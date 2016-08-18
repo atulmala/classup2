@@ -1,0 +1,34 @@
+{% extends 'classup/base.html' %}
+
+{% load staticfiles %}
+
+{% block title %}
+    Setup Module
+{% endblock %}
+
+{% block body_block %}
+
+    {% if user_type == 'school_admin' %}
+        <h1>ClassUp Setup Menu</h1>
+        <a href="/setup/upload_students/">Setup student Details</a><br/><p/>
+        <a href="/setup/upload_teachers/">Setup Teachers Details</a><br/><p/>
+        <a href="/setup/upload_classes/">Setup Class List</a><br/><p/>
+        <a href="/setup/upload_sections/">Setup Section List</a><br/><p/>
+        <a href="/setup/upload_subjects/">Setup Subjects</a><p/>
+        <a href="/setup/upload_working_days/">Set Working Days</a><p/>
+        <a href="/setup/upload_classteacher_details">Setup Class Teachers</a><p/>
+        <a href="/bus_attendance/setup_routs/">Upload Bus Routs</a><p/>
+        <a href="/bus_attendance/setup_student_routs/">Setup Student Bus Routs</a><p/>
+        <a href="/bus_attendance/setup_bus_stops/">Setup Bus Stops</a><p/>
+        <a href="/setup/upload_exam/">Upload Exam Details</a><p/>
+
+    {% endif %}
+
+    <h1>ClassUp Operations Menu</h1>
+    <a href="/operations/att_summary_school/">Download Daily Attendance Summary for School</a><p/>
+    <a href="/operations/att_register_class/">Download Monthly Attendance for a Class</a><p/>
+    <a href="/operations/test_results/">Download Test Results For Class</a><p/>
+    <a href="/operations/result_sms/">Send Test Results SMS to Parents</a><p/>
+    <a href="/operations/parents_communication_details/">Download Parents Communications</a><p/>
+
+{% endblock %}

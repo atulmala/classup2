@@ -1,0 +1,63 @@
+{% extends 'classup/base.html' %}
+
+{% load staticfiles %}
+
+{% block title %}
+    Setup Module
+{% endblock %}
+
+{% block body_block %}
+
+    <script>
+        $(document).ready(function(){
+
+            $(".monthpicker").datepicker({
+                dateFormat: 'mm-yy',
+                changeMonth: true,
+                changeYear: true,
+                showButtonPanel: true,
+
+                onClose: function(dateText, inst) {
+                    var month = $("#ui-datepicker-div .ui-datepicker-month :selected").val();
+                    var year = $("#ui-datepicker-div .ui-datepicker-year :selected").val();
+                    $(this).val($.datepicker.formatDate('yy-mm', new Date(year, month, 1)));
+                }
+            });
+
+            $(".monthpicker").focus(function () {
+                $(".ui-datepicker-calendar").hide();
+                $("#ui-datepicker-div").position({
+                    my: "center top",
+                    at: "center bottom",
+                    of: $(this)
+                });
+            });
+        });
+    </script>
+
+    <h1>{{ header }}</h1>
+
+    {% if form.errors %}
+        <div class="alert alert-danger">
+            <p style="color: red;">
+                Please correct the error{{ form.errors|pluralize }} below.
+            </p>
+        </div>
+    {% endif %}
+
+    <form action="" enctype="multipart/form-data"  method="post">
+        {% csrf_token %}
+        <header>{{ header }}</header>
+
+        {{ form.non_field_errors }}
+
+        <table>
+            {{ form.as_table }}
+        </table>
+        <p>
+            <br/>
+            <input class="btn-primary" type="submit" name="submit" value="Download Excel">
+            <input class="btn-primary" type="submit" name="cancel" value="Done/Cancel">
+        </p>
+    </form>
+{% endblock %}
