@@ -9,6 +9,8 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from setup.forms import ExcelFileUploadForm
+
+from setup.models import School, UserSchoolMapping
 from academics.models import Class, Section, Subject, WorkingDays, TestResults, ClassTest, ClassTeacher, Exam
 from teacher.models import Teacher
 from student.models import Student, Parent
@@ -18,15 +20,14 @@ from operations import sms
 
 server_ip = 'http://52.32.99.184/'
 router_server_ip = 'http://52.32.99.184/'
-school_id = 2
 update_marks_list = False
 
 
 # function to validate the extension of uploaded excel file - should be either .xls or .xlsx
 def validate_excel_extension(file_handle, form, context_dict):
-    print 'Inside validate_excel_extension function...'
+    print ('Inside validate_excel_extension function...')
     (file_name, file_extension) = os.path.splitext(str(file_handle))
-    print 'file extension = ' + file_extension
+    print ('file extension = ' + file_extension)
     if file_extension != '.xls' and file_extension != '.xlsx':
         # this is not a file with either .xls or .xlsx extension.
         error = 'The file you uploaded is not a valid excel file. '
@@ -34,7 +35,7 @@ def validate_excel_extension(file_handle, form, context_dict):
         error += 'You have uploaded ' + str(file_handle) + '. Please try again.'
         form.errors['__all__'] = form.error_class([error])
         context_dict['error'] = error
-        print error
+        print (error)
         return False
     else:
         return True
@@ -56,7 +57,6 @@ def setup_students(request):
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return render(request, 'classup/setup_index.html', context_dict)
-        return HttpResponseRedirect(reverse('setup_index'), context_dict)
 
     # now start processing the file upload
 
@@ -69,7 +69,11 @@ def setup_students(request):
 
         if form.is_valid():
             try:
-                print 'now starting to process the uploaded file for setting up Student data...'
+                # determine the school for which this processing is done
+                school_id = request.session['school_id']
+                school = School.objects.get(id=school_id)
+                print('school=' + school.school_name)
+                print ('now starting to process the uploaded file for setting up Student data...')
                 file_to_process_handle = request.FILES['excelFile']
 
                 # check that the file uploaded should be a valid excel
@@ -81,12 +85,12 @@ def setup_students(request):
                 file_to_process = xlrd.open_workbook(filename=None, file_contents=file_to_process_handle.read())
                 sheet = file_to_process.sheet_by_index(0)
                 if sheet:
-                    print 'Successfully got hold of sheet!'
+                    print ('Successfully got hold of sheet!')
                 for row in range(sheet.nrows):
                     # skip the header row
                     if row == 0:
                         continue
-                    print 'Processing a new row'
+                    print ('Processing a new row')
                     # first, capture student data
                     # we need to explicitly cast student id to string. Else update will not function properly
                     student_id = str(sheet.cell(row, 0).value)
@@ -98,8 +102,8 @@ def setup_students(request):
 
                     # excel may add a decimal to the roll number. We need to convert it to integer
                     current_roll_no = int(current_roll_no_raw)
-                    print current_roll_no_raw
-                    print current_roll_no
+                    print (current_roll_no_raw)
+                    print (current_roll_no)
 
                     # now, capture the parent data
                     parent_name = sheet.cell(row, 6).value
@@ -122,23 +126,23 @@ def setup_students(request):
                         p = Parent.objects.get(parent_mobile1=parent_mobile1)
 
                         if p:
-                            print 'Parent ' + parent_name + ' already exist. This will be updated!'
+                            print ('Parent ' + parent_name + ' already exist. This will be updated!')
                             p.parent_name = parent_name
                             p.parent_mobile1 = parent_mobile1
                             p.parent_mobile2 = parent_mobile2
                             p.parent_email = parent_email
                     except Exception as e:
-                        print 'Exception = %s (%s)' % (e.message, type(e))
-                        print 'Parent ' + parent_name + ' is a new entry. This will be created!'
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Parent ' + parent_name + ' is a new entry. This will be created!')
                         p = Parent(parent_name=parent_name, parent_mobile1=parent_mobile1,
                                    parent_mobile2=parent_mobile2, parent_email=parent_email)
                     try:
                         p.save()
                     except Exception as e:
-                        print 'Exception = %s (%s)' % (e.message, type(e))
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
                         error = 'Unable to save the parent data for ' + parent_name + ' in Table Parent'
                         form.errors['__all__'] = form.error_class([error])
-                        print error
+                        print (error)
                         continue
                     # now, create a user for this parent
 
@@ -152,35 +156,27 @@ def setup_students(request):
                             # the user name would be the mobile, and password would be a random string
                             password = User.objects.make_random_password(length=5, allowed_chars='1234567890')
 
-                            print 'Initial password = ' + password
+                            print ('Initial password = ' + password)
                             user = User.objects.create_user(parent_mobile1, parent_email, password)
                             user.first_name = parent_name
                             user.is_staff = False
                             user.save()
 
-                            print 'Successfully created user for ' + parent_name
+                            print ('Successfully created user for ' + parent_name)
                     except Exception as e:
-                        print 'Exception = %s (%s)' % (e.message, type(e))
-                        print 'Unable to create user for ' + parent_name
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Unable to create user for ' + parent_name)
                         # todo implement the code to send password to the user through an sms and email
 
                     # create an entry for this parent in ClassUpRouter
                     try:
-                        for conf in Configurations.objects.all():
-                            router_server_ip = conf.router_server_ip
-                            print 'router_server_ip=' + router_server_ip
-                            school_id = conf.school_id
-                            print 'school_id=' + school_id
-                        request1 = 'http://' + str(router_server_ip) + '/map_parent/' + str(parent_mobile1) + '/' \
-                                  + str(school_id) + '/'
-                        requests.post(request1)
-
+                        conf = Configurations.objects.get(school=school):
                         if whether_new_user:
                             android_link = conf.google_play_link
                             iOS_link = conf.app_store_link
 
                             # send login id and password to teacher via sms
-                            message = 'Dear ' + parent_name + ',thanks for registering at ClassUp(TM).'
+                            message = 'Dear ' + parent_name + ', thanks for registering at ClassUp(TM).'
                             message += 'Please install ClassUp from these links. Android: '
                             message += android_link
                             message += ' iPhone/iOS: '
@@ -191,40 +187,40 @@ def setup_students(request):
 
                             #sms.send_sms(parent_mobile1, message)
                     except Exception as e:
-                        print 'Exception = %s (%s)' % (e.message, type(e))
-                        print 'Failed to create Parent School mapping for ' + parent_name + ' in ClassUpRouter'
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Failed to create Parent School mapping for ' + parent_name + ' in ClassUpRouter')
 
                     # now, start creating the student. The parent created above will be the parent of this student.
 
                     # class and section are foreign keys. Get hold of the relevant objects
-                    print 'Class = ' + current_class
+                    print ('Class = ' + current_class)
 
                     try:
-                        the_class = Class.objects.get(standard=current_class)
+                        the_class = Class.objects.get(school=school, standard=current_class)
                     except Exception as e:
                         error = 'Unable to retrieve the relevant class: ' + current_class
-                        print 'Exception = %s (%s)' % (e.message, type(e))
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
                         form.errors['__all__'] = form.error_class([error])
-                        print error
+                        print (error)
                         # todo - we should skip this student but report this and move on to the next student <provide code>
                         continue
 
                     try:
-                        the_section = Section.objects.get(section=current_section)
+                        the_section = Section.objects.get(school=school, section=current_section)
                     except Exception as e:
-                        print 'Exception = %s (%s)' % (e.message, type(e))
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
                         error = 'Unable to retrieve the relevant object for section: ' + current_section
                         form.errors['__all__'] = form.error_class([error])
-                        print error
+                        print (error)
                         # todo - we should skip this student but report this and move on to the next student <provide code>
                         continue
 
                     # process student. If this is an existing student, this is an update operations.
                     try:
-                        s = Student.objects.get(student_erp_id=student_id)
+                        s = Student.objects.get(school=school, student_erp_id=student_id)
                         if s:
-                            print 'Student with  ID: ' + student_id + \
-                                  ' & name: ' + student_first_name + ' already exist. This will be updated!'
+                            print ('Student with  ID: ' + student_id + \
+                                  ' & name: ' + student_first_name + ' already exist. This will be updated!')
                             s.student_erp_id = student_id
                             s.fist_name = student_first_name
                             s.last_name = student_last_name
@@ -236,80 +232,78 @@ def setup_students(request):
                             s.roll_number = current_roll_no
                             s.parent = p
                     except Exception as e:
-                        print 'Exception = %s (%s)' % (e.message, type(e))
-                        print 'Student with ID:  ' + student_id + ' Name: ' \
-                              + student_first_name + ' ' + student_last_name + ' is a new entry. Hence inserting...'
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Student with ID:  ' + student_id + ' Name: ' \
+                              + student_first_name + ' ' + student_last_name + ' is a new entry. Hence inserting...')
                         try:
-                            s = Student(student_erp_id=student_id, fist_name=student_first_name,
+                            s = Student(school=school, student_erp_id=student_id, fist_name=student_first_name,
                                         last_name=student_last_name,
                                         current_class=the_class, current_section=the_section,
                                         roll_number=current_roll_no, parent=p)
                             s.save()
-                            print 'saving successful!'
+                            print ('saving successful!')
                             # this student should appear in all the pending test for this class & section
-                            print 'creating an entry for this student in all pending test for this class/section'
+                            print ('creating an entry for this student in all pending test for this class/section')
                             try:
-                                tests = ClassTest.objects.filter(the_class=the_class, section=the_section,
-                                                                 is_completed=False)
+                                tests = ClassTest.objects.filter(school=school, the_class=the_class,
+                                                                 section=the_section, is_completed=False)
                                 for t in tests:
                                     test_result = TestResults(class_test=t, roll_no=current_roll_no,
                                               student=s, marks_obtained=-5000.00, grade='')
                                     try:
                                         test_result.save()
-                                        print ' test results successfully created'
+                                        print (' test results successfully created')
                                     except Exception as e:
-                                        print 'failed to create test results'
-                                        print 'Exception = %s (%s)' % (e.message, type(e))
+                                        print ('failed to create test results')
+                                        print ('Exception = %s (%s)' % (e.message, type(e)))
                             except Exception as e:
-                                print 'Currently no pending tests for this class/section'
-                                print 'Exception = %s (%s)' % (e.message, type(e))
+                                print ('Currently no pending tests for this class/section')
+                                print ('Exception = %s (%s)' % (e.message, type(e)))
                         except Exception as e:
                             error = 'Unable to create the new student in the database'
-                            print error
-                            print 'Exception = %s (%s)' % (e.message, type(e))
+                            print (error)
+                            print ('Exception = %s (%s)' % (e.message, type(e)))
                             form.errors['__all__'] = form.error_class([error])
                             # todo - we should skip this student but report this and move on to the next student <provide code>
                     try:
                         s.save()
-                        print 'updated Student with  ID: ' + student_id + \
-                                  ' & name: ' + student_first_name
+                        print ('updated Student with  ID: ' + student_id + ' & name: ' + student_first_name)
 
                         # 04/01/2016 - if the roll number has been changed, we need to update the marks entry list
                         if update_marks_list:
-                            print 'going to update the roll number'
+                            print ('going to update the roll number')
                             try:
                                 results = TestResults.objects.filter(student=s, class_test__is_completed=False)
                                 for r in results:
                                     r.roll_no = current_roll_no
                                     try:
                                         r.save()
-                                        print 'roll number updated in test_result'
+                                        print ('roll number updated in test_result')
                                     except Exception as e:
-                                        print 'unable to change roll number in test result'
-                                        print 'Exception = %s (%s)' % (e.message, type(e))
+                                        print ('unable to change roll number in test result')
+                                        print ('Exception = %s (%s)' % (e.message, type(e)))
                             except Exception as e:
-                                print 'no pending tests for which roll number needs to be changed'
-                                print 'Exception = %s (%s)' % (e.message, type(e))
+                                print ('no pending tests for which roll number needs to be changed')
+                                print ('Exception = %s (%s)' % (e.message, type(e)))
                             update_marks_list = False
                     except Exception as e:
-                        print 'Exception = %s (%s)' % (e.message, type(e))
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
                         error = 'Unable to save the data for Student with ID: ' + student_id + \
                                 ' Name: ' + student_first_name + ' ' + student_last_name + ' in Table Student'
                         form.errors['__all__'] = form.error_class([error])
-                        print error
+                        print (error)
                         # todo - we should skip this student but report this and move on to the next student <provide code>
 
 
                 # file upload and saving to db was successful. Hence go back to the main menu
-                print 'reached here'
-                print context_dict
+                print ('reached here')
+                print (context_dict)
                 return render(request, 'classup/setup_index.html')
-                return HttpResponseRedirect(reverse('setup_index'))
             except Exception as e:
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('Exception = %s (%s)' % (e.message, type(e)))
                 error = 'Invalid file uploaded. Please try again.'
                 form.errors['__all__'] = form.error_class([error])
-                print error
+                print (error)
                 return render(request, 'classup/setup_data.html', context_dict)
     else:
         form = ExcelFileUploadForm()
@@ -324,7 +318,6 @@ def setup_classes(request):
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return render(request, 'classup/setup_index.html', context_dict)
-        return HttpResponseRedirect(reverse('setup_index'))
 
     # now start processing the file upload
 
@@ -336,7 +329,11 @@ def setup_classes(request):
 
         if form.is_valid():
             try:
-                print 'now starting to process the uploaded file for setting up Classes...'
+                # determine the school for which this processing is done
+                school_id = request.session['school_id']
+                school = School.objects.get(id=school_id)
+                print('school=' + school.school_name)
+                print ('now starting to process the uploaded file for setting up Classes...')
                 fileToProcess_handle = request.FILES['excelFile']
 
                 # check that the file uploaded should be a valid excel
@@ -347,48 +344,49 @@ def setup_classes(request):
                 # if this is a valid excel file - start processing it
                 fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
                 sheet = fileToProcess.sheet_by_index(0)
-                if (sheet):
-                    print 'Successfully got hold of sheet!'
+                if sheet:
+                    print('Successfully got hold of sheet!')
 
                 for row in range(sheet.nrows):
                     # skip the header rows
-                    if (row == 0):
+                    if row == 0:
                         continue
 
-                    print 'Processing a new row'
+                    print('Processing a new row')
                     class_standard = sheet.cell(row, 0).value
                     class_sequence = sheet.cell(row, 1).value
-                    print class_standard
-                    print class_sequence
+                    print(class_standard)
+                    print(class_sequence)
 
                     # Now we are ready to insert into db. But, we need to be sure that we are not trying
                     # to insert a duplicate
                     try:
-                        c = Class.objects.get(standard=class_standard, sequence=class_sequence)
+                        c = Class.objects.get(school=school, standard=class_standard, sequence=class_sequence)
                         if c:
-                            print 'Class ' + class_standard + ' already exist. Hence skipping...'
+                            print('Class ' + class_standard + ' for school ' + school.school_name +
+                                  ' already exist. Hence skipping...')
                     except Exception as e:
-                        print 'Exception = %s (%s)' % (e.message, type(e))
-                        print 'class ' + class_standard + ' is a new class. Hence inserting...'
+                        print('Exception = %s (%s)' % (e.message, type(e)))
+                        print('class ' + class_standard + ' is a new class. Hence inserting...')
                         try:
                             c = Class(standard=class_standard)
+                            c.school = school
                             c.sequence = class_sequence
                             c.save()
                         except Exception as e:
-                            print 'Exception = %s (%s)' % (e.message, type(e))
+                            print ('Exception = %s (%s)' % (e.message, type(e)))
                             error = 'Unable to save the class ' + class_standard + ' in table Class'
                             form.errors['__all__'] = form.error_class([error])
-                            print error
+                            print(error)
                             return render(request, 'classup/setup_data.html', context_dict)
 
                 # file upload and saving to db was successful. Hence go back to the main menu
                 return render(request, 'classup/setup_index.html', context_dict)
-                return HttpResponseRedirect(reverse('setup_index'))
             except Exception as e:
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print('Exception = %s (%s)' % (e.message, type(e)))
                 error = 'Invalid file uploaded. Please try again.'
                 form.errors['__all__'] = form.error_class([error])
-                print error
+                print(error)
                 return render(request, 'classup/setup_data.html', context_dict)
     else:
         # we are arriving at this page for the first time, hence show an empty form
@@ -404,7 +402,6 @@ def setup_sections(request):
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return render(request, 'classup/setup_index.html', context_dict)
-        return HttpResponseRedirect(reverse('setup_index'))
 
     # now start processing the file upload
 
@@ -416,7 +413,9 @@ def setup_sections(request):
 
         if form.is_valid():
             try:
-                print 'now starting to process the uploaded file for setting up Sections...'
+                school_id = request.session['school_id']
+                school = School.objects.get(id=school_id)
+                print('now starting to process the uploaded file for setting up Sections...')
                 fileToProcess_handle = request.FILES['excelFile']
 
                 # check that the file uploaded should be a valid excel
@@ -428,40 +427,41 @@ def setup_sections(request):
                 fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
                 sheet = fileToProcess.sheet_by_index(0)
                 if sheet:
-                    print 'Successfully got hold of sheet!'
+                    print ('Successfully got hold of sheet!')
                 for row in range(sheet.nrows):
                     if row == 0:
                         continue
-                    print 'Processing a new row'
+                    print ('Processing a new row')
                     section = sheet.cell(row, 0).value
-                    print section
+                    print (section)
 
                     # Now we are ready to insert into db. But, we need to be sure that we are not trying
                     # to insert a duplicate
                     try:
-                        s = Section.objects.get(section=section)
+                        s = Section.objects.get(school=school, section=section)
                         if (s):
-                            print 'Section ' + section + ' already exist. Hence skipping...'
+                            print ('Section ' + section + 'for school ' + school.school_name
+                                   + ' already exist. Hence skipping...')
                     except Exception as e:
-                        print 'Exception = %s (%s)' % (e.message, type(e))
-                        print 'Section ' + section + ' is a new section. Hence inserting...'
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Section ' + section + ' is a new section. Hence inserting...')
                         try:
                             s = Section(section=section)
+                            s.school = school
                             s.save()
                         except Exception as e:
-                            print 'Exception = %s (%s)' % (e.message, type(e))
+                            print ('Exception = %s (%s)' % (e.message, type(e)))
                             error = 'Unable to save the data in Table Section'
                             form.errors['__all__'] = form.error_class([error])
-                            print error
+                            print (error)
                             return render(request, 'classup/setup_data.html', context_dict)
                 # file upload and saving to db was successful. Hence go back to the main menu
                 return render(request, 'classup/setup_index.html', context_dict)
-                return HttpResponseRedirect(reverse('setup_index'))
             except Exception as e:
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('Exception = %s (%s)' % (e.message, type(e)))
                 error = 'Invalid file uploaded. Please try again.'
                 form.errors['__all__'] = form.error_class([error])
-                print error
+                print (error)
                 return render(request, 'classup/setup_data.html', context_dict)
     else:
         form = ExcelFileUploadForm()
@@ -476,7 +476,6 @@ def setup_teachers(request):
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return render(request, 'classup/setup_index.html', context_dict)
-        return HttpResponseRedirect(reverse('setup_index'))
 
     # now start processing the file upload
 
@@ -488,7 +487,10 @@ def setup_teachers(request):
 
         if form.is_valid():
             try:
-                print 'now starting to process the uploaded file for setting up Teachers...'
+                school_id = request.session['school_id']
+                school = School.objects.get(id=school_id)
+
+                print ('now starting to process the uploaded file for setting up Teachers...')
                 fileToProcess_handle = request.FILES['excelFile']
 
                 # check that the file uploaded should be a valid excel
@@ -500,12 +502,12 @@ def setup_teachers(request):
                 fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
                 sheet = fileToProcess.sheet_by_index(0)
                 if sheet:
-                    print 'Successfully got hold of sheet!'
+                    print ('Successfully got hold of sheet!')
                 for row in range(sheet.nrows):
                     # skip the header row
                     if row == 0:
                         continue
-                    print 'Processing a new row'
+                    print ('Processing a new row')
                     # we need to explicitly cast employee id to string. Else update will not function properly
                     employee_id = str(sheet.cell(row, 0).value)
                     f_name = sheet.cell(row, 1).value
@@ -517,52 +519,38 @@ def setup_teachers(request):
                     mobile_int = int(mobile_raw)
                     mobile = str(mobile_int)
 
-
                     # if this is an existing employee/teacher, this is an update operations.
                     try:
-                        t = Teacher.objects.get(teacher_erp_id=employee_id)
+                        t = Teacher.objects.get(school=school, teacher_erp_id=employee_id)
 
                         if t:
-                            print 'Teacher with Employee ID: ' + employee_id + \
-                                  ' & name: ' + f_name + ' already exist. This will be updated!'
+                            print ('Teacher with Employee ID: ' + employee_id +
+                                   ' & name: ' + f_name + ' already exist. This will be updated!')
                             t.first_name = f_name
                             t.last_name = l_name
                             t.email = email
                             t.mobile = mobile
                             try:
                                 t.save()
-                                print 'Teacher ' + f_name + ' ' + l_name + ' ' + 'updated'
+                                print ('Teacher ' + f_name + ' ' + l_name + ' ' + 'updated')
                             except Exception as e:
-                                print 'Updating ' + f_name + ' ' + l_name + ' ' + 'failed!'
-                                print 'Exception = %s (%s)' % (e.message, type(e))
-
-                        # create an entry for this teacher in ClassUpRouter
-                        try:
-                            for conf in Configurations.objects.all():
-                                router_server_ip = conf.router_server_ip
-                                school_id = conf.school_id
-                            request1 = 'http://' + str(router_server_ip) + '/map_teacher/' + \
-                                       email + '/' + str(school_id) + '/'
-                            requests.post(request1)
-                        except Exception as e:
-                            print 'Updating router entry for  ' + f_name + ' ' + l_name + ' ' + 'failed!'
-                            print 'Exception = %s (%s)' % (e.message, type(e))
+                                print ('Updating ' + f_name + ' ' + l_name + ' ' + 'failed!')
+                                print ('Exception = %s (%s)' % (e.message, type(e)))
 
                     except Exception as e:
-                        print 'Exception = %s (%s)' % (e.message, type(e))
-                        print 'Teacher ' + f_name + ' ' + l_name + ' is a new entry. Hence inserting...'
-                        t = Teacher(teacher_erp_id=employee_id, first_name=f_name, last_name=l_name,
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Teacher ' + f_name + ' ' + l_name + ' is a new entry. Hence inserting...')
+                        t = Teacher(teacher_erp_id=employee_id, school=school, first_name=f_name, last_name=l_name,
                                     email=email, mobile=mobile)
                         try:
                             t.save()
-                            print 'Successfully created Teacher ' + f_name + ' ' + l_name
+                            print ('Successfully created Teacher ' + f_name + ' ' + l_name)
 
                             # now, create a user for this teacher
                             # the user name would be the email, and password would be a random string
-                            password = User.objects.make_random_password(length=5, allowed_chars=
-                            '1234567890')
+                            password = User.objects.make_random_password(length=5, allowed_chars='1234567890')
 
-                            print 'Initial password = ' + password
+                            print ('Initial password = ' + password)
                             user = None
                             try:
                                 user = User.objects.create_user(email, email, password)
@@ -570,31 +558,26 @@ def setup_teachers(request):
                                 user.last_name = l_name
                                 user.is_staff = True
                                 user.save()
-                                print 'Successfully created user for ' + f_name + ' ' + l_name
+                                print ('Successfully created user for ' + f_name + ' ' + l_name)
+
+                                mapping = UserSchoolMapping(user=user, school=school)
+                                mapping.save()
                             except Exception as e:
-                                print 'Exception = %s (%s)' % (e.message, type(e))
-                                print 'Unable to create user for ' + f_name + ' ' + l_name
+                                print ('Exception = %s (%s)' % (e.message, type(e)))
+                                print ('Unable to create user or user-school mapping for ' + f_name + ' ' + l_name)
                             # todo implement the code to send password to the user through an sms and email
 
                             # make this user part of the Teachers group
                             try:
                                 group = Group.objects.get(name='teachers')
                                 user.groups.add(group)
-                                print 'Successfully added ' + f_name + ' ' + l_name + ' to the Teachers group'
+                                print ('Successfully added ' + f_name + ' ' + l_name + ' to the Teachers group')
                             except Exception as e:
-                                print 'Exception = %s (%s)' % (e.message, type(e))
-                                print 'Unable to add ' + f_name + ' ' + l_name + ' to the Teachers group'
-
-                            # create an entry for this teacher in ClassUpRouter
-                            for conf in Configurations.objects.all():
-                                router_server_ip = conf.router_server_ip
-                                school_id = conf.school_id
-                            request1 = 'http://' + str(router_server_ip) + '/map_teacher/' + \
-                                       email + '/' + str(school_id) + '/'
-                            requests.post(request1)
+                                print ('Exception = %s (%s)' % (e.message, type(e)))
+                                print ('Unable to add ' + f_name + ' ' + l_name + ' to the Teachers group')
 
                             # get the links of app on Google Play and Apple App store
-                            configuration = Configurations.objects.get(pk=1)
+                            configuration = Configurations.objects.get(school=school)
                             android_link = configuration.google_play_link
                             iOS_link = configuration.app_store_link
 
@@ -609,24 +592,23 @@ def setup_teachers(request):
                             message += 'Enjoy managing your class with ClassUp(TM)!'
                             message += ' In case of any problem please send an email to: info@classup.in'
 
-                            sms.send_sms(mobile, message)
+                            #sms.send_sms(mobile, message)
 
                         except Exception as e:
-                            print 'Exception = %s (%s)' % (e.message, type(e))
+                            print ('Exception = %s (%s)' % (e.message, type(e)))
                             error = 'Unable to save the data for ' + f_name + ' ' + l_name + ' in Table Teacher'
                             form.errors['__all__'] = form.error_class([error])
-                            print error
+                            print (error)
                             # todo - we should skip this teacher but report this and move on to the next treacher <provide code>
                             continue
 
                 # file upload and saving to db was successful. Hence go back to the main menu
                 return render(request, 'classup/setup_index.html', context_dict)
-                return HttpResponseRedirect(reverse('setup_index'))
             except Exception as e:
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('Exception = %s (%s)' % (e.message, type(e)))
                 error = 'Invalid file uploaded. Please try again.'
                 form.errors['__all__'] = form.error_class([error])
-                print error
+                print (error)
                 return render(request, 'classup/setup_data.html', context_dict)
     else:
         form = ExcelFileUploadForm()
@@ -641,7 +623,6 @@ def setup_subjects(request):
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return render(request, 'classup/setup_index.html', context_dict)
-        return HttpResponseRedirect(reverse('setup_index'))
 
     # now start processing the file upload
 
@@ -653,7 +634,10 @@ def setup_subjects(request):
 
         if form.is_valid():
             try:
-                print 'now starting to process the uploaded file for setting up Subjects...'
+                school_id = request.session['school_id']
+                school = School.objects.get(id=school_id)
+
+                print ('now starting to process the uploaded file for setting up Subjects...')
                 fileToProcess_handle = request.FILES['excelFile']
 
                 # check that the file uploaded should be a valid excel
@@ -665,46 +649,44 @@ def setup_subjects(request):
                 fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
                 sheet = fileToProcess.sheet_by_index(0)
                 if sheet:
-                    print 'Successfully got hold of sheet!'
+                    print ('Successfully got hold of sheet!')
                 for row in range(sheet.nrows):
                     # skip the header row
                     if row == 0:
                         continue
-                    print 'Processing a new row'
+                    print ('Processing a new row')
                     # we need to explicitly cast employee id to string. Else update will not function properly
                     sub_name = str(sheet.cell(row, 0).value)
                     sub_code = sheet.cell(row, 1).value
                     sub_sequence = sheet.cell(row, 2).value
 
-                    # if this is an existing employee/teacher, this is an update operations.
+                    # if this is an existing subject, this is an update operations.
                     try:
-                        s = Subject.objects.get(subject_code=sub_code)
-
+                        s = Subject.objects.get(school=school, subject_code=sub_code)
                         if s:
-                            print 'Subject: ' + sub_name + \
-                                  ' already exist. This will be updated!'
+                            print ('Subject: ' + sub_name + ' already exist. This will be updated!')
                             s.subject_name = sub_name
                             s.subject_code = sub_code
                             s.subject_sequence = sub_sequence
                     except Exception as e:
-                        print 'Exception = %s (%s)' % (e.message, type(e))
-                        print 'Subject ' + sub_name + ' is a new entry. Hence inserting...'
-                        s = Subject(subject_name=sub_name, subject_code=sub_code, subject_sequence=sub_sequence)
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Subject ' + sub_name + ' is a new entry. Hence inserting...')
+                        s = Subject(school=school, subject_name=sub_name,
+                                    subject_code=sub_code, subject_sequence=sub_sequence)
                     try:
                         s.save()
                     except Exception as e:
-                        print 'Exception = %s (%s)' % (e.message, type(e))
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
                         error = 'Unable to save the data for ' + sub_name + ' ' + sub_code + ' in Table Subject'
                         form.errors['__all__'] = form.error_class([error])
-                        print error
+                        print (error)
                 # file upload and saving to db was successful. Hence go back to the main menu
                 return render(request, 'classup/setup_index.html', context_dict)
-                return HttpResponseRedirect(reverse('setup_index'))
             except Exception as e:
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('Exception = %s (%s)' % (e.message, type(e)))
                 error = 'Invalid file uploaded. Please try again.'
                 form.errors['__all__'] = form.error_class([error])
-                print error
+                print (error)
                 return render(request, 'classup/setup_data.html', context_dict)
     else:
         form = ExcelFileUploadForm()

@@ -5,19 +5,20 @@ from .models import *
 
 
 class SectionAdmin(admin.ModelAdmin):
-    pass
+    list_display = ['school', 'section']
 
 admin.site.register(Section, SectionAdmin)
 
 
 class ClassAdmin(admin.ModelAdmin):
-    pass
+    list_display = ['standard']
 
 admin.site.register(Class, ClassAdmin)
 
 
 class SubjectAdmin(admin.ModelAdmin):
-    pass
+    search_fields = ['subject_name']
+    list_display = ['school', 'subject_name', 'subject_code']
 
 admin.site.register(Subject, SubjectAdmin)
 

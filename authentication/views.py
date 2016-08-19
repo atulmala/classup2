@@ -1,13 +1,14 @@
 import json
 
 from django.contrib.auth.models import User, Group
-from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponse
 from django.shortcuts import render
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework.renderers import JSONRenderer
+
+from setup.models import UserSchoolMapping
 
 
 from .forms import ClassUpLoginForm
@@ -34,6 +35,13 @@ def auth_login(request):
         if user is not None:
             if user.is_active:
                 login(request, user)
+                try:
+                    u = UserSchoolMapping.objects.get(user=user)
+                    school_id = u.school.id
+                    request.session['school_id'] = school_id
+                    print 'school_id=' + str(school_id)
+                except Exception as e:
+                    print 'unable to retrieve schoo_id for ' + user.username
                 if user.groups.filter(name='school_admin').exists():
                     context_dict['user_type'] = 'school_admin'
                 print context_dict
@@ -87,6 +95,14 @@ def auth_login_from_device(request, user_name, password):
             return_data["login"] = "successful"
             return_data["user_status"] = "active"
             return_data['user_name'] = user.first_name + ' ' + user.last_name
+            try:
+                u = UserSchoolMapping.objects.get(user=user)
+                school_id = u.school.id
+                request.session['school_id'] = school_id
+                return_data['school_id'] = school_id
+                print 'school_id=' + str(school_id)
+            except Exception as e:
+                print 'unable to retrieve school_id for ' + user.username
 
             if user.is_staff:
                 return_data['is_staff'] = "true"
@@ -106,7 +122,7 @@ def auth_login_from_device(request, user_name, password):
 
 @csrf_exempt
 def auth_login_from_device1(request):
-    print 'Inside login from device view!'
+    print ('Inside login from device view!')
     return_data = {
 
     }
@@ -122,6 +138,15 @@ def auth_login_from_device1(request):
                 return_data["user_status"] = "active"
                 return_data['user_name'] = user.first_name + ' ' + user.last_name
 
+                try:
+                    u = UserSchoolMapping.objects.get(user=user)
+                    school_id = u.school.id
+                    request.session['school_id'] = school_id
+                    return_data['school_id'] = school_id
+                    print ('school_id=' + str(school_id))
+                except Exception as e:
+                    print ('unable to retrieve schoo_id for ' + user.username)
+
                 if user.is_staff:
                     return_data['is_staff'] = "true"
                 else:
@@ -130,11 +155,11 @@ def auth_login_from_device1(request):
             else:
                 return_data["login"] = "successful"
                 return_data["user_status"] = "inactive"
-                print return_data
+                print (return_data)
                 return JSONResponse(return_data, status=403)
         else:
             return_data["login"] = "failed"
-            print return_data
+            print (return_data)
             return JSONResponse(return_data, status=404)
 
 
@@ -169,4 +194,8 @@ def change_password(request):
 
 
 def logout_view(request):
+    try:
+        del request.session['school_id']
+    except KeyError:
+        pass
     logout(request)

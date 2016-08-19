@@ -9,19 +9,19 @@ from teacher.models import Teacher
 
 class Section(models.Model):
     school = models.ForeignKey(School)
-    section = models.CharField(max_length=5, unique=True)
+    section = models.CharField(max_length=5)
 
     def __unicode__(self):
-        return self.section
+        return self.school.school_name + ', ' + self.section
 
 
 class Class(models.Model):
     school = models.ForeignKey(School)
-    standard = models.CharField(max_length=20, unique=True)
+    standard = models.CharField(max_length=20)
     sequence = models.SmallIntegerField()
 
     def __unicode__(self):
-        return str(self.standard)
+        return self.school.school_name + ', ' + str(self.standard)
 
 
 class ClassTeacher(models.Model):
@@ -31,18 +31,18 @@ class ClassTeacher(models.Model):
     class_teacher = models.ForeignKey(Teacher)
 
     def __unicode__(self):
-        return self.standard.standard + ' ' + self.section.section + ' ' + \
+        return self.school.school_name + ', ' + self.standard.standard + ' ' + self.section.section + ' ' + \
                self.class_teacher.first_name + ' ' + self.class_teacher.last_name
 
 
 class Subject(models.Model):
     school = models.ForeignKey(School)
     subject_name = models.CharField(max_length=40)
-    subject_code = models.CharField(max_length=10, unique=True)
+    subject_code = models.CharField(max_length=10)
     subject_sequence = models.SmallIntegerField(null=True)
 
     def __unicode__(self):
-        return '%s' % self.subject_name
+        return self.school.school_name + ', ' + self.subject_name
 
 
 class ClassTest(models.Model):
@@ -64,7 +64,6 @@ class ClassTest(models.Model):
 
 
 class TestResults(models.Model):
-    school = models.ForeignKey(School)
     class_test = models.ForeignKey(ClassTest)
     student = models.ForeignKey(Student, db_column='student_erp_id')
     roll_no = models.IntegerField(null=True)
