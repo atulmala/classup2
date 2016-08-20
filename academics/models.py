@@ -42,11 +42,11 @@ class Subject(models.Model):
     subject_sequence = models.SmallIntegerField(null=True)
 
     def __unicode__(self):
-        return self.school.school_name + ', ' + self.subject_name
+        return self.subject_name
 
 
 class ClassTest(models.Model):
-    school = models.ForeignKey(School)
+    # school = models.ForeignKey(School)
     date_conducted = models.DateField()
     teacher = models.ForeignKey(Teacher)
     subject = models.ForeignKey(Subject)
@@ -102,7 +102,7 @@ class Exam(models.Model):
 
 
 class TeacherSubjects(models.Model):
-    school = models.ForeignKey(School)
+    #school = models.ForeignKey(School)
     teacher = models.ForeignKey(Teacher)
     subject = models.ForeignKey(Subject)
 

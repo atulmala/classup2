@@ -150,6 +150,7 @@ def setup_students(request):
                     whether_new_user = False
                     try:
                         if User.objects.filter(username=parent_mobile1).exists():
+                            print('user for parent ' + p.parent_name + ' already exists!')
                             whether_new_user = False
                         else:
                             whether_new_user = True
@@ -170,7 +171,7 @@ def setup_students(request):
 
                     # create an entry for this parent in ClassUpRouter
                     try:
-                        conf = Configurations.objects.get(school=school):
+                        conf = Configurations.objects.get(school=school)
                         if whether_new_user:
                             android_link = conf.google_play_link
                             iOS_link = conf.app_store_link
@@ -219,8 +220,8 @@ def setup_students(request):
                     try:
                         s = Student.objects.get(school=school, student_erp_id=student_id)
                         if s:
-                            print ('Student with  ID: ' + student_id + \
-                                  ' & name: ' + student_first_name + ' already exist. This will be updated!')
+                            print ('Student with  ID: ' + student_id + ' & name: ' + student_first_name + ' in school '
+                                   + school.school_name + ' already exists. This will be updated!')
                             s.student_erp_id = student_id
                             s.fist_name = student_first_name
                             s.last_name = student_last_name
@@ -233,8 +234,9 @@ def setup_students(request):
                             s.parent = p
                     except Exception as e:
                         print ('Exception = %s (%s)' % (e.message, type(e)))
-                        print ('Student with ID:  ' + student_id + ' Name: ' \
-                              + student_first_name + ' ' + student_last_name + ' is a new entry. Hence inserting...')
+                        print ('Student with ID:  ' + student_id + ' Name: '
+                               + student_first_name + ' ' + student_last_name +
+                               ' is a new entry for school ' + school.school_name + '. Hence inserting...')
                         try:
                             s = Student(school=school, student_erp_id=student_id, fist_name=student_first_name,
                                         last_name=student_last_name,
@@ -298,7 +300,7 @@ def setup_students(request):
                 # file upload and saving to db was successful. Hence go back to the main menu
                 print ('reached here')
                 print (context_dict)
-                return render(request, 'classup/setup_index.html')
+                return render(request, 'classup/setup_index.html', context_dict)
             except Exception as e:
                 print ('Exception = %s (%s)' % (e.message, type(e)))
                 error = 'Invalid file uploaded. Please try again.'
@@ -792,10 +794,8 @@ def setup_class_teacher(request):
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return render(request, 'classup/setup_index.html', context_dict)
-        return HttpResponseRedirect(reverse('setup_index'))
 
     # now start processing the file upload
-
 
     context_dict['header'] = 'Upload Class Teacher Details'
     if request.method == 'POST':
@@ -887,7 +887,6 @@ def setup_exam(request):
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return render(request, 'classup/setup_index.html', context_dict)
-        return HttpResponseRedirect(reverse('setup_index'))
 
     # now start processing the file upload
 

@@ -19,7 +19,7 @@ import Queue
 from attendance.models import Attendance, AttendanceTaken
 from teacher.models import Teacher
 from student.models import Student
-from setup.models import Configurations
+from setup.models import Configurations, School
 from .models import Class, Section, Subject, ClassTest, TestResults, WorkingDays, Exam
 from .serializers import ClassSerializer, SectionSerializer, \
     SubjectSerializer, TestSerializer, ClassSectionForTestSerializer, \
@@ -29,18 +29,33 @@ from operations import sms
 
 
 class ClassList(generics.ListCreateAPIView):
-    queryset = Class.objects.all().order_by('sequence')
     serializer_class = ClassSerializer
+
+    def get_queryset(self):
+        school_id = self.kwargs['school_id']
+        school = School.objects.get(id=school_id)
+        q = Class.objects.filter(school=school).order_by('sequence')
+        return q
 
 
 class SectionList(generics.ListCreateAPIView):
-    queryset = Section.objects.all()
     serializer_class = SectionSerializer
+
+    def get_queryset(self):
+        school_id = self.kwargs['school_id']
+        school = School.objects.get(id=school_id)
+        q = Section.objects.filter(school=school)
+        return q
 
 
 class SubjectList(generics.ListCreateAPIView):
-    queryset = Subject.objects.all().order_by('subject_sequence')
     serializer_class = SubjectSerializer
+
+    def get_queryset(self):
+        school_id = self.kwargs['school_id']
+        school = School.objects.get(id=school_id)
+        q = Subject.objects.filter(school=school).order_by('subject_sequence')
+        return q
 
 
 class ExamList(generics.ListCreateAPIView):
@@ -97,8 +112,8 @@ class ClassSectionForTest(generics.ListCreateAPIView):
 
         q = ClassTest.objects.filter(pk=test_id)[:1]
         for p in q:
-            print p.the_class
-            print p.section
+            print (p.the_class)
+            print (p.section)
         return q
 
 

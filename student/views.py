@@ -3,8 +3,9 @@
 
 from rest_framework import generics
 
+from setup.models import School
+from academics.models import ClassTest
 from .models import Student, Parent
-from academics.models import Class, Section, ClassTest
 
 from .serializers import StudentSerializer
 
@@ -16,13 +17,15 @@ class StudentList(generics.ListAPIView):
         """
         :return: list of all students based on class and section supplied by the URL
         """
-        print self.request._request
-        print self.kwargs
+        print (self.request._request)
+        print (self.kwargs)
 
+        school_id = self.kwargs['school_id']
+        school = School.objects.get(id=school_id)
         the_class = self.kwargs['the_class']
         section = self.kwargs['section']
 
-        q1 = Student.objects.filter(current_section__section=section,
+        q1 = Student.objects.filter(school=school, current_section__section=section,
                                     current_class__standard=the_class, active_status=True)
         q2 = q1.order_by('roll_number')
         return q2

@@ -31,29 +31,29 @@ class TeacherSubjectList(generics.ListCreateAPIView):
 
 @csrf_exempt
 def set_subjects(request, teacher):
-    print 'request.body='
+    print ('request.body=')
     if request.method == 'POST':
         t = Teacher.objects.get(email=teacher)
-        print t
-        print 'request.body='
-        print request.body
+        print (t)
+        print ('request.body=')
+        print (equest.body)
 
         data = json.loads(request.body)
-        print 'data='
-        print data
+        print ('data=')
+        print (data)
 
         for key in data:
             print('key=' + key)
             subject = data[key]
             print('subject=' + subject)
-            print 'now trying to extract subject'
+            print ('now trying to extract subject')
             try:
                 s = Subject.objects.get(subject_code=subject)
             except Exception as e:
                     print('unable to retrieve subject')
-                    print 'Exception = %s (%s)' % (e.message, type(e))
+                    print ('Exception = %s (%s)' % (e.message, type(e)))
 
-            print 'now trying to set teacher subject'
+            print ('now trying to set teacher subject')
 
             try:
                 ts = TeacherSubjects.objects.get(teacher=t, subject=s)
@@ -72,36 +72,36 @@ def set_subjects(request, teacher):
                 except Exception as e:
                     print('unable to set subject ' + s.subject_name +
                           ' for teacher ' + t.first_name + ' ' + t.last_name)
-                    print 'Exception = %s (%s)' % (e.message, type(e))
+                    print ('Exception = %s (%s)' % (e.message, type(e)))
 
     return HttpResponse('OK')
 
 
 @csrf_exempt
 def unset_subjects(request, teacher):
-    print 'request.body='
+    print ('request.body=')
     if request.method == 'POST':
         t = Teacher.objects.get(email=teacher)
-        print t
-        print 'request.body='
-        print request.body
+        print (t)
+        print ('request.body=')
+        print (request.body)
 
         data = json.loads(request.body)
-        print 'data='
-        print data
+        print ('data=')
+        print (data)
 
         for key in data:
             print('key=' + key)
             subject = data[key]
             print('subject=' + subject)
-            print 'now trying to extract subject'
+            print ('now trying to extract subject')
             try:
                 s = Subject.objects.get(subject_code=subject)
             except Exception as e:
                     print('unable to retrieve subject')
-                    print 'Exception = %s (%s)' % (e.message, type(e))
+                    print ('Exception = %s (%s)' % (e.message, type(e)))
 
-            print 'now trying to set teacher subject'
+            print ('now trying to set teacher subject')
 
             try:
                 ts = TeacherSubjects.objects.get(teacher=t, subject=s)
@@ -112,7 +112,7 @@ def unset_subjects(request, teacher):
 
             except Exception as e:
                 print('subject ' + s.subject_name + ' was not set for teacher ' + t.first_name + ' ' + t.last_name)
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('Exception = %s (%s)' % (e.message, type(e)))
                 pass
 
     return HttpResponse('OK')

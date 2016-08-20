@@ -15,7 +15,7 @@ from .forms import ClassUpLoginForm
 
 # Create your views here.
 
-print 'in view.py for authentication'
+print ('in view.py for authentication')
 
 
 def auth_index(request):
@@ -39,23 +39,23 @@ def auth_login(request):
                     u = UserSchoolMapping.objects.get(user=user)
                     school_id = u.school.id
                     request.session['school_id'] = school_id
-                    print 'school_id=' + str(school_id)
+                    print ('school_id=' + str(school_id))
                 except Exception as e:
-                    print 'unable to retrieve schoo_id for ' + user.username
+                    print ('unable to retrieve schoo_id for ' + user.username)
                 if user.groups.filter(name='school_admin').exists():
                     context_dict['user_type'] = 'school_admin'
-                print context_dict
+                print (context_dict)
                 return render(request, 'classup/setup_index.html', context_dict)
-                #return HttpResponseRedirect(reverse('setup_index'), context_dict)
+                # return HttpResponseRedirect(reverse('setup_index'), context_dict)
             else:
                 error = 'User: '+ user_name +' is disabled. Please contact your administrator'
                 login_form.errors['__all__'] = login_form.error_class([error])
-                print error
+                print (error)
                 return render(request, 'classup/auth_login.html', context_dict)
         else:
             error = 'Invalid username/password. Please try again.'
             login_form.errors['__all__'] = login_form.error_class([error])
-            print error
+            print (error)
             return render(request, 'classup/auth_login.html', context_dict)
     else:
         login_form = ClassUpLoginForm()
@@ -77,14 +77,14 @@ class JSONResponse(HttpResponse):
     an HttpResponse that renders its contents to JSON
     """
     def __init__(self, data, **kwargs):
-        print 'from JSONResponse...'
+        print ('from JSONResponse...')
         content = JSONRenderer().render(data)
         kwargs['content_type'] = 'application/json'
         super(JSONResponse, self).__init__(content, **kwargs)
 
 
 def auth_login_from_device(request, user_name, password):
-    print 'Inside login from device view!'
+    print ('Inside login from device view!')
     return_data = {
 
     }
@@ -100,9 +100,9 @@ def auth_login_from_device(request, user_name, password):
                 school_id = u.school.id
                 request.session['school_id'] = school_id
                 return_data['school_id'] = school_id
-                print 'school_id=' + str(school_id)
+                print ('school_id=' + str(school_id))
             except Exception as e:
-                print 'unable to retrieve school_id for ' + user.username
+                print ('unable to retrieve school_id for ' + user.username)
 
             if user.is_staff:
                 return_data['is_staff'] = "true"
@@ -112,11 +112,11 @@ def auth_login_from_device(request, user_name, password):
         else:
             return_data["login"] = "successful"
             return_data["user_status"] = "inactive"
-            print return_data
+            print (return_data)
             return JSONResponse(return_data, status=403)
     else:
         return_data["login"] = "failed"
-        print return_data
+        print (return_data)
         return JSONResponse(return_data, status=404)
 
 
@@ -138,29 +138,29 @@ def auth_login_from_device1(request):
                 return_data["user_status"] = "active"
                 return_data['user_name'] = user.first_name + ' ' + user.last_name
 
-                try:
-                    u = UserSchoolMapping.objects.get(user=user)
-                    school_id = u.school.id
-                    request.session['school_id'] = school_id
-                    return_data['school_id'] = school_id
-                    print ('school_id=' + str(school_id))
-                except Exception as e:
-                    print ('unable to retrieve schoo_id for ' + user.username)
-
                 if user.is_staff:
                     return_data['is_staff'] = "true"
+                    try:
+                        u = UserSchoolMapping.objects.get(user=user)
+                        school_id = u.school.id
+                        request.session['school_id'] = school_id
+                        return_data['school_id'] = school_id
+                        print ('school_id=' + str(school_id))
+                    except Exception as e:
+                        print ('unable to retrieve schoo_id for ' + user.username)
                 else:
                     return_data['is_staff'] = "false"
                 return JSONResponse(return_data, status=200)
             else:
                 return_data["login"] = "successful"
+                return_data['user_name'] = user.first_name + ' ' + user.last_name
                 return_data["user_status"] = "inactive"
                 print (return_data)
-                return JSONResponse(return_data, status=403)
+                return JSONResponse(return_data, status=200)
         else:
             return_data["login"] = "failed"
             print (return_data)
-            return JSONResponse(return_data, status=404)
+            return JSONResponse(return_data, status=200)
 
 
 @csrf_exempt

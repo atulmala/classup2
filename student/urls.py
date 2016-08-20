@@ -6,7 +6,7 @@ from student import views
 
 
 urlpatterns = patterns('',
-                       url(r'^list/(?P<the_class>[\w.@+-]+)/(?P<section>[\w.@+-]+)/$',
+                       url(r'^list/(?P<school_id>\w+)/(?P<the_class>[\w.@+-]+)/(?P<section>[\w.@+-]+)/$',
                            views.StudentList.as_view()),
                        url(r'^student_list_for_test/(?P<test_id>\w+)/$',
                            views.StudentListForTest.as_view()),

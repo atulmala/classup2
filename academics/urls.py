@@ -6,7 +6,25 @@ from academics import views
 
 
 urlpatterns = [
-
+    url(r'^class_list/(?P<school_id>\w+)/$', views.ClassList.as_view()),
+    url(r'^section_list/(?P<school_id>\w+)/$', views.SectionList.as_view()),
+    url(r'^subject_list/(?P<school_id>\w+)/$', views.SubjectList.as_view()),
+    url(r'^completed_test_list/(?P<teacher>[\w.@+-]+)/$', views.CompletedTestList .as_view()),
+    url(r'^pending_test_list/(?P<teacher>[\w.@+-]+)/$', views.PendingTestList .as_view()),
+    url(r'^create_test/(?P<the_class>[\w.@+-]+)/(?P<section>[\w.@+-]+)/(?P<subject>[\w\ ]+)/(?P<teacher>[\w.@+-]+)'
+        r'/(?P<d>\w+)/(?P<m>\w+)/(?P<y>\w+)/'
+        r'(?P<max_marks>\w+)/(?P<pass_marks>\w+)/(?P<grade_based>\w+)/(?P<comments>[\w\ ]+)/$',
+        views.create_test, name='create_test'),
+    url(r'^class_section_for_test/(?P<id>\w+)/$', views.ClassSectionForTest.as_view()),
+    url(r'^get_test_marks_list/(?P<test_id>\w+)/$', views.MarksListForTest.as_view()),
+    url(r'^save_marks/$', views.save_marks, name='save_marks'),
+    url(r'^submit_marks/$', views.submit_marks, name='submit_marks'),
+    url(r'get_working_days/', views.get_working_days, name='get_working_days'),
+    url(r'get_working_days1/', views.get_working_days1, name='get_working_days1'),
+    url(r'get_attendance_summary/', views.get_attendance_summary, name='get_attendance_summary'),
+    url(r'delete_test/(?P<test_id>\w+)/$', views.delete_test, name='delete_test'),
+    url(r'get_test_type/(?P<test_id>\w+)/$', views.TestType.as_view()),
+    url(r'^get_exam_list/(?P<student_id>[\w.@+-]+)/$', views.ExamList.as_view(), name='get_exam_list'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
