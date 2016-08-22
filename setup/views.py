@@ -2,6 +2,8 @@ import os
 import datetime
 import requests
 import xlrd
+
+from rest_framework import generics
 from django.views.decorators.csrf import csrf_exempt
 
 from django.contrib.auth.models import User, Group
@@ -15,6 +17,8 @@ from academics.models import Class, Section, Subject, WorkingDays, TestResults, 
 from teacher.models import Teacher
 from student.models import Student, Parent
 from .models import Configurations
+
+from .serializers import ConfigurationSerializer
 
 from operations import sms
 
@@ -46,7 +50,6 @@ def validate_excel_extension(file_handle, form, context_dict):
 def setup_index(request):
     response = render(request, 'classup/setup_index.html')
     return response
-
 
 @csrf_exempt
 def setup_students(request):
@@ -985,3 +988,13 @@ def setup_exam(request):
         form = ExcelFileUploadForm()
         context_dict['form'] = form
     return render(request, 'classup/setup_data.html', context_dict)
+
+
+class ConfigurationList(generics.ListCreateAPIView):
+    serializer_class = ConfigurationSerializer
+
+    def get_queryset(self):
+        school_id = self.kwargs['school_id']
+        school = School.objects.get(id=school_id)
+        q = Configurations.objects.filter(school=school)
+        return q

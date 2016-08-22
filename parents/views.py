@@ -34,11 +34,11 @@ def submit_parents_communication(request):
         cat = data['category']
         communication_text = data['communication_text']
 
-        configuration = Configurations.objects.get(pk=1)
+        student = Student.objects.get(id=student_id)
+        configuration = Configurations.objects.get(school=student.school)
 
         # student and category are foreign keys
 
-        student = Student.objects.get(id=student_id)
         category = ParentCommunicationCategories.objects.get(category=cat)
 
         # now, create the ParentCommunicationObject
@@ -46,7 +46,7 @@ def submit_parents_communication(request):
             pc = ParentCommunication(student=student, category=category, date_sent=datetime.datetime.now(),
                                      communication_text=communication_text)
             pc.save()
-            print 'successfully saved the message "' + communication_text + '" in the database'
+            print ('successfully saved the message "' + communication_text + '" in the database')
             # if the message was for Class Teacher/Principal's immediate attention an sms need to be sent to them
             if cat == 'Class Teacher/Principal Attention' or cat == 'Leave Application' \
                     or configuration.send_all_parent_sms_to_principal:
@@ -65,19 +65,19 @@ def submit_parents_communication(request):
                     message = communication_text + '. Regards, ' + parent_name + ', Parent of '
                     message += student.fist_name + ' ' + student.last_name + ' (class '
                     message += the_class.standard + '/' + section.section + ')'
-                    print message
+                    print (message)
                     sms.send_sms(teacher_mobile, message)
                     sms.send_sms(principal_mobile, message)
                 except Exception as e:
-                    print 'failed to send message "' + communication_text + '" to ' \
-                          + teacher.first_name + teacher.last_name + ' and Principal'
-                    print 'Exception = %s (%s)' % (e.message, type(e))
+                    print ('failed to send message ' + communication_text + ' to '
+                           + teacher.first_name + teacher.last_name + ' and Principal')
+                    print ('Exception = %s (%s)' % (e.message, type(e)))
 
             return HttpResponse('Success')
         except Exception as e:
-            print 'Error occured while trying to save comments from parents of ' \
-                  + student.fist_name + ' ' + student.last_name
-            print 'Exception = %s (%s)' % (e.message, type(e))
+            print ('Error occured while trying to save comments from parents of ' \
+                  + student.fist_name + ' ' + student.last_name)
+            print ('Exception = %s (%s)' % (e.message, type(e)))
             return HttpResponse('Failed')
 
     return HttpResponse('OK')
@@ -90,35 +90,55 @@ def retrieve_stu_att_summary(request):
     }
     response_array = []
 
-    c = Configurations.objects.get(pk=1)
-    session_start_month = c.session_start_month
-    print session_start_month
-
-    main = Subject.objects.get(subject_name='Main')
     if request.method == 'GET':
         student_id = request.GET.get('student_id')
     student = Student.objects.get(id=student_id)
+    school = student.school
+    c = Configurations.objects.get(school=school)
+    session_start_month = c.session_start_month
+    print (session_start_month)
+
     the_class = student.current_class
     section = student.current_section
+
+    # 22/08/2016 logic - Coaching classes and Colleges prefer to condcuct attendance subject wise and hence
+    # Main subject may not exist for them. In this case we will be presenting the aggregate of attendance for all
+    # the subjects. This will be done by first checking the existence of subject Main. If it is present the
+    # calculations are based on attendance in Main subjects, else aggregate of all subjects
+    main_exist = True
+    try:
+        main = Subject.objects.get(school=school, subject_name='Main')
+    except Exception as e:
+        print ('Main subject does not exist for this school/Coaching Institute')
+        print ('Exception = %s (%s)' % (e.message, type(e)))
+        main_exist = False
+
     now = datetime.datetime.now()
     work_days = 0
     if now.month < session_start_month:
-        print 'current month is less than session start month. Hence starting from last year'
+        print ('current month is less than session start month. Hence starting from last year')
         for m in range(session_start_month, 12 + 1):  # 12+1, because loop executes for 1 time less than max index
             month_year = calendar.month_abbr[m] + '/' + str(now.year-1)
             dict_attendance_summary["month_year"] = month_year
             try:
-                query = AttendanceTaken.objects.filter(date__month=m, date__year=now.year - 1, subject=main,
+                if main_exist:
+                    query = AttendanceTaken.objects.filter(date__month=m, date__year=now.year - 1, subject=main,
+                                                           the_class=the_class, section=section)
+                else:
+                    query = AttendanceTaken.objects.filter(date__month=m, date__year=now.year - 1,
                                                            the_class=the_class, section=section)
                 work_days = query.count()
                 dict_attendance_summary["work_days"] = work_days
-                print 'days in ' + str(m) + '/' + str(now.year - 1) + '=' + str(work_days)
+                print ('days in ' + str(m) + '/' + str(now.year - 1) + '=' + str(work_days))
             except Exception as e:
-                print 'unable to fetch the number of days for ' + month_year
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('unable to fetch the number of days for ' + month_year)
+                print ('Exception = %s (%s)' % (e.message, type(e)))
             try:
-                query = Attendance.objects.filter \
-                    (student=student, subject=main, date__month=m, date__year=now.year - 1)
+                if main_exist:
+                    query = Attendance.objects.filter(student=student, subject=main,
+                                                      date__month=m, date__year=now.year - 1)
+                else:
+                    query = Attendance.objects.filter(student=student, date__month=m, date__year=now.year - 1)
                 absent_days = query.count()
                 dict_attendance_summary["absent_days"] = absent_days
                 present_days = work_days - absent_days
@@ -129,27 +149,34 @@ def retrieve_stu_att_summary(request):
                     dict_attendance_summary['percentage'] = str(present_perc) + '%'
                 else:
                     dict_attendance_summary['percentage'] = 'N/A'
-                print 'absent days for ' + str(m) + '/' + str(now.year - 1) + '=' + str(query.count())
+                print ('absent days for ' + str(m) + '/' + str(now.year - 1) + '=' + str(query.count()))
             except Exception as e:
-                print 'unable to fetch absent days for ' + str(m) + '/' + str(now.year - 1)
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('unable to fetch absent days for ' + str(m) + '/' + str(now.year - 1))
+                print ('Exception = %s (%s)' % (e.message, type(e)))
             d = dict(dict_attendance_summary)
             response_array.append(d)
         for m in range(1, now.month+1):
             month_year = calendar.month_abbr[m] + '/' + str(now.year)
             dict_attendance_summary["month_year"] = month_year
             try:
-                query = AttendanceTaken.objects.filter(date__month=m, date__year=now.year, subject=main,
-                                                       the_class=the_class, section=section)
+                if main_exist:
+                    query = AttendanceTaken.objects.filter(date__month=m, date__year=now.year,
+                                                           subject=main,the_class=the_class, section=section)
+                else:
+                    query = AttendanceTaken.objects.filter(date__month=m, date__year=now.year,
+                                                           the_class=the_class, section=section)
                 work_days = query.count()
                 dict_attendance_summary["work_days"] = work_days
-                print 'days in ' + str(m) + '/' + str(now.year) + '=' + str(work_days)
+                print ('days in ' + str(m) + '/' + str(now.year) + '=' + str(work_days))
             except Exception as e:
-                print 'unable to fetch the number of days for ' + str(m) + '/' + str(now.year)
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('unable to fetch the number of days for ' + str(m) + '/' + str(now.year))
+                print ('Exception = %s (%s)' % (e.message, type(e)))
             try:
-                query = Attendance.objects.filter \
-                    (student=student, subject=main, date__month=m, date__year=now.year)
+                if main_exist:
+                    query = Attendance.objects.filter(student=student, subject=main,
+                                                      date__month=m, date__year=now.year)
+                else:
+                    query = Attendance.objects.filter(student=student, date__month=m, date__year=now.year)
                 absent_days = query.count()
                 dict_attendance_summary["absent_days"] = absent_days
                 present_days = work_days - absent_days
@@ -159,10 +186,10 @@ def retrieve_stu_att_summary(request):
                     dict_attendance_summary['percentage'] = str(present_perc) + '%'
                 else:
                     dict_attendance_summary['percentage'] = 'N/A'
-                print 'absent days for ' + str(m) + '/' + str(now.year) + '=' + str(query.count())
+                print ('absent days for ' + str(m) + '/' + str(now.year) + '=' + str(query.count()))
             except Exception as e:
-                print 'unable to fetch absent days for ' + str(m) + '/' + str(now.year)
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('unable to fetch absent days for ' + str(m) + '/' + str(now.year))
+                print ('Exception = %s (%s)' % (e.message, type(e)))
             d = dict(dict_attendance_summary)
             response_array.append(d)
 
@@ -173,18 +200,24 @@ def retrieve_stu_att_summary(request):
             month_year = calendar.month_abbr[m] + '/' + str(now.year)
             dict_attendance_summary["month_year"] = month_year
             try:
-                query = AttendanceTaken.objects.filter(date__month=m, date__year=now.year, subject=main,
-                                                    the_class=the_class, section=section)
-
+                if main_exist:
+                    query = AttendanceTaken.objects.filter(date__month=m, date__year=now.year,
+                                                           subject=main, the_class=the_class, section=section)
+                else:
+                    query = AttendanceTaken.objects.filter(date__month=m, date__year=now.year,
+                                                           the_class=the_class, section=section)
                 work_days = query.count()
                 dict_attendance_summary["work_days"] = work_days
-                print 'days in ' + str(m) + '/' + str(now.year) + '=' + str(work_days)
+                print ('days in ' + str(m) + '/' + str(now.year) + '=' + str(work_days))
             except Exception as e:
-                print 'Aunable to fetch the number of days for ' + str(m) + '/' + str(now.year)
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('unable to fetch the number of days for ' + str(m) + '/' + str(now.year))
+                print ('Exception = %s (%s)' % (e.message, type(e)))
             try:
-                query = Attendance.objects.filter \
-                    (student=student, subject=main, date__month=m, date__year=now.year)
+                if main_exist:
+                    query = Attendance.objects.filter (student=student, subject=main,
+                                                       date__month=m, date__year=now.year)
+                else:
+                    query = Attendance.objects.filter(student=student, date__month=m, date__year=now.year)
                 absent_days = query.count()
                 dict_attendance_summary["absent_days"] = absent_days
                 present_days = work_days - absent_days
@@ -195,15 +228,15 @@ def retrieve_stu_att_summary(request):
                 else:
                     dict_attendance_summary['percentage'] = 'N/A'
 
-                print 'absent days for ' + str(m) + '/' + str(now.year) + '=' + str(query.count())
+                print ('absent days for ' + str(m) + '/' + str(now.year) + '=' + str(query.count()))
 
             except Exception as e:
-                print 'unable to fetch absent days for ' + str(m) + '/' + str(now.year)
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('unable to fetch absent days for ' + str(m) + '/' + str(now.year))
+                print ('Exception = %s (%s)' % (e.message, type(e)))
             d = dict(dict_attendance_summary)
 
             response_array.append(d)
-    print response_array.__len__()
+    print (response_array.__len__())
 
     return JSONResponse(response_array, status=200)
 
@@ -216,7 +249,7 @@ def retrieve_student_subjects(request):
 
     if request.method == 'GET':
         student = request.GET.get('student')
-        print student
+        print (student)
         try:
             s = Student.objects.get(id=student)
             c = s.current_class
@@ -230,8 +263,8 @@ def retrieve_student_subjects(request):
                 response_array.append(d)
             return JSONResponse(response_array, status=200)
         except Exception as e:
-            print 'unable to retrieve list of sbujects for ' + s.fist_name + ' ' + s.last_name
-            print 'Exception = %s (%s)' % (e.message, type(e))
+            print ('unable to retrieve list of sbujects for ' + s.fist_name + ' ' + s.last_name)
+            print ('Exception = %s (%s)' % (e.message, type(e)))
     return JSONResponse(response_array, status=201)
 
 
@@ -266,8 +299,9 @@ def retrieve_stu_sub_marks_history(request, subject):
                 response_array.append(d)
             return JSONResponse(response_array, status=200)
         except Exception as e:
-            print 'Exception = %s (%s)' % (e.message, type(e))
-            print 'unable to retrieve ' + sub.subject_name + ' marks history for ' + s.fist_name + ' ' + s.last_name
+            print ('Exception = %s (%s)' % (e.message, type(e)))
+            print ('unable to retrieve ' + sub.subject_name + ' marks history for '
+                   + s.fist_name + ' ' + s.last_name)
 
     return JSONResponse(response_array, status=201)
 
@@ -280,9 +314,9 @@ def get_exam_result(request, student_id, exam_id):
 
     if request.method == 'GET':
         student = Student.objects.get(id=student_id)
-        print student
+        print (student)
         exam = Exam.objects.get(id=exam_id)
-        print exam
+        print (exam)
 
         start_date = exam.start_date
         end_date = exam.end_date
@@ -290,16 +324,16 @@ def get_exam_result(request, student_id, exam_id):
         # get the list of tests conducted for the class/section of the student between the exam start and end dates
         try:
             test_list = ClassTest.objects.filter(date_conducted__gte=start_date, date_conducted__lte=end_date,
-                                                the_class=student.current_class, section=student.current_section)
-            print test_list
+                                                 the_class=student.current_class, section=student.current_section)
+            print (test_list)
             for test in test_list:
                 if test.is_completed:
-                    print test
+                    print (test)
                     exam_result['subject'] = test.subject.subject_name
-                    print exam_result
+                    print (exam_result)
 
                     test_result = TestResults.objects.filter(class_test=test, student=student)
-                    print test_result
+                    print (test_result)
                     if test.grade_based:
                         exam_result['max_marks'] = 'Grade Based'
                         for tr in test_result:
@@ -308,7 +342,7 @@ def get_exam_result(request, student_id, exam_id):
                     else:
                         exam_result['max_marks'] = test.max_marks
                         for tr in test_result:
-                            print tr.marks_obtained
+                            print (tr.marks_obtained)
                             exam_result['marks'] = tr.marks_obtained
                             break
 
@@ -316,7 +350,8 @@ def get_exam_result(request, student_id, exam_id):
                     response_array.append(d)
             return JSONResponse(response_array, status=200)
         except Exception as e:
-            print exam_result
-            print 'Exception = %s (%s)' % (e.message, type(e))
-            print 'unable to retrieve ' + exam.title + ' results for ' + student.fist_name + ' ' + student.last_name
+            print (exam_result)
+            print ('Exception = %s (%s)' % (e.message, type(e)))
+            print ('unable to retrieve ' + exam.title + ' results for ' +
+                   student.fist_name + ' ' + student.last_name)
     return JSONResponse(response_array, status=201)

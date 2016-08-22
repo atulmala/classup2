@@ -12,7 +12,8 @@ class Section(models.Model):
     section = models.CharField(max_length=5)
 
     def __unicode__(self):
-        return self.school.school_name + ', ' + self.section
+        return self.section
+        # return self.school.school_name + ', ' + self.section
 
 
 class Class(models.Model):
@@ -21,7 +22,8 @@ class Class(models.Model):
     sequence = models.SmallIntegerField()
 
     def __unicode__(self):
-        return self.school.school_name + ', ' + str(self.standard)
+        # return self.school.school_name + ', ' + str(self.standard)
+        return self.standard
 
 
 class ClassTeacher(models.Model):

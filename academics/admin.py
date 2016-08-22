@@ -11,7 +11,7 @@ admin.site.register(Section, SectionAdmin)
 
 
 class ClassAdmin(admin.ModelAdmin):
-    list_display = ['standard']
+    list_display = ['school', 'standard']
 
 admin.site.register(Class, ClassAdmin)
 

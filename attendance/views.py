@@ -244,8 +244,8 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                     print ("mobile2=" + m2)
 
                     message = ''
-                    configuration = Configurations.objects.get(pk=1)
-                    school_name = configuration.school_name
+                    configuration = Configurations.objects.get(school=school)
+                    school_name = school.school_name
 
                     # prepare the message
                     try:

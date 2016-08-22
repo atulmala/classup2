@@ -18,6 +18,7 @@ class Configurations(models.Model):
     school = models.ForeignKey(School)
     router_server_ip = models.CharField(max_length=50, default='0.0.0.0')
     school_group_id = models.CharField(max_length=10, default=None)
+    enable_bus_attendance = models.BooleanField(default=False)
     send_absence_sms = models.BooleanField(default=True)
     send_period_bunk_sms = models.BooleanField(default=False)
     send_marks_sms = models.BooleanField(default=True)
@@ -43,8 +44,9 @@ class Configurations(models.Model):
     bunk_sms_epilog = models.CharField(max_length=200, default=' ', null=True)
     teacher_sms_prolog = models.CharField(max_length=200, default=' ', null=True)
     teacher_sms_epilog = models.CharField(max_length=200, default=' ', null=True)
-    google_play_link = models.CharField(max_length=100, default=' ', null=True)
-    app_store_link = models.CharField(max_length=100, default=' ', null=True)
+    google_play_link = models.CharField(max_length=100,
+                                        default='https://play.google.com/store/apps/details?id=com.classup', null=True)
+    app_store_link = models.CharField(max_length=100, default='http://onelink.to/ajfj3j', null=True)
 
     def __unicode__(self):
         return str(self.school.id) + ', ' + self.school.school_name

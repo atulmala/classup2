@@ -25,7 +25,7 @@ from student.models import Student
 from teacher.models import Teacher
 from attendance.models import Attendance, AttendanceTaken
 from parents.models import  ParentCommunication
-from setup.models import Configurations
+from setup.models import Configurations, School
 
 # Create your views here.
 
@@ -227,7 +227,9 @@ def att_register_class(request):
     }
     context_dict['header'] = 'Download Monthly Attendance'
     if request.method == 'POST':
-        form = AttendanceRegisterForm(request.POST)
+        school_id = request.session['school_id']
+        school = School.objects.get(id=school_id)
+        form = AttendanceRegisterForm(request.POST, school_id=school_id)
 
         if form.is_valid():
             the_class = form.cleaned_data['the_class']
@@ -237,7 +239,7 @@ def att_register_class(request):
 
         else:
             error = 'You have missed to select either Date, or Class, or Section, or Subject'
-            form = AttendanceRegisterForm()
+            form = AttendanceRegisterForm(request)
             context_dict['form'] = form
             form.errors['__all__'] = form.error_class([error])
             return render(request, 'classup/att_register.html', context_dict)
@@ -365,16 +367,16 @@ def att_register_class(request):
                                     attendance_sheet.write_string(row, d+2, ugettext("P"), present_format)
                                     present_count += 1
                             except Exception as e:
-                                print 'exception occured while doing lookup in the Attendance table'
-                                print 'Exception = %s (%s)' % (e.message, type(e))
+                                print ('exception occured while doing lookup in the Attendance table')
+                                print ('Exception = %s (%s)' % (e.message, type(e)))
                         else:   # wow, this day was a holiday
                             holidays.append(d)
                             holiday_count += 1
                             attendance_sheet.write(row, d+2, ugettext("NA"), holiday_format)
 
                     except Exception as e:
-                        print 'exception occured while doing lookup in the AttendanceTaken table'
-                        print 'Exception = %s (%s)' % (e.message, type(e))
+                        print ('exception occured while doing lookup in the AttendanceTaken table')
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
                 else:
                     attendance_sheet.write(row, d+2, ugettext("NA"), holiday_format)
 
@@ -385,12 +387,12 @@ def att_register_class(request):
                     perc_present = float(float(present_count)/float(working_days))
                     attendance_sheet.write_number(row, d+4, perc_present, perc_format)
                 except Exception as e:
-                    print 'exception occured while trying to calculate percentage'
-                    print 'Exception = %s (%s)' % (e.message, type(e))
+                    print ('exception occured while trying to calculate percentage')
+                    print ('Exception = %s (%s)' % (e.message, type(e)))
 
             # calculate the till date attendance for this student
             try:
-                conf = Configurations.objects.get(pk=1)
+                conf = Configurations.objects.get(school=school)
                 session_start_month = conf.session_start_month
                 if month_int < session_start_month:
                     start = date(year_int-1, session_start_month, 1)
@@ -418,8 +420,8 @@ def att_register_class(request):
                     present_perc_till_date = float(float(present_days_till_date)/float(working_days_till_date))
                     attendance_sheet.write(row, d+6, present_perc_till_date, perc_format)
             except Exception as e:
-                print 'unable to calculate attendance till date'
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('unable to calculate attendance till date')
+                print ('Exception = %s (%s)' % (e.message, type(e)))
 
             row += 1
             idx += 1
@@ -432,7 +434,8 @@ def att_register_class(request):
         return response
 
     if request.method == 'GET':
-        form = AttendanceRegisterForm()
+        school_id = request.session['school_id']
+        form = AttendanceRegisterForm(school_id=school_id)
         context_dict['form'] = form
 
     return render(request, 'classup/att_register.html', context_dict)
@@ -442,13 +445,14 @@ def test_result(request):
     context_dict = {
     }
     context_dict['header'] = 'Download Test Results'
+    school_id = request.session['school_id']
 
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return HttpResponseRedirect(reverse('setup_index'))
 
     if request.method == 'POST':
-        form = TestResultForm(request.POST)
+        form = TestResultForm(request.POST, school_id=school_id)
 
         if form.is_valid():
             the_class = form.cleaned_data['the_class']
@@ -516,7 +520,6 @@ def test_result(request):
             'font_color': 'blue'
         })
 
-
         s_d = str(start_date).split('-')[2]  # start date
         s_m = str(start_date).split('-')[1]  # start month
         s_y = str(start_date).split('-')[0]  # start year
@@ -546,6 +549,9 @@ def test_result(request):
                                              date_conducted__gte=start_date, date_conducted__lte=end_date):
 
             sub = test.subject.subject_name
+            date_conducted = test.date_conducted
+            d2 = date_conducted.strftime('%d-%m-%Y')
+            sub += ' (' + d2 + ')'
             result_sheet.merge_range(2, col, 2, col+1, ugettext(sub), header)
             result_sheet.write(2+1, col, ugettext("MM"), header2)
             if not test.grade_based:
@@ -595,14 +601,14 @@ def test_result(request):
                             else:
                                 result_sheet.write(row+2, marks_col+1, ugettext(grade), cell_center)
                     except Exception as e:
-                        print 'Exception occured while trying to fetch marks/grade for a student'
-                        print 'Exception = %s (%s)' % (e.message, type(e))
+                        print ('Exception occured while trying to fetch marks/grade for a student')
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
 
                     row += 1
                     idx += 1
                 s_list_created = True
             else:
-                print 'now dealing with=' + str(test.subject)
+                print ('now dealing with=' + str(test.subject))
                 row = 2
                 marks_col = 5
                 for s in s_list:
@@ -621,7 +627,7 @@ def test_result(request):
                                 marks = 'ABS'
                                 result_sheet.write(row+2, marks_col1+1, marks, absent_format)
                             elif marks == -5000.00:
-                                print 'No marks have been entered for this test'
+                                print ('No marks have been entered for this test')
                                 marks = 'NA'
                                 result_sheet.write(row+2, marks_col1+1, marks, absent_format)
                             elif marks < test.passing_marks:
@@ -639,8 +645,8 @@ def test_result(request):
                             else:
                                 result_sheet.write(row+2, marks_col1+1, ugettext(grade), cell_center)
                     except Exception as e:
-                        print 'Exception occured while trying to fetch marks/grade for a student'
-                        print 'Exception = %s (%s)' % (e.message, type(e))
+                        print ('Exception occured while trying to fetch marks/grade for a student')
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
                     row += 1
                 marks_col1 += 2
 
@@ -651,7 +657,7 @@ def test_result(request):
         return response
 
     if request.method == 'GET':
-        form = TestResultForm()
+        form = TestResultForm(school_id=school_id)
         context_dict['form'] = form
 
     return render(request, 'classup/test_results.html', context_dict)
@@ -754,19 +760,20 @@ def result_sms(request):
 
 
 @csrf_exempt
-def send_message(request):
+def send_message(request, school_id):
     if request.method == 'POST':
         response = {
 
         }
         try:
+            school = School.objects.get(id=school_id)
             data = json.loads(request.body)
             message_content = data['message']
             email = data['teacher']
             t = Teacher.objects.get(email=email)
             teacher_name = t.first_name + ' ' + t.last_name
-            configuration = Configurations.objects.get(pk=1)
-            school_name = configuration.school_name
+            # configuration = Configurations.objects.get(school=school)
+            school_name = school.school_name
             message_trailer = '. Regards, ' + teacher_name + ', ' + school_name
 
             # check if the message is to be sent to all the parents
@@ -787,15 +794,15 @@ def send_message(request):
                         message_header = 'Dear Ms/Mr ' + p.parent_name + ', this is message regarding your ward ' + \
                                          s.fist_name + ' ' + s.last_name + ': '
                         message = message_header + message_content + message_trailer
-                        print message
+                        print (message)
 
                         sms.send_sms(m1, message)
 
                         if m2 != '':
                             sms.send_sms(m2, message)
                 except Exception as e:
-                    print 'Unable to send message while trying for whole class'
-                    print 'Exception = %s (%s)' % (e.message, type(e))
+                    print ('Unable to send message while trying for whole class')
+                    print ('Exception = %s (%s)' % (e.message, type(e)))
                 response["status"] = "success"
 
             # the message is to be sent to parents of selected students only
@@ -807,31 +814,31 @@ def send_message(request):
                         s = Student.objects.get(pk=student_id)
                         p = s.parent
                         m1 = p.parent_mobile1
-                        print m1
+                        print (m1)
                         m2 = p.parent_mobile2
-                        print m2
+                        print (m2)
 
                         message_header = 'Dear Ms/Mr ' + p.parent_name + ', this is message regarding your ward ' + \
                                              s.fist_name + ' ' + s.last_name + ': '
                         message = message_header + message_content + message_trailer
-                        print 'message=' + message
+                        print ('message=' + message)
                         try:
                             sms.send_sms(m1, message)
                         except Exception as e:
-                            print 'Unable to send message to ' + p.parent_name + 'with mobile number: ' + m1
-                            print 'Exception = %s (%s)' % (e.message, type(e))
+                            print ('Unable to send message to ' + p.parent_name + 'with mobile number: ' + m1)
+                            print ('Exception = %s (%s)' % (e.message, type(e)))
 
                         if m2 != '':
                             try:
                                 sms.send_sms(m2, message)
                             except Exception as e:
-                                print 'Unable to send message to ' + p.parent_name + 'with mobile number: ' + m2
-                                print 'Exception = %s (%s)' % (e.message, type(e))
+                                print ('Unable to send message to ' + p.parent_name + 'with mobile number: ' + m2)
+                                print ('Exception = %s (%s)' % (e.message, type(e)))
 
                 response["status"] = "success"
         except Exception as e:
-            print 'Unable to send message'
-            print 'Exception = %s (%s)' % (e.message, type(e))
+            print ('Unable to send message')
+            print ('Exception = %s (%s)' % (e.message, type(e)))
 
     return JSONResponse(response, status=200)
 

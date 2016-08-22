@@ -131,24 +131,26 @@ class MarksListForTest(generics.ListCreateAPIView):
 # we need to exempt this view from csrf verification. Will be updated in next version when
 # we will implement authentication
 @csrf_exempt
-def create_test(request, the_class, section, subject, teacher, d, m, y, max_marks, pass_marks, grade_based, comments):
+def create_test(request, school_id, the_class, section, subject,
+                teacher, d, m, y, max_marks, pass_marks, grade_based, comments):
     if request.method == 'POST':
         # all of the above except date are foreign key in Attendance model. Hence we need to get the actual object
-        c = Class.objects.get(standard=the_class)
-        print c
-        s = Section.objects.get(section=section)
-        print s
-        sub = Subject.objects.get(subject_name=subject)
-        print sub
+        school = School.objects.get(id=school_id)
+        c = Class.objects.get(school=school, standard=the_class)
+        print (c)
+        s = Section.objects.get(school=school, section=section)
+        print (s)
+        sub = Subject.objects.get(school=school, subject_name=subject)
+        print (sub)
         t = Teacher.objects.get(email=teacher)
-        print t
+        print (t)
         the_date = date(int(y), int(m), int(d))
-        print the_date
+        print (the_date)
 
         # check to see if this test has already been created.
         try:
             q = ClassTest.objects.filter(date_conducted=the_date, the_class=c, section=s, subject=sub, teacher=t)
-            print q.count()
+            print (q.count())
 
             # make an entry to database only it is a fresh entry
             if q.count() == 0:
@@ -161,30 +163,30 @@ def create_test(request, the_class, section, subject, teacher, d, m, y, max_mark
                 test.passing_marks = float(pass_marks)
 
                 if grade_based == '0':
-                    print 'grade_based is 0'
+                    print ('grade_based is 0')
                     test.grade_based = True
 
                 if grade_based == '1':
-                    print 'grade_based is 1'
+                    print ('grade_based is 1')
                     test.grade_based = False
 
-                print grade_based
+                print (grade_based)
 
                 test.test_type = comments
                 test.is_completed = False
 
                 try:
                     test.save()
-                    print 'test successfully created'
+                    print ('test successfully created')
 
                 except Exception as e:
-                    print 'Test creation failed'
-                    print 'Exception = %s (%s)' % (e.message, type(e))
+                    print ('Test creation failed')
+                    print ('Exception = %s (%s)' % (e.message, type(e)))
                     return HttpResponse('Test Creation Failed')
 
                 # now, create entry for each student in table TestResults. We need to retrieve the list of student
                 # of the class associated with this test
-                student_list = Student.objects.filter(current_section__section=section,
+                student_list = Student.objects.filter(school=school, current_section__section=section,
                                                       current_class__standard=the_class, active_status=True)
                 for student in student_list:
                     # -5000.00 marks indicate null value
@@ -192,16 +194,16 @@ def create_test(request, the_class, section, subject, teacher, d, m, y, max_mark
                                               student=student, marks_obtained=-5000.00, grade='')
                     try:
                         test_result.save()
-                        print ' test results successfully created'
+                        print (' test results successfully created')
                     except Exception as e:
-                        print 'failed to create test results'
-                        print 'Exception = %s (%s)' % (e.message, type(e))
+                        print ('failed to create test results')
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
                         return HttpResponse('Failed to create test results')
             else:
-                print 'Test already exist'
+                print ('Test already exist')
                 return HttpResponse('Test already exist')
         except Exception as e:
-            print 'Exception = %s (%s)' % (e.message, type(e))
+            print ('Exception = %s (%s)' % (e.message, type(e)))
             return HttpResponse('Failed')
 
     # this view is being called from mobile. We use dummy template so that we dont' run into exception
@@ -219,12 +221,12 @@ def save_marks(request):
         response = {
 
         }
-        print 'request.body='
-        print request.body
+        print ('request.body=')
+        print (request.body)
         # convert the raw data received to json
         data = json.loads(request.body)
-        print 'json='
-        print data
+        print ('json=')
+        print (data)
 
         # determine whether this test is marks based or grade based
         grade_based = False
@@ -234,14 +236,14 @@ def save_marks(request):
 
         if test.grade_based:
             grade_based = True
-            print 'this is a grade based test'
+            print ('this is a grade based test')
 
         # iterate over json and save/update marks
         for key in data:
             tr = TestResults.objects.get(pk=key)
 
             if grade_based:
-                print 'saving grade....'
+                print ('saving grade....')
                 tr.grade = data[key]
             else:
                 tr.marks_obtained = float(data[key])
@@ -250,7 +252,7 @@ def save_marks(request):
                 tr.save()
             except Exception as e:
                 print('unable to save marks')
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('Exception = %s (%s)' % (e.message, type(e)))
 
         response["status"] = "success"
 
@@ -258,7 +260,7 @@ def save_marks(request):
 
 
 @csrf_exempt
-def submit_marks(request):
+def submit_marks(request, school_id):
     t1 = datetime.datetime.now()
     message_list = {
 
@@ -267,11 +269,12 @@ def submit_marks(request):
         response = {
 
         }
+        school = School.objects.get(id=school_id)
+        conf = Configurations.objects.get(school=school)
         # convert the raw data received to json
         data = json.loads(request.body)
 
-        configuration = Configurations.objects.get(pk=1)
-        school_name = configuration.school_name
+        school_name = school.school_name
 
         # determine whether this test is marks based or grade based
         grade_based = False
@@ -307,7 +310,7 @@ def submit_marks(request):
                 tr.save()
             except Exception as e:
                 print('unable to save marks')
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('Exception = %s (%s)' % (e.message, type(e)))
 
         # get the id of the associated test and mark it as complete
         test = ClassTest.objects.get(testresults__id=key)
@@ -329,16 +332,16 @@ def submit_marks(request):
             # execute for long thus sending same sms several times to the same parent. Hence we are implementing
             # threshold, which if exceeds, the function will return
             initial += 1
-            print 'initial=' + str(initial)
+            print ('initial=' + str(initial))
             if initial > threshold:
-                print 'exiting due to threshold was hit'
+                print ('exiting due to threshold was hit')
                 response["status"] = "success"
                 return JSONResponse(response, status=200)
 
             # print data[key]
             tr = TestResults.objects.get(pk=key)
             student = tr.student
-            print student
+            print (student)
 
             try:
 
@@ -405,8 +408,8 @@ def submit_marks(request):
                     # sms.send_sms(m2, message)
 
             except Exception as e1:
-                print 'unable send sms for ' + student.fist_name + ' ' + student.last_name
-                print 'Exception = %s (%s)' % (e1.message, type(e1))
+                print ('unable send sms for ' + student.fist_name + ' ' + student.last_name)
+                print ('Exception = %s (%s)' % (e1.message, type(e1)))
 
                 # p = student.parent
                 # print p
@@ -419,25 +422,27 @@ def submit_marks(request):
                 #
                 # if m2 != '':
                 #     sms.send_sms(m2, message)
-        t = Thread(target=sms.send_sms_asynch(message_list))
-        t.start()
+        if conf.send_marks_sms:
+            t = Thread(target=sms.send_sms_asynch(message_list))
+            t.start()
+
         count = 0
         for mobile in message_list:
-            print mobile
-            print message_list[mobile]
+            print (mobile)
+            print (message_list[mobile])
             count += 1
-            print count
+            print (count)
         t2 = datetime.datetime.now()
-        print 'execution took ' + str(t2 - t1)
+        print ('execution took ' + str(t2 - t1))
         response["status"] = "success"
         return JSONResponse(response, status=200)
 
 
 @csrf_exempt
 def get_working_days(request):
-    print 'I am being executed the old get_working_days'
-    print 'request for calculating working days started at='
-    print datetime.datetime.now()
+    print ('I am being executed the old get_working_days')
+    print ('request for calculating working days started at=')
+    print (datetime.datetime.now())
     month_dict = {
         'Jan': 1,
         'Feb': 2,
@@ -462,17 +467,17 @@ def get_working_days(request):
 
         y = request.GET.get('year')
         m = request.GET.get('month')
-        print 'while caculating workig days, year from request=' + y
+        print ('while caculating workig days, year from request=' + y)
 
         if y != 'till_date':
             try:
                 total_days = WorkingDays.objects.get(year=y, month=month_dict[m])
-                print 'days in ' + str(month_dict[m]) + '/' + str(y) + '=' + str(total_days.working_days)
+                print ('days in ' + str(month_dict[m]) + '/' + str(y) + '=' + str(total_days.working_days))
                 response['working_days'] = total_days.working_days
                 return JSONResponse(response, status=200)
             except Exception as e:
-                print 'unable to fetch the number of days for ' + str(m) + '/' + str(y)
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('unable to fetch the number of days for ' + str(m) + '/' + str(y))
+                print ('Exception = %s (%s)' % (e.message, type(e)))
                 return JSONResponse('Failed', status=404)
         else:
             # logic: if current month is less than session_start_month,
@@ -485,20 +490,20 @@ def get_working_days(request):
                                12 + 1):  # 12+1, because loop executes for 1 time less than max index
                     try:
                         total_days = WorkingDays.objects.get(year=now.year - 1, month=m)
-                        print 'days in ' + str(m) + '/' + str(now.year - 1) + '=' + str(total_days.working_days)
+                        print ('days in ' + str(m) + '/' + str(now.year - 1) + '=' + str(total_days.working_days))
                         days_till_last_month += total_days.working_days
                     except Exception as e:
-                        print 'unable to fetch the number of days for ' + str(m) + '/' + str(now.year - 1)
-                        print 'Exception = %s (%s)' % (e.message, type(e))
+                        print ('unable to fetch the number of days for ' + str(m) + '/' + str(now.year - 1))
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
                         return JSONResponse('Failed', status=404)
                 for m in range(1, now.month):
                     try:
                         total_days = WorkingDays.objects.get(year=now.year, month=m)
-                        print 'days in ' + str(m) + '/' + str(now.year) + '=' + str(total_days.working_days)
+                        print ('days in ' + str(m) + '/' + str(now.year) + '=' + str(total_days.working_days))
                         days_till_last_month += total_days.working_days
                     except Exception as e:
-                        print 'unable to fetch the number of days for ' + str(m) + '/' + str(now.year)
-                        print 'Exception = %s (%s)' % (e.message, type(e))
+                        print ('unable to fetch the number of days for ' + str(m) + '/' + str(now.year))
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
                         return JSONResponse('Failed', status=404)
             # if current month is higher than the session_start_month then we need to add the working days
             # session start month till current-1 month
@@ -506,16 +511,16 @@ def get_working_days(request):
                 for m in range(session_start_month, now.month):
                     try:
                         total_days = WorkingDays.objects.get(year=now.year, month=m)
-                        print 'days in ' + str(m) + '/' + str(now.year) + '=' + str(total_days.working_days)
+                        print ('days in ' + str(m) + '/' + str(now.year) + '=' + str(total_days.working_days))
                         days_till_last_month += total_days.working_days
                     except Exception as e:
-                        print 'unable to fetch the number of days for ' + str(m) + '/' + str(now.year)
-                        print 'Exception = %s (%s)' % (e.message, type(e))
+                        print ('unable to fetch the number of days for ' + str(m) + '/' + str(now.year))
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
                         return JSONResponse('Failed', status=404)
             response['working_days'] = days_till_last_month
             return JSONResponse(response, status=200)
-    print 'request for calculating working days finished at='
-    print datetime.datetime.now()
+    print ('request for calculating working days finished at=')
+    print (datetime.datetime.now())
     return HttpResponse('OK')
 
 
@@ -538,39 +543,48 @@ def get_working_days1(request):
 
     response = {
     }
-    c = Configurations.objects.get(pk=1)
-    session_start_month = c.session_start_month
 
     if request.method == 'GET':
 
         y = request.GET.get('year')
-        print y
+        print (y)
         mo = request.GET.get('month')
         m = month_dict[mo]
+
+        school_id = request.GET.get('school_id')
         cl = request.GET.get('class')
         the_section = request.GET.get('section')
         the_subject = request.GET.get('subject')
 
-        the_class = Class.objects.get(standard=cl)
-        section = Section.objects.get(section=the_section)
+        school = School.objects.get(id=school_id)
+        try:
+            school = School.objects.get(id=school_id)
+            configuration = Configurations.objects.get(school=school)
+            session_start_month = configuration.session_start_month
+        except Exception as e:
+            print ('unable to fetch the session_start_month for school with id:  ' + school_id)
+            print ('Exception = %s (%s)' % (e.message, type(e)))
+
+        the_class = Class.objects.get(school=school, standard=cl)
+        section = Section.objects.get(school=school, section=the_section)
 
         # 11/08/2016 earlier the summary was based on the main only but now they can be for any specific subject
         # main = Subject.objects.get(subject_name='Main')
-        subject = Subject.objects.get(subject_name=the_subject)
+        subject = Subject.objects.get(school=school, subject_name=the_subject)
 
         if y != 'till_date':
-            print 'calculating working days for the month ' + mo + ' of year ' + y
+            print ('calculating working days for the month ' + mo + ' of year ' + y)
             try:
                 query = AttendanceTaken.objects.filter(date__month=m, date__year=y, subject=subject,
                                                        the_class=the_class, section=section)
                 total_days = query.count()
-                print 'total days found = ' + str(total_days)
+                print ('total days found = ' + str(total_days))
 
                 response['working_days'] = total_days
                 return JSONResponse(response, status=200)
             except Exception as e:
-                print 'unable to fetch the number of days for ' + str(m) + '/' + str(y)
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('unable to fetch the number of days for ' + str(m) + '/' + str(y))
+                print ('Exception = %s (%s)' % (e.message, type(e)))
                 return JSONResponse('Failed', status=201)
         else:
             # logic: if current month is less than session_start_month,
@@ -582,25 +596,26 @@ def get_working_days1(request):
                 for m in range(session_start_month,
                                12 + 1):  # 12+1, because loop executes for 1 time less than max index
                     try:
-                        query = AttendanceTaken.objects.filter(date__month=m, date__year=now.year - 1, subject=subject,
-                                                               the_class=the_class, section=section)
+                        query = AttendanceTaken.objects.filter(date__month=m, date__year=now.year - 1,
+                                                               subject=subject, the_class=the_class,
+                                                               section=section)
                         total_days = query.count()
-                        print 'days in ' + str(m) + '/' + str(now.year - 1) + '=' + str(total_days)
+                        print ('days in ' + str(m) + '/' + str(now.year - 1) + '=' + str(total_days))
                         days_till_last_month += total_days
                     except Exception as e:
-                        print 'unable to fetch the number of days for ' + str(m) + '/' + str(now.year - 1)
-                        print 'Exception = %s (%s)' % (e.message, type(e))
+                        print ('unable to fetch the number of days for ' + str(m) + '/' + str(now.year - 1))
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
                         return JSONResponse('Failed', status=404)
                 for m in range(1, now.month + 1):
                     try:
                         query = AttendanceTaken.objects.filter(date__month=m, date__year=now.year, subject=subject,
                                                                the_class=the_class, section=section)
                         total_days = query.count()
-                        print 'days in ' + str(m) + '/' + str(now.year - 1) + '=' + str(total_days)
+                        print ('days in ' + str(m) + '/' + str(now.year - 1) + '=' + str(total_days))
                         days_till_last_month += total_days
                     except Exception as e:
-                        print 'unable to fetch the number of days for ' + str(m) + '/' + str(now.year)
-                        print 'Exception = %s (%s)' % (e.message, type(e))
+                        print ('unable to fetch the number of days for ' + str(m) + '/' + str(now.year))
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
                         return JSONResponse('Failed', status=404)
             # if current month is higher than the session_start_month then we need to add the working days
             # session start month till current-1 month
@@ -610,21 +625,21 @@ def get_working_days1(request):
                         query = AttendanceTaken.objects.filter(date__month=m, date__year=now.year, subject=subject,
                                                                the_class=the_class, section=section)
                         total_days = query.count()
-                        print 'days in ' + str(m) + '/' + str(now.year - 1) + '=' + str(total_days)
+                        print ('days in ' + str(m) + '/' + str(now.year - 1) + '=' + str(total_days))
                         days_till_last_month += total_days
                     except Exception as e:
-                        print 'unable to fetch the number of days for ' + str(m) + '/' + str(now.year)
-                        print 'Exception = %s (%s)' % (e.message, type(e))
+                        print ('unable to fetch the number of days for ' + str(m) + '/' + str(now.year))
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
                         return JSONResponse('Failed', status=404)
             response['working_days'] = days_till_last_month
             return JSONResponse(response, status=200)
-    print datetime.datetime.now()
+    print (datetime.datetime.now())
     return HttpResponse('OK')
 
 
 def get_attendance_summary(request):
-    print 'request for attendance summary started at='
-    print datetime.datetime.now()
+    print ('request for attendance summary started at=')
+    print (datetime.datetime.now())
     month_dict = {
         'Jan': 1,
         'Feb': 2,
@@ -639,8 +654,8 @@ def get_attendance_summary(request):
         'Nov': 11,
         'Dec': 12
     }
-    c = Configurations.objects.get(pk=1)
-    session_start_month = c.session_start_month
+
+
     dict_attendance_summary = {
 
     }
@@ -648,18 +663,27 @@ def get_attendance_summary(request):
     response_array = []
 
     if request.method == 'GET':
+        school_id = request.GET.get('school_id')
+        try:
+            school = School.objects.get(id=school_id)
+            configuration = Configurations.objects.get(school=school)
+            session_start_month = configuration.session_start_month
+        except Exception as e:
+            print ('unable to fetch the session_start_month for school with id:  ' + school_id)
+            print ('Exception = %s (%s)' % (e.message, type(e)))
+
         c = request.GET.get('class')
         sec = request.GET.get('section')
         sub = request.GET.get('subject')
         m = request.GET.get('month')
         y = request.GET.get('year')
-        print 'while in attendance summary, year from request=' + y
+        print ('while in attendance summary, year from request=' + y)
 
         # get the number of working days for the duration mentioned in request (for a specific month or till date)
         # we are re-using the view get_working_days. We need to simulate an HTTP GET request to use the view
         factory = RequestFactory()
 
-        request = factory.get('/academics/get_working_days1/?year=' + y +
+        request = factory.get('/academics/get_working_days1/?school_id=' + school_id + '&year=' + y +
                               '&month=' + m + '&class=' + c + '&section=' + sec + '&subject=' + sub)
 
         # the response contains newlines and Content type information. Hence it cannot be converted to json as it is.
@@ -670,13 +694,14 @@ def get_attendance_summary(request):
         data = data.strip('\r\n')
         json_data = json.loads(data)
         working_days = json_data['working_days']
-        print working_days
+        print (working_days)
 
-        print 'working days=' + str(json_data['working_days'])
+        print ('working days=' + str(json_data['working_days']))
 
         # get the list of students for the given class, section,
-        q = Student.objects.filter(current_section__section=sec, current_class__standard=c, active_status=True)
-        subject = Subject.objects.get(subject_name=sub)
+        q = Student.objects.filter(school=school, current_section__section=sec,
+                                   current_class__standard=c, active_status=True)
+        subject = Subject.objects.get(school=school, subject_name=sub)
         # for this subject and duration get the number of absent days for each student one by one. Also, keep
         # on building the json to be returned
         for s in q:
@@ -686,7 +711,7 @@ def get_attendance_summary(request):
                         (student=s, subject=subject, date__month=month_dict[m], date__year=y)
                     absent_days = query.count()
                 except Exception as e:
-                    print 'Exception = %s (%s)' % (e.message, type(e))
+                    print ('Exception = %s (%s)' % (e.message, type(e)))
             else:
                 # logic: if current month is less than session_start_month,
                 # this means that the session started last year. So we need to add the working day for each month from
@@ -701,37 +726,37 @@ def get_attendance_summary(request):
                             query = Attendance.objects.filter \
                                 (student=s, subject=subject, date__month=m, date__year=now.year - 1)
                             absent_days += query.count()
-                            print 'absent days for ' + str(m) + '/' + str(now.year - 1) + '=' + str(query.count())
+                            print ('absent days for ' + str(m) + '/' + str(now.year - 1) + '=' + str(query.count()))
                         except Exception as e:
-                            print 'unable to fetch absent days for ' + str(m) + '/' + str(now.year - 1)
-                            print 'Exception = %s (%s)' % (e.message, type(e))
+                            print ('unable to fetch absent days for ' + str(m) + '/' + str(now.year - 1))
+                            print ('Exception = %s (%s)' % (e.message, type(e)))
                             return JSONResponse('Failed', status=404)
-                    for m in range(1, now.month):
+                    for m in range(1, now.month + 1):
                         try:
                             query = Attendance.objects.filter \
                                 (student=s, subject=subject, date__month=m, date__year=now.year)
                             absent_days += query.count()
-                            print 'absent days for ' + str(m) + '/' + str(now.year) + '=' + str(query.count())
+                            print ('absent days for ' + str(m) + '/' + str(now.year) + '=' + str(query.count()))
                         except Exception as e:
-                            print 'unable to fetch absent days for ' + str(m) + '/' + str(now.year)
-                            print 'Exception = %s (%s)' % (e.message, type(e))
+                            print ('unable to fetch absent days for ' + str(m) + '/' + str(now.year))
+                            print ('Exception = %s (%s)' % (e.message, type(e)))
                             return JSONResponse('Failed', status=404)
                 # if current month is higher than the session_start_month then we need to add the working days
                 # session start month till current-1 month
                 else:
-                    for m in range(session_start_month, now.month):
+                    for m in range(session_start_month, now.month + 1):
                         try:
                             query = Attendance.objects.filter \
                                 (student=s, subject=subject, date__month=m, date__year=now.year)
                             absent_days += query.count()
 
-                            print 'absent days for ' + str(m) + '/' + str(now.year) + '=' + str(query.count())
+                            print ('absent days for ' + str(m) + '/' + str(now.year) + '=' + str(query.count()))
                         except Exception as e:
-                            print 'unable to fetch absent days for ' + str(m) + '/' + str(now.year)
-                            print 'Exception = %s (%s)' % (e.message, type(e))
+                            print ('unable to fetch absent days for ' + str(m) + '/' + str(now.year))
+                            print ('Exception = %s (%s)' % (e.message, type(e)))
                             return JSONResponse('Failed', status=404)
             # response['working_days'] = days_till_last_month
-            print 'absent days=' + str(absent_days)
+            print ('absent days=' + str(absent_days))
             present_days = working_days - absent_days
             # calculate the % of present days
             if int(working_days) < 1:
@@ -740,7 +765,7 @@ def get_attendance_summary(request):
                 present_perc = round((float(present_days) / float(working_days)) * 100, 2)
                 dict_attendance_summary['percentage'] = str(present_perc) + '%'
 
-            print 'present days=' + str(present_days)
+            print ('present days=' + str(present_days))
 
             dict_attendance_summary['name'] = s.fist_name + ' ' + s.last_name
             dict_attendance_summary['roll_number'] = s.roll_number
@@ -749,10 +774,10 @@ def get_attendance_summary(request):
             d = dict(dict_attendance_summary)
             response_array.append(d)
 
-        print response_array.__len__()
+        print (response_array.__len__())
 
-        print 'request for attendance summary finished at='
-        print datetime.datetime.now()
+        print ('request for attendance summary finished at=')
+        print (datetime.datetime.now())
         return JSONResponse(response_array, status=200)
 
 
@@ -770,7 +795,7 @@ def delete_test(request, test_id):
         except Exception as e:
             response["status"] = "failed"
             print('Unable to delete test with id=' + test_id)
-            print 'Exception = %s (%s)' % (e.message, type(e))
+            print ('Exception = %s (%s)' % (e.message, type(e)))
             return JSONResponse(response, status=404)
 
 

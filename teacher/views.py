@@ -36,7 +36,7 @@ def set_subjects(request, teacher):
         t = Teacher.objects.get(email=teacher)
         print (t)
         print ('request.body=')
-        print (equest.body)
+        print (request.body)
 
         data = json.loads(request.body)
         print ('data=')
