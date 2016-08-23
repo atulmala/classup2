@@ -746,8 +746,8 @@ def get_attendance_summary(request):
                 else:
                     for m in range(session_start_month, now.month + 1):
                         try:
-                            query = Attendance.objects.filter \
-                                (student=s, subject=subject, date__month=m, date__year=now.year)
+                            query = Attendance.objects.filter(student=s, subject=subject,
+                                                              date__month=m, date__year=now.year)
                             absent_days += query.count()
 
                             print ('absent days for ' + str(m) + '/' + str(now.year) + '=' + str(query.count()))

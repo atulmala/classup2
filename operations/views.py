@@ -334,7 +334,7 @@ def att_register_class(request):
 
         # 04/08/2016 - Changed functionality to retrieve attendance for a specific subject. Done for coaching/college
         #subject = Subject.objects.get(subject_name='Main')
-        subject = Subject.objects.get(subject_name=the_subject)
+        subject = Subject.objects.get(school=school, subject_name=the_subject)
 
         # we will cache the list of holidays so that the execution is faster, and less hits to db means
         # saving on AWS bill!
