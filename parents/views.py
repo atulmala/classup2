@@ -55,18 +55,24 @@ def submit_parents_communication(request):
                     parent_name = parent.parent_name
                     the_class = student.current_class
                     section = student.current_section
-                    ct = ClassTeacher.objects.get(standard=the_class, section=section)
-                    teacher = ct.class_teacher
-                    teacher_mobile = teacher.mobile
-
-                    principal_mobile = configuration.principal_mobile
 
                     # compose the message
                     message = communication_text + '. Regards, ' + parent_name + ', Parent of '
                     message += student.fist_name + ' ' + student.last_name + ' (class '
-                    message += the_class.standard + '/' + section.section + ')'
+                    message += the_class.standard + '-' + section.section + ')'
                     print (message)
-                    sms.send_sms(teacher_mobile, message)
+
+                    # sometimes class teacher may not be set
+                    try:
+                        ct = ClassTeacher.objects.get(standard=the_class, section=section)
+                        teacher = ct.class_teacher
+                        teacher_mobile = teacher.mobile
+                        sms.send_sms(teacher_mobile, message)
+                    except Exception as e:
+                        print('Class Teacher not set for ' + the_class + '-' + section)
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
+
+                    principal_mobile = configuration.principal_mobile
                     sms.send_sms(principal_mobile, message)
                 except Exception as e:
                     print ('failed to send message ' + communication_text + ' to '

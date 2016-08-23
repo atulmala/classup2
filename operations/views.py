@@ -685,7 +685,7 @@ def result_sms(request):
             term = form.cleaned_data['term']
 
         else:
-            print 'form could not be validated'
+            print ('form could not be validated')
             error = 'You have missed to select either Start/End Date, or Class, or Section, or Term'
             form = TestResultForm(request.POST)
             context_dict['form'] = form
@@ -714,9 +714,9 @@ def result_sms(request):
                                     marks = 'ABS'
                                 message += str(marks) + '/' + str(mm) + ', '
                             except Exception as e:
-                                print 'error occured while fetching marks for ' + \
-                                      str(s) + ' for test.subject.subject_name'
-                                print 'Exception = %s (%s)' % (e.message, type(e))
+                                print ('error occured while fetching marks for ' +
+                                       str(s) + ' for test.subject.subject_name')
+                                print ('Exception = %s (%s)' % (e.message, type(e)))
                         else:
                             try:
                                 tr = TestResults.objects.get(class_test=test, student=s)
@@ -725,13 +725,13 @@ def result_sms(request):
                                     grade = 'ABS'
                                 message += str(grade) + '(Grade) '
                             except Exception as e:
-                                print 'error occured while fetching grade for ' + \
-                                      str(s) + ' for test.subject.subject_name'
-                                print 'Exception = %s (%s)' % (e.message, type(e))
+                                print ('error occured while fetching grade for ' +
+                                       str(s) + ' for test.subject.subject_name')
+                                print ('Exception = %s (%s)' % (e.message, type(e)))
 
                 except Exception as e:
-                    print 'error occured while fetching the list of tests'
-                    print 'Exception = %s (%s)' % (e.message, type(e))
+                    print ('error occured while fetching the list of tests')
+                    print ('Exception = %s (%s)' % (e.message, type(e)))
                 message += ' Regards, Model School Administration'
                 p = s.parent
                 m1 = p.parent_mobile1
@@ -748,8 +748,8 @@ def result_sms(request):
                     # thread2.start()
                     sms.send_sms(m2, message)
         except Exception as e:
-            print 'error occured while fetching the list of students'
-            print 'Exception = %s (%s)' % (e.message, type(e))
+            print ('error occured while fetching the list of students')
+            print ('Exception = %s (%s)' % (e.message, type(e)))
         return render(request, 'classup/setup_index.html', context_dict)
 
     if request.method == 'GET':
@@ -941,12 +941,18 @@ def parents_communication_details(request):
             main_sheet.write(current_row, 4, ugettext(student_name))
 
             # ge the student class/section
-            student_class = c.student.current_class.standard + '/' + c.student.current_section.section
+            student_class = c.student.current_class.standard + '-' + c.student.current_section.section
             main_sheet.write(current_row, 5, ugettext(student_class))
 
             # get the class teacher name
-            ct = ClassTeacher.objects.get(standard=c.student.current_class, section=c.student.current_section)
-            teacher_name = ct.class_teacher.first_name + ' ' + ct.class_teacher.last_name
+            try:
+                ct = ClassTeacher.objects.get(standard=c.student.current_class, section=c.student.current_section)
+                teacher_name = ct.class_teacher.first_name + ' ' + ct.class_teacher.last_name
+            except Exception as e:
+                print ('Class Teacher not set for ' + student_class)
+                print ('Exception = %s (%s)' % (e.message, type(e)))
+                teacher_name = "N/A"
+
             main_sheet.write(current_row, 6, ugettext(teacher_name))
 
             # get the category
@@ -958,7 +964,6 @@ def parents_communication_details(request):
             main_sheet.write(current_row, 8, ugettext(message))
 
             sr_no += 1
-
 
         workbook.close()
         response = HttpResponse(content_type='application/vnd.ms-excel')
@@ -994,4 +999,3 @@ def download_ios(request):
     response['Content-Length'] = os.path.getsize(the_file)
     response['Content-Disposition'] = "attachment; filename=%s" % filename
     return response
-

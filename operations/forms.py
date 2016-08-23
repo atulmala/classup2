@@ -1,11 +1,11 @@
-__author__ = 'atulgupta'
-
 from django import forms
 
 from functools import partial
 
 from setup.models import School
 from academics.models import Class, Section, Subject
+
+__author__ = 'atulgupta'
 
 DateInput = partial(forms.DateInput, {'class': 'datepicker'})
 MonthInput = partial(forms.DateInput, {'class': 'monthpicker'})

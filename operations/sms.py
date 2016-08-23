@@ -26,8 +26,8 @@ def send_sms(mobile, message):
         #response = urlopen(url, data)
         #queue.put(response)
     except Exception as e:
-        print 'error occured while sending sms to ' + str(mobile)
-        print 'Exception = %s (%s)' % (e.message, type(e))
+        print ('error occured while sending sms to ' + str(mobile))
+        print ('Exception = %s (%s)' % (e.message, type(e)))
     print (response.read().decode('utf-8'))
 
 
