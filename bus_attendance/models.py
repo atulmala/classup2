@@ -1,5 +1,6 @@
 from django.db import models
 
+from setup.models import School
 from student.models import Student
 from teacher.models import Teacher
 
@@ -7,6 +8,7 @@ from teacher.models import Teacher
 
 
 class Bus_Rout(models.Model):
+    school = models.ForeignKey(School)
     bus_root = models.CharField(max_length=50)
 
     def __unicode__(self):

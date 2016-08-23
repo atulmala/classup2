@@ -28,9 +28,9 @@ server_ip = 'http://52.32.99.184/'
 
 # function to validate the extension of uploaded excel file - should be either .xls or .xlsx
 def validate_excel_extension(file_handle, form, context_dict):
-    print 'Inside validate_excel_extension function...'
+    print ('Inside validate_excel_extension function...')
     (file_name, file_extension) = os.path.splitext(str(file_handle))
-    print 'file extension = ' + file_extension
+    print ('file extension = ' + file_extension)
     if file_extension != '.xls' and file_extension != '.xlsx':
         # this is not a file with either .xls or .xlsx extension.
         error = 'The file you uploaded is not a valid excel file. '
@@ -38,7 +38,7 @@ def validate_excel_extension(file_handle, form, context_dict):
         error += 'You have uploaded ' + str(file_handle) + '. Please try again.'
         form.errors['__all__'] = form.error_class([error])
         context_dict['error'] = error
-        print error
+        print (error)
         return False
     else:
         return True

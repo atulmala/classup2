@@ -779,9 +779,9 @@ def send_message(request, school_id):
             # check if the message is to be sent to all the parents
             if data["whole_class"] == "true":
                 the_class = data["class"]
-                c = Class.objects.get(standard=the_class)
+                c = Class.objects.get(school=school, standard=the_class)
                 the_section = data["section"]
-                sec = Section.objects.get(section=the_section)
+                sec = Section.objects.get(school=school, section=the_section)
 
                 # get the list of all students in this class/section
                 try:
@@ -857,7 +857,7 @@ def parents_communication_details(request):
         if form.is_valid():
             the_date = form.cleaned_data['date']
         else:
-            print 'form could not be validated'
+            print ('form could not be validated')
             error = 'You have missed to select the Month/Year'
             form = ParentsCommunicationDetailsForm()
             context_dict['form'] = form
