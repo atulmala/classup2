@@ -75,14 +75,14 @@ def submit_parents_communication(request):
                     principal_mobile = configuration.principal_mobile
                     sms.send_sms(principal_mobile, message)
                 except Exception as e:
-                    print ('failed to send message ' + communication_text + ' to '
-                           + teacher.first_name + teacher.last_name + ' and Principal')
+                    print ('failed to send message ' + communication_text + ' to Class Teacher of class ' +
+                           the_class.standard + '-' + section.section)
                     print ('Exception = %s (%s)' % (e.message, type(e)))
 
             return HttpResponse('Success')
         except Exception as e:
-            print ('Error occured while trying to save comments from parents of ' \
-                  + student.fist_name + ' ' + student.last_name)
+            print ('Error occured while trying to save comments from parents of '
+                   + student.fist_name + ' ' + student.last_name)
             print ('Exception = %s (%s)' % (e.message, type(e)))
             return HttpResponse('Failed')
 

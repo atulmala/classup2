@@ -189,7 +189,7 @@ def setup_students(request):
                             message += 'You can change your password after first login. '
                             message += ' In case of any problem please send an email to: info@classup.in'
 
-                            #sms.send_sms(parent_mobile1, message)
+                            sms.send_sms(parent_mobile1, message)
                     except Exception as e:
                         print ('Exception = %s (%s)' % (e.message, type(e)))
                         print ('Failed to create Parent School mapping for ' + parent_name + ' in ClassUpRouter')
