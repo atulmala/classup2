@@ -65,9 +65,10 @@ def submit_parents_communication(request):
                     # sometimes class teacher may not be set
                     try:
                         ct = ClassTeacher.objects.get(standard=the_class, section=section)
-                        teacher = ct.class_teacher
-                        teacher_mobile = teacher.mobile
-                        sms.send_sms(teacher_mobile, message)
+                        if ct:
+                            teacher = ct.class_teacher
+                            teacher_mobile = teacher.mobile
+                            sms.send_sms(teacher_mobile, message)
                     except Exception as e:
                         print('Class Teacher not set for ' + the_class + '-' + section)
                         print ('Exception = %s (%s)' % (e.message, type(e)))
