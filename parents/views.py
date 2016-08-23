@@ -53,11 +53,13 @@ def submit_parents_communication(request):
                 try:
                     parent = student.parent
                     parent_name = parent.parent_name
+                    parent_mobile = parent.parent_mobile1
                     the_class = student.current_class
                     section = student.current_section
 
                     # compose the message
-                    message = communication_text + '. Regards, ' + parent_name + ', Parent of '
+                    message = communication_text + '. Regards, ' + parent_name + '(' + parent_mobile + ')'
+                    message += ', Parent of '
                     message += student.fist_name + ' ' + student.last_name + ' (class '
                     message += the_class.standard + '-' + section.section + ')'
                     print (message)
