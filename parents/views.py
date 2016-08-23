@@ -70,7 +70,7 @@ def submit_parents_communication(request):
                             teacher_mobile = teacher.mobile
                             sms.send_sms(teacher_mobile, message)
                     except Exception as e:
-                        print('Class Teacher not set for ' + the_class + '-' + section)
+                        print('Class Teacher not set for ' + the_class.standard + '-' + section.section)
                         print ('Exception = %s (%s)' % (e.message, type(e)))
 
                     principal_mobile = configuration.principal_mobile
