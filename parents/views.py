@@ -58,7 +58,7 @@ def submit_parents_communication(request):
                     section = student.current_section
 
                     # compose the message
-                    message = communication_text + '. Regards, ' + parent_name + '(' + parent_mobile + ')'
+                    message = communication_text + '. Regards, ' + parent_name + ' (' + parent_mobile + ')'
                     message += ', Parent of '
                     message += student.fist_name + ' ' + student.last_name + ' (class '
                     message += the_class.standard + '-' + section.section + ')'
