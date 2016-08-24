@@ -671,6 +671,8 @@ def result_sms(request):
     context_dict['header'] = 'Send Term test Marks to Parents via SMS'
     context_dict['caller'] = 'result_sms'
     school_id = request.session['school_id']
+    school = School.objects.get(id=school_id)
+    conf = Configurations.objects.get(school=school)
 
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
@@ -697,12 +699,13 @@ def result_sms(request):
 
         try:
             for s in Student.objects.filter(current_class=the_class, current_section=section):
-                message = 'Dear ' + s.parent.parent_name + ', please find subject-wise marks of your ward, '
+                message = 'Dear Ms/Mr ' + s.parent.parent_name + ', please find subject-wise marks of your ward, '
                 message += ugettext(s.fist_name + ' ' + s.last_name)
                 message += ', for ' + term + ' test: '
                 try:
                     for test in ClassTest.objects.filter(the_class=the_class, section=section,
-                                                         date_conducted__gte=start_date, date_conducted__lte=end_date):
+                                                         date_conducted__gte=start_date,
+                                                         date_conducted__lte=end_date):
                         message += test.subject.subject_name + ' = '
                         if not test.grade_based:
                             mm = int(test.max_marks)
@@ -735,7 +738,8 @@ def result_sms(request):
                 except Exception as e:
                     print ('error occured while fetching the list of tests')
                     print ('Exception = %s (%s)' % (e.message, type(e)))
-                message += ' Regards, Model School Administration'
+                message += ' Regards, ' + school.school_name
+                print(message)
                 p = s.parent
                 m1 = p.parent_mobile1
                 m2 = p.parent_mobile2
