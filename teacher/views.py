@@ -86,6 +86,7 @@ def unset_subjects(request, teacher):
         print (t)
         print ('request.body=')
         print (request.body)
+        school = t.school
 
         data = json.loads(request.body)
         print ('data=')
@@ -97,7 +98,7 @@ def unset_subjects(request, teacher):
             print('subject=' + subject)
             print ('now trying to extract subject')
             try:
-                s = Subject.objects.get(subject_code=subject)
+                s = Subject.objects.get(school=school, subject_code=subject)
             except Exception as e:
                     print('unable to retrieve subject')
                     print ('Exception = %s (%s)' % (e.message, type(e)))

@@ -44,6 +44,8 @@ def att_summary_school(request):
         return HttpResponseRedirect(reverse('setup_index'))
 
     if "submit" in request.GET:
+        school_id = request.session['school_id']
+        school = School.objects.get(id=school_id)
         the_date = request.GET['date']
         if the_date == '':
             error = 'Please select a date'
@@ -130,7 +132,7 @@ def att_summary_school(request):
         absentee_sheet.set_column('C:C', 20)
         absentee_sheet.set_column('D:F', 15)
 
-        main = Subject.objects.get(subject_name='Main')
+        main = Subject.objects.get(school=school, subject_name='Main')
 
         grand_total = p_total = a_total = idx = 0
 
@@ -668,13 +670,14 @@ def result_sms(request):
     }
     context_dict['header'] = 'Send Term test Marks to Parents via SMS'
     context_dict['caller'] = 'result_sms'
+    school_id = request.session['school_id']
 
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return HttpResponseRedirect(reverse('setup_index'))
 
     if request.method == 'POST':
-        form = TestResultForm(request.POST)
+        form = TestResultForm(request.POST, school_id=school_id)
 
         if form.is_valid():
             the_class = form.cleaned_data['the_class']
@@ -753,7 +756,7 @@ def result_sms(request):
         return render(request, 'classup/setup_index.html', context_dict)
 
     if request.method == 'GET':
-        form = TestResultForm()
+        form = TestResultForm(school_id=school_id)
         context_dict['form'] = form
 
     return render(request, 'classup/test_results.html', context_dict)

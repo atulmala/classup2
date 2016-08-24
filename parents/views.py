@@ -287,8 +287,9 @@ def retrieve_stu_sub_marks_history(request, subject):
         student = request.GET.get('student')
 
         try:
-            sub = Subject.objects.get(subject_name=subject)
+
             s = Student.objects.get(id=student)
+            sub = Subject.objects.get(school=s.school, subject_name=subject)
             c = s.current_class
             sect = s.current_section
 
