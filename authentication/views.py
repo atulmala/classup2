@@ -9,7 +9,8 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.renderers import JSONRenderer
 
 from setup.models import UserSchoolMapping
-
+from teacher.models import Teacher
+from operations import sms
 
 from .forms import ClassUpLoginForm
 
@@ -169,14 +170,14 @@ def change_password(request):
 
     }
     if request.method == 'POST':
-        print 'request body = ' + request.body
+        print ('request body = ' + request.body)
 
         data = json.loads(request.body)
-        print data
+        print (data)
         user = data["user"]
-        print user
+        print (user)
         new_password = data["new_password"]
-        print new_password
+        print (new_password)
 
         try:
             u = User.objects.get(username=user)
@@ -186,8 +187,53 @@ def change_password(request):
             return JSONResponse(return_data, status=200)
         except Exception as e:
             print('unable to change password for ' + user)
-            print 'Exception = %s (%s)' % (e.message, type(e))
+            print('Exception = %s (%s)' % (e.message, type(e)))
             return_data["password_change"] = "Fail"
+            return JSONResponse(return_data, status=400)
+
+    return HttpResponse('OK', status=200)
+
+
+@csrf_exempt
+def forgot_password(request):
+    return_data = {
+
+    }
+    if request.method == 'POST':
+        print ('request body = ' + request.body)
+
+        data = json.loads(request.body)
+        print (data)
+        user = data["user"]
+        print (user)
+
+        try:
+            u = User.objects.get(username=user)
+            new_password = User.objects.make_random_password(length=5, allowed_chars='1234567890')
+            print (new_password)
+            u.set_password(new_password)
+            u.save()
+            message = 'Dear Ms/Mr ' + u.first_name + ' ' + u.last_name + ', your new password is ' + new_password
+            message += '. Regards, ClassUp Support'
+            print(message)
+
+            # check if user is teacher or parent
+            if u.is_staff:
+                # a teacher's user is created as his/her email id
+                teacher = Teacher.objects.get(email=u.email)
+                mobile = teacher.mobile
+            else:
+                # a parent's mobile is their username
+                mobile = user
+
+            sms.send_sms(mobile, message)
+
+            return_data["forgot_password"] = "successful"
+            return JSONResponse(return_data, status=200)
+        except Exception as e:
+            print('unable to reset password for ' + user)
+            print('Exception = %s (%s)' % (e.message, type(e)))
+            return_data["forgot_password"] = "Fail"
             return JSONResponse(return_data, status=400)
 
     return HttpResponse('OK', status=200)

@@ -12,4 +12,5 @@ urlpatterns = patterns('',
     url(r'^auth/login1/$', views.auth_login_from_device1, name='login_from_device1'),
 
     url(r'auth/change_password/$', views.change_password, name="change_password"),
+    url(r'auth/forgot_password/$', views.forgot_password, name='forgot_password'),
 )
