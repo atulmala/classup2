@@ -181,7 +181,8 @@ def att_summary_school(request):
                     # Print the name of absent students, their regn number, parent name & mobile
                     absentee_sheet.write_string(row_absentee, 0, c.standard, cell_center)
                     absentee_sheet.write_string(row_absentee, 1, s.section, cell_center)
-                    for student in Attendance.objects.filter(date=converted_date, the_class=c, section=s, subject=main):
+                    for student in Attendance.objects.filter(date=converted_date,
+                                                             the_class=c, section=s, subject=main):
 
                         absentee_sheet.write_string(row_absentee, 2,
                                                     student.student.fist_name + ' ' + student.student.last_name,
@@ -342,7 +343,7 @@ def att_register_class(request):
 
         holiday_count = present_count = 0
         db_hit = 1
-        for s in Student.objects.filter(current_class=the_class, current_section=section):
+        for s in Student.objects.filter(school=school, current_class=the_class, current_section=section):
             attendance_sheet.write_number(row, 0, idx+1, cell_center)
             attendance_sheet.write_number(row, 1, s.roll_number, cell_center)
             attendance_sheet.write_string(row, 2, ugettext(s.fist_name + ' ' + s.last_name), cell_left)
@@ -461,7 +462,6 @@ def test_result(request):
             end_date = form.cleaned_data['end_date']
 
             term = form.cleaned_data['term']
-
         else:
             error = 'You have missed to select either Start/End Date, or Class, or Section, or Term'
             form = TestResultForm(request.POST)

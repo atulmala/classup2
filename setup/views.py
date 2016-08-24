@@ -180,14 +180,17 @@ def setup_students(request):
                             iOS_link = conf.app_store_link
 
                             # send login id and password to teacher via sms
-                            message = 'Dear ' + parent_name + ', thanks for registering at ClassUp(TM).'
+                            message = 'Dear Ms/Mr ' + parent_name + ', thanks for registering at ' \
+                                                                    'ClassUp(TM) mobile app. '
+                            message += "Now you can track your child's progress at " + school.school_name + ' '
+                            message += 'using ClassUp App. '
                             message += 'Please install ClassUp from these links. Android: '
                             message += android_link
                             message += ' iPhone/iOS: '
                             message += iOS_link
-                            message += ' Your user id is: ' + str(parent_mobile1) + ', and password is: ' + password + '. '
-                            message += 'You can change your password after first login. '
-                            message += ' In case of any problem please send an email to: info@classup.in'
+                            message += ' Your user id is: ' + str(parent_mobile1) + ', and password is: ' + password
+                            message += '. You can change your password after first login. '
+                            message += 'In case of any problem please send an email to: info@classup.in'
 
                             sms.send_sms(parent_mobile1, message)
                     except Exception as e:
@@ -592,12 +595,12 @@ def setup_teachers(request):
                             message += android_link
                             message += ', iPhone/iOS: '
                             message += iOS_link
-                            message += ' Your user id is: ' + email + ', and password is: ' + password + '. '
+                            message += '. Your user id is: ' + email + ', and password is: ' + password + '. '
                             message += 'You can change your password after first login. '
-                            message += 'Enjoy managing your class with ClassUp(TM)!'
+                            message += 'Enjoy managing your class with ClassUp!'
                             message += ' In case of any problem please send an email to: info@classup.in'
 
-                            #sms.send_sms(mobile, message)
+                            sms.send_sms(mobile, message)
 
                         except Exception as e:
                             print ('Exception = %s (%s)' % (e.message, type(e)))
