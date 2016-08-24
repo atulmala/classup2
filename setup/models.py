@@ -11,7 +11,7 @@ class School(models.Model):
     school_address = models.CharField(max_length=200, blank=True)
 
     def __unicode__(self):
-        return str(self.id) + ', ' + str(self.school_name)
+        return str(self.school_name)
 
 
 class Configurations(models.Model):
