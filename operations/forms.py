@@ -11,6 +11,10 @@ __author__ = 'atulgupta'
 DateInput = partial(forms.DateInput, {'class': 'datepicker'})
 MonthInput = partial(forms.DateInput, {'class': 'monthpicker'})
 
+STAFF_CHOICES = (
+    ('teacher', 'Teacher'),
+    ('whole_staff', 'Whole Staff'),
+)
 
 class HorizontalRenderer(forms.CheckboxSelectMultiple.renderer):
     def render(self):
@@ -61,6 +65,9 @@ class BulkSMSForm(forms.Form):
         self.fields['Class'] = forms.ModelChoiceField(queryset=Class.objects.filter(school=school).
                                                       order_by('sequence'), label='Class',
                                                       widget=forms.CheckboxSelectMultiple
-                                                      (attrs={'checked' : 'checked'}, renderer=HorizontalRenderer))
+                                                      (attrs={'checked': 'checked'}, renderer=HorizontalRenderer))
         self.fields['Class'].empty_label = None
+
     message_text = forms.CharField(widget=forms.Textarea, label='Enter SMS Text')
+    Staff = forms.MultipleChoiceField(choices=STAFF_CHOICES,
+                                      widget=forms.CheckboxSelectMultiple(renderer=HorizontalRenderer))
