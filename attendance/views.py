@@ -279,7 +279,7 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                         # in main attendance (means the student has BUNKED this class :)
                         if subject != 'Main' and subject != 'main' and subject != 'MAIN':
                             try:
-                                main = Subject.objects.get(school=school, msubject_name='Main')
+                                main = Subject.objects.get(school=school, subject_name='Main')
                                 q = Attendance.objects.filter(date=the_date, the_class=c,
                                                               section=s, subject=main, student=student)
                                 if q.count() == 0:
