@@ -254,11 +254,11 @@ def setup_students(request):
                             # this student should appear in all the pending test for this class & section
                             print ('creating an entry for this student in all pending test for this class/section')
                             try:
-                                tests = ClassTest.objects.filter(school=school, the_class=the_class,
+                                tests = ClassTest.objects.filter(the_class=the_class,
                                                                  section=the_section, is_completed=False)
                                 for t in tests:
                                     test_result = TestResults(class_test=t, roll_no=current_roll_no,
-                                              student=s, marks_obtained=-5000.00, grade='')
+                                                              student=s, marks_obtained=-5000.00, grade='')
                                     try:
                                         test_result.save()
                                         print (' test results successfully created')
