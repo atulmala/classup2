@@ -946,11 +946,12 @@ def setup_exam(request):
                     # to insert a duplicate
 
                     try:
-                        e = Exam.objects.get(title=exam_title, start_class=exam_start_class, end_class=exam_end_class)
+                        e = Exam.objects.get(school=school, title=exam_title, start_class=exam_start_class,
+                                             end_class=exam_end_class)
 
                         if e:
-                            print ('Exam ' + exam_title + ' for ' + exam_start_class + ' and ' + exam_end_class \
-                                  + ' already set. This will be updated...')
+                            print ('Exam ' + exam_title + ' for ' + exam_start_class + ' and ' + exam_end_class
+                                   + ' already set. This will be updated...')
                             e.start_date = exam_start_date
                             e.end_date = exam_end_date
                             try:
@@ -965,20 +966,20 @@ def setup_exam(request):
                         print ('Exam  ' + exam_title + ' for ' + exam_start_class + ' and ' + exam_end_class \
                               + ' is not yet set. Setting it now...')
                         try:
-                            e = Exam(title=exam_title, start_date=exam_start_date, end_date=exam_end_date,
-                                     start_class=exam_start_class, end_class=exam_end_class)
+                            e = Exam(school=school, title=exam_title, start_date=exam_start_date,
+                                     end_date=exam_end_date, start_class=exam_start_class, end_class=exam_end_class)
                             e.save()
-                            print ('successfully created Exam  ' + exam_title + ' with start date: ' \
-                                  + str(exam_start_date) + ' and end date: ' + str(exam_end_date) + \
-                                  ' for ' + exam_start_class + ' and ' + exam_end_class)
+                            print ('successfully created Exam  ' + exam_title + ' with start date: '
+                                   + str(exam_start_date) + ' and end date: ' + str(exam_end_date) +
+                                   ' for ' + exam_start_class + ' and ' + exam_end_class)
                         except Exception as e:
-                            print ('unable to create exam ' + exam_title + ' with start date: ' \
-                                  + str(exam_start_date) + ' and end date: ' + str(exam_end_date) + ' for ' + \
-                                  exam_start_class + ' and ' + exam_end_class)
+                            print ('unable to create exam ' + exam_title + ' with start date: '
+                                   + str(exam_start_date) + ' and end date: ' + str(exam_end_date) + ' for ' +
+                                   exam_start_class + ' and ' + exam_end_class)
                             print ('Exception = %s (%s)' % (e.message, type(e)))
                             error = 'unable to create exam ' + exam_title + ' with start date: ' \
-                                  + str(exam_start_date) + ' and end date: ' + str(exam_end_date) + ' for ' + \
-                                  exam_start_class + ' and ' + exam_end_class
+                                    + str(exam_start_date) + ' and end date: ' + str(exam_end_date) + ' for ' + \
+                                    exam_start_class + ' and ' + exam_end_class
                             form.errors['__all__'] = form.error_class([error])
                             print (error)
                             return render(request, 'classup/setup_data.html', context_dict)

@@ -90,9 +90,9 @@ class Exam(models.Model):
 
     # what is provide in the data is the standard. We need to extract the sequence of the class
     def save(self, *args, **kwargs):
-        sc = Class.objects.get(standard=self.start_class)
+        sc = Class.objects.get(school=self.school, standard=self.start_class)
         self.start_class_sequence = sc.sequence
-        ec = Class.objects.get(standard=self.end_class)
+        ec = Class.objects.get(school=self.school, standard=self.end_class)
         self.end_class_sequence = ec.sequence
         super(Exam, self).save(*args, **kwargs)
 
