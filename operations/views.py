@@ -17,7 +17,8 @@ import mimetypes
 from django.core.urlresolvers import reverse
 from authentication.views import JSONResponse
 
-from .forms import SchoolAttSummaryForm, AttendanceRegisterForm, TestResultForm, ParentsCommunicationDetailsForm
+from .forms import SchoolAttSummaryForm, AttendanceRegisterForm
+from .forms import TestResultForm, ParentsCommunicationDetailsForm, BulkSMSForm
 import sms
 
 from academics.models import Class, Section, Subject, ClassTest, TestResults, ClassTeacher
@@ -442,6 +443,26 @@ def att_register_class(request):
         context_dict['form'] = form
 
     return render(request, 'classup/att_register.html', context_dict)
+
+
+def send_bulk_sms(request):
+    context_dict = {
+    }
+    context_dict['header'] = 'Send Bulk SMS'
+    school_id = request.session['school_id']
+
+    # first see whether the cancel button was pressed
+    if "cancel" in request.POST:
+        return HttpResponseRedirect(reverse('setup_index'))
+
+    if request.method == 'POST':
+        form = BulkSMSForm(request.POST, school_id=school_id)
+
+    if request.method == 'GET':
+        form = BulkSMSForm(school_id=school_id)
+        context_dict['form'] = form
+
+    return render(request, 'classup/bulk_sms.html', context_dict)
 
 
 def test_result(request):

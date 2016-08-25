@@ -1,0 +1,43 @@
+{% extends 'classup/base.html' %}
+
+{% load staticfiles %}
+
+{% block title %}
+    Setup Module
+{% endblock %}
+
+{% block body_block %}
+    <script>
+            $(document).ready(function() {
+            $('.datepicker').datepicker({
+                minDate: -365, maxDate: "+0D", showButtonPanel: true, format: "yyyy-mm-dd" } );
+            });
+    </script>
+
+    <h1>{{ header }}</h1>
+
+    {% if form.errors %}
+        <div class="alert alert-danger">
+            <p style="color: red;">
+                Please correct the error{{ form.errors|pluralize }} below.
+            </p>
+        </div>
+    {% endif %}
+
+    <form action="" enctype="multipart/form-data"  method="post">
+        {% csrf_token %}
+        {% load bootstrap %}
+        {{ form.message_text|bootstrap }}
+        {{ form.Class|bootstrap_horizontal:'col-lg-2' }}
+        <!--<header>{{ header }}</header>-->
+
+        {{ form.non_field_errors }}
+
+
+        <p>
+            <br/>
+            <input class="btn-primary" type="submit" name="submit" value="Send SMS">
+            <input class="btn-primary" type="submit" name="cancel" value="Done/Cancel">
+        </p>
+    </form>
+{% endblock %}
