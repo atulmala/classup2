@@ -794,6 +794,7 @@ def setup_working_days(request):
         context_dict['form'] = form
     return render(request, 'classup/setup_data.html', context_dict)
 
+
 def setup_class_teacher(request):
     context_dict = {
     }
@@ -806,13 +807,15 @@ def setup_class_teacher(request):
 
     context_dict['header'] = 'Upload Class Teacher Details'
     if request.method == 'POST':
+        school_id = request.session['school_id']
+        school = School.objects.get(id=school_id)
         # get the file uploaded by the user
         form = ExcelFileUploadForm(request.POST, request.FILES)
         context_dict['form'] = form
 
         if form.is_valid():
             try:
-                print 'now starting to process the uploaded file for setting up Class Teachers...'
+                print ('now starting to process the uploaded file for setting up Class Teachers...')
                 fileToProcess_handle = request.FILES['excelFile']
 
                 # check that the file uploaded should be a valid excel
@@ -824,11 +827,11 @@ def setup_class_teacher(request):
                 fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
                 sheet = fileToProcess.sheet_by_index(0)
                 if sheet:
-                    print 'Successfully got hold of sheet!'
+                    print ('Successfully got hold of sheet!')
                 for row in range(sheet.nrows):
                     if row == 0:
                         continue
-                    print 'Processing a new row'
+                    print ('Processing a new row')
 
                     the_class = sheet.cell(row, 0).value
 
@@ -839,47 +842,46 @@ def setup_class_teacher(request):
                     # Now we are ready to insert into db. But, we need to be sure that we are not trying
                     # to insert a duplicate
                     try:
-                        c = Class.objects.get(standard=the_class)
-                        s = Section.objects.get(section=section)
+                        c = Class.objects.get(school=school, standard=the_class)
+                        s = Section.objects.get(school=school, section=section)
                         t = Teacher.objects.get(teacher_erp_id=class_teacher)
                         ct = ClassTeacher.objects.get(standard=c, section=s)
                         if ct:
-                            print 'class teacher for ' + the_class + '/' + section + \
-                                  ' already set. This will be updated...'
+                            print ('class teacher for ' + the_class + '-' + section +
+                                   ' already set. This will be updated...')
                             ct.class_teacher = t
                             try:
                                 ct.save()
-                                print 'successfully updated class teacher ' + the_class + '/' + section
+                                print ('successfully updated class teacher ' + the_class + '-' + section)
                             except Exception as e:
-                                print 'unable to the update class teacher for ' + the_class + '/' + section
-                                print 'Exception = %s (%s)' % (e.message, type(e))
-
+                                print ('unable to the update class teacher for ' + the_class + '-' + section)
+                                print ('Exception = %s (%s)' % (e.message, type(e)))
                     except Exception as e:
-                        print 'Exception = %s (%s)' % (e.message, type(e))
-                        print 'class teacher for ' + the_class + '/' + section + ' is not yet set. Setting them now...'
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('class teacher for ' + the_class + '-' + section +
+                               ' is not yet set. Setting them now...')
                         try:
-                            c = Class.objects.get(standard=the_class)
-                            s = Section.objects.get(section=section)
+                            c = Class.objects.get(school=school, standard=the_class)
+                            s = Section.objects.get(school=school, section=section)
                             t = Teacher.objects.get(teacher_erp_id=class_teacher)
-                            ct = ClassTeacher(standard=c, section=s, class_teacher=t)
+                            ct = ClassTeacher(school=school, standard=c, section=s, class_teacher=t)
                             ct.save()
-                            print 'successfully class teacher for ' + the_class + '/' + section
+                            print ('successfully class teacher for ' + the_class + '-' + section)
                         except Exception as e:
-                            print 'unable to set class teacher for ' + the_class + '/' + section
-                            print 'Exception = %s (%s)' % (e.message, type(e))
-                            error = 'unable to set class teacher ' + the_class + '/' + section
+                            print ('unable to set class teacher for ' + the_class + '-' + section)
+                            print ('Exception = %s (%s)' % (e.message, type(e)))
+                            error = ('unable to set class teacher ' + the_class + '-' + section)
                             form.errors['__all__'] = form.error_class([error])
-                            print error
+                            print (error)
                             return render(request, 'classup/setup_data.html', context_dict)
 
                 # file upload and saving to db was successful. Hence go back to the main menu
                 return render(request, 'classup/setup_index.html', context_dict)
-                return HttpResponseRedirect(reverse('setup_index'))
             except Exception as e:
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('Exception = %s (%s)' % (e.message, type(e)))
                 error = 'Invalid file uploaded. Please try again.'
                 form.errors['__all__'] = form.error_class([error])
-                print error
+                print (error)
                 return render(request, 'classup/setup_data.html', context_dict)
     else:
         form = ExcelFileUploadForm()
@@ -899,13 +901,15 @@ def setup_exam(request):
 
     context_dict['header'] = 'Upload Exam Details'
     if request.method == 'POST':
+        school_id = request.session['school_id']
+        school = School.objects.get(id=school_id)
         # get the file uploaded by the user
         form = ExcelFileUploadForm(request.POST, request.FILES)
         context_dict['form'] = form
 
         if form.is_valid():
             try:
-                print 'now starting to process the uploaded file for setting up Exams...'
+                print ('now starting to process the uploaded file for setting up Exams...')
                 fileToProcess_handle = request.FILES['excelFile']
 
                 # check that the file uploaded should be a valid excel
@@ -917,26 +921,26 @@ def setup_exam(request):
                 fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
                 sheet = fileToProcess.sheet_by_index(0)
                 if sheet:
-                    print 'Successfully got hold of sheet!'
+                    print ('Successfully got hold of sheet!')
                 for row in range(sheet.nrows):
                     if row == 0:
                         continue
-                    print 'Processing a new row'
+                    print ('Processing a new row')
 
                     exam_title = sheet.cell(row, 0).value
-                    print exam_title
+                    print (exam_title)
 
                     esd = sheet.cell(row, 1).value
                     exam_start_date = datetime.datetime(*xlrd.xldate_as_tuple(esd, fileToProcess.datemode))
-                    print exam_start_date
+                    print (exam_start_date)
 
                     eed = sheet.cell(row, 2).value
                     exam_end_date = datetime.datetime(*xlrd.xldate_as_tuple(eed, fileToProcess.datemode))
-                    print exam_end_date
+                    print (exam_end_date)
                     exam_start_class = sheet.cell(row, 3).value
-                    print exam_start_class
+                    print (exam_start_class)
                     exam_end_class = sheet.cell(row, 4).value
-                    print exam_end_class
+                    print (exam_end_class)
 
                     # Now we are ready to insert into db. But, we need to be sure that we are not trying
                     # to insert a duplicate
@@ -945,48 +949,47 @@ def setup_exam(request):
                         e = Exam.objects.get(title=exam_title, start_class=exam_start_class, end_class=exam_end_class)
 
                         if e:
-                            print 'Exam ' + exam_title + ' for ' + exam_start_class + ' and ' + exam_end_class \
-                                  + ' already set. This will be updated...'
+                            print ('Exam ' + exam_title + ' for ' + exam_start_class + ' and ' + exam_end_class \
+                                  + ' already set. This will be updated...')
                             e.start_date = exam_start_date
                             e.end_date = exam_end_date
                             try:
                                 e.save()
-                                print 'successfully updated Exam ' + exam_title
+                                print ('successfully updated Exam ' + exam_title)
                             except Exception as e:
-                                print 'unable to the update Exam ' + exam_title
-                                print 'Exception = %s (%s)' % (e.message, type(e))
+                                print ('unable to the update Exam ' + exam_title)
+                                print ('Exception = %s (%s)' % (e.message, type(e)))
 
                     except Exception as e:
-                        print 'Exception = %s (%s)' % (e.message, type(e))
-                        print 'Exam  ' + exam_title + ' for ' + exam_start_class + ' and ' + exam_end_class \
-                              + ' is not yet set. Setting it now...'
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exam  ' + exam_title + ' for ' + exam_start_class + ' and ' + exam_end_class \
+                              + ' is not yet set. Setting it now...')
                         try:
                             e = Exam(title=exam_title, start_date=exam_start_date, end_date=exam_end_date,
                                      start_class=exam_start_class, end_class=exam_end_class)
                             e.save()
-                            print 'successfully created Exam  ' + exam_title + ' with start date: ' \
+                            print ('successfully created Exam  ' + exam_title + ' with start date: ' \
                                   + str(exam_start_date) + ' and end date: ' + str(exam_end_date) + \
-                                  ' for ' + exam_start_class + ' and ' + exam_end_class
+                                  ' for ' + exam_start_class + ' and ' + exam_end_class)
                         except Exception as e:
-                            print 'unable to create exam ' + exam_title + ' with start date: ' \
+                            print ('unable to create exam ' + exam_title + ' with start date: ' \
                                   + str(exam_start_date) + ' and end date: ' + str(exam_end_date) + ' for ' + \
-                                  exam_start_class + ' and ' + exam_end_class
-                            print 'Exception = %s (%s)' % (e.message, type(e))
+                                  exam_start_class + ' and ' + exam_end_class)
+                            print ('Exception = %s (%s)' % (e.message, type(e)))
                             error = 'unable to create exam ' + exam_title + ' with start date: ' \
                                   + str(exam_start_date) + ' and end date: ' + str(exam_end_date) + ' for ' + \
                                   exam_start_class + ' and ' + exam_end_class
                             form.errors['__all__'] = form.error_class([error])
-                            print error
+                            print (error)
                             return render(request, 'classup/setup_data.html', context_dict)
 
                 # file upload and saving to db was successful. Hence go back to the main menu
                 return render(request, 'classup/setup_index.html', context_dict)
-                return HttpResponseRedirect(reverse('setup_index'))
             except Exception as e:
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('Exception = %s (%s)' % (e.message, type(e)))
                 error = 'Invalid file uploaded. Please try again.'
                 form.errors['__all__'] = form.error_class([error])
-                print error
+                print (error)
                 return render(request, 'classup/setup_data.html', context_dict)
     else:
         form = ExcelFileUploadForm()
