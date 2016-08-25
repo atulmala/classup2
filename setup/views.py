@@ -191,6 +191,7 @@ def setup_students(request):
                             message += ' Your user id is: ' + str(parent_mobile1) + ', and password is: ' + password
                             message += '. You can change your password after first login. '
                             message += 'In case of any problem please send an email to: info@classup.in'
+                            print(message)
 
                             sms.send_sms(parent_mobile1, message)
                     except Exception as e:
