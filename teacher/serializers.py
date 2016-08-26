@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from academics.models import TeacherSubjects
 
+
 class TeacherSubjectSerializer(serializers.ModelSerializer):
 
     subject = serializers.StringRelatedField()

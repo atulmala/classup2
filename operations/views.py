@@ -13,6 +13,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import ugettext
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect, StreamingHttpResponse
+from django.contrib import messages
 import mimetypes
 from django.core.urlresolvers import reverse
 from authentication.views import JSONResponse
@@ -449,7 +450,9 @@ def send_bulk_sms(request):
     context_dict = {
     }
     context_dict['header'] = 'Send Bulk SMS'
+    context_dict['user_type'] = 'school_admin'
     school_id = request.session['school_id']
+    school = School.objects.get(id=school_id)
 
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
@@ -457,8 +460,56 @@ def send_bulk_sms(request):
 
     if request.method == 'POST':
         form = BulkSMSForm(request.POST, school_id=school_id)
+        context_dict['form'] = form
+
+        message_body = request.POST['message_text']
+        if message_body == '':
+            error = 'Message is Empty'
+            form.errors['__all__'] = form.error_class([error])
+            print (error)
+            return render(request, 'classup/bulk_sms.html', context_dict)
+
+        selected_classes = request.POST.getlist('Class')
+        staff = request.POST.getlist('Staff')
+        print(staff)
+        if len(selected_classes) == 0 and len(staff) == 0:
+            error = 'You have not selected any Class, Teacher, or Staff'
+            form.errors['__all__'] = form.error_class([error])
+            print (error)
+            return render(request, 'classup/bulk_sms.html', context_dict)
+
+        for sc in selected_classes:
+            the_class = Class.objects.get(school=school, standard=sc)
+            print(the_class.standard)
+            student_list = Student.objects.filter(current_class=the_class)
+            for student in student_list:
+                print(student.fist_name + ' ' + student.last_name)
+                parent = student.parent
+                print(parent)
+                message = 'Dear Ms/Mr. ' + parent.parent_name + ', '
+                message += message_body + ' Regards, ' + school.school_name
+                print(message)
+                mobile = parent.parent_mobile1
+                print(mobile)
+                sms.send_sms(mobile, message)
+
+        if staff[0] == 'teacher':
+            for teacher in Teacher.objects.all():
+                teacher_name = teacher.first_name + ' ' + teacher.last_name
+                print(teacher_name)
+                message = 'Dear Ms/Mr. ' + teacher_name + ', '
+                message += message_body + ' Regards, ' + school.school_name
+                print(message)
+                teacher_mobile = teacher.mobile
+                print(teacher_mobile)
+                sms.send_sms(teacher_mobile, message)
+
+        context_dict['header'] = 'Operation Completed'
+        messages.success(request, 'Messages Sent!')
+        return render(request, 'classup/setup_index.html', context_dict)
 
     if request.method == 'GET':
+        print('getting the bulk sms form')
         form = BulkSMSForm(school_id=school_id)
         context_dict['form'] = form
 

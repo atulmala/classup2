@@ -963,8 +963,8 @@ def setup_exam(request):
 
                     except Exception as e:
                         print ('Exception = %s (%s)' % (e.message, type(e)))
-                        print ('Exam  ' + exam_title + ' for ' + exam_start_class + ' and ' + exam_end_class \
-                              + ' is not yet set. Setting it now...')
+                        print ('Exam  ' + exam_title + ' for ' + exam_start_class + ' and ' +
+                               exam_end_class + ' is not yet set. Setting it now...')
                         try:
                             e = Exam(school=school, title=exam_title, start_date=exam_start_date,
                                      end_date=exam_end_date, start_class=exam_start_class, end_class=exam_end_class)

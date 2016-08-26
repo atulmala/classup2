@@ -16,7 +16,19 @@
 
     <body>
         <div class="container-fluid">
+            {% if messages %}
+                <ul class="alert alert-success">
+                    {% for message in messages %}
+                    <li><strong>
+                        {% if message.tags %}
+                            {{ message }}
+                        {% endif %}
+                    </strong></li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
             {% block body_block %}
+
             {% endblock %}
         </div>
 
@@ -35,4 +47,7 @@
         </div>
 
     </body>
+
+
+
 </html>
