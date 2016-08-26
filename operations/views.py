@@ -493,16 +493,17 @@ def send_bulk_sms(request):
                 print(mobile)
                 sms.send_sms(mobile, message)
 
-        if staff[0] == 'teacher':
-            for teacher in Teacher.objects.all():
-                teacher_name = teacher.first_name + ' ' + teacher.last_name
-                print(teacher_name)
-                message = 'Dear Ms/Mr. ' + teacher_name + ', '
-                message += message_body + ' Regards, ' + school.school_name
-                print(message)
-                teacher_mobile = teacher.mobile
-                print(teacher_mobile)
-                sms.send_sms(teacher_mobile, message)
+        for st in staff:
+            if st == 'teacher':
+                for teacher in Teacher.objects.all():
+                    teacher_name = teacher.first_name + ' ' + teacher.last_name
+                    print(teacher_name)
+                    message = 'Dear Ms/Mr. ' + teacher_name + ', '
+                    message += message_body + ' Regards, ' + school.school_name
+                    print(message)
+                    teacher_mobile = teacher.mobile
+                    print(teacher_mobile)
+                    sms.send_sms(teacher_mobile, message)
 
         context_dict['header'] = 'Operation Completed'
         messages.success(request, 'Messages Sent!')
