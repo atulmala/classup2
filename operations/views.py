@@ -456,7 +456,7 @@ def send_bulk_sms(request):
 
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
-        return HttpResponseRedirect(reverse('setup_index'))
+        return render(request, 'classup/setup_index.html', context_dict)
 
     if request.method == 'POST':
         form = BulkSMSForm(request.POST, school_id=school_id)
