@@ -8,7 +8,7 @@ from teacher.models import Teacher
 
 
 class Bus_Rout(models.Model):
-    school = models.ForeignKey(School)
+    school = models.ForeignKey(School, null=True)
     bus_root = models.CharField(max_length=50)
 
     def __unicode__(self):

@@ -1,11 +1,11 @@
 import os
 import datetime
-import requests
 import xlrd
 
 from rest_framework import generics
 from django.views.decorators.csrf import csrf_exempt
 
+from django.contrib import messages
 from django.contrib.auth.models import User, Group
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
@@ -303,10 +303,10 @@ def setup_students(request):
                         print (error)
                         # todo - we should skip this student but report this and move on to the next student <provide code>
 
-
                 # file upload and saving to db was successful. Hence go back to the main menu
                 print ('reached here')
                 print (context_dict)
+                messages.success(request, 'Student Uploaded. Please login from device to verify')
                 return render(request, 'classup/setup_index.html', context_dict)
             except Exception as e:
                 print ('Exception = %s (%s)' % (e.message, type(e)))
@@ -390,6 +390,7 @@ def setup_classes(request):
                             return render(request, 'classup/setup_data.html', context_dict)
 
                 # file upload and saving to db was successful. Hence go back to the main menu
+                messages.success(request, 'Classes Uploaded. Please login from device to verify')
                 return render(request, 'classup/setup_index.html', context_dict)
             except Exception as e:
                 print('Exception = %s (%s)' % (e.message, type(e)))
@@ -465,6 +466,7 @@ def setup_sections(request):
                             print (error)
                             return render(request, 'classup/setup_data.html', context_dict)
                 # file upload and saving to db was successful. Hence go back to the main menu
+                messages.success(request, 'Section Uploaded. Please login from device to verify')
                 return render(request, 'classup/setup_index.html', context_dict)
             except Exception as e:
                 print ('Exception = %s (%s)' % (e.message, type(e)))
@@ -612,6 +614,7 @@ def setup_teachers(request):
                             continue
 
                 # file upload and saving to db was successful. Hence go back to the main menu
+                messages.success(request, 'Teacher Uploaded. Please login from device to verify')
                 return render(request, 'classup/setup_index.html', context_dict)
             except Exception as e:
                 print ('Exception = %s (%s)' % (e.message, type(e)))
@@ -690,6 +693,7 @@ def setup_subjects(request):
                         form.errors['__all__'] = form.error_class([error])
                         print (error)
                 # file upload and saving to db was successful. Hence go back to the main menu
+                messages.success(request, 'Subjects Uploaded. Please login from device to verify')
                 return render(request, 'classup/setup_index.html', context_dict)
             except Exception as e:
                 print ('Exception = %s (%s)' % (e.message, type(e)))
@@ -876,6 +880,7 @@ def setup_class_teacher(request):
                             return render(request, 'classup/setup_data.html', context_dict)
 
                 # file upload and saving to db was successful. Hence go back to the main menu
+                messages.success(request, 'Class Teachers Uploaded. Please login from device to verify')
                 return render(request, 'classup/setup_index.html', context_dict)
             except Exception as e:
                 print ('Exception = %s (%s)' % (e.message, type(e)))
@@ -985,6 +990,7 @@ def setup_exam(request):
                             return render(request, 'classup/setup_data.html', context_dict)
 
                 # file upload and saving to db was successful. Hence go back to the main menu
+                messages.success(request, 'Exams Uploaded. Please login from device to verify')
                 return render(request, 'classup/setup_index.html', context_dict)
             except Exception as e:
                 print ('Exception = %s (%s)' % (e.message, type(e)))

@@ -7,19 +7,21 @@ import xlrd
 from datetime import date
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
+from django.contrib import messages
 from rest_framework import generics
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from authentication.views import JSONResponse
 
-from .models import Bus_Rout, BusAttendanceTaken, Student_Rout, Attedance_Type, Bus_Attendance, BusStop
-from .serializers import BusRoutSerializer, BusAttendanceSerializer, BusStopSerializer
+from setup.models import School
 from student.models import Student
 from teacher.models import Teacher
 from setup.models import Configurations
 from student.serializers import StudentSerializer
 from setup.forms import ExcelFileUploadForm
+from .models import Bus_Rout, BusAttendanceTaken, Student_Rout, Attedance_Type, Bus_Attendance, BusStop
 
+from .serializers import BusRoutSerializer, BusAttendanceSerializer, BusStopSerializer
 from operations import sms
 
 
@@ -51,7 +53,6 @@ def setup_routs(request):
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return render(request, 'classup/setup_index.html', context_dict)
-        return HttpResponseRedirect(reverse('setup_index'))
 
     # now start processing the file upload
 
@@ -63,7 +64,10 @@ def setup_routs(request):
 
         if form.is_valid():
             try:
-                print 'now starting to process the uploaded file for setting up Bus Routs...'
+                # determine the school for which this processing is done
+                school_id = request.session['school_id']
+                school = School.objects.get(id=school_id)
+                print ('now starting to process the uploaded file for setting up Bus Routs...')
                 fileToProcess_handle = request.FILES['excelFile']
 
                 # check that the file uploaded should be a valid excel
@@ -74,45 +78,47 @@ def setup_routs(request):
                 # if this is a valid excel file - start processing it
                 fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
                 sheet = fileToProcess.sheet_by_index(0)
-                if (sheet):
-                    print 'Successfully got hold of sheet!'
+                if sheet:
+                    print ('Successfully got hold of sheet!')
 
                 for row in range(sheet.nrows):
                     # skip the header rows
-                    if (row == 0):
+                    if row == 0:
                         continue
 
-                    print 'Processing a new row'
+                    print ('Processing a new row')
                     bus_rout = sheet.cell(row, 0).value
-                    print bus_rout
+                    print (bus_rout)
 
                     # Now we are ready to insert into db. But, we need to be sure that we are not trying
                     # to insert a duplicate
                     try:
-                        c = Bus_Rout.objects.get(bus_root=bus_rout)
+                        c = Bus_Rout.objects.get(school=school, bus_root=bus_rout)
                         if c:
-                            print 'Bus Rout ' + bus_rout + ' already exist. Hence skipping...'
+                            print ('Bus Rout ' + bus_rout + ' for school '
+                                   + school.school_name + ' already exist. Hence skipping...')
                     except Exception as e:
-                        print 'Exception = %s (%s)' % (e.message, type(e))
-                        print 'Bus Rout ' + bus_rout + ' is a new rout. Hence inserting...'
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Bus Rout ' + bus_rout + ' is a new rout. Hence inserting...')
                         try:
-                            c = Bus_Rout(bus_root=bus_rout)
+                            c = Bus_Rout(school=school, bus_root=bus_rout)
                             c.save()
                         except Exception as e:
-                            print 'Exception = %s (%s)' % (e.message, type(e))
-                            error = 'Unable to save the Bus Rout ' + bus_rout + ' in table Bus_Rout'
+                            print ('Exception = %s (%s)' % (e.message, type(e)))
+                            error = 'Unable to save the Bus Rout ' + bus_rout + ' for school ' \
+                                    + school.school_name + ' in table Bus_Rout'
                             form.errors['__all__'] = form.error_class([error])
-                            print error
+                            print (error)
                             return render(request, 'classup/setup_data.html', context_dict)
 
                 # file upload and saving to db was successful. Hence go back to the main menu
+                messages.success(request, 'Bus Routs Uploaded. Please login from device to verify')
                 return render(request, 'classup/setup_index.html', context_dict)
-                return HttpResponseRedirect(reverse('setup_index'))
             except Exception as e:
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('Exception = %s (%s)' % (e.message, type(e)))
                 error = 'Invalid file uploaded. Please try again.'
                 form.errors['__all__'] = form.error_class([error])
-                print error
+                print (error)
                 return render(request, 'classup/setup_data.html', context_dict)
     else:
         # we are arriving at this page for the first time, hence show an empty form
@@ -128,7 +134,6 @@ def setup_bus_stops(request):
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return render(request, 'classup/setup_index.html', context_dict)
-        return HttpResponseRedirect(reverse('setup_index'))
 
     # now start processing the file upload
 
@@ -140,7 +145,10 @@ def setup_bus_stops(request):
 
         if form.is_valid():
             try:
-                print 'now starting to process the uploaded file for setting up Bus stops...'
+                # determine the school for which this processing is done
+                school_id = request.session['school_id']
+                school = School.objects.get(id=school_id)
+                print ('now starting to process the uploaded file for setting up Bus stops...')
                 fileToProcess_handle = request.FILES['excelFile']
 
                 # check that the file uploaded should be a valid excel
@@ -151,47 +159,50 @@ def setup_bus_stops(request):
                 # if this is a valid excel file - start processing it
                 fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
                 sheet = fileToProcess.sheet_by_index(0)
-                if (sheet):
-                    print 'Successfully got hold of sheet!'
+                if sheet:
+                    print ('Successfully got hold of sheet!')
 
                 for row in range(sheet.nrows):
                     # skip the header rows
-                    if (row == 0):
+                    if row == 0:
                         continue
 
-                    print 'Processing a new row'
+                    print ('Processing a new row')
                     stop_name = sheet.cell(row, 1).value
-                    print stop_name
+                    print (stop_name)
                     bus_rout = sheet.cell(row, 0).value
-                    br = Bus_Rout.objects.get(bus_root=bus_rout)
+                    br = Bus_Rout.objects.get(school=school, bus_root=bus_rout)
 
                     # Now we are ready to insert into db. But, we need to be sure that we are not trying
                     # to insert a duplicate
                     try:
                         c = BusStop.objects.get(stop_name=stop_name, bus_rout=br)
                         if c:
-                            print 'Bus Stop ' + stop_name + ' already exist. Hence skipping...'
+                            print ('Bus Stop ' + stop_name + ' on bus rout ' +
+                                   br.bus_root + ' already exist. Hence skipping...')
                     except Exception as e:
-                        print 'Exception = %s (%s)' % (e.message, type(e))
-                        print 'Bus Rout ' + stop_name + ' is a new stop. Hence inserting...'
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Bus stop  ' + stop_name + ' on rout ' +
+                               br.bus_root + ' is a new stop. Hence inserting...')
                         try:
                             c = BusStop(stop_name=stop_name, bus_rout=br)
                             c.save()
                         except Exception as e:
-                            print 'Exception = %s (%s)' % (e.message, type(e))
-                            error = 'Unable to save the Bus stop ' + stop_name + ' in table Bus_Rout'
+                            print ('Exception = %s (%s)' % (e.message, type(e)))
+                            error = 'Unable to save the Bus stop ' + stop_name + 'on rout ' +\
+                                    br.bus_root + ' in table Bus_Rout'
                             form.errors['__all__'] = form.error_class([error])
-                            print error
+                            print (error)
                             return render(request, 'classup/setup_data.html', context_dict)
 
                 # file upload and saving to db was successful. Hence go back to the main menu
+                messages.success(request, 'Bus Stops uploaded. Please login from mobile app to verify')
                 return render(request, 'classup/setup_index.html', context_dict)
-                return HttpResponseRedirect(reverse('setup_index'))
             except Exception as e:
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('Exception = %s (%s)' % (e.message, type(e)))
                 error = 'Invalid file uploaded. Please try again.'
                 form.errors['__all__'] = form.error_class([error])
-                print error
+                print (error)
                 return render(request, 'classup/setup_data.html', context_dict)
     else:
         # we are arriving at this page for the first time, hence show an empty form
@@ -208,7 +219,6 @@ def student_bus_rout(request):
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return render(request, 'classup/setup_index.html', context_dict)
-        return HttpResponseRedirect(reverse('setup_index'))
 
     # now start processing the file upload
 
@@ -221,7 +231,10 @@ def student_bus_rout(request):
 
         if form.is_valid():
             try:
-                print 'now starting to process the students bus rout mapping...'
+                # determine the school for which this processing is done
+                school_id = request.session['school_id']
+                school = School.objects.get(id=school_id)
+                print ('now starting to process the students bus rout mapping...')
                 file_to_process_handle = request.FILES['excelFile']
 
                 # check that the file uploaded should be a valid excel
@@ -233,12 +246,12 @@ def student_bus_rout(request):
                 file_to_process = xlrd.open_workbook(filename=None, file_contents=file_to_process_handle.read())
                 sheet = file_to_process.sheet_by_index(0)
                 if sheet:
-                    print 'Successfully got hold of sheet!'
+                    print ('Successfully got hold of sheet!')
                 for row in range(sheet.nrows):
                     # skip the header row
                     if row == 0:
                         continue
-                    print 'Processing a new row'
+                    print ('Processing a new row')
                     # first, capture student data
                     # we need to explicitly cast student id to string. Else update will not function properly
                     student_id = str(sheet.cell(row, 0).value)
@@ -250,13 +263,14 @@ def student_bus_rout(request):
                     # start assigning student to bus routs. Both bus_rout and student are foreign objects
 
                     try:
-                        the_rout = Bus_Rout.objects.get(bus_root=bus_rout)
+                        the_rout = Bus_Rout.objects.get(school=school, bus_root=bus_rout)
                     except Exception as e:
                         error = 'Unable to retrieve the Bus Rout: ' + bus_rout
-                        print 'Exception = %s (%s)' % (e.message, type(e))
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
                         form.errors['__all__'] = form.error_class([error])
-                        print error
-                        # todo - we should skip this student but report this and move on to the next student <provide code>
+                        print (error)
+                        # todo - we should skip this student but report
+                        # this and move on to the next student <provide code>
                         continue
 
                     try:
@@ -264,20 +278,20 @@ def student_bus_rout(request):
                     except Exception as e:
 
                         error = 'Unable to retrieve the Bus stop: ' + stop_name
-                        print 'Exception = %s (%s)' % (e.message, type(e))
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
                         form.errors['__all__'] = form.error_class([error])
-                        print error
+                        print (error)
                         # todo - we should skip this student but report this and move on to the next student <provide code>
                         continue
 
                     try:
                         the_student = Student.objects.get(student_erp_id=student_id)
                     except Exception as e:
-                        print 'Exception = %s (%s)' % (e.message, type(e))
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
                         error = 'Unable to retrieve the student: ' + student_id + ' ' + \
                                 student_first_name + ' ' + student_last_name
                         form.errors['__all__'] = form.error_class([error])
-                        print error
+                        print (error)
                         # todo - we should skip this student but report this and move on to the next student <provide code>
                         continue
 
@@ -285,47 +299,48 @@ def student_bus_rout(request):
                     try:
                         r = Student_Rout.objects.get(student=the_student)
                         if r:
-                            print 'Student with  ID: ' + student_id + \
-                                  ' & name: ' + student_first_name + ' already exist. This will be updated!'
+                            print ('Student with  ID: ' + student_id +
+                                   ' & name: ' + student_first_name + ' already exist. This will be updated!')
                             r.student = the_student
                             r.bus_root = the_rout
                             r.bus_stop = the_stop
                     except Exception as e:
-                        print 'Exception = %s (%s)' % (e.message, type(e))
-                        print 'Student with ID:  ' + student_id + ' Name: ' \
-                              + student_first_name + ' ' + student_last_name + ' is a new entry. Hence inserting...'
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Student with ID:  ' + student_id + ' Name: '
+                               + student_first_name + ' ' + student_last_name +
+                               ' is a new entry. Hence inserting...')
                         try:
                             r = Student_Rout(student=the_student, bus_root=the_rout, bus_stop=the_stop)
                             r.save()
-                            print 'saving successful!'
+                            print ('saving successful!')
 
                         except Exception as e:
                             error = 'Unable to create the new student-bus rout mapping in the database'
-                            print error
-                            print 'Exception = %s (%s)' % (e.message, type(e))
+                            print (error)
+                            print ('Exception = %s (%s)' % (e.message, type(e)))
                             form.errors['__all__'] = form.error_class([error])
                             # todo - we should skip this student but report this and move on to the next student <provide code>
                     try:
                         r.save()
-                        print 'updated Student with  ID: ' + student_id + \
-                                  ' & name: ' + student_first_name
+                        print ('updated Student with  ID: ' + student_id + ' & name: ' + student_first_name)
 
                     except Exception as e:
-                        print 'Exception = %s (%s)' % (e.message, type(e))
+                        print ('Exception = %s (%s)' % (e.message, type(e)))
                         error = 'Unable to save the bus rout mapping for Student with ID: ' + student_id + \
                                 ' Name: ' + student_first_name + ' ' + student_last_name + ' in Table Student_Rout'
                         form.errors['__all__'] = form.error_class([error])
-                        print error
+                        print (error)
                         # todo - we should skip this student but report this and move on to the next student <provide code>
 
                 # file upload and saving to db was successful. Hence go back to the main menu
+                messages.success(request, 'Bus Routs for ' + school.school_name +
+                                 ' uploaded. Please login from device to verify')
                 return render(request, 'classup/setup_index.html', context_dict)
-                return HttpResponseRedirect(reverse('setup_index'))
             except Exception as e:
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('Exception = %s (%s)' % (e.message, type(e)))
                 error = 'Invalid file uploaded. Please try again.'
                 form.errors['__all__'] = form.error_class([error])
-                print error
+                print (error)
                 return render(request, 'classup/setup_data.html', context_dict)
     else:
         form = ExcelFileUploadForm()
@@ -334,26 +349,23 @@ def student_bus_rout(request):
 
 
 class RoutList(generics.ListAPIView):
-    queryset = Bus_Rout.objects.all().order_by('bus_root')
-    serializer_class = BusRoutSerializer
-
-
-class StudentListForRout(generics.ListAPIView):
-    serializer_class = StudentSerializer
-
     def get_queryset(self):
-        bus_rout = self.kwargs['rout']
-        the_rout = Bus_Rout.objects.get(bus_root=bus_rout)
-        q = Student.objects.filter(student_rout__bus_root=the_rout).order_by('fist_name')
+        school_id = self.kwargs['school_id']
+        school = School.objects.get(id=school_id)
+        q = Bus_Rout.objects.filter(school=school).order_by('bus_root')
         return q
+
+    serializer_class = BusRoutSerializer
 
 
 class StudentListForRout1(generics.ListAPIView):
     serializer_class = StudentSerializer
 
     def get_queryset(self):
+        school_id = self.kwargs['school_id']
+        school = School.objects.get(id=school_id)
         bus_rout = self.kwargs['rout']
-        the_rout = Bus_Rout.objects.get(bus_root=bus_rout)
+        the_rout = Bus_Rout.objects.get(school=school, bus_root=bus_rout)
         bus_stop = self.kwargs['bus_stop']
         the_stop = BusStop.objects.get(stop_name=bus_stop, bus_rout=the_rout)
         q = Student.objects.filter(student_rout__bus_root=the_rout,
@@ -365,21 +377,24 @@ class StopListForRout(generics.ListAPIView):
     serializer_class = BusStopSerializer
 
     def get_queryset(self):
+        school_id = self.kwargs['school_id']
+        school = School.objects.get(id=school_id)
         bus_rout = self.kwargs['rout']
-        the_rout = Bus_Rout.objects.get(bus_root=bus_rout)
+        the_rout = Bus_Rout.objects.get(school=school, bus_root=bus_rout)
         q = BusStop.objects.filter(bus_rout=the_rout).order_by('stop_name')
         return q
 
 
 # this function is to verify whether an attendance on a bus rout for a particular date was taken earlier or not?
-def attendance_taken_earlier(request, rout, d, m, y):
+def attendance_taken_earlier(request, school_id, rout, d, m, y):
     if request.method == 'GET':
         return_data = {
 
         }
         the_date = date(int(y), int(m), int(d))
         try:
-            r = Bus_Rout.objects.get(bus_root=rout)
+            school = School.objects.get(id=school_id)
+            r = Bus_Rout.objects.get(school=school, bus_root=rout)
 
             q = BusAttendanceTaken.objects.filter(date=the_date, rout=r)
             if 0 == q.count():
@@ -388,16 +403,17 @@ def attendance_taken_earlier(request, rout, d, m, y):
                 return_data['taken_earlier'] = True
             return JSONResponse(return_data, status=200)
         except Exception as e:
-            print 'unable to check whether bus attendance was taken on ' + rout + ' on ' + str(the_date)
-            print 'Exception = %s (%s)' % (e.message, type(e))
+            print ('unable to check whether bus attendance was taken on ' + rout + ' on ' + str(the_date))
+            print ('Exception = %s (%s)' % (e.message, type(e)))
     return JSONResponse(return_data, status=201)
 
 
 @csrf_exempt
-def bus_attendance_taken(request, rout, t, d, m, y, teacher):
+def bus_attendance_taken(request, school_id, rout, t, d, m, y, teacher):
     if request.method == 'POST':
         # all of the above except date are foreign key in Attendance model. Hence we need to get the actual object
-        r = Bus_Rout.objects.get(bus_root=rout)
+        school = School.objects.get(id=school_id)
+        r = Bus_Rout.objects.get(school=school, bus_root=rout)
         attendance_type = Attedance_Type.objects.get(route_type=t)
 
         the_date = date(int(y), int(m), int(d))
@@ -413,7 +429,7 @@ def bus_attendance_taken(request, rout, t, d, m, y, teacher):
 
                 a.save()
         except Exception as e:
-            print 'Exception = %s (%s)' % (e.message, type(e))
+            print ('Exception = %s (%s)' % (e.message, type(e)))
 
     return HttpResponse('OK')
 
@@ -422,6 +438,8 @@ class BusAttendanceList(generics.ListCreateAPIView):
     serializer_class = BusAttendanceSerializer
 
     def get_queryset(self):
+        school_id = self.kwargs['school_id']
+        school = School.objects.get(id=school_id)
         the_rout = self.kwargs['rout']
         rout_type = self.kwargs['type']
         d = self.kwargs['d']
@@ -429,29 +447,29 @@ class BusAttendanceList(generics.ListCreateAPIView):
         y = self.kwargs['y']
 
         # all of the above except date are foreign key in Attendance model. Hence we need to get the actual object
-        r = Bus_Rout.objects.get(bus_root=the_rout)
+        r = Bus_Rout.objects.get(school=school, bus_root=the_rout)
         t1 = Attedance_Type.objects.get(route_type='to_school')
-        print t1
+        print (t1)
         t2 = Attedance_Type.objects.get(route_type='from_school')
-        print t2
+        print (t2)
 
         q1 = Bus_Attendance.objects.filter(date=date(int(y), int(m), int(d)), bus_rout=r, attendance_type=t1)
         q2 = Bus_Attendance.objects.filter(date=date(int(y), int(m), int(d)), bus_rout=r, attendance_type=t2)
 
         te = BusAttendanceTaken.objects.filter(date=date(int(y), int(m), int(d)), rout=r, type=t2)
-        print 'te count='
-        print te.count()
+        print ('te count=')
+        print (te.count())
         if rout_type == 'from_school':
             if te.count() > 0:
-                print 'A'
-                print q2
+                print ('A')
+                print (q2)
                 return q2
 
             else:
-                print 'B'
+                print ('B')
                 return q1
         else:
-            print 'C'
+            print ('C')
             return q1
 
 
@@ -468,8 +486,8 @@ def delete_bus_attendance(request, student, att_type, d, m, y):
             if q.count() > 0:
                 q.delete()
         except Exception as e:
-            print 'unable to delete the bus attendance for ' + student.fist_name + ' ' + student.last_name
-            print 'Exception = %s (%s)' % (e.message, type(e))
+            print ('unable to delete the bus attendance for ' + student.fist_name + ' ' + student.last_name)
+            print ('Exception = %s (%s)' % (e.message, type(e)))
 
     return HttpResponse('OK')
 
@@ -483,8 +501,8 @@ def delete_bus_attendance1(request, att_type, d, m, y):
         the_date = date(int(y), int(m), int(d))
 
         data = json.loads(request.body)
-        print 'attendance correction data='
-        print data
+        print ('attendance correction data=')
+        print (data)
         for key in data:
             st = data[key]
             # check whether the absence for this student for this date has been already marked or not
@@ -495,40 +513,11 @@ def delete_bus_attendance1(request, att_type, d, m, y):
                 if q.count() > 0:
                     q.delete()
             except Exception as e:
-                print 'unable to delete the bus attendance for ' + student.fist_name + ' ' + student.last_name
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('unable to delete the bus attendance for ' + student.fist_name + ' ' + student.last_name)
+                print ('Exception = %s (%s)' % (e.message, type(e)))
         response_data['status'] = 'success'
 
     return JSONResponse(response_data, status=200)
-
-
-@csrf_exempt
-def process_bus_attendance(request, student, att_type, d, m, y, teacher):
-    if request.method == 'POST':
-        the_date = date(int(y), int(m), int(d))
-        try:
-            st = Student.objects.get(id=student)
-            attendance_type = Attedance_Type.objects.get(route_type=att_type)
-            sr = Student_Rout.objects.get(student=st)
-            bus_rout = sr.bus_root
-        except Exception as e:
-            print 'unable to retrieve necessary value for the bus attendance for ' + st.fist_name + ' ' + st.last_name
-            print 'Exception = %s (%s)' % (e.message, type(e))
-        # check whether the attendance for this student for this date has been already marked or not
-        try:
-            q = Bus_Attendance.objects.filter(date=the_date,
-                                           student=st, bus_rout=bus_rout, attendance_type=attendance_type)
-            if q.count() == 0:
-                bus_attendance = Bus_Attendance(date=the_date, student=st, bus_rout=bus_rout,
-                                                taken_by=Teacher.objects.get(email=teacher),
-                                                attendance_type=attendance_type)
-                bus_attendance.save()
-        except Exception as e:
-            print 'unable to save the bus attendance for ' + st.fist_name + ' ' + st.last_name + \
-                  ' for rout ' + bus_rout.bus_root + ' ' + attendance_type.rout_type + 'on date ' + str(the_date)
-            print 'Exception = %s (%s)' % (e.message, type(e))
-
-    return HttpResponse('OK')
 
 
 @csrf_exempt
@@ -542,11 +531,11 @@ def process_bus_attendance1(request, att_type, d, m, y, teacher):
             attendance_type = Attedance_Type.objects.get(route_type=att_type)
 
         except Exception as e:
-            print 'unable to retrieve attendance type for ' + att_type
-            print 'Exception = %s (%s)' % (e.message, type(e))
+            print ('unable to retrieve attendance type for ' + att_type)
+            print ('Exception = %s (%s)' % (e.message, type(e)))
         data = json.loads(request.body)
-        print 'attendance processing data'
-        print data
+        print ('attendance processing data')
+        print (data)
         for key in data:
             student = data[key]
             try:
@@ -563,9 +552,10 @@ def process_bus_attendance1(request, att_type, d, m, y, teacher):
                                                     attendance_type=attendance_type)
                     bus_attendance.save()
             except Exception as e:
-                print 'unable to save the bus attendance for ' + st.fist_name + ' ' + st.last_name + \
-                  ' for rout ' + bus_rout.bus_root + ' ' + attendance_type.rout_type + 'on date ' + str(the_date)
-                print 'Exception = %s (%s)' % (e.message, type(e))
+                print ('unable to save the bus attendance for ' + st.fist_name + ' ' + st.last_name +
+                       ' for rout ' + bus_rout.bus_root + ' ' + attendance_type.rout_type
+                       + 'on date ' + str(the_date))
+                print ('Exception = %s (%s)' % (e.message, type(e)))
                 response_data['status'] = 'failure'
             response_data['status'] = 'success'
 
@@ -582,17 +572,19 @@ def report_delay(request):
         d = data['date']
         m = data['month']
         y = data['year']
+        school_id = data['school_id']
         rout = data['rout']
         teacher = data['teacher']
         message = data['message']
         the_date = date(int(y), int(m), int(d))
 
         try:
-            r = Bus_Rout.objects.get(bus_root=rout)
+            school = School.objects.get(id=school_id)
+            r = Bus_Rout.objects.get(school=school_id, bus_root=rout)
             teacher = Teacher.objects.get(email=teacher)
             student_rout = Student_Rout.objects.filter(bus_root=r)
-            configuration = Configurations.objects.get(pk=1)
-            school_name = configuration.school_name
+
+            school_name = school.school_name
             for sr in student_rout:
                 parent = sr.student.parent
                 m1 = parent.parent_mobile1
@@ -605,8 +597,8 @@ def report_delay(request):
                 if m2 != '':
                     sms.send_sms(m2, full_message)
 
-                print full_message
+                print (full_message)
         except Exception as e:
-            print 'unable to send bus delay message'
-            print 'Exception = %s (%s)' % (e.message, type(e))
+            print ('unable to send bus delay message')
+            print ('Exception = %s (%s)' % (e.message, type(e)))
     return JSONResponse(response, status=200)
