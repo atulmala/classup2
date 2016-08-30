@@ -7,6 +7,6 @@ from .models import *
 
 class TeacherAdmin(admin.ModelAdmin):
     search_fields = ['first_name', 'last_name']
-    list_display = ['first_name', 'last_name', 'teacher_erp_id', 'school']
+    list_display = ['first_name', 'last_name', 'teacher_erp_id', 'email', 'school']
 
 admin.site.register(Teacher, TeacherAdmin)
