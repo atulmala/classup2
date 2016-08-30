@@ -205,7 +205,6 @@ def att_summary_school(request):
             summary_sheet.write_number(row, 5, a_total, summary_row)
             summary_sheet.write_number(row, 6, grand_present_perc, grand_perc_format)
 
-
         workbook.close()
 
         response = HttpResponse(content_type='application/vnd.ms-excel')
@@ -1063,8 +1062,7 @@ def download_android(request):
     filename = os.path.basename(the_file)
 
     chunk_size = 8192
-    response = StreamingHttpResponse(FileWrapper(open(the_file), chunk_size),
-                           content_type='file')
+    response = StreamingHttpResponse(FileWrapper(open(the_file), chunk_size), content_type='file')
     response['Content-Length'] = os.path.getsize(the_file)
     response['Content-Disposition'] = "attachment; filename=%s" % filename
     return response
@@ -1075,7 +1073,7 @@ def download_ios(request):
     filename = os.path.basename(the_file)
     chunk_size = 8192
     response = StreamingHttpResponse(FileWrapper(open(the_file), chunk_size),
-                           content_type=mimetypes.guess_type(the_file)[0])
+                                     content_type=mimetypes.guess_type(the_file)[0])
     response['Content-Length'] = os.path.getsize(the_file)
     response['Content-Disposition'] = "attachment; filename=%s" % filename
     return response

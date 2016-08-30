@@ -30,7 +30,7 @@ urlpatterns = [
 
     url(r'^submit_marks/(?P<school_id>\w+)/$', views.submit_marks, name='submit_marks'),
 
-    url(r'get_working_days/', views.get_working_days, name='get_working_days'),
+
 
     url(r'get_working_days1/', views.get_working_days1, name='get_working_days1'),
 

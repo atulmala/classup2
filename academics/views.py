@@ -66,7 +66,8 @@ class ExamList(generics.ListCreateAPIView):
         student = Student.objects.get(id=student_id)
         the_class = student.current_class
         class_sequence = the_class.sequence
-        q = Exam.objects.filter(start_class_sequence__lte=class_sequence, end_class_sequence__gte=class_sequence)
+        q = Exam.objects.filter(start_class_sequence__lte=class_sequence,
+                                end_class_sequence__gte=class_sequence)
         return q.order_by('start_date')
 
 
@@ -344,9 +345,7 @@ def submit_marks(request, school_id):
             print (student)
 
             try:
-
                 sub = test.subject
-
                 message = 'Dear Ms/Mr ' + student.parent.parent_name + ', your ward ' + student.fist_name + \
                           ' ' + student.last_name + ' '
 
@@ -437,91 +436,6 @@ def submit_marks(request, school_id):
         response["status"] = "success"
         return JSONResponse(response, status=200)
 
-
-@csrf_exempt
-def get_working_days(request):
-    print ('I am being executed the old get_working_days')
-    print ('request for calculating working days started at=')
-    print (datetime.datetime.now())
-    month_dict = {
-        'Jan': 1,
-        'Feb': 2,
-        'Mar': 3,
-        'Apr': 4,
-        'May': 5,
-        'Jun': 6,
-        'Jul': 7,
-        'Aug': 8,
-        'Sep': 9,
-        'Oct': 10,
-        'Nov': 11,
-        'Dec': 12
-    }
-
-    response = {
-    }
-    c = Configurations.objects.get(pk=1)
-    session_start_month = c.session_start_month
-
-    if request.method == 'GET':
-
-        y = request.GET.get('year')
-        m = request.GET.get('month')
-        print ('while caculating workig days, year from request=' + y)
-
-        if y != 'till_date':
-            try:
-                total_days = WorkingDays.objects.get(year=y, month=month_dict[m])
-                print ('days in ' + str(month_dict[m]) + '/' + str(y) + '=' + str(total_days.working_days))
-                response['working_days'] = total_days.working_days
-                return JSONResponse(response, status=200)
-            except Exception as e:
-                print ('unable to fetch the number of days for ' + str(m) + '/' + str(y))
-                print ('Exception = %s (%s)' % (e.message, type(e)))
-                return JSONResponse('Failed', status=404)
-        else:
-            # logic: if current month is less than session_start_month,
-            # this means that the session started last year. So we need to add the working day for each month from
-            # session start month till dec for last year and jan till current-1  month for current year.
-            now = datetime.datetime.now()
-            days_till_last_month = 0
-            if now.month < session_start_month:
-                for m in range(session_start_month,
-                               12 + 1):  # 12+1, because loop executes for 1 time less than max index
-                    try:
-                        total_days = WorkingDays.objects.get(year=now.year - 1, month=m)
-                        print ('days in ' + str(m) + '/' + str(now.year - 1) + '=' + str(total_days.working_days))
-                        days_till_last_month += total_days.working_days
-                    except Exception as e:
-                        print ('unable to fetch the number of days for ' + str(m) + '/' + str(now.year - 1))
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
-                        return JSONResponse('Failed', status=404)
-                for m in range(1, now.month):
-                    try:
-                        total_days = WorkingDays.objects.get(year=now.year, month=m)
-                        print ('days in ' + str(m) + '/' + str(now.year) + '=' + str(total_days.working_days))
-                        days_till_last_month += total_days.working_days
-                    except Exception as e:
-                        print ('unable to fetch the number of days for ' + str(m) + '/' + str(now.year))
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
-                        return JSONResponse('Failed', status=404)
-            # if current month is higher than the session_start_month then we need to add the working days
-            # session start month till current-1 month
-            else:
-                for m in range(session_start_month, now.month):
-                    try:
-                        total_days = WorkingDays.objects.get(year=now.year, month=m)
-                        print ('days in ' + str(m) + '/' + str(now.year) + '=' + str(total_days.working_days))
-                        days_till_last_month += total_days.working_days
-                    except Exception as e:
-                        print ('unable to fetch the number of days for ' + str(m) + '/' + str(now.year))
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
-                        return JSONResponse('Failed', status=404)
-            response['working_days'] = days_till_last_month
-            return JSONResponse(response, status=200)
-    print ('request for calculating working days finished at=')
-    print (datetime.datetime.now())
-    return HttpResponse('OK')
 
 
 @csrf_exempt
@@ -654,7 +568,6 @@ def get_attendance_summary(request):
         'Nov': 11,
         'Dec': 12
     }
-
 
     dict_attendance_summary = {
 

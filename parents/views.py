@@ -110,7 +110,7 @@ def retrieve_stu_att_summary(request):
     the_class = student.current_class
     section = student.current_section
 
-    # 22/08/2016 logic - Coaching classes and Colleges prefer to condcuct attendance subject wise and hence
+    # 22/08/2016 logic - Coaching classes and Colleges prefer to conduct attendance subject wise and hence
     # Main subject may not exist for them. In this case we will be presenting the aggregate of attendance for all
     # the subjects. This will be done by first checking the existence of subject Main. If it is present the
     # calculations are based on attendance in Main subjects, else aggregate of all subjects
@@ -272,7 +272,7 @@ def retrieve_student_subjects(request):
                 response_array.append(d)
             return JSONResponse(response_array, status=200)
         except Exception as e:
-            print ('unable to retrieve list of sbujects for ' + s.fist_name + ' ' + s.last_name)
+            print ('unable to retrieve list of subjects for ' + s.fist_name + ' ' + s.last_name)
             print ('Exception = %s (%s)' % (e.message, type(e)))
     return JSONResponse(response_array, status=201)
 
