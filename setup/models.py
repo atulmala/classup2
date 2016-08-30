@@ -49,7 +49,7 @@ class Configurations(models.Model):
     app_store_link = models.CharField(max_length=100, default='http://onelink.to/ajfj3j', null=True)
 
     def __unicode__(self):
-        return str(self.school.id) + ', ' + self.school.school_name
+        return self.school.school_name
 
 
 class UserSchoolMapping(models.Model):

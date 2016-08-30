@@ -172,14 +172,13 @@ def setup_students(request):
                         print ('Unable to create user for ' + parent_name)
                         # todo implement the code to send password to the user through an sms and email
 
-                    # create an entry for this parent in ClassUpRouter
                     try:
                         conf = Configurations.objects.get(school=school)
                         if whether_new_user:
                             android_link = conf.google_play_link
                             iOS_link = conf.app_store_link
 
-                            # send login id and password to teacher via sms
+                            # send login id and password to parent via sms
                             message = 'Dear Ms/Mr ' + parent_name + ', thanks for registering at ' \
                                                                     'ClassUp(TM) mobile app. '
                             message += "Now you can track your child's progress at " + school.school_name + ' '

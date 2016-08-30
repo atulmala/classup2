@@ -5,6 +5,7 @@ from .models import *
 
 
 class SchoolAdmin(admin.ModelAdmin):
+    list_display = ['id', 'school_name', 'school_address',]
     pass
 
 admin.site.register(School, SchoolAdmin)
