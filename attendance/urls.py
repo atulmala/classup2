@@ -18,9 +18,7 @@ urlpatterns = patterns('',
             r'(?P<d>\w+)/(?P<m>\w+)/(?P<y>\w+)/(?P<teacher>[\w.@+-]+)/$',
             views.process_attendance1, name='process_attendance1'),
 
-        url(r'^delete/(?P<the_class>[\w.@+-]+)/(?P<section>[\w.@+-]+)/(?P<subject>[\w\ ]+)/'
-            r'(?P<d>\w+)/(?P<m>\w+)/(?P<y>\w+)/(?P<id>\w+)/$',
-            views.delete_attendance, name='delete_attendance'),
+
 
         url(r'^delete2/(?P<school_id>\w+)/(?P<the_class>[\w.@+-]+)/(?P<section>[\w.@+-]+)/(?P<subject>[\w\ ]+)/'
             r'(?P<d>\w+)/(?P<m>\w+)/(?P<y>\w+)/$',

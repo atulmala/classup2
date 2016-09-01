@@ -11,8 +11,6 @@ class StudentAdmin(admin.ModelAdmin):
     get_parent_name.short_description = 'Parent'
 
     def get_school_name(self, obj):
-
-
         return obj.school
     get_school_name.short_description = 'School'
 

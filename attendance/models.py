@@ -7,7 +7,6 @@ from academics.models import Class, Section, Subject, Teacher
 
 
 class Attendance(models.Model):
-    # school = models.ForeignKey(School)
     date = models.DateField()
     the_class = models.ForeignKey(Class)    # the name of field is the_class because class may be reserved word
     section = models.ForeignKey(Section)
@@ -17,7 +16,6 @@ class Attendance(models.Model):
 
 
 class AttendanceTaken(models.Model):
-    # school = models.ForeignKey(School)
     date = models.DateField()
     the_class = models.ForeignKey(Class)
     section = models.ForeignKey(Section)

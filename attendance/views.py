@@ -348,35 +348,4 @@ def delete_attendance2(request, school_id, the_class, section, subject, d, m, y)
         return JSONResponse(response_data, status=200)
 
 
-# we need to exempt this view from csrf verification. Will be updated in next version when
-# we will implement authentication
-@csrf_exempt
-def delete_attendance(request, the_class, section, subject, d, m, y, id):
-    if request.method == 'POST':
-        # all of the above except date are foreign key in Attendance model. Hence we need to get the actual object
-        c = Class.objects.get(standard=the_class)
-        print c
-        s = Section.objects.get(section=section)
-        print s
-        sub = Subject.objects.get(subject_name=subject)
-        print sub
-        student = Student.objects.get(id=id)
-        print student
-        the_date = date(int(y), int(m), int(d))
-        print the_date
 
-        # check to see if absence for this student for this date, class, section and subject has already been marked
-        try:
-            q = Attendance.objects.filter(date=the_date, the_class=c,
-                           section=s, subject=sub, student=student)
-            print q.count()
-            # make an entry to database only it is a fresh entry
-            if q.count() > 0:
-                q.delete()
-
-        except Exception as e:
-            print 'Exception = %s (%s)' % (e.message, type(e))
-
-    # this view is being called from mobile. We use dummy template so that we dont' run into exception
-    # return render(request, 'classup/dummy.html')
-    return HttpResponse('OK')

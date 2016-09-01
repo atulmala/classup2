@@ -40,12 +40,12 @@ class StudentListForTest(generics.ListCreateAPIView):
         query_set = ClassTest.objects.filter(pk=test_id)[:1]
         for q in query_set:
             the_class = q.the_class
-            print 'class='
-            print the_class
+            print ('class=')
+            print (the_class)
 
             section = q.section
-            print 'section='
-            print section
+            print ('section=')
+            print (section)
 
         q1 = Student.objects.filter(current_section__section=section,
                                     current_class__standard=the_class, active_status=True)

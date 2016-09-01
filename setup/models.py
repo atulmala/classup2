@@ -9,6 +9,7 @@ from django.contrib.auth.models import User
 class School(models.Model):
     school_name = models.CharField(max_length=200)
     school_address = models.CharField(max_length=200, blank=True)
+    subscription_active = models.BooleanField(default=True)
 
     def __unicode__(self):
         return str(self.school_name)

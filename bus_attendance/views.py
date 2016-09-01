@@ -9,14 +9,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.contrib import messages
 from rest_framework import generics
-from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
 from authentication.views import JSONResponse
 
 from setup.models import School
 from student.models import Student
 from teacher.models import Teacher
-from setup.models import Configurations
 from student.serializers import StudentSerializer
 from setup.forms import ExcelFileUploadForm
 from .models import Bus_Rout, BusAttendanceTaken, Student_Rout, Attedance_Type, Bus_Attendance, BusStop
@@ -471,25 +468,6 @@ class BusAttendanceList(generics.ListCreateAPIView):
         else:
             print ('C')
             return q1
-
-
-@csrf_exempt
-def delete_bus_attendance(request, student, att_type, d, m, y):
-    if request.method == 'POST':
-        the_date = date(int(y), int(m), int(d))
-        student = Student.objects.get(id=student)
-        attendance_type = Attedance_Type.objects.get(route_type=att_type)
-
-        # check whether the absence for this student for this date has been already marked or not
-        try:
-            q = Bus_Attendance.objects.filter(date=the_date, student=student, attendance_type=attendance_type)
-            if q.count() > 0:
-                q.delete()
-        except Exception as e:
-            print ('unable to delete the bus attendance for ' + student.fist_name + ' ' + student.last_name)
-            print ('Exception = %s (%s)' % (e.message, type(e)))
-
-    return HttpResponse('OK')
 
 
 @csrf_exempt

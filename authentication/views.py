@@ -10,6 +10,7 @@ from rest_framework.renderers import JSONRenderer
 
 from setup.models import UserSchoolMapping
 from teacher.models import Teacher
+from student.models import Student
 from operations import sms
 
 from .forms import ClassUpLoginForm
@@ -84,49 +85,13 @@ class JSONResponse(HttpResponse):
         super(JSONResponse, self).__init__(content, **kwargs)
 
 
-def auth_login_from_device(request, user_name, password):
-    print ('Inside login from device view!')
-    return_data = {
-
-    }
-    user = authenticate(username=user_name, password=password)
-    if user is not None:
-        if user.is_active:
-            login(request, user)
-            return_data["login"] = "successful"
-            return_data["user_status"] = "active"
-            return_data['user_name'] = user.first_name + ' ' + user.last_name
-            try:
-                u = UserSchoolMapping.objects.get(user=user)
-                school_id = u.school.id
-                request.session['school_id'] = school_id
-                return_data['school_id'] = school_id
-                print ('school_id=' + str(school_id))
-            except Exception as e:
-                print ('unable to retrieve school_id for ' + user.username)
-
-            if user.is_staff:
-                return_data['is_staff'] = "true"
-            else:
-                return_data['is_staff'] = "false"
-            return JSONResponse(return_data, status=200)
-        else:
-            return_data["login"] = "successful"
-            return_data["user_status"] = "inactive"
-            print (return_data)
-            return JSONResponse(return_data, status=403)
-    else:
-        return_data["login"] = "failed"
-        print (return_data)
-        return JSONResponse(return_data, status=404)
-
-
 @csrf_exempt
 def auth_login_from_device1(request):
     print ('Inside login from device view!')
     return_data = {
 
     }
+    return_data['subscription'] = 'na'
     if request.method == 'POST':
         data = json.loads(request.body)
         the_user = data['user']
@@ -144,11 +109,18 @@ def auth_login_from_device1(request):
                     try:
                         u = UserSchoolMapping.objects.get(user=user)
                         school_id = u.school.id
+
+                        # check whether the subscription of this school is active or not
+                        if u.school.subscription_active:
+                            return_data['subscription'] = 'active'
+                        else:
+                            return_data['subscription'] = 'expired'
+
                         request.session['school_id'] = school_id
                         return_data['school_id'] = school_id
                         print ('school_id=' + str(school_id))
                     except Exception as e:
-                        print ('unable to retrieve schoo_id for ' + user.username)
+                        print ('unable to retrieve school_id for ' + user.username)
                 else:
                     return_data['is_staff'] = "false"
                 return JSONResponse(return_data, status=200)
@@ -245,3 +217,26 @@ def logout_view(request):
     except KeyError:
         pass
     logout(request)
+
+
+def check_subscription(request, student_id):
+    return_data = {
+
+    }
+    if request.method == 'GET':
+        try:
+            student = Student.objects.get(id=student_id)
+            school = student.school
+            if school.subscription_active:
+                return_data['subscription'] = 'active'
+            else:
+                return_data['subscription'] = 'expired'
+                error_message = 'Subscription of ' + school.school_name + ' has expired. '
+                error_message += 'Please request the school/institute to renew the subscription with ClassUp.'
+                return_data['error_message'] = error_message
+            return JSONResponse(return_data, status=200)
+        except Exception as e:
+            print('unable to retrieve subscription status for  ' + school.school_name)
+            print('Exception = %s (%s)' % (e.message, type(e)))
+            return JSONResponse(return_data, status=400)
+    return JSONResponse(return_data, status=200)
