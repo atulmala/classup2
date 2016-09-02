@@ -17,6 +17,8 @@ class StudentAdmin(admin.ModelAdmin):
     search_fields = ['fist_name', 'last_name']
     list_display = ('fist_name', 'last_name', 'school',
                     'current_class', 'current_section', 'get_parent_name',)
+    list_filter = ('school',)
+
 
 admin.site.register(Student, StudentAdmin)
 

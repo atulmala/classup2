@@ -39,9 +39,19 @@ def auth_login(request):
                 login(request, user)
                 try:
                     u = UserSchoolMapping.objects.get(user=user)
-                    school_id = u.school.id
-                    request.session['school_id'] = school_id
-                    print ('school_id=' + str(school_id))
+                    school = u.school
+                    request.session['school_name'] = school.school_name
+                    context_dict['school_name'] = school.school_name
+                    if school.subscription_active:
+                        school_id = u.school.id
+                        request.session['school_id'] = school_id
+                        print ('school_id=' + str(school_id))
+                    else:
+                        error = school.school_name + "'s subscription has expired. "
+                        error += 'Please contact ClassUp support at info@classup.in for renewal'
+                        print(error)
+                        login_form.errors['__all__'] = login_form.error_class([error])
+                        return render(request, 'classup/auth_login.html', context_dict)
                 except Exception as e:
                     print ('unable to retrieve schoo_id for ' + user.username)
                 if user.groups.filter(name='school_admin').exists():
@@ -50,7 +60,7 @@ def auth_login(request):
                 return render(request, 'classup/setup_index.html', context_dict)
                 # return HttpResponseRedirect(reverse('setup_index'), context_dict)
             else:
-                error = 'User: '+ user_name +' is disabled. Please contact your administrator'
+                error = 'User: ' + user_name + ' is disabled. Please contact your administrator'
                 login_form.errors['__all__'] = login_form.error_class([error])
                 print (error)
                 return render(request, 'classup/auth_login.html', context_dict)

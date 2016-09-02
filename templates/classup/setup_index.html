@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block body_block %}
-
+    {{ school_name }}
     {% if user_type == 'school_admin' %}
         <h1>ClassUp Setup Menu</h1>
         <a href="/operations/send_bulk_sms/">Send Bulk SMS</a><br/><p/>
