@@ -104,7 +104,6 @@ class Exam(models.Model):
 
 
 class TeacherSubjects(models.Model):
-    #school = models.ForeignKey(School)
     teacher = models.ForeignKey(Teacher)
     subject = models.ForeignKey(Subject)
 

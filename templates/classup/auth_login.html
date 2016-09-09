@@ -45,30 +45,45 @@
         {{ form.non_field_errors }}
       {% endif %}
     </div>
-  {% endif %}
+{% endif %}
 
-<div class="container">
-    <form role="form" method="post" action="/auth/login/">
-    {% csrf_token %}
-        <table>
-        <p></p>
-        <tr>
-            <div class="form-group">
-                <td>{{ form.username.label_tag }}</td>
-                <td>{{ form.username }}</td>
-            </div>
-        </tr>
-        <tr>
-            <div class="form-group">
-                <td>{{ form.password.label_tag }}</td>
-                <td>{{ form.password }}</td>
-            </div>
-        </tr>
-        </table>
+<div class="login-box-body">
+    <div class="row">
+        <div class="col-md-5 col-md-offset-4">
+            <div class="login-panel panel panel-default">
+                <div class="panel-heading">
+                    <h4 class="panel-title">Welcome to ClassUp. Please Login</h4>
+                </div>
+                <div class="panel-body">
+                    <form method="post" action="/auth/login/">
+                        <div class="modal-header" align="center">
+                            <img src="{{MEDIA_URL}}/class_up_logo.png" class="img-responsive" alt="" />
+                        </div>
+                        <div class="col-xs-12" style="height:5px;"></div>
+                        {% csrf_token %}
+                        <p class="bs-component">
 
-    <input class="btn-primary" type="submit" value="login" />
-    <input type="hidden" name="next" value="{{ next }}" />
-    </form>
+                            <tr>
+                                <td>{{ form.username.label_tag }}</td>
+                                <td>{{ form.username }}</td>
+                            </tr>
+                            <div class="col-xs-12" style="height:5px;"></div>
+                            <tr>
+                                <td>{{ form.password.label_tag }}</td>
+                                <td>{{ form.password }}</td>
+                            </tr>
+                        </p>
+                        <p class="bs-component">
+                            <center>
+                                <input class="btn btn-success btn-sm" type="submit" value="login" />
+                            </center>
+                        </p>
+                        <input type="hidden" name="next" value="{{ next }}" />
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 {% endblock %}

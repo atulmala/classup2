@@ -4,7 +4,7 @@ from authentication import views
 from django.conf.urls import url, patterns
 
 urlpatterns = patterns('',
-    url('^$', views.auth_index, name='auth_index'),
+    url('^$', views.auth_login, name='auth_index'),
     url('^auth/login/$', views.auth_login, name='auth_login'),
     url('^logout/$', views.auth_logout, name='auth_logout'),
 
