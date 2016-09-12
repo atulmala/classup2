@@ -1057,23 +1057,3 @@ def parents_communication_details(request):
     return render(request, 'classup/parents_communication_details.html', context_dict)
 
 
-def download_android(request):
-    the_file = '/download/android/ClassUp-release.apk'
-    filename = os.path.basename(the_file)
-
-    chunk_size = 8192
-    response = StreamingHttpResponse(FileWrapper(open(the_file), chunk_size), content_type='file')
-    response['Content-Length'] = os.path.getsize(the_file)
-    response['Content-Disposition'] = "attachment; filename=%s" % filename
-    return response
-
-
-def download_ios(request):
-    the_file = '/download/android/ClassUp-release.apk'
-    filename = os.path.basename(the_file)
-    chunk_size = 8192
-    response = StreamingHttpResponse(FileWrapper(open(the_file), chunk_size),
-                                     content_type=mimetypes.guess_type(the_file)[0])
-    response['Content-Length'] = os.path.getsize(the_file)
-    response['Content-Disposition'] = "attachment; filename=%s" % filename
-    return response

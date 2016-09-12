@@ -6,12 +6,14 @@ from .models import *
 
 class SectionAdmin(admin.ModelAdmin):
     list_display = ['school', 'section']
+    list_filter = ['school']
 
 admin.site.register(Section, SectionAdmin)
 
 
 class ClassAdmin(admin.ModelAdmin):
     list_display = ['school', 'standard']
+    list_filter = ['school']
 
 admin.site.register(Class, ClassAdmin)
 

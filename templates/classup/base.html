@@ -45,12 +45,16 @@
         <div class="container-fluid">
             <ul>
                 {% if user.is_authenticated %}
-                    <li><a href="/logout">Logout</a> </li>
+                    <a href="/logout">Logout</a>
                 {% else %}
+<!--
                     <li><a href="/register/">Register with Classup</a></li>
-                    <li><a href="/login/">Login</a><br/></li>
+-->
+                    <a href="/login/">Login</a><br/>
                 {% endif %}
+<!--
                 <li><a href="/about/">About Classup</a></li>
+-->
             </ul>
         </div>
 
