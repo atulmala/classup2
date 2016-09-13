@@ -56,16 +56,19 @@ def auth_login(request):
                     print ('unable to retrieve schoo_id for ' + user.username)
                 if user.groups.filter(name='school_admin').exists():
                     context_dict['user_type'] = 'school_admin'
+                    request.session['user_type'] = 'school_admin'
+                else:
+                    context_dict['user_type'] = 'non_admin'
+                    request.session['user_type'] = 'non_admin'
                 print (context_dict)
                 return render(request, 'classup/setup_index.html', context_dict)
-                # return HttpResponseRedirect(reverse('setup_index'), context_dict)
             else:
                 error = 'User: ' + user_name + ' is disabled. Please contact your administrator'
                 login_form.errors['__all__'] = login_form.error_class([error])
                 print (error)
                 return render(request, 'classup/auth_login.html', context_dict)
         else:
-            error = 'Invalid username/password. Please try again.'
+            error = 'Invalid username/password or blank entry. Please try again.'
             login_form.errors['__all__'] = login_form.error_class([error])
             print (error)
             return render(request, 'classup/auth_login.html', context_dict)

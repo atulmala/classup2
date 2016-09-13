@@ -22,8 +22,6 @@ from .serializers import ConfigurationSerializer
 
 from operations import sms
 
-server_ip = 'http://52.32.99.184/'
-router_server_ip = 'http://52.32.99.184/'
 update_marks_list = False
 
 
@@ -53,10 +51,11 @@ def setup_index(request):
 
 @csrf_exempt
 def setup_students(request):
-    context_dict = {
+    context_dict = {}
 
-    }
     context_dict['user_type'] = 'school_admin'
+    context_dict['school_name'] = request.session['school_name']
+
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return render(request, 'classup/setup_index.html', context_dict)
@@ -76,7 +75,8 @@ def setup_students(request):
                 school_id = request.session['school_id']
                 school = School.objects.get(id=school_id)
                 print('school=' + school.school_name)
-                print ('now starting to process the uploaded file for setting up Student data...')
+                print ('now starting to process the uploaded file for setting up Student data for school ' +
+                       school.school_name)
                 file_to_process_handle = request.FILES['excelFile']
 
                 # check that the file uploaded should be a valid excel
@@ -323,6 +323,8 @@ def setup_classes(request):
     context_dict = {
     }
     context_dict['user_type'] = 'school_admin'
+    context_dict['school_name'] = request.session['school_name']
+
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return render(request, 'classup/setup_index.html', context_dict)
@@ -408,6 +410,8 @@ def setup_sections(request):
     context_dict = {
     }
     context_dict['user_type'] = 'school_admin'
+    context_dict['school_name'] = request.session['school_name']
+
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return render(request, 'classup/setup_index.html', context_dict)
@@ -483,6 +487,8 @@ def setup_teachers(request):
     context_dict = {
     }
     context_dict['user_type'] = 'school_admin'
+    context_dict['school_name'] = request.session['school_name']
+
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return render(request, 'classup/setup_index.html', context_dict)
@@ -631,6 +637,8 @@ def setup_subjects(request):
     context_dict = {
     }
     context_dict['user_type'] = 'school_admin'
+    context_dict['school_name'] = request.session['school_name']
+
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return render(request, 'classup/setup_index.html', context_dict)
@@ -706,102 +714,12 @@ def setup_subjects(request):
     return render(request, 'classup/setup_data.html', context_dict)
 
 
-def setup_working_days(request):
-    context_dict = {
-    }
-    context_dict['user_type'] = 'school_admin'
-    # first see whether the cancel button was pressed
-    if "cancel" in request.POST:
-        return render(request, 'classup/setup_index.html', context_dict)
-        return HttpResponseRedirect(reverse('setup_index'))
-
-    # now start processing the file upload
-
-    context_dict['header'] = 'Upload Working Days'
-    if request.method == 'POST':
-        # get the file uploaded by the user
-        form = ExcelFileUploadForm(request.POST, request.FILES)
-        context_dict['form'] = form
-
-        if form.is_valid():
-            try:
-                print 'now starting to process the uploaded file for setting up Working Days...'
-                fileToProcess_handle = request.FILES['excelFile']
-
-                # check that the file uploaded should be a valid excel
-                # file with .xls or .xlsx
-                if not validate_excel_extension(fileToProcess_handle, form, context_dict):
-                    return render(request, 'classup/setup_data.html', context_dict)
-
-                # if this is a valid excel file - start processing it
-                fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
-                sheet = fileToProcess.sheet_by_index(0)
-                if sheet:
-                    print 'Successfully got hold of sheet!'
-                for row in range(sheet.nrows):
-                    if row == 0:
-                        continue
-                    print 'Processing a new row'
-
-                    y = sheet.cell(row, 0).value
-                    print ('year=' + str(int(y)))
-
-                    m = sheet.cell(row, 1).value
-                    print('month=' + str(int(m)))
-
-                    d = sheet.cell(row, 2).value
-                    print('days=' + str(int(d)))
-
-                    # Now we are ready to insert into db. But, we need to be sure that we are not trying
-                    # to insert a duplicate
-                    try:
-                        wd = WorkingDays.objects.get(year=y, month=m)
-                        if wd:
-                            print 'working days for ' + str(int(y)) + '/' + str(int(m)) + \
-                                  ' already set. This will be updated...'
-                            wd.working_days = d
-                            try:
-                                wd.save()
-                                print 'successfully updated working days for ' + str(int(y)) + '/' + str(int(m))
-                            except Exception as e:
-                                print 'unable to update working days for ' + str(int(y)) + '/' + str(int(m))
-                                print 'Exception = %s (%s)' % (e.message, type(e))
-
-                    except Exception as e:
-                        print 'Exception = %s (%s)' % (e.message, type(e))
-                        print 'working days for ' + str(int(y)) + '/' + str(int(m)) + \
-                              ' are not yet set. Setting them now...'
-                        try:
-                            wd = WorkingDays(year=y, month=m, working_days=d)
-                            wd.save()
-                            print 'successfully set working days for ' + str(int(y)) + '/' + str(int(m))
-                        except Exception as e:
-                            print 'unable to set working days for ' + str(int(y)) + '/' + str(int(m))
-                            print 'Exception = %s (%s)' % (e.message, type(e))
-                            error = 'unable to set working days for ' + str(int(y)) + '/' + str(int(m))
-                            form.errors['__all__'] = form.error_class([error])
-                            print error
-                            return render(request, 'classup/setup_data.html', context_dict)
-
-                # file upload and saving to db was successful. Hence go back to the main menu
-                return render(request, 'classup/setup_index.html', context_dict)
-                return HttpResponseRedirect(reverse('setup_index'))
-            except Exception as e:
-                print 'Exception = %s (%s)' % (e.message, type(e))
-                error = 'Invalid file uploaded. Please try again.'
-                form.errors['__all__'] = form.error_class([error])
-                print error
-                return render(request, 'classup/setup_data.html', context_dict)
-    else:
-        form = ExcelFileUploadForm()
-        context_dict['form'] = form
-    return render(request, 'classup/setup_data.html', context_dict)
-
-
 def setup_class_teacher(request):
     context_dict = {
     }
     context_dict['user_type'] = 'school_admin'
+    context_dict['school_name'] = request.session['school_name']
+
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return render(request, 'classup/setup_index.html', context_dict)
@@ -897,6 +815,8 @@ def setup_exam(request):
     context_dict = {
     }
     context_dict['user_type'] = 'school_admin'
+    context_dict['school_name'] = request.session['school_name']
+
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return render(request, 'classup/setup_index.html', context_dict)

@@ -1,4 +1,5 @@
 from datetime import datetime, date
+import time
 import calendar
 from calendar import monthrange
 import StringIO
@@ -40,10 +41,14 @@ def att_summary_school(request):
     context_dict = {
     }
     context_dict['header'] = 'Daily Class-wise Attendance Summary'
+    context_dict['school_name'] = request.session['school_name']
+
+    if request.session['user_type'] == 'school_admin':
+        context_dict['user_type'] = 'school_admin'
 
     # first see whether the cancel button was pressed
     if "cancel" in request.GET:
-        return HttpResponseRedirect(reverse('setup_index'))
+        return render(request, 'classup/setup_index.html', context_dict)
 
     if "submit" in request.GET:
         school_id = request.session['school_id']
@@ -165,12 +170,9 @@ def att_summary_school(request):
                     present = total - absent
                     perc_present = float(float(present)/float(total))
 
-                    #grand_total += total
                     p_total += present
                     a_total += absent
                     grand_present_perc = float(float(p_total)/float(grand_total))
-
-
 
                     summary_sheet.write_number(row, 0, idx+1, cell_center)
                     summary_sheet.write_string(row, 1, c.standard, cell_center)
@@ -223,12 +225,21 @@ def att_summary_school(request):
 
 
 def att_register_class(request):
-    # first see whether the cancel button was pressed
-    if "cancel" in request.POST:
-        return HttpResponseRedirect(reverse('setup_index'))
-
     context_dict = {
     }
+
+    # first see whether the cancel button was pressed
+    context_dict['header'] = 'Daily Class-wise Attendance Summary'
+    context_dict['school_name'] = request.session['school_name']
+
+    if request.session['user_type'] == 'school_admin':
+        context_dict['user_type'] = 'school_admin'
+
+    # first see whether the cancel button was pressed
+    if "cancel" in request.POST:
+        return render(request, 'classup/setup_index.html', context_dict)
+
+
     context_dict['header'] = 'Download Monthly Attendance'
     if request.method == 'POST':
         school_id = request.session['school_id']
@@ -453,6 +464,8 @@ def send_bulk_sms(request):
     school_id = request.session['school_id']
     school = School.objects.get(id=school_id)
 
+
+
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return render(request, 'classup/setup_index.html', context_dict)
@@ -476,21 +489,24 @@ def send_bulk_sms(request):
             form.errors['__all__'] = form.error_class([error])
             print (error)
             return render(request, 'classup/bulk_sms.html', context_dict)
-
+        start_time = time.time()
         for sc in selected_classes:
             the_class = Class.objects.get(school=school, standard=sc)
-            print(the_class.standard)
+            #print(the_class.standard)
             student_list = Student.objects.filter(current_class=the_class)
+            start_time = time.time()
             for student in student_list:
-                print(student.fist_name + ' ' + student.last_name)
+                #print(student.fist_name + ' ' + student.last_name)
                 parent = student.parent
-                print(parent)
+                #print(parent)
                 message = 'Dear Ms/Mr. ' + parent.parent_name + ', '
                 message += message_body + ' Regards, ' + school.school_name
-                print(message)
+                #print(message)
                 mobile = parent.parent_mobile1
-                print(mobile)
+                #print(mobile)
                 sms.send_sms(mobile, message)
+        elapsed_time = time.time() - start_time
+        print('time taken to send sms=' + str(elapsed_time))
 
         for st in staff:
             if st == 'teacher':
@@ -520,11 +536,13 @@ def test_result(request):
     context_dict = {
     }
     context_dict['header'] = 'Download Test Results'
+    context_dict['user_type'] = request.session['user_type']
+    context_dict['school_name'] = request.session['school_name']
     school_id = request.session['school_id']
 
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
-        return HttpResponseRedirect(reverse('setup_index'))
+        return render(request, 'classup/setup_index.html', context_dict)
 
     if request.method == 'POST':
         form = TestResultForm(request.POST, school_id=school_id)
@@ -744,11 +762,12 @@ def result_sms(request):
     context_dict['caller'] = 'result_sms'
     school_id = request.session['school_id']
     school = School.objects.get(id=school_id)
-    conf = Configurations.objects.get(school=school)
+    context_dict['user_type'] = request.session['user_type']
+    context_dict['school_name'] = request.session['school_name']
 
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
-        return HttpResponseRedirect(reverse('setup_index'))
+        return render(request, 'classup/setup_index.html', context_dict)
 
     if request.method == 'POST':
         form = TestResultForm(request.POST, school_id=school_id)
@@ -923,13 +942,16 @@ def send_message(request, school_id):
 
 
 def parents_communication_details(request):
-    # first see whether the cancel button was pressed
-    if "cancel" in request.POST:
-        return HttpResponseRedirect(reverse('setup_index'))
-
     context_dict = {
     }
     context_dict['header'] = 'Download Parents Communications'
+    context_dict['user_type'] = request.session['user_type']
+    context_dict['school_name'] = request.session['school_name']
+
+    # first see whether the cancel button was pressed
+    if "cancel" in request.POST:
+        return render(request, 'classup/setup_index.html', context_dict)
+
     if request.method == 'POST':
         form = ParentsCommunicationDetailsForm(request.POST)
 

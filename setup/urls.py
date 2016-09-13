@@ -10,7 +10,7 @@ urlpatterns = patterns('',
                     url(r'^upload_classes/$', views.setup_classes, name='upload_classes'),
                     url(r'^upload_sections/$', views.setup_sections, name='upload_sections'),
                     url(r'^upload_subjects/$', views.setup_subjects, name='upload_subjects'),
-                    url(r'^upload_working_days/$', views.setup_working_days, name='upload_working_days'),
+
                     url(r'^upload_classteacher_details/$', views.setup_class_teacher, name='setup_class_teacher'),
                     url(r'^upload_exam/$', views.setup_exam, name='upload_exam'),
                     url(r'^bus_attendance_enabled/(?P<school_id>\w+)/$',

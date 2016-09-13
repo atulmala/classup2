@@ -7,10 +7,9 @@
 {% endblock %}
 
 {% block body_block %}
-
+    <div class="input-append date" id="monthpicker">
     <script>
         $(document).ready(function(){
-
             $(".monthpicker").datepicker({
                 dateFormat: 'mm-yy',
                 changeMonth: true,
@@ -32,9 +31,9 @@
                     of: $(this)
                 });
             });
-
         });
     </script>
+    </div>
 
     <h1>{{ header }}</h1>
 
