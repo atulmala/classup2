@@ -1,5 +1,4 @@
 from django import forms
-from bootstrap3_datetime.widgets import DateTimePicker
 
 from functools import partial
 from django.utils.safestring import mark_safe
