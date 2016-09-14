@@ -8,24 +8,6 @@
 
 {% block body_block %}
 
-                <div class='input-group date' id='datetimepicker1'>
-                    <input type='text' class="form-control" />
-                    <span class="input-group-addon">
-                        <span class="glyphicon glyphicon-calendar"></span>
-                    </span>
-                </div>
-        <script type="text/javascript">
-            $(function () {
-                $('#datetimepicker1').datetimepicker();
-            });
-        </script>
-
-    <script type="text/javascript">
-            $(document).ready(function() {
-            $('.datepicker').datetimepicker({
-                minDate: -365 } );
-            });
-    </script>
 
     <h1>{{ header }}</h1>
 
@@ -38,12 +20,28 @@
     {% endif %}
 
     <form action="" enctype="multipart/form-data"  method="get">
-        {% csrf_token %}
 
         {{ form.non_field_errors }}
 
         <table>
             {{ form.as_table }}
+            <!--<div class='input-group date' id='date'>
+                <input type='text' class="form-control" />
+                <span class="input-group-addon">
+                    <span class="glyphicon glyphicon-calendar"></span>
+                </span>
+            </div>-->
+
+            <script>
+                $(document).ready(function() {
+                    $('.datepicker').datepicker();
+                });
+            </script>
+            <!--<script type="text/javascript">
+                $(function () {
+                    $('#date').datetimepicker();
+                });
+        </script>-->
         </table>
         <p>
             <br/>

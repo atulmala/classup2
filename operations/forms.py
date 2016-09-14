@@ -1,4 +1,5 @@
 from django import forms
+from bootstrap3_datetime.widgets import DateTimePicker
 
 from functools import partial
 from django.utils.safestring import mark_safe
@@ -13,7 +14,6 @@ MonthInput = partial(forms.DateInput, {'class': 'monthpicker'})
 
 STAFF_CHOICES = (
     ('teacher', 'Teachers'),
-
 )
 
 
