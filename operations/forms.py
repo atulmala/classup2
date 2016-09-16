@@ -22,7 +22,7 @@ class HorizontalRenderer(forms.CheckboxSelectMultiple.renderer):
 
 
 class SchoolAttSummaryForm(forms.Form):
-    date = forms.DateField(widget=DateInput())
+    date = forms.DateField(widget=DateInput(), label='Date(mm/dd/yyyy) ')
 
 
 class AttendanceRegisterForm(forms.Form):

@@ -64,9 +64,10 @@ class ExamList(generics.ListCreateAPIView):
     def get_queryset(self):
         student_id = self.kwargs['student_id']
         student = Student.objects.get(id=student_id)
+        school = student.school
         the_class = student.current_class
         class_sequence = the_class.sequence
-        q = Exam.objects.filter(start_class_sequence__lte=class_sequence,
+        q = Exam.objects.filter(school=school, start_class_sequence__lte=class_sequence,
                                 end_class_sequence__gte=class_sequence)
         return q.order_by('start_date')
 

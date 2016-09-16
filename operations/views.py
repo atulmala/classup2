@@ -866,11 +866,11 @@ def send_message(request, school_id):
         try:
             school = School.objects.get(id=school_id)
             data = json.loads(request.body)
+            print(data)
             message_content = data['message']
             email = data['teacher']
             t = Teacher.objects.get(email=email)
             teacher_name = t.first_name + ' ' + t.last_name
-            # configuration = Configurations.objects.get(school=school)
             school_name = school.school_name
             message_trailer = '. Regards, ' + teacher_name + ', ' + school_name
 

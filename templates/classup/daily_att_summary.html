@@ -25,23 +25,12 @@
 
         <table>
             {{ form.as_table }}
-            <!--<div class='input-group date' id='date'>
-                <input type='text' class="form-control" />
-                <span class="input-group-addon">
-                    <span class="glyphicon glyphicon-calendar"></span>
-                </span>
-            </div>-->
-
             <script>
                 $(document).ready(function() {
-                    $('.datepicker').datepicker();
+                    $('.datepicker').datepicker({
+                        minDate: -365, maxDate: "+0D", showButtonPanel: true, format: "yyyy-mm-dd" });
                 });
             </script>
-            <!--<script type="text/javascript">
-                $(function () {
-                    $('#date').datetimepicker();
-                });
-        </script>-->
         </table>
         <p>
             <br/>

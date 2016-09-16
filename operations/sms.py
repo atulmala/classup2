@@ -4,9 +4,6 @@ import urllib
 
 
 def send_sms(mobile, message):
-#def send_sms(mobile, message, queue):
-    #print 'sending sms to=' + mobile
-    #print 'message=' + message
 
     url = "http://www.smscountry.com/smscwebservice_bulk.aspx"
     values = {
@@ -16,15 +13,14 @@ def send_sms(mobile, message):
         'mobilenumber': mobile,
         'mtype': 'N',
         'DR': 'Y'
-        }
+    }
 
     data = urllib.urlencode(values)
     data = data.encode('utf-8')
 
     try:
         response = urllib.urlopen(url, data)
-        #response = urlopen(url, data)
-        #queue.put(response)
+
     except Exception as e:
         print ('error occured while sending sms to ' + str(mobile))
         print ('Exception = %s (%s)' % (e.message, type(e)))
@@ -42,16 +38,15 @@ def send_sms_asynch(message_list):
             'mobilenumber': number,
             'mtype': 'N',
             'DR': 'Y'
-            }
+        }
 
         data = urllib.urlencode(values)
         data = data.encode('utf-8')
 
         try:
             response = urllib.urlopen(url, data)
-            #response = urlopen(url, data)
-            #queue.put(response)
+
         except Exception as e:
-            print 'error occured while sending sms to ' + str(number)
-            print 'Exception = %s (%s)' % (e.message, type(e))
+            print('error occured while sending sms to ' + str(number))
+            print('Exception = %s (%s)' % (e.message, type(e)))
         print (response.read().decode('utf-8'))
