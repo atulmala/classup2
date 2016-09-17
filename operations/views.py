@@ -948,6 +948,8 @@ def parents_communication_details(request):
     context_dict['user_type'] = request.session['user_type']
     context_dict['school_name'] = request.session['school_name']
 
+    school = School.objects.get(school_name = request.session['school_name'])
+
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return render(request, 'classup/setup_index.html', context_dict)
@@ -1017,9 +1019,10 @@ def parents_communication_details(request):
         main_sheet.write(current_row, 5, ugettext("Class"), header)
         main_sheet.write(current_row, 6, ugettext("Class Teacher"), header)
         main_sheet.write(current_row, 7, ugettext("Category"), header)
-        main_sheet.write(current_row, 8, ugettext("Comminication"), header)
+        main_sheet.write(current_row, 8, ugettext("Communication"), header)
 
-        communications = ParentCommunication.objects.filter(date_sent__month=month_int, date_sent__year=year_int)
+        communications = ParentCommunication.objects.filter(student__school=school,
+                                                            date_sent__month=month_int, date_sent__year=year_int)
         sr_no = 1
         for c in communications:
             current_row += 1
