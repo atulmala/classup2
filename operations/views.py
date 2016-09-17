@@ -510,7 +510,7 @@ def send_bulk_sms(request):
 
         for st in staff:
             if st == 'teacher':
-                for teacher in Teacher.objects.all():
+                for teacher in Teacher.objects.filter(school=school):
                     teacher_name = teacher.first_name + ' ' + teacher.last_name
                     print(teacher_name)
                     message = 'Dear Ms/Mr. ' + teacher_name + ', '

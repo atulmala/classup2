@@ -49,6 +49,7 @@ def setup_index(request):
     response = render(request, 'classup/setup_index.html')
     return response
 
+
 @csrf_exempt
 def setup_students(request):
     context_dict = {}

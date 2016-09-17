@@ -18,7 +18,7 @@ class Parent(models.Model):
 
 
 class Student(models.Model):
-    student_erp_id = models.CharField(max_length=20, null=True, blank=True, db_column='student_erp_id') # this can be existing id such as registration number
+    student_erp_id = models.CharField(max_length=30, null=True, blank=True, db_column='student_erp_id') # this can be existing id such as registration number
     school = models.ForeignKey(School)
     fist_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
