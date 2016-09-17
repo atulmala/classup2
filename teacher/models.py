@@ -6,7 +6,7 @@ from setup.models import School
 
 # Create your models here.
 class Teacher(models.Model):
-    teacher_erp_id = models.CharField(max_length=20, unique=True)    # this can be the existing employee id of the teacher
+    teacher_erp_id = models.CharField(max_length=30, unique=True)    # this can be the existing employee id of the teacher
     school = models.ForeignKey(School)
     first_name = models.CharField(max_length=50, blank=False, null=False)
     last_name = models.CharField(max_length=50, null=False)
