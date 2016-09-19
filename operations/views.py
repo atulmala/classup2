@@ -4,19 +4,15 @@ import calendar
 from calendar import monthrange
 import StringIO
 
-import os
 import json
-from django.core.servers.basehttp import FileWrapper
 
 import xlsxwriter
 
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import ugettext
 from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseRedirect, StreamingHttpResponse
+from django.http import HttpResponse
 from django.contrib import messages
-import mimetypes
-from django.core.urlresolvers import reverse
 from authentication.views import JSONResponse
 
 from .forms import SchoolAttSummaryForm, AttendanceRegisterForm
