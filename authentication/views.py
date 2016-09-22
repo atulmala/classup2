@@ -109,6 +109,7 @@ def auth_login_from_device1(request):
         data = json.loads(request.body)
         the_user = data['user']
         password = data['password']
+        print('user trying to login: ' + the_user + ', with password: ' + password)
         user = authenticate(username=the_user, password=password)
         if user is not None:
             if user.is_active:
