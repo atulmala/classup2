@@ -141,8 +141,8 @@ def att_summary_school(request):
 
         # start fetching the data and write into the excel file
         row_absentee = 3
-        for c in Class.objects.all():
-            for s in Section.objects.all():
+        for c in Class.objects.filter(school=school):
+            for s in Section.objects.filter(school=school):
                 total = Student.objects.filter(current_class=c, current_section=s).count()
                 grand_total += total
                 row = 3 + idx

@@ -4,7 +4,10 @@ import urllib
 
 
 def send_sms(mobile, message):
-
+    #url1 = 'http://bhashsms.com/api/sendmsg.php?user=success&pass=654321&sender=BSHSMS' \
+     #      '&phone=9871093296&text=TestSMSfromBhash&priority=ndnd&stype=normal'
+    #response = urllib.urlopen(url1)
+    #print(response)
     url = "http://www.smscountry.com/smscwebservice_bulk.aspx"
     values = {
         'user': 'EmergeTech',
