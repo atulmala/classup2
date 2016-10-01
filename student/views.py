@@ -7,7 +7,9 @@ from setup.models import School
 from academics.models import ClassTest
 from .models import Student, Parent
 
-from .serializers import StudentSerializer
+from .serializers import StudentSerializer, ParentSerializer
+
+from authentication.views import JSONResponse
 
 
 class StudentList(generics.ListAPIView):
@@ -62,4 +64,37 @@ class StudentListForParent(generics.ListAPIView):
         the_parent = Parent.objects.get(parent_mobile1=parent_mobile)
         q1 = Student.objects.filter(parent=the_parent).order_by('fist_name')
         return q1
+
+
+def get_parent(request, student_id):
+    parent_detail = {
+
+    }
+
+    if request.method == 'GET':
+        try:
+            student = Student.objects.get(id=student_id)
+            parent = student.parent
+            parent_detail['parent_name'] = parent.parent_name
+            parent_detail['parent_mobile1'] = parent.parent_mobile1
+            parent_detail['parent_mobile2'] = parent.parent_mobile2
+            parent_detail['status'] = 'ok'
+        except Exception as e:
+            print ('Exception = %s (%s)' % (e.message, type(e)))
+            print('unable to fetch parent name and mobile for student id: ' + student_id)
+            parent_detail['status'] = 'error'
+            return JSONResponse(parent_detail, status=201)
+
+        return JSONResponse(parent_detail, status=201)
+
+
+class ParentList(generics.ListAPIView):
+    serializer_class = ParentSerializer
+
+    def get_queryset(self):
+        print('inside queryset')
+        student_id = self.kwargs['student_id']
+
+        q = Parent.objects.filter(student__id=student_id)
+        return q
 

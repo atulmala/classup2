@@ -3,7 +3,7 @@ __author__ = 'atulgupta'
 
 from rest_framework import serializers
 
-from .models import Student
+from .models import Student, Parent
 
 
 class StudentSerializer(serializers.ModelSerializer):
@@ -15,3 +15,10 @@ class StudentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Student
         fields = ('id', 'fist_name', 'last_name', 'roll_number', 'current_class', 'current_section',)
+
+
+class ParentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Parent
+        fields = ('parent_name', 'parent_mobile1', 'parent_mobile2',)
+

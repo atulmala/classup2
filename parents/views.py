@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from authentication.views import JSONResponse
 from student.models import Student
 from setup.models import Configurations
-from academics.models import Subject, Class, Section, ClassTeacher, ClassTest, TestResults, Exam
+from academics.models import Subject, ClassTeacher, ClassTest, TestResults, Exam
 from attendance.models import AttendanceTaken, Attendance
 
 from operations import sms
