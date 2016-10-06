@@ -374,12 +374,9 @@ def submit_marks(request, school_id):
                 # print message
 
                 p = student.parent
-                # print p
                 m1 = p.parent_mobile1
                 message_list[m1] = message
                 m2 = p.parent_mobile2
-                # print "mobile1=" + m1
-                # print "mobile2=" + m2
 
                 # 11/20 - we may need to send sms for about 40-50 students, which can be time consumeing.
                 # Hence we use thread
@@ -391,39 +388,21 @@ def submit_marks(request, school_id):
 
                 result = Queue.Queue()
 
-                # thread1 = Thread(target=sms.send_sms, args=(m1, message, result))
-                # thread1 = Thread(target=sms.send_sms, args=(m1, message))
-                # thread1.start()
-                # thread1.join()
-                # sms.send_sms(m1, message)
-
                 if m2 != '':
                     message_list[m2] = message
-                    # pass
-                    # thread2 = Thread(target=sms.send_sms, args=(m2, message, result))
-                    # thread2 = Thread(target=sms.send_sms, args=(m2, message))
-                    # thread2.start()
-                    # thread2.join()
-                    # sms.send_sms(m2, message)
+                sms.send_sms(m1, message)
+                if m2 != '':
+                    sms.send_sms(m2, message)
 
             except Exception as e1:
                 print ('unable send sms for ' + student.fist_name + ' ' + student.last_name)
                 print ('Exception = %s (%s)' % (e1.message, type(e1)))
 
-                # p = student.parent
-                # print p
-                # m1 = p.parent_mobile1
-                # m2 = p.parent_mobile2
-                # print "mobile1=" + m1
-                # print "mobile2=" + m2
-                #
-                # sms.send_sms(m1, message)
-                #
-                # if m2 != '':
-                #     sms.send_sms(m2, message)
+
         if conf.send_marks_sms:
-            t = Thread(target=sms.send_sms_asynch(message_list))
-            t.start()
+            pass
+            #t = Thread(target=sms.send_sms_asynch(message_list))
+            #t.start()
 
         count = 0
         for mobile in message_list:
