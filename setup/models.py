@@ -21,6 +21,7 @@ class Configurations(models.Model):
     school_group_id = models.CharField(max_length=10, default=None)
     enable_bus_attendance = models.BooleanField(default=False)
     send_absence_sms = models.BooleanField(default=True)
+    send_absence_sms_both_to_parent = models.BooleanField(default=True)
     send_period_bunk_sms = models.BooleanField(default=False)
     send_marks_sms = models.BooleanField(default=True)
     send_results_sms = models.BooleanField(default=True)

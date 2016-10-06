@@ -259,9 +259,9 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                             message += ' was absent on ' + str(d) + '/' + str(m) + '/' + str(y) + \
                                        ' in the attendance of ' + subject
 
-                        message += '. Please ignore if you have already '
-                        message += 'submitted an application for this absence. '
-                        message += 'Otherwise, please send an application. Regards, ' + school_name
+                        #message += '. Please ignore if you have already '
+                        #message += 'submitted an application for this absence. '
+                        message += '. Please send an application. Regards, ' + school_name
                         # message += ' Administration.'
                     except Exception as e:
                         print ('Exception = %s (%s)' % (e.message, type(e)))
@@ -272,7 +272,8 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                     if configuration.send_period_bunk_sms:
                         sms.send_sms(m1, message)
                         if m2 != '':
-                            sms.send_sms(m2, message)
+                            if configuration.send_absence_sms_both_to_parent:
+                                sms.send_sms(m2, message)
                     else:
                         # for schools
                         # if this subject is NOT the main subject, then we will send sms only if the student was present
@@ -296,7 +297,8 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                             if configuration.send_absence_sms:
                                 sms.send_sms(m1, message)
                                 if m2 != '':
-                                    sms.send_sms(m2, message)
+                                    if configuration.send_absence_sms_both_to_parent:
+                                        sms.send_sms(m2, message)
             except Exception as e:
                 print ('Exception = %s (%s)' % (e.message, type(e)))
 
