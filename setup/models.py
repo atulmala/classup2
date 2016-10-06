@@ -6,7 +6,15 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
+class SchoolGroup(models.Model):
+    group_name = models.CharField(max_length=200)
+
+    def __unicode__(self):
+        return self.group_name
+
+
 class School(models.Model):
+    group = models.ForeignKey(SchoolGroup, null=True)
     school_name = models.CharField(max_length=200)
     school_address = models.CharField(max_length=200, blank=True)
     subscription_active = models.BooleanField(default=True)

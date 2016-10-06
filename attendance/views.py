@@ -12,7 +12,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import Attendance, AttendanceTaken
+from .models import Attendance, AttendanceTaken, AttendanceUpdated
 from academics.models import Section, Class, Subject
 from student.models import Student
 from teacher.models import Teacher
@@ -89,6 +89,15 @@ def attendance_taken(request, school_id, the_class, section, subject, d, m, y, t
 
                 a.save()
         except Exception as e:
+            print ('failed to recored AttendanceTaken')
+            print ('Exception = %s (%s)' % (e.message, type(e)))
+
+        # for the purpose of audit, make an entry in AttendanceUpdated table.
+        try:
+            au = AttendanceUpdated(date=the_date, the_class=c, section=s, subject=sub, updated_by=t)
+            au.save()
+        except Exception as e:
+            print ('failed to record AttendanceUpdate')
             print ('Exception = %s (%s)' % (e.message, type(e)))
 
     return HttpResponse('OK')
@@ -289,7 +298,8 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                                     if configuration.send_period_bunk_sms:
                                         sms.send_sms(m1, message)
                                         if m2 != '':
-                                            sms.send_sms(m2, message)
+                                            if configuration.send_absence_sms_both_to_parent:
+                                                sms.send_sms(m2, message)
                             except Exception as e:
                                 print ('unable to send sms for ' + student_name)
                                 print ('Exception = %s (%s)' % (e.message, type(e)))
