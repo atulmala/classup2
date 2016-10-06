@@ -11,7 +11,6 @@ from django.http import HttpResponse
 from django.test import RequestFactory
 
 from authentication.views import JSONResponse
-
 from rest_framework import generics
 from threading import Thread
 import Queue
@@ -20,7 +19,7 @@ from attendance.models import Attendance, AttendanceTaken
 from teacher.models import Teacher
 from student.models import Student
 from setup.models import Configurations, School
-from .models import Class, Section, Subject, ClassTest, TestResults, WorkingDays, Exam
+from .models import Class, Section, Subject, ClassTest, TestResults, Exam
 from .serializers import ClassSerializer, SectionSerializer, \
     SubjectSerializer, TestSerializer, ClassSectionForTestSerializer, \
     TestMarksSerializer, TestTypeSerializer, ExamSerializer

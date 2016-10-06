@@ -4,10 +4,22 @@ import urllib
 
 
 def send_sms(mobile, message):
-    #url1 = 'http://bhashsms.com/api/sendmsg.php?user=success&pass=654321&sender=BSHSMS' \
-     #      '&phone=9871093296&text=TestSMSfromBhash&priority=ndnd&stype=normal'
-    #response = urllib.urlopen(url1)
-    #print(response)
+    url1 = 'http://bhashsms.com/api/sendmsg.php?user=EMERGETECH&pass=kawasaki&sender=ClssUp'
+    url1 += '&phone=' + mobile
+    url1 += '&text=' + message
+    url1 += '&priority=ndnd&stype=normal'
+    print(url1)
+    try:
+        response = urllib.urlopen(url1)
+        print(response)
+    except Exception as e:
+        print ('error occured while sending sms to ' + str(mobile))
+        print ('Exception = %s (%s)' % (e.message, type(e)))
+    print (response.read().decode('utf-8'))
+
+
+
+
     url = "http://www.smscountry.com/smscwebservice_bulk.aspx"
     values = {
         'user': 'EmergeTech',
@@ -21,13 +33,7 @@ def send_sms(mobile, message):
     data = urllib.urlencode(values)
     data = data.encode('utf-8')
 
-    try:
-        response = urllib.urlopen(url, data)
 
-    except Exception as e:
-        print ('error occured while sending sms to ' + str(mobile))
-        print ('Exception = %s (%s)' % (e.message, type(e)))
-    print (response.read().decode('utf-8'))
 
 
 def send_sms_asynch(message_list):
