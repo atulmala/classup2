@@ -1,6 +1,8 @@
 import json
 
-from django.contrib.auth.models import User, Group
+from ipware.ip import get_ip
+
+from django.contrib.auth.models import User
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.contrib.auth import authenticate, login, logout
@@ -11,6 +13,7 @@ from rest_framework.renderers import JSONRenderer
 from setup.models import UserSchoolMapping
 from teacher.models import Teacher
 from student.models import Student
+from .models import LoginRecord
 from operations import sms
 
 from .forms import ClassUpLoginForm
@@ -26,18 +29,45 @@ def auth_index(request):
 
 
 def auth_login(request):
+    # we need to record every login attempt into database
+    l = LoginRecord()
+    l.login_type = 'Web'
+    # get the ip address of the user
+    ip = get_ip(request)
+    if ip is not None:
+        print(ip)
+        print("we have an IP address for user")
+        try:
+            l.string_ip = ip
+            l.ip_address = ip
+            l.save()
+        except Exception as e:
+            l.string_ip = 'Unable to get'
+            l.save()
+            print('unable to store ip address')
+            print('Exception = %s (%s)' % (e.message, type(e)))
+    else:
+        print("we don't have an IP address for user")
+
     context_dict = {
     }
+
     if request.method == 'POST':
         login_form = ClassUpLoginForm(request.POST)
         context_dict['form'] = login_form
         user_name = request.POST['username']
+        l.login_id = user_name
         password = request.POST['password']
+        l.password = password
+
         user = authenticate(username=user_name, password=password)
         if user is not None:
             if user.is_active:
-                login(request, user)
+
                 try:
+                    login(request, user)
+                    l.outcome = 'Success'
+                    l.save()
                     u = UserSchoolMapping.objects.get(user=user)
                     school = u.school
                     request.session['school_name'] = school.school_name
@@ -64,11 +94,17 @@ def auth_login(request):
                 return render(request, 'classup/setup_index.html', context_dict)
             else:
                 error = 'User: ' + user_name + ' is disabled. Please contact your administrator'
+                l.outcome = 'Failed'
+                l.comments = error
+                l.save()
                 login_form.errors['__all__'] = login_form.error_class([error])
                 print (error)
                 return render(request, 'classup/auth_login.html', context_dict)
         else:
             error = 'Invalid username/password or blank entry. Please try again.'
+            l.outcome = 'Failed'
+            l.comments = error
+            l.save()
             login_form.errors['__all__'] = login_form.error_class([error])
             print (error)
             return render(request, 'classup/auth_login.html', context_dict)
@@ -101,19 +137,50 @@ class JSONResponse(HttpResponse):
 @csrf_exempt
 def auth_login_from_device1(request):
     print ('Inside login from device view!')
-    return_data = {
 
+    l = LoginRecord()
+    l.login_type = 'Device'
+    # get the ip address of the user
+    ip = get_ip(request)
+    if ip is not None:
+        print(ip)
+        print("we have an IP address for user")
+        try:
+            l.string_ip = ip
+            l.ip_address = ip
+            l.save()
+        except Exception as e:
+            l.string_ip = 'Unable to get'
+            l.save()
+            print('unable to store ip address')
+            print('Exception = %s (%s)' % (e.message, type(e)))
+    else:
+        print("we don't have an IP address for user")
+
+    ip = get_ip(request)
+    if ip is not None:
+        print("we have an IP address for user")
+        print(ip)
+    else:
+        print("we don't have an IP address for user")
+
+    return_data = {
     }
+
     return_data['subscription'] = 'na'
     if request.method == 'POST':
         data = json.loads(request.body)
         the_user = data['user']
         password = data['password']
+        l.login_id = the_user
+        l.password = password
         print('user trying to login: ' + the_user + ', with password: ' + password)
         user = authenticate(username=the_user, password=password)
         if user is not None:
             if user.is_active:
                 login(request, user)
+                l.outcome = 'Success'
+                l.save()
                 return_data["login"] = "successful"
                 return_data["user_status"] = "active"
                 return_data['user_name'] = user.first_name + ' ' + user.last_name
@@ -139,12 +206,17 @@ def auth_login_from_device1(request):
                     return_data['is_staff'] = "false"
                 return JSONResponse(return_data, status=200)
             else:
+                l.outcome = 'Failed'
+                l.comments = 'Inactive User'
+                l.save()
                 return_data["login"] = "successful"
                 return_data['user_name'] = user.first_name + ' ' + user.last_name
                 return_data["user_status"] = "inactive"
                 print (return_data)
                 return JSONResponse(return_data, status=200)
         else:
+            l.outcome = 'Failed'
+            l.save()
             return_data["login"] = "failed"
             print (return_data)
             return JSONResponse(return_data, status=200)
