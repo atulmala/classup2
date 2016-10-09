@@ -283,6 +283,10 @@ def submit_marks(request, school_id):
             test = ClassTest.objects.get(testresults__id=key)
             break  # because we can get the test object with the first key only
 
+        # get the email of teacher. This is required for send_sms1
+        t = test.teacher
+        sender = t.email
+
         if test.grade_based:
             grade_based = True
 
@@ -387,22 +391,17 @@ def submit_marks(request, school_id):
                 # off threading till some solution is found
 
                 result = Queue.Queue()
+                message_type = 'Test Marks'
 
-                if m2 != '':
-                    message_list[m2] = message
-                sms.send_sms(m1, message)
-                if m2 != '':
-                    sms.send_sms(m2, message)
+                if conf.send_marks_sms:
+                    sms.send_sms1(school, sender, m1, message, message_type)
+                    if conf.send_absence_sms_both_to_parent:
+                        if m2 != '':
+                            sms.send_sms1(school, sender, m2, message, message_type)
 
             except Exception as e1:
                 print ('unable send sms for ' + student.fist_name + ' ' + student.last_name)
                 print ('Exception = %s (%s)' % (e1.message, type(e1)))
-
-
-        if conf.send_marks_sms:
-            pass
-            #t = Thread(target=sms.send_sms_asynch(message_list))
-            #t.start()
 
         count = 0
         for mobile in message_list:
