@@ -108,8 +108,11 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
     response_data = {
 
     }
+    message_type = 'Attendance'
+
     if request.method == 'POST':
         school = School.objects.get(id=school_id)
+
         # all of the above except date are foreign key in Attendance model. Hence we need to get the actual object
         c = Class.objects.get(school=school, standard=the_class)
         s = Section.objects.get(school=school, section=section)
@@ -178,10 +181,10 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
 
                     # for coaching classes and colleges we need to send sms for any kind of absence
                     if configuration.send_period_bunk_sms:
-                        sms.send_sms(m1, message)
+                        sms.send_sms1(school, teacher, m1, message, message_type)
                         if m2 != '':
                             if configuration.send_absence_sms_both_to_parent:
-                                sms.send_sms(m2, message)
+                                sms.send_sms1(school, teacher, m2, message, message_type)
                     else:
                         # for schools
                         # if this subject is NOT the main subject, then we will send sms only if the student was present
@@ -195,19 +198,19 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                                     print ('this student was not absent in Main attendance. '
                                            'Looks he has bunked this class...')
                                     if configuration.send_period_bunk_sms:
-                                        sms.send_sms(m1, message)
+                                        sms.send_sms1(school, teacher, m1, message, message_type)
                                         if m2 != '':
                                             if configuration.send_absence_sms_both_to_parent:
-                                                sms.send_sms(m2, message)
+                                                sms.send_sms1(school, teacher, m2, message, message_type)
                             except Exception as e:
                                 print ('unable to send sms for ' + student_name)
                                 print ('Exception = %s (%s)' % (e.message, type(e)))
                         else:
                             if configuration.send_absence_sms:
-                                sms.send_sms(m1, message)
+                                sms.send_sms1(school, teacher, m1, message, message_type)
                                 if m2 != '':
                                     if configuration.send_absence_sms_both_to_parent:
-                                        sms.send_sms(m2, message)
+                                        sms.send_sms1(school, teacher, m2, message, message_type)
             except Exception as e:
                 print ('Exception = %s (%s)' % (e.message, type(e)))
 

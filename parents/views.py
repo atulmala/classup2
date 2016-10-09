@@ -35,7 +35,8 @@ def submit_parents_communication(request):
         communication_text = data['communication_text']
 
         student = Student.objects.get(id=student_id)
-        configuration = Configurations.objects.get(school=student.school)
+        school = student.school
+        configuration = Configurations.objects.get(school=school)
 
         # student and category are foreign keys
 
@@ -58,6 +59,7 @@ def submit_parents_communication(request):
                     section = student.current_section
 
                     # compose the message
+                    message_type = 'Parent Communication'
                     message = communication_text + '. Regards, ' + parent_name + ' (' + parent_mobile + ')'
                     message += ', Parent of '
                     message += student.fist_name + ' ' + student.last_name + ' (class '
@@ -70,13 +72,13 @@ def submit_parents_communication(request):
                         if ct:
                             teacher = ct.class_teacher
                             teacher_mobile = teacher.mobile
-                            sms.send_sms(teacher_mobile, message)
+                            sms.send_sms1(school, parent_name, teacher_mobile, message, message_type)
                     except Exception as e:
                         print('Class Teacher not set for ' + the_class.standard + '-' + section.section)
                         print ('Exception = %s (%s)' % (e.message, type(e)))
 
                     principal_mobile = configuration.principal_mobile
-                    sms.send_sms(principal_mobile, message)
+                    sms.send_sms1(school, parent_name, principal_mobile, message, message_type)
                 except Exception as e:
                     print ('failed to send message ' + communication_text + ' to Class Teacher of class ' +
                            the_class.standard + '-' + section.section)
