@@ -140,6 +140,7 @@ def auth_login_from_device1(request):
 
     l = LoginRecord()
     l.login_type = 'Device'
+
     # get the ip address of the user
     ip = get_ip(request)
     if ip is not None:
@@ -154,13 +155,6 @@ def auth_login_from_device1(request):
             l.save()
             print('unable to store ip address')
             print('Exception = %s (%s)' % (e.message, type(e)))
-    else:
-        print("we don't have an IP address for user")
-
-    ip = get_ip(request)
-    if ip is not None:
-        print("we have an IP address for user")
-        print(ip)
     else:
         print("we don't have an IP address for user")
 

@@ -103,104 +103,6 @@ def attendance_taken(request, school_id, the_class, section, subject, d, m, y, t
     return HttpResponse('OK')
 
 
-# we need to exempt this view from csrf verification. Will be updated in next version when
-# we will implement authentication
-@csrf_exempt
-def process_attendance(request, the_class, section, subject, d, m, y, id, teacher):
-    if request.method == 'POST':
-        # all of the above except date are foreign key in Attendance model. Hence we need to get the actual object
-        c = Class.objects.get(standard=the_class)
-        s = Section.objects.get(section=section)
-        sub = Subject.objects.get(subject_name=subject)
-        student = Student.objects.get(id=id)
-        the_date = date(int(y), int(m), int(d))
-        t = Teacher.objects.get(email=teacher)
-
-        # check to see if absence for this student for this date, class, section and subject has already been marked
-        try:
-            q = Attendance.objects.filter(date=the_date, the_class=c, section=s, subject=sub, student=student)
-
-            # make an entry to database only it is a fresh entry
-            if q.count() == 0:
-                attendance = Attendance(date=the_date)
-                attendance.the_class = c
-                attendance.section = s
-                attendance.subject = sub
-                attendance.student = student
-                attendance.taken_by = t
-
-                attendance.save()
-
-                # send sms to the parents of absent students
-                m1 = ''
-                m2 = ''
-                try:
-                    p = student.parent
-                    m1 = p.parent_mobile1
-                    m2 = p.parent_mobile2
-                except Exception as e:
-                    print ('Exception occured during processing of: ')
-                    print (student)
-                    print ('Exception = %s (%s)' % (e.message, type(e)))
-
-                print ("mobile1=" + m1)
-                print ("mobile2=" + m2)
-
-                message = ''
-
-                # prepare the message
-                try:
-                    configuration = Configurations.objects.get(pk=1)
-                    school_name = configuration.school_name
-                    student_name = student.fist_name + ' ' + student.last_name
-                    message = 'Dear Parent, your ward ' + student_name
-
-                    # if subject is main then we need to tell that student was absent
-                    if subject == 'Main' or subject == 'main' or subject == 'MAIN':
-                        message += ' was absent today'
-                    else:
-                        message += ' was absent today in the attendance of ' + subject
-
-                    message += '. Please ignore if you have already '
-                    message += 'submitted an application for this absence. '
-                    message += 'Otherwise, please send an application. Regards, ' + school_name
-                    message += ' Administration.'
-                except Exception as e:
-                    print ('Exception = %s (%s)' % (e.message, type(e)))
-
-                print (message)
-
-                # if this subject is NOT the main subject, then we will send sms only if the student was present
-                # in main attendance (means the student has BUNKED this class :)
-                if subject != 'Main' and subject != 'main' and subject != 'MAIN':
-
-                    try:
-                        main = Subject.objects.get(subject_name='Main')
-                        q = Attendance.objects.filter(date=the_date, the_class=c,
-                                                      section=s, subject=main, student=student)
-
-                        if q.count() == 0:
-                            print ('this student was not absent in Main attendance. '
-                                   'Looks he has bunked this class...')
-                            sms.send_sms(m1, message)
-                            if m2 != '':
-                                sms.send_sms(m2, message)
-                    except Exception as e:
-                        print ('unable to send sms for ' + student_name)
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
-                else:
-                    sms.send_sms(m1, message)
-                    if m2 != '':
-                        sms.send_sms(m2, message)
-
-        except Exception as e:
-            print ('Exception = %s (%s)' % (e.message, type(e)))
-
-    # this view is being called from mobile. We use dummy template so that we dont' run into exception
-    # return render(request, 'classup/dummy.html')
-    return HttpResponse('OK')
-
-
 @csrf_exempt
 def process_attendance1(request, school_id, the_class, section, subject, d, m, y, teacher):
     response_data = {
@@ -268,10 +170,7 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                             message += ' was absent on ' + str(d) + '/' + str(m) + '/' + str(y) + \
                                        ' in the attendance of ' + subject
 
-                        #message += '. Please ignore if you have already '
-                        #message += 'submitted an application for this absence. '
                         message += '. Please send an application. Regards, ' + school_name
-                        # message += ' Administration.'
                     except Exception as e:
                         print ('Exception = %s (%s)' % (e.message, type(e)))
 
@@ -312,9 +211,6 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
             except Exception as e:
                 print ('Exception = %s (%s)' % (e.message, type(e)))
 
-
-    # this view is being called from mobile. We use dummy template so that we dont' run into exception
-    # return render(request, 'classup/dummy.html')
     response_data['status'] = 'success'
     return JSONResponse(response_data, status=200)
 

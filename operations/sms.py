@@ -8,7 +8,6 @@ def send_sms(mobile, message):
     url1 += '&phone=' + mobile
     url1 += '&text=' + message
     url1 += '&priority=ndnd&stype=normal'
-    #print(url1)
     try:
         response = urllib.urlopen(url1)
         print(response)

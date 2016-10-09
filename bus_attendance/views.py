@@ -11,7 +11,7 @@ from django.contrib import messages
 from rest_framework import generics
 from authentication.views import JSONResponse
 
-from setup.models import School
+from setup.models import School, Configurations
 from student.models import Student
 from teacher.models import Teacher
 from student.serializers import StudentSerializer
@@ -547,17 +547,14 @@ def report_delay(request):
         }
     if request.method == 'POST':
         data = json.loads(request.body)
-        d = data['date']
-        m = data['month']
-        y = data['year']
         school_id = data['school_id']
         rout = data['rout']
         teacher = data['teacher']
         message = data['message']
-        the_date = date(int(y), int(m), int(d))
 
         try:
             school = School.objects.get(id=school_id)
+            configuration = Configurations.objects.get(school=school)
             r = Bus_Rout.objects.get(school=school_id, bus_root=rout)
             teacher = Teacher.objects.get(email=teacher)
             student_rout = Student_Rout.objects.filter(bus_root=r)
@@ -568,12 +565,14 @@ def report_delay(request):
                 m1 = parent.parent_mobile1
                 m2 = parent.parent_mobile2
 
-                full_message = 'Dear Ms/Mr ' + parent.parent_name + ', Message regarding Bus on rout ' + rout
+                full_message = 'Dear Ms/Mr ' + parent.parent_name + ', Delay on Bus rout ' + rout
                 full_message += ': ' + message + '. Regards, ' + teacher.first_name + ' ' + teacher.last_name
                 full_message += ', ' + school_name
                 sms.send_sms(m1, full_message)
+
                 if m2 != '':
-                    sms.send_sms(m2, full_message)
+                    if configuration.send_absence_sms_both_to_parent:
+                        sms.send_sms(m2, full_message)
 
                 print (full_message)
         except Exception as e:
