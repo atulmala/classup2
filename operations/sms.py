@@ -1,6 +1,7 @@
 __author__ = 'atulgupta'
 
 import urllib
+import json
 
 
 def send_sms(mobile, message):
@@ -8,8 +9,12 @@ def send_sms(mobile, message):
     url1 += '&phone=' + mobile
     url1 += '&text=' + message
     url1 += '&priority=ndnd&stype=normal'
+
     try:
         response = urllib.urlopen(url1)
+        results = json.loads(response)
+        print(results)
+
         print(response)
         print (response.read().decode('utf-8'))
     except Exception as e:
