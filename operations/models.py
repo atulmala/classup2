@@ -19,5 +19,5 @@ class SMSRecord(models.Model):
     recipient_number = models.CharField(max_length=20, default='Not Available')
     recipient_type = models.CharField(max_length=20, default='Not Available')
     message = models.TextField()
-    message_type = models.CharField(max_length=20, default='Not Available')
+    message_type = models.CharField(max_length=30, default='Not Available')
     outcome = models.TextField(max_length=20, default='Delivered')

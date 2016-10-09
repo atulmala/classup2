@@ -859,8 +859,10 @@ def send_message(request, school_id):
         response = {
 
         }
+        message_type = 'Teacher Communication'
         try:
             school = School.objects.get(id=school_id)
+            configuration = Configurations.objects.get(school=school)
             data = json.loads(request.body)
             print(data)
             message_content = data['message']
@@ -890,10 +892,10 @@ def send_message(request, school_id):
                         message = message_header + message_content + message_trailer
                         print (message)
 
-                        sms.send_sms(m1, message)
-
-                        if m2 != '':
-                            sms.send_sms(m2, message)
+                        sms.send_sms1(school, email, m1, message, message_type)
+                        if configuration.send_absence_sms_both_to_parent:
+                            if m2 != '':
+                                sms.send_sms1(school, email, m2, message, message_type)
                 except Exception as e:
                     print ('Unable to send message while trying for whole class')
                     print ('Exception = %s (%s)' % (e.message, type(e)))
@@ -917,17 +919,13 @@ def send_message(request, school_id):
                         message = message_header + message_content + message_trailer
                         print ('message=' + message)
                         try:
-                            sms.send_sms(m1, message)
+                            sms.send_sms1(school, email, m1, message, message_type)
+                            if configuration.send_absence_sms_both_to_parent:
+                                if m2 != '':
+                                    sms.send_sms1(school, email, m2, message, message_type)
                         except Exception as e:
                             print ('Unable to send message to ' + p.parent_name + 'with mobile number: ' + m1)
                             print ('Exception = %s (%s)' % (e.message, type(e)))
-
-                        if m2 != '':
-                            try:
-                                sms.send_sms(m2, message)
-                            except Exception as e:
-                                print ('Unable to send message to ' + p.parent_name + 'with mobile number: ' + m2)
-                                print ('Exception = %s (%s)' % (e.message, type(e)))
 
                 response["status"] = "success"
         except Exception as e:

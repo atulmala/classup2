@@ -557,6 +557,7 @@ def report_delay(request):
             configuration = Configurations.objects.get(school=school)
             r = Bus_Rout.objects.get(school=school_id, bus_root=rout)
             teacher = Teacher.objects.get(email=teacher)
+            email = teacher.email
             student_rout = Student_Rout.objects.filter(bus_root=r)
 
             school_name = school.school_name
@@ -568,11 +569,13 @@ def report_delay(request):
                 full_message = 'Dear Ms/Mr ' + parent.parent_name + ', Delay on Bus rout ' + rout
                 full_message += ': ' + message + '. Regards, ' + teacher.first_name + ' ' + teacher.last_name
                 full_message += ', ' + school_name
-                sms.send_sms(m1, full_message)
+
+                message_type = 'Bus Delay'
+                sms.send_sms1(school, email, m1, full_message, message_type)
 
                 if m2 != '':
                     if configuration.send_absence_sms_both_to_parent:
-                        sms.send_sms(m2, full_message)
+                        sms.send_sms1(school, email, m2, full_message, message_type)
 
                 print (full_message)
         except Exception as e:

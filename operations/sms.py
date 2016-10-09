@@ -10,6 +10,7 @@ from .models import SMSRecord
 
 def send_sms1(school, sender, mobile, message, message_type):
     print('sending to=' + mobile)
+    print('sender=' + sender)
 
     url1 = 'http://bhashsms.com/api/sendmsg.php?user=EMERGETECH&pass=kawasaki&sender=ClssUp'
     url1 += '&phone=' + mobile
@@ -26,7 +27,6 @@ def send_sms1(school, sender, mobile, message, message_type):
         # store into database
         try:
             t = Teacher.objects.get(email=sender)
-
             sender_name = t.first_name + ' ' + t.last_name + ' (' + sender + ')'    # include teacher's id also
             sender_type = 'Teacher'
 
@@ -35,11 +35,15 @@ def send_sms1(school, sender, mobile, message, message_type):
             recepient_name = p.parent_name
             recepient_type = 'Parent'
 
-            sr = SMSRecord(school=school, sender1=sender_name, sender_type=sender_type,
-                           recipient_name=recepient_name, recipient_type=recepient_type, recipient_number=mobile,
-                           message=message, message_type=message_type,
-                           outcome=response)
-            sr.save()
+            try:
+                sr = SMSRecord(school=school, sender1=sender_name, sender_type=sender_type,
+                               recipient_name=recepient_name, recipient_type=recepient_type, recipient_number=mobile,
+                               message=message, message_type=message_type,
+                               outcome=response)
+                sr.save()
+            except Exception as e:
+                print ('error occured while sending sms to ' + str(mobile))
+                print ('Exception3 = %s (%s)' % (e.message, type(e)))
         except Exception as e:
 
             # sender is a parent and their name was passed as sender. Hence we can use as it is
@@ -55,11 +59,11 @@ def send_sms1(school, sender, mobile, message, message_type):
             sr.save()
 
             print('error while trying to save sms in database')
-            print ('Exception = %s (%s)' % (e.message, type(e)))
+            print ('Exception1 = %s (%s)' % (e.message, type(e)))
 
     except Exception as e:
         print ('error occured while sending sms to ' + str(mobile))
-        print ('Exception = %s (%s)' % (e.message, type(e)))
+        print ('Exception2 = %s (%s)' % (e.message, type(e)))
 
 
 def send_sms(mobile, message):
