@@ -70,6 +70,7 @@ def auth_login(request):
                     l.save()
                     u = UserSchoolMapping.objects.get(user=user)
                     school = u.school
+                    request.session['user'] = user_name
                     request.session['school_name'] = school.school_name
                     context_dict['school_name'] = school.school_name
                     if school.subscription_active:

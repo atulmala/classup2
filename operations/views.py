@@ -459,8 +459,7 @@ def send_bulk_sms(request):
     context_dict['user_type'] = 'school_admin'
     school_id = request.session['school_id']
     school = School.objects.get(id=school_id)
-
-
+    configuration = Configurations.objects.get(school=school)
 
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
@@ -469,8 +468,8 @@ def send_bulk_sms(request):
     if request.method == 'POST':
         form = BulkSMSForm(request.POST, school_id=school_id)
         context_dict['form'] = form
-
         message_body = request.POST['message_text']
+
         if message_body == '':
             error = 'Message is Empty'
             form.errors['__all__'] = form.error_class([error])
@@ -479,28 +478,32 @@ def send_bulk_sms(request):
 
         selected_classes = request.POST.getlist('Class')
         staff = request.POST.getlist('Staff')
-        print(staff)
+
         if len(selected_classes) == 0 and len(staff) == 0:
             error = 'You have not selected any Class, Teacher, or Staff'
             form.errors['__all__'] = form.error_class([error])
             print (error)
             return render(request, 'classup/bulk_sms.html', context_dict)
+
         start_time = time.time()
+        sender = request.session['user']
+        message_type = 'Bulk SMS (Web Interface)'
         for sc in selected_classes:
             the_class = Class.objects.get(school=school, standard=sc)
-            #print(the_class.standard)
             student_list = Student.objects.filter(current_class=the_class)
             start_time = time.time()
             for student in student_list:
-                #print(student.fist_name + ' ' + student.last_name)
                 parent = student.parent
-                #print(parent)
                 message = 'Dear Ms/Mr. ' + parent.parent_name + ', '
                 message += message_body + ' Regards, ' + school.school_name
-                #print(message)
+                print(message)
                 mobile = parent.parent_mobile1
-                #print(mobile)
-                sms.send_sms(mobile, message)
+                sms.send_sms1(school, sender, mobile, message, message_type)
+                if configuration.send_absence_sms_both_to_parent:
+                    mobile = parent.parent_mobile2
+                    if mobile != '':
+                        sms.send_sms1(school, sender, mobile, message, message_type)
+
         elapsed_time = time.time() - start_time
         print('time taken to send sms=' + str(elapsed_time))
 
@@ -514,7 +517,7 @@ def send_bulk_sms(request):
                     print(message)
                     teacher_mobile = teacher.mobile
                     print(teacher_mobile)
-                    sms.send_sms(teacher_mobile, message)
+                    sms.send_sms1(school, sender, teacher_mobile, message, message_type)
 
         context_dict['header'] = 'Operation Completed'
         messages.success(request, 'Messages Sent!')

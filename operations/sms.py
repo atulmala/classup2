@@ -28,12 +28,23 @@ def send_sms1(school, sender, mobile, message, message_type):
         try:
             t = Teacher.objects.get(email=sender)
             sender_name = t.first_name + ' ' + t.last_name + ' (' + sender + ')'    # include teacher's id also
-            sender_type = 'Teacher'
 
-            # because the sender is a teacher, it is obvious that the receiver is a parent
-            p = Parent.objects.get(Q(parent_mobile1=mobile) | Q(parent_mobile2=mobile))
-            recepient_name = p.parent_name
-            recepient_type = 'Parent'
+            sender_type = 'Teacher'
+            if message_type == 'Bulk SMS (Web Interface)':
+                sender_type = 'Admin'
+
+            try:
+                # because the sender is a teacher, it is obvious that the receiver is a parent
+                p = Parent.objects.get(Q(parent_mobile1=mobile) | Q(parent_mobile2=mobile))
+                recepient_name = p.parent_name
+                recepient_type = 'Parent'
+            except Exception as e:
+                # from web interface bulk sms are also sent to teachers. In this case recipient is a teacher
+                print('unable to associate parent with ' + mobile + ' May this belongs to teacher...')
+                print ('Exception4 = %s (%s)' % (e.message, type(e)))
+                t = Teacher.objects.get(mobile=mobile)
+                recepient_name = t.first_name + ' ' + t.last_name
+                recepient_type = 'Teacher'
 
             try:
                 sr = SMSRecord(school=school, sender1=sender_name, sender_type=sender_type,
