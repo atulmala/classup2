@@ -41,7 +41,7 @@ def send_sms1(school, sender, mobile, message, message_type):
             except Exception as e:
                 # from web interface bulk sms are also sent to teachers. In this case recipient is a teacher
                 print('unable to associate parent with ' + mobile + ' May this belongs to teacher...')
-                print ('Exception4 = %s (%s)' % (e.message, type(e)))
+                print ('Exception4 from sms.py = %s (%s)' % (e.message, type(e)))
                 t = Teacher.objects.get(mobile=mobile)
                 recepient_name = t.first_name + ' ' + t.last_name
                 recepient_type = 'Teacher'
@@ -54,27 +54,45 @@ def send_sms1(school, sender, mobile, message, message_type):
                 sr.save()
             except Exception as e:
                 print ('error occured while sending sms to ' + str(mobile))
-                print ('Exception3 = %s (%s)' % (e.message, type(e)))
+                print ('Exception3 from sms.py = %s (%s)' % (e.message, type(e)))
         except Exception as e:
 
             # sender is a parent and their name was passed as sender. Hence we can use as it is
             sender_name = sender
             sender_type = 'Parent'
-            t = Teacher.objects.get(mobile=mobile)
-            recepient_name = t.first_name + ' ' + t.last_name
-            recepient_type = 'Teacher'
-            sr = SMSRecord(school=school, sender1=sender_name, sender_type=sender_type,
-                           recipient_name=recepient_name, recipient_type=recepient_type, recipient_number=mobile,
-                           message=message, message_type=message_type,
-                           outcome=response)
-            sr.save()
 
-            print('error while trying to save sms in database')
-            print ('Exception1 = %s (%s)' % (e.message, type(e)))
+            try:
+                t = Teacher.objects.get(mobile=mobile)
+                recepient_name = t.first_name + ' ' + t.last_name
+                recepient_type = 'Teacher'
+                sr = SMSRecord(school=school, sender1=sender_name, sender_type=sender_type,
+                               recipient_name=recepient_name, recipient_type=recepient_type, recipient_number=mobile,
+                               message=message, message_type=message_type,
+                               outcome=response)
+                sr.save()
+            except Exception as e:
+                # this will happen when a parent tries to reset password. Both sender and receiver is parent,
+                # hence the above query will fail
+                print('looks like a case of password reset by parent...')
+                print ('Exception5 from sms.py = %s (%s)' % (e.message, type(e)))
+                sender_type = 'Parent'
+                recepient_type = 'Parent'
+                try:
+                    p = Parent.objects.get(Q(parent_mobile1=mobile) | Q(parent_mobile2=mobile))
+                    sender_name = p.parent_name
+                    recepient_name = p.parent_name
+                    sr = SMSRecord(school=school, sender1=sender_name, sender_type=sender_type,
+                                   recipient_name=recepient_name, recipient_type=recepient_type,
+                                   recipient_number=mobile, message=message, message_type=message_type,
+                                   outcome=response)
+                    sr.save()
+                except Exception as e:
+                    print ('error occured while trying to save sms for:  ' + str(mobile))
+                    print ('Exception6 from sms.py = %s (%s)' % (e.message, type(e)))
 
     except Exception as e:
         print ('error occured while sending sms to ' + str(mobile))
-        print ('Exception2 = %s (%s)' % (e.message, type(e)))
+        print ('Exception2 from sms.py = %s (%s)' % (e.message, type(e)))
 
 
 def send_sms(mobile, message):

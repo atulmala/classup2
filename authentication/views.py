@@ -3,6 +3,7 @@ import json
 from ipware.ip import get_ip
 
 from django.contrib.auth.models import User
+from django.db.models import Q
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.contrib.auth import authenticate, login, logout
@@ -12,7 +13,7 @@ from rest_framework.renderers import JSONRenderer
 
 from setup.models import UserSchoolMapping
 from teacher.models import Teacher
-from student.models import Student
+from student.models import Student, Parent
 from .models import LoginRecord
 from operations import sms
 
@@ -266,6 +267,7 @@ def forgot_password(request):
             print (new_password)
             u.set_password(new_password)
             u.save()
+            message_type = 'Forgot Password'
             message = 'Dear Ms/Mr ' + u.first_name + ' ' + u.last_name + ', your new password is ' + new_password
             message += '. Regards, ClassUp Support'
             print(message)
@@ -275,11 +277,19 @@ def forgot_password(request):
                 # a teacher's user is created as his/her email id
                 teacher = Teacher.objects.get(email=u.email)
                 mobile = teacher.mobile
+                school = teacher.school
             else:
                 # a parent's mobile is their username
                 mobile = user
+                # we need to extract the school name this parent belong to. First get the parent
+                p = Parent.objects.get(Q(parent_mobile1=mobile) | Q(parent_mobile2=mobile))
+                # now get the children of this parent
+                ward_list = Student.objects.filter(parent=p)
+                # finally, get the school
+                for student in ward_list:
+                    school = student.school
 
-            sms.send_sms(mobile, message)
+            sms.send_sms1(school, user, mobile, message, message_type)
 
             return_data["forgot_password"] = "successful"
             return JSONResponse(return_data, status=200)

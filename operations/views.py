@@ -29,7 +29,7 @@ from setup.models import Configurations, School
 # Create your views here.
 
 
-def operations_index(request):
+def operations_index():
     pass
 
 
@@ -416,7 +416,6 @@ def att_register_class(request):
                                                    subject=subject, date__range=[start, end])
                 working_days_till_date = q.count()
 
-                #q = Attendance.objects.filter(student=s, date__range=[start, end])
                 q = Attendance.objects.filter(student=s, subject=subject, date__range=[start, end])
                 absent_days_till_date = q.count()
 
@@ -830,20 +829,18 @@ def result_sms(request):
                     print ('Exception = %s (%s)' % (e.message, type(e)))
                 message += ' Regards, ' + school.school_name
                 print(message)
+                message_type = 'Term Test Subject Wise Marks'
+                sender = request.session['user']
                 p = s.parent
                 m1 = p.parent_mobile1
-                m2 = p.parent_mobile2
 
-                # 11/20 - we may need to send sms for about 40-50 students, which can be time consumeing.
-                # Hence we use thread
-                # thread1 = Thread(target=sms.send_sms, args=(m1, message))
-                # thread1.start()
-                sms.send_sms(m1, message)
+                sms.send_sms1(school, sender, m1, message, message_type)
 
-                if m2 != '':
-                    # thread2 = Thread(target=sms.send_sms, args=(m2, message))
-                    # thread2.start()
-                    sms.send_sms(m2, message)
+                configuration = Configurations.objects.get(school=school)
+                if configuration.send_absence_sms_both_to_parent:
+                    m2 = p.parent_mobile2
+                    if m2 != '':
+                        sms.send_sms1(school, sender, m2, message, message_type)
         except Exception as e:
             print ('error occured while fetching the list of students')
             print ('Exception = %s (%s)' % (e.message, type(e)))
@@ -1077,5 +1074,3 @@ def parents_communication_details(request):
         context_dict['form'] = form
 
     return render(request, 'classup/parents_communication_details.html', context_dict)
-
-
