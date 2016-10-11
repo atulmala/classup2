@@ -136,14 +136,14 @@ def setup_students(request):
                             p.parent_mobile2 = parent_mobile2
                             p.parent_email = parent_email
                     except Exception as e:
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception2 from setup views.py = %s (%s)' % (e.message, type(e)))
                         print ('Parent ' + parent_name + ' is a new entry. This will be created!')
                         p = Parent(parent_name=parent_name, parent_mobile1=parent_mobile1,
                                    parent_mobile2=parent_mobile2, parent_email=parent_email)
                     try:
                         p.save()
                     except Exception as e:
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception3 from setup views.py = %s (%s)' % (e.message, type(e)))
                         error = 'Unable to save the parent data for ' + parent_name + ' in Table Parent'
                         form.errors['__all__'] = form.error_class([error])
                         print (error)
@@ -169,7 +169,7 @@ def setup_students(request):
 
                             print ('Successfully created user for ' + parent_name)
                     except Exception as e:
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception4 from setup views.py = %s (%s)' % (e.message, type(e)))
                         print ('Unable to create user for ' + parent_name)
                         # todo implement the code to send password to the user through an sms and email
 
@@ -186,17 +186,20 @@ def setup_students(request):
                             message += 'using ClassUp App. '
                             message += 'Please install ClassUp from these links. Android: '
                             message += android_link
-                            message += ' iPhone/iOS: '
+                            message += '. iPhone/iOS: '
                             message += iOS_link
-                            message += ' Your user id is: ' + str(parent_mobile1) + ', and password is: ' + password
+                            message += '. Your user id is: ' + str(parent_mobile1) + ', and password is: '
+                            message += str(password)
                             message += '. You can change your password after first login. '
                             message += 'In case of any problem please send an email to: info@classup.in'
                             print(message)
+                            message_type = 'Welcome Parent'
+                            sender = request.session['user']
 
-                            sms.send_sms(parent_mobile1, message)
+                            sms.send_sms1(school, sender, str(parent_mobile1), message, message_type)
                     except Exception as e:
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
-                        print ('Failed to create Parent School mapping for ' + parent_name + ' in ClassUpRouter')
+                        print ('Exception1 in setup view.py = %s (%s)' % (e.message, type(e)))
+                        print ('Failed to send welcome sms to ' + parent_name)
 
                     # now, start creating the student. The parent created above will be the parent of this student.
 
@@ -207,7 +210,7 @@ def setup_students(request):
                         the_class = Class.objects.get(school=school, standard=current_class)
                     except Exception as e:
                         error = 'Unable to retrieve the relevant class: ' + current_class
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception5 from setup views.py = %s (%s)' % (e.message, type(e)))
                         form.errors['__all__'] = form.error_class([error])
                         print (error)
                         # todo - we should skip this student but report this and move on to the next student <provide code>
@@ -216,7 +219,7 @@ def setup_students(request):
                     try:
                         the_section = Section.objects.get(school=school, section=current_section)
                     except Exception as e:
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception6 from setup views.py = %s (%s)' % (e.message, type(e)))
                         error = 'Unable to retrieve the relevant object for section: ' + current_section
                         form.errors['__all__'] = form.error_class([error])
                         print (error)
@@ -240,7 +243,7 @@ def setup_students(request):
                             s.roll_number = current_roll_no
                             s.parent = p
                     except Exception as e:
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception7 from setup views.py = %s (%s)' % (e.message, type(e)))
                         print ('Student with ID:  ' + student_id + ' Name: '
                                + student_first_name + ' ' + student_last_name +
                                ' is a new entry for school ' + school.school_name + '. Hence inserting...')
@@ -264,14 +267,14 @@ def setup_students(request):
                                         print (' test results successfully created')
                                     except Exception as e:
                                         print ('failed to create test results')
-                                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                                        print ('Exception8 from setup views.py = %s (%s)' % (e.message, type(e)))
                             except Exception as e:
                                 print ('Currently no pending tests for this class/section')
-                                print ('Exception = %s (%s)' % (e.message, type(e)))
+                                print ('Exception9 from setup views.py = %s (%s)' % (e.message, type(e)))
                         except Exception as e:
                             error = 'Unable to create the new student in the database'
                             print (error)
-                            print ('Exception = %s (%s)' % (e.message, type(e)))
+                            print ('Exception10 from setup views.py = %s (%s)' % (e.message, type(e)))
                             form.errors['__all__'] = form.error_class([error])
                             # todo - we should skip this student but report this and move on to the next student <provide code>
                     try:
@@ -290,13 +293,13 @@ def setup_students(request):
                                         print ('roll number updated in test_result')
                                     except Exception as e:
                                         print ('unable to change roll number in test result')
-                                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                                        print ('Exception11 from setup views.py = %s (%s)' % (e.message, type(e)))
                             except Exception as e:
                                 print ('no pending tests for which roll number needs to be changed')
-                                print ('Exception = %s (%s)' % (e.message, type(e)))
+                                print ('Exception 12 from setup views.py= %s (%s)' % (e.message, type(e)))
                             update_marks_list = False
                     except Exception as e:
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception13 from setup views.py = %s (%s)' % (e.message, type(e)))
                         error = 'Unable to save the data for Student with ID: ' + student_id + \
                                 ' Name: ' + student_first_name + ' ' + student_last_name + ' in Table Student'
                         form.errors['__all__'] = form.error_class([error])
@@ -309,7 +312,7 @@ def setup_students(request):
                 messages.success(request, 'Student Uploaded. Please login from device to verify')
                 return render(request, 'classup/setup_index.html', context_dict)
             except Exception as e:
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception14 from setup views.py = %s (%s)' % (e.message, type(e)))
                 error = 'Invalid file uploaded. Please try again.'
                 form.errors['__all__'] = form.error_class([error])
                 print (error)
@@ -377,7 +380,7 @@ def setup_classes(request):
                             print('Class ' + class_standard + ' for school ' + school.school_name +
                                   ' already exist. Hence skipping...')
                     except Exception as e:
-                        print('Exception = %s (%s)' % (e.message, type(e)))
+                        print('Exception15 from setup views.py = %s (%s)' % (e.message, type(e)))
                         print('class ' + class_standard + ' is a new class. Hence inserting...')
                         try:
                             c = Class(standard=class_standard)
@@ -385,7 +388,7 @@ def setup_classes(request):
                             c.sequence = class_sequence
                             c.save()
                         except Exception as e:
-                            print ('Exception = %s (%s)' % (e.message, type(e)))
+                            print ('Exception16 from setup views.py = %s (%s)' % (e.message, type(e)))
                             error = 'Unable to save the class ' + class_standard + ' in table Class'
                             form.errors['__all__'] = form.error_class([error])
                             print(error)
@@ -395,7 +398,7 @@ def setup_classes(request):
                 messages.success(request, 'Classes Uploaded. Please login from device to verify')
                 return render(request, 'classup/setup_index.html', context_dict)
             except Exception as e:
-                print('Exception = %s (%s)' % (e.message, type(e)))
+                print('Exception17 from setup views.py = %s (%s)' % (e.message, type(e)))
                 error = 'Invalid file uploaded. Please try again.'
                 form.errors['__all__'] = form.error_class([error])
                 print(error)
@@ -457,14 +460,14 @@ def setup_sections(request):
                             print ('Section ' + section + 'for school ' + school.school_name
                                    + ' already exist. Hence skipping...')
                     except Exception as e:
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception18 from setup views.py = %s (%s)' % (e.message, type(e)))
                         print ('Section ' + section + ' is a new section. Hence inserting...')
                         try:
                             s = Section(section=section)
                             s.school = school
                             s.save()
                         except Exception as e:
-                            print ('Exception = %s (%s)' % (e.message, type(e)))
+                            print ('Exception19 from setup views.py = %s (%s)' % (e.message, type(e)))
                             error = 'Unable to save the data in Table Section'
                             form.errors['__all__'] = form.error_class([error])
                             print (error)
@@ -473,7 +476,7 @@ def setup_sections(request):
                 messages.success(request, 'Section Uploaded. Please login from device to verify')
                 return render(request, 'classup/setup_index.html', context_dict)
             except Exception as e:
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception20 from setup views.py = %s (%s)' % (e.message, type(e)))
                 error = 'Invalid file uploaded. Please try again.'
                 form.errors['__all__'] = form.error_class([error])
                 print (error)
@@ -555,7 +558,7 @@ def setup_teachers(request):
                                 print ('Exception = %s (%s)' % (e.message, type(e)))
 
                     except Exception as e:
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception21 from setup views.py = %s (%s)' % (e.message, type(e)))
                         print ('Teacher ' + f_name + ' ' + l_name + ' is a new entry. Hence inserting...')
                         t = Teacher(teacher_erp_id=employee_id, school=school, first_name=f_name, last_name=l_name,
                                     email=email, mobile=mobile)
@@ -590,7 +593,7 @@ def setup_teachers(request):
                                 user.groups.add(group)
                                 print ('Successfully added ' + f_name + ' ' + l_name + ' to the Teachers group')
                             except Exception as e:
-                                print ('Exception = %s (%s)' % (e.message, type(e)))
+                                print ('Exception22 from setup views.py = %s (%s)' % (e.message, type(e)))
                                 print ('Unable to add ' + f_name + ' ' + l_name + ' to the Teachers group')
 
                             # get the links of app on Google Play and Apple App store
@@ -608,11 +611,13 @@ def setup_teachers(request):
                             message += 'You can change your password after first login. '
                             message += 'Enjoy managing your class with ClassUp!'
                             message += ' In case of any problem please send an email to: info@classup.in'
+                            message_type = 'Welcome Teacher'
+                            sender = request.session['user']
 
-                            sms.send_sms(mobile, message)
+                            sms.send_sms1(school, sender, str(mobile), message, message_type)
 
                         except Exception as e:
-                            print ('Exception = %s (%s)' % (e.message, type(e)))
+                            print ('Exception23 from setup views.py = %s (%s)' % (e.message, type(e)))
                             error = 'Unable to save the data for ' + f_name + ' ' + l_name + ' in Table Teacher'
                             form.errors['__all__'] = form.error_class([error])
                             print (error)
@@ -623,7 +628,7 @@ def setup_teachers(request):
                 messages.success(request, 'Teacher Uploaded. Please login from device to verify')
                 return render(request, 'classup/setup_index.html', context_dict)
             except Exception as e:
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception24 from setup views.py = %s (%s)' % (e.message, type(e)))
                 error = 'Invalid file uploaded. Please try again.'
                 form.errors['__all__'] = form.error_class([error])
                 print (error)
@@ -689,14 +694,14 @@ def setup_subjects(request):
                             s.subject_code = sub_code
                             s.subject_sequence = sub_sequence
                     except Exception as e:
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception25 from setup views.py = %s (%s)' % (e.message, type(e)))
                         print ('Subject ' + sub_name + ' is a new entry. Hence inserting...')
                         s = Subject(school=school, subject_name=sub_name,
                                     subject_code=sub_code, subject_sequence=sub_sequence)
                     try:
                         s.save()
                     except Exception as e:
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception26 from setup views.py = %s (%s)' % (e.message, type(e)))
                         error = 'Unable to save the data for ' + sub_name + ' ' + sub_code + ' in Table Subject'
                         form.errors['__all__'] = form.error_class([error])
                         print (error)
@@ -704,7 +709,7 @@ def setup_subjects(request):
                 messages.success(request, 'Subjects Uploaded. Please login from device to verify')
                 return render(request, 'classup/setup_index.html', context_dict)
             except Exception as e:
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception27 from setup views.py = %s (%s)' % (e.message, type(e)))
                 error = 'Invalid file uploaded. Please try again.'
                 form.errors['__all__'] = form.error_class([error])
                 print (error)
@@ -777,9 +782,9 @@ def setup_class_teacher(request):
                                 print ('successfully updated class teacher ' + the_class + '-' + section)
                             except Exception as e:
                                 print ('unable to the update class teacher for ' + the_class + '-' + section)
-                                print ('Exception = %s (%s)' % (e.message, type(e)))
+                                print ('Exception28 from setup views.py = %s (%s)' % (e.message, type(e)))
                     except Exception as e:
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception29 from setup views.py = %s (%s)' % (e.message, type(e)))
                         print ('class teacher for ' + the_class + '-' + section +
                                ' is not yet set. Setting them now...')
                         try:
@@ -791,7 +796,7 @@ def setup_class_teacher(request):
                             print ('successfully class teacher for ' + the_class + '-' + section)
                         except Exception as e:
                             print ('unable to set class teacher for ' + the_class + '-' + section)
-                            print ('Exception = %s (%s)' % (e.message, type(e)))
+                            print ('Exception30 from setup views.py = %s (%s)' % (e.message, type(e)))
                             error = ('unable to set class teacher ' + the_class + '-' + section)
                             form.errors['__all__'] = form.error_class([error])
                             print (error)
@@ -801,7 +806,7 @@ def setup_class_teacher(request):
                 messages.success(request, 'Class Teachers Uploaded. Please login from device to verify')
                 return render(request, 'classup/setup_index.html', context_dict)
             except Exception as e:
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception31 from setup views.py = %s (%s)' % (e.message, type(e)))
                 error = 'Invalid file uploaded. Please try again.'
                 form.errors['__all__'] = form.error_class([error])
                 print (error)
@@ -884,10 +889,10 @@ def setup_exam(request):
                                 print ('successfully updated Exam ' + exam_title)
                             except Exception as e:
                                 print ('unable to the update Exam ' + exam_title)
-                                print ('Exception = %s (%s)' % (e.message, type(e)))
+                                print ('Exception32 from setup views.py = %s (%s)' % (e.message, type(e)))
 
                     except Exception as e:
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception33 from setup views.py = %s (%s)' % (e.message, type(e)))
                         print ('Exam  ' + exam_title + ' for ' + exam_start_class + ' and ' +
                                exam_end_class + ' is not yet set. Setting it now...')
                         try:
@@ -901,7 +906,7 @@ def setup_exam(request):
                             print ('unable to create exam ' + exam_title + ' with start date: '
                                    + str(exam_start_date) + ' and end date: ' + str(exam_end_date) + ' for ' +
                                    exam_start_class + ' and ' + exam_end_class)
-                            print ('Exception = %s (%s)' % (e.message, type(e)))
+                            print ('Exception34 from setup views.py = %s (%s)' % (e.message, type(e)))
                             error = 'unable to create exam ' + exam_title + ' with start date: ' \
                                     + str(exam_start_date) + ' and end date: ' + str(exam_end_date) + ' for ' + \
                                     exam_start_class + ' and ' + exam_end_class
@@ -913,7 +918,7 @@ def setup_exam(request):
                 messages.success(request, 'Exams Uploaded. Please login from device to verify')
                 return render(request, 'classup/setup_index.html', context_dict)
             except Exception as e:
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception35 from setup views.py = %s (%s)' % (e.message, type(e)))
                 error = 'Invalid file uploaded. Please try again.'
                 form.errors['__all__'] = form.error_class([error])
                 print (error)

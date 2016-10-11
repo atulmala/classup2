@@ -30,7 +30,7 @@ def send_sms1(school, sender, mobile, message, message_type):
             sender_name = t.first_name + ' ' + t.last_name + ' (' + sender + ')'    # include teacher's id also
 
             sender_type = 'Teacher'
-            if message_type == 'Bulk SMS (Web Interface)':
+            if message_type == 'Bulk SMS (Web Interface)' or 'Welcome Parent' or 'Welcome Teacher':
                 sender_type = 'Admin'
 
             try:
