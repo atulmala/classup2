@@ -71,3 +71,7 @@ class BulkSMSForm(forms.Form):
     message_text = forms.CharField(widget=forms.Textarea, label='Enter Message')
     Staff = forms.MultipleChoiceField(choices=STAFF_CHOICES,
                                       widget=forms.CheckboxSelectMultiple(renderer=HorizontalRenderer))
+
+
+class SMSSummaryForm(forms.Form):
+    date = forms.CharField(widget=MonthInput(), label='Select Month & Year')

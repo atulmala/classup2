@@ -455,7 +455,7 @@ def get_working_days1(request):
             session_start_month = configuration.session_start_month
         except Exception as e:
             print ('unable to fetch the session_start_month for school with id:  ' + school_id)
-            print ('Exception = %s (%s)' % (e.message, type(e)))
+            print ('Exception1 from academics views.py = %s (%s)' % (e.message, type(e)))
 
         the_class = Class.objects.get(school=school, standard=cl)
         section = Section.objects.get(school=school, section=the_section)
@@ -476,7 +476,7 @@ def get_working_days1(request):
                 return JSONResponse(response, status=200)
             except Exception as e:
                 print ('unable to fetch the number of days for ' + str(m) + '/' + str(y))
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception2 from academics views.py = %s (%s)' % (e.message, type(e)))
                 return JSONResponse('Failed', status=201)
         else:
             # logic: if current month is less than session_start_month,
@@ -507,7 +507,7 @@ def get_working_days1(request):
                         days_till_last_month += total_days
                     except Exception as e:
                         print ('unable to fetch the number of days for ' + str(m) + '/' + str(now.year))
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception3 from academics views.py = %s (%s)' % (e.message, type(e)))
                         return JSONResponse('Failed', status=404)
             # if current month is higher than the session_start_month then we need to add the working days
             # session start month till current-1 month
@@ -521,7 +521,7 @@ def get_working_days1(request):
                         days_till_last_month += total_days
                     except Exception as e:
                         print ('unable to fetch the number of days for ' + str(m) + '/' + str(now.year))
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception4 from academics views.py = %s (%s)' % (e.message, type(e)))
                         return JSONResponse('Failed', status=404)
             response['working_days'] = days_till_last_month
             return JSONResponse(response, status=200)
@@ -561,7 +561,7 @@ def get_attendance_summary(request):
             session_start_month = configuration.session_start_month
         except Exception as e:
             print ('unable to fetch the session_start_month for school with id:  ' + school_id)
-            print ('Exception = %s (%s)' % (e.message, type(e)))
+            print ('Exception6 from academics views.py = %s (%s)' % (e.message, type(e)))
 
         c = request.GET.get('class')
         sec = request.GET.get('section')
@@ -602,7 +602,7 @@ def get_attendance_summary(request):
                         (student=s, subject=subject, date__month=month_dict[m], date__year=y)
                     absent_days = query.count()
                 except Exception as e:
-                    print ('Exception = %s (%s)' % (e.message, type(e)))
+                    print ('Exception7 from academics views.py = %s (%s)' % (e.message, type(e)))
             else:
                 # logic: if current month is less than session_start_month,
                 # this means that the session started last year. So we need to add the working day for each month from
@@ -630,7 +630,7 @@ def get_attendance_summary(request):
                             print ('absent days for ' + str(m) + '/' + str(now.year) + '=' + str(query.count()))
                         except Exception as e:
                             print ('unable to fetch absent days for ' + str(m) + '/' + str(now.year))
-                            print ('Exception = %s (%s)' % (e.message, type(e)))
+                            print ('Exception8 from academics views.py = %s (%s)' % (e.message, type(e)))
                             return JSONResponse('Failed', status=404)
                 # if current month is higher than the session_start_month then we need to add the working days
                 # session start month till current-1 month
@@ -644,7 +644,7 @@ def get_attendance_summary(request):
                             print ('absent days for ' + str(m) + '/' + str(now.year) + '=' + str(query.count()))
                         except Exception as e:
                             print ('unable to fetch absent days for ' + str(m) + '/' + str(now.year))
-                            print ('Exception = %s (%s)' % (e.message, type(e)))
+                            print ('Exception9 from academics views.py = %s (%s)' % (e.message, type(e)))
                             return JSONResponse('Failed', status=404)
             # response['working_days'] = days_till_last_month
             print ('absent days=' + str(absent_days))
@@ -686,7 +686,7 @@ def delete_test(request, test_id):
         except Exception as e:
             response["status"] = "failed"
             print('Unable to delete test with id=' + test_id)
-            print ('Exception = %s (%s)' % (e.message, type(e)))
+            print ('Exception10 from academics views.py = %s (%s)' % (e.message, type(e)))
             return JSONResponse(response, status=404)
 
 

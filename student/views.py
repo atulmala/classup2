@@ -80,7 +80,7 @@ def get_parent(request, student_id):
             parent_detail['parent_mobile2'] = parent.parent_mobile2
             parent_detail['status'] = 'ok'
         except Exception as e:
-            print ('Exception = %s (%s)' % (e.message, type(e)))
+            print ('Exception1 from student views.py = %s (%s)' % (e.message, type(e)))
             print('unable to fetch parent name and mobile for student id: ' + student_id)
             parent_detail['status'] = 'error'
             return JSONResponse(parent_detail, status=201)

@@ -1,4 +1,5 @@
 from datetime import datetime, date
+
 import time
 import calendar
 from calendar import monthrange
@@ -16,7 +17,7 @@ from django.contrib import messages
 from authentication.views import JSONResponse
 
 from .forms import SchoolAttSummaryForm, AttendanceRegisterForm
-from .forms import TestResultForm, ParentsCommunicationDetailsForm, BulkSMSForm
+from .forms import TestResultForm, ParentsCommunicationDetailsForm, BulkSMSForm, SMSSummaryForm
 import sms
 
 from academics.models import Class, Section, Subject, ClassTest, TestResults, ClassTeacher
@@ -25,6 +26,8 @@ from teacher.models import Teacher
 from attendance.models import Attendance, AttendanceTaken
 from parents.models import  ParentCommunication
 from setup.models import Configurations, School
+from .models import SMSRecord
+
 
 # Create your views here.
 
@@ -220,6 +223,153 @@ def att_summary_school(request):
     return render(request, 'classup/daily_att_summary.html', context_dict)
 
 
+def sms_summary(request):
+    context_dict = {
+    }
+
+    context_dict['header'] = 'Monthly SMS Summary'
+    context_dict['school_name'] = request.session['school_name']
+    context_dict['user_type'] = request.session['user_type']
+
+    # first see whether the cancel button was pressed
+    if "cancel" in request.POST:
+        return render(request, 'classup/setup_index.html', context_dict)
+
+    context_dict['header'] = 'Download Monthly SMS Summary'
+
+    if request.method == 'POST':
+        school_id = request.session['school_id']
+        school = School.objects.get(id=school_id)
+        school_name = school.school_name
+        form = SMSSummaryForm(request.POST)
+
+        if form.is_valid():
+            the_date = form.cleaned_data['date']
+
+        else:
+            error = 'You have missed to select the Date'
+            form = SMSSummaryForm()
+            context_dict['form'] = form
+            form.errors['__all__'] = form.error_class([error])
+            return render(request, 'classup/sms_summary.html', context_dict)
+
+        m = the_date.split('-')[1]
+        month_int = int(m)
+        month = calendar.month_name[month_int]
+        y = the_date.split('-')[0]
+        year_int = int(y)
+
+        excel_file_name = 'SMS_Summary_' + '_' + str(month) + '_' + str(y) + '.xlsx'
+
+        output = StringIO.StringIO(excel_file_name)
+        workbook = xlsxwriter.Workbook(output)
+        sms_sheet = workbook.add_worksheet("SMS Summary")
+
+        title = workbook.add_format({
+            'bold': True,
+            'font_size': 14,
+            'align': 'center',
+            'valign': 'vcenter'
+        })
+        header = workbook.add_format({
+            'bold': True,
+            'bg_color': '#F7F7F7',
+            'color': 'black',
+            'align': 'center',
+            'valign': 'top',
+            'border': 1
+        })
+        date_format = workbook.add_format({
+            'num_format': 'dd/mm/yy'
+        })
+
+        title_text = 'Monthly SMS Summary for ' + school_name
+        title_text += ' for ' + month + '/' + y
+        sms_sheet.merge_range('A2:Q2', title_text, title)
+        sms_sheet.set_column('A:A', 4)
+        sms_sheet.set_column('B:B', 7)
+        sms_sheet.set_column('C:C', 15)
+        sms_sheet.set_column('D:D', 15)
+        sms_sheet.set_column('E:E', 15)
+        sms_sheet.set_column('F:F', 15)
+        sms_sheet.set_column('G:G', 15)
+        sms_sheet.set_column('H:H', 100)
+        sms_sheet.set_column('I:I', 15)
+
+        current_row = 3
+        sms_sheet.write(3, 0, ugettext("S No."), header)
+        sms_sheet.write(3, 1, ugettext("Date"), header)
+        sms_sheet.write(3, 2, ugettext("Sender"), header)
+        sms_sheet.write(3, 3, ugettext("Sender Type"), header)
+        sms_sheet.write(3, 4, ugettext("Recipient"), header)
+        sms_sheet.write(3, 5, ugettext("Recipient Number"), header)
+        sms_sheet.write(3, 6, ugettext("Recipient Type"), header)
+        sms_sheet.write(3, 7, ugettext("Message"), header)
+        sms_sheet.write(3, 8, ugettext("Message Type"), header)
+        sms_sheet.write(3, 9, ugettext("Status"), header)
+        try:
+            sms_list = SMSRecord.objects.filter(school=school, date__month=month_int, date__year=year_int)
+            sr_no = 1
+            for s in sms_list:
+                current_row += 1
+                sms_sheet.write_number(current_row, 0, sr_no)
+
+                # the date on which the sms was sent
+                sms_date = s.date
+                sms_sheet.write(current_row, 1, sms_date, date_format)
+
+                # sender of the sma
+                sender = s.sender1
+                sms_sheet.write(current_row, 2, ugettext(sender))
+
+                # sender type
+                sender_type = s.sender_type
+                sms_sheet.write(current_row, 3, ugettext(sender_type))
+
+                # recipient of the message
+                recipient = s.recipient_name
+                sms_sheet.write(current_row, 4, ugettext(recipient))
+
+                # recipient number
+                recipient_number = s.recipient_number
+                sms_sheet.write(current_row, 5, ugettext(recipient_number))
+
+                # recipient type
+                recipient_type = s.recipient_type
+                sms_sheet.write(current_row, 6, ugettext(recipient_type))
+
+                # message
+                message = s.message
+                sms_sheet.write(current_row, 7, ugettext(message))
+
+                # message type
+                message_type = s.message_type
+                sms_sheet.write(current_row, 8, ugettext(message_type))
+
+                # outcome
+                outcome = s.outcome
+                sms_sheet.write(current_row, 9, ugettext(outcome))
+
+                sr_no += 1
+
+            workbook.close()
+        except Exception as e:
+            print('unable to write sms to excel file')
+            print ('Exception50 from operations views.py = %s (%s)' % (e.message, type(e)))
+
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
+        response.write(output.getvalue())
+
+        return response
+
+    if request.method == 'GET':
+        form = SMSSummaryForm()
+        context_dict['form'] = form
+
+    return render(request, 'classup/sms_summary.html', context_dict)
+
+
 def att_register_class(request):
     context_dict = {
     }
@@ -234,7 +384,6 @@ def att_register_class(request):
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return render(request, 'classup/setup_index.html', context_dict)
-
 
     context_dict['header'] = 'Download Monthly Attendance'
     if request.method == 'POST':
@@ -344,7 +493,6 @@ def att_register_class(request):
         row = 4 + idx
 
         # 04/08/2016 - Changed functionality to retrieve attendance for a specific subject. Done for coaching/college
-        #subject = Subject.objects.get(subject_name='Main')
         subject = Subject.objects.get(school=school, subject_name=the_subject)
 
         # we will cache the list of holidays so that the execution is faster, and less hits to db means
@@ -379,7 +527,7 @@ def att_register_class(request):
                                     present_count += 1
                             except Exception as e:
                                 print ('exception occured while doing lookup in the Attendance table')
-                                print ('Exception = %s (%s)' % (e.message, type(e)))
+                                print ('Exception1 from operations views.py = %s (%s)' % (e.message, type(e)))
                         else:   # wow, this day was a holiday
                             holidays.append(d)
                             holiday_count += 1
@@ -387,7 +535,7 @@ def att_register_class(request):
 
                     except Exception as e:
                         print ('exception occured while doing lookup in the AttendanceTaken table')
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception2 from operations views.py = %s (%s)' % (e.message, type(e)))
                 else:
                     attendance_sheet.write(row, d+2, ugettext("NA"), holiday_format)
 
@@ -399,7 +547,7 @@ def att_register_class(request):
                     attendance_sheet.write_number(row, d+4, perc_present, perc_format)
                 except Exception as e:
                     print ('exception occured while trying to calculate percentage')
-                    print ('Exception = %s (%s)' % (e.message, type(e)))
+                    print ('Exception3 from operations views.py = %s (%s)' % (e.message, type(e)))
 
             # calculate the till date attendance for this student
             try:
@@ -431,7 +579,7 @@ def att_register_class(request):
                     attendance_sheet.write(row, d+6, present_perc_till_date, perc_format)
             except Exception as e:
                 print ('unable to calculate attendance till date')
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception4 from operations views.py = %s (%s)' % (e.message, type(e)))
 
             row += 1
             idx += 1
@@ -692,7 +840,7 @@ def test_result(request):
                                 result_sheet.write(row+2, marks_col+1, ugettext(grade), cell_center)
                     except Exception as e:
                         print ('Exception occured while trying to fetch marks/grade for a student')
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception5 from operations views.py = %s (%s)' % (e.message, type(e)))
 
                     row += 1
                     idx += 1
@@ -736,7 +884,7 @@ def test_result(request):
                                 result_sheet.write(row+2, marks_col1+1, ugettext(grade), cell_center)
                     except Exception as e:
                         print ('Exception occured while trying to fetch marks/grade for a student')
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception6 from operations views.py = %s (%s)' % (e.message, type(e)))
                     row += 1
                 marks_col1 += 2
 
@@ -811,7 +959,7 @@ def result_sms(request):
                             except Exception as e:
                                 print ('error occured while fetching marks for ' +
                                        str(s) + ' for test.subject.subject_name')
-                                print ('Exception = %s (%s)' % (e.message, type(e)))
+                                print ('Exception7 from operations views.py = %s (%s)' % (e.message, type(e)))
                         else:
                             try:
                                 tr = TestResults.objects.get(class_test=test, student=s)
@@ -822,11 +970,11 @@ def result_sms(request):
                             except Exception as e:
                                 print ('error occured while fetching grade for ' +
                                        str(s) + ' for test.subject.subject_name')
-                                print ('Exception = %s (%s)' % (e.message, type(e)))
+                                print ('Exception8 from operations views.py = %s (%s)' % (e.message, type(e)))
 
                 except Exception as e:
                     print ('error occured while fetching the list of tests')
-                    print ('Exception = %s (%s)' % (e.message, type(e)))
+                    print ('Exception9 from operations views.py = %s (%s)' % (e.message, type(e)))
                 message += ' Regards, ' + school.school_name
                 print(message)
                 message_type = 'Term Test Subject Wise Marks'
@@ -843,7 +991,7 @@ def result_sms(request):
                         sms.send_sms1(school, sender, m2, message, message_type)
         except Exception as e:
             print ('error occured while fetching the list of students')
-            print ('Exception = %s (%s)' % (e.message, type(e)))
+            print ('Exception10 from operations views.py = %s (%s)' % (e.message, type(e)))
         return render(request, 'classup/setup_index.html', context_dict)
 
     if request.method == 'GET':
@@ -898,7 +1046,7 @@ def send_message(request, school_id):
                                 sms.send_sms1(school, email, m2, message, message_type)
                 except Exception as e:
                     print ('Unable to send message while trying for whole class')
-                    print ('Exception = %s (%s)' % (e.message, type(e)))
+                    print ('Exception11 from operations views.py = %s (%s)' % (e.message, type(e)))
                 response["status"] = "success"
 
             # the message is to be sent to parents of selected students only
@@ -925,12 +1073,12 @@ def send_message(request, school_id):
                                     sms.send_sms1(school, email, m2, message, message_type)
                         except Exception as e:
                             print ('Unable to send message to ' + p.parent_name + 'with mobile number: ' + m1)
-                            print ('Exception = %s (%s)' % (e.message, type(e)))
+                            print ('Exception12 from operations views.py = %s (%s)' % (e.message, type(e)))
 
                 response["status"] = "success"
         except Exception as e:
             print ('Unable to send message')
-            print ('Exception = %s (%s)' % (e.message, type(e)))
+            print ('Exception13 from operations views.py = %s (%s)' % (e.message, type(e)))
 
     return JSONResponse(response, status=200)
 
@@ -1048,7 +1196,7 @@ def parents_communication_details(request):
                 teacher_name = ct.class_teacher.first_name + ' ' + ct.class_teacher.last_name
             except Exception as e:
                 print ('Class Teacher not set for ' + student_class)
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception14 from operations views.py = %s (%s)' % (e.message, type(e)))
                 teacher_name = "N/A"
 
             main_sheet.write(current_row, 6, ugettext(teacher_name))

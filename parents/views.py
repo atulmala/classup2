@@ -75,20 +75,20 @@ def submit_parents_communication(request):
                             sms.send_sms1(school, parent_name, teacher_mobile, message, message_type)
                     except Exception as e:
                         print('Class Teacher not set for ' + the_class.standard + '-' + section.section)
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception1 from parents views.py = %s (%s)' % (e.message, type(e)))
 
                     principal_mobile = configuration.principal_mobile
                     sms.send_sms1(school, parent_name, principal_mobile, message, message_type)
                 except Exception as e:
                     print ('failed to send message ' + communication_text + ' to Class Teacher of class ' +
                            the_class.standard + '-' + section.section)
-                    print ('Exception = %s (%s)' % (e.message, type(e)))
+                    print ('Exception2 from parents views.py = %s (%s)' % (e.message, type(e)))
 
             return HttpResponse('Success')
         except Exception as e:
             print ('Error occured while trying to save comments from parents of '
                    + student.fist_name + ' ' + student.last_name)
-            print ('Exception = %s (%s)' % (e.message, type(e)))
+            print ('Exception3 from parents views.py = %s (%s)' % (e.message, type(e)))
             return HttpResponse('Failed')
 
     return HttpResponse('OK')
@@ -121,7 +121,7 @@ def retrieve_stu_att_summary(request):
         main = Subject.objects.get(school=school, subject_name='Main')
     except Exception as e:
         print ('Main subject does not exist for this school/Coaching Institute')
-        print ('Exception = %s (%s)' % (e.message, type(e)))
+        print ('Exception4 from parents views.py = %s (%s)' % (e.message, type(e)))
         main_exist = False
 
     now = datetime.datetime.now()
@@ -143,7 +143,7 @@ def retrieve_stu_att_summary(request):
                 print ('days in ' + str(m) + '/' + str(now.year - 1) + '=' + str(work_days))
             except Exception as e:
                 print ('unable to fetch the number of days for ' + month_year)
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception5 from parents views.py = %s (%s)' % (e.message, type(e)))
             try:
                 if main_exist:
                     query = Attendance.objects.filter(student=student, subject=main,
@@ -163,7 +163,7 @@ def retrieve_stu_att_summary(request):
                 print ('absent days for ' + str(m) + '/' + str(now.year - 1) + '=' + str(query.count()))
             except Exception as e:
                 print ('unable to fetch absent days for ' + str(m) + '/' + str(now.year - 1))
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception6 from parents views.py = %s (%s)' % (e.message, type(e)))
             d = dict(dict_attendance_summary)
             response_array.append(d)
         for m in range(1, now.month+1):
@@ -181,7 +181,7 @@ def retrieve_stu_att_summary(request):
                 print ('days in ' + str(m) + '/' + str(now.year) + '=' + str(work_days))
             except Exception as e:
                 print ('unable to fetch the number of days for ' + str(m) + '/' + str(now.year))
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception7 from parents views.py = %s (%s)' % (e.message, type(e)))
             try:
                 if main_exist:
                     query = Attendance.objects.filter(student=student, subject=main,
@@ -200,7 +200,7 @@ def retrieve_stu_att_summary(request):
                 print ('absent days for ' + str(m) + '/' + str(now.year) + '=' + str(query.count()))
             except Exception as e:
                 print ('unable to fetch absent days for ' + str(m) + '/' + str(now.year))
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception8 from parents views.py = %s (%s)' % (e.message, type(e)))
             d = dict(dict_attendance_summary)
             response_array.append(d)
 
@@ -222,7 +222,7 @@ def retrieve_stu_att_summary(request):
                 print ('days in ' + str(m) + '/' + str(now.year) + '=' + str(work_days))
             except Exception as e:
                 print ('unable to fetch the number of days for ' + str(m) + '/' + str(now.year))
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception9 from parents views.py = %s (%s)' % (e.message, type(e)))
             try:
                 if main_exist:
                     query = Attendance.objects.filter (student=student, subject=main,
@@ -243,7 +243,7 @@ def retrieve_stu_att_summary(request):
 
             except Exception as e:
                 print ('unable to fetch absent days for ' + str(m) + '/' + str(now.year))
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception10 from parents views.py = %s (%s)' % (e.message, type(e)))
             d = dict(dict_attendance_summary)
 
             response_array.append(d)
@@ -275,7 +275,7 @@ def retrieve_student_subjects(request):
             return JSONResponse(response_array, status=200)
         except Exception as e:
             print ('unable to retrieve list of subjects for ' + s.fist_name + ' ' + s.last_name)
-            print ('Exception = %s (%s)' % (e.message, type(e)))
+            print ('Exception11 from parents views.py = %s (%s)' % (e.message, type(e)))
     return JSONResponse(response_array, status=201)
 
 
@@ -311,7 +311,7 @@ def retrieve_stu_sub_marks_history(request, subject):
                 response_array.append(d)
             return JSONResponse(response_array, status=200)
         except Exception as e:
-            print ('Exception = %s (%s)' % (e.message, type(e)))
+            print ('Exception12 from parents views.py = %s (%s)' % (e.message, type(e)))
             print ('unable to retrieve ' + sub.subject_name + ' marks history for '
                    + s.fist_name + ' ' + s.last_name)
 
@@ -363,7 +363,7 @@ def get_exam_result(request, student_id, exam_id):
             return JSONResponse(response_array, status=200)
         except Exception as e:
             print (exam_result)
-            print ('Exception = %s (%s)' % (e.message, type(e)))
+            print ('Exception13 from parents views.py = %s (%s)' % (e.message, type(e)))
             print ('unable to retrieve ' + exam.title + ' results for ' +
                    student.fist_name + ' ' + student.last_name)
     return JSONResponse(response_array, status=201)

@@ -1,6 +1,5 @@
 import json
 
-from django.shortcuts import render
 
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -52,7 +51,7 @@ def set_subjects(request, teacher):
                 s = Subject.objects.get(school=school, subject_code=subject)
             except Exception as e:
                     print('unable to retrieve subject')
-                    print ('Exception = %s (%s)' % (e.message, type(e)))
+                    print ('Exception1 from teacher views.py = %s (%s)' % (e.message, type(e)))
 
             print ('now trying to set teacher subject')
 
@@ -73,7 +72,7 @@ def set_subjects(request, teacher):
                 except Exception as e:
                     print('unable to set subject ' + s.subject_name +
                           ' for teacher ' + t.first_name + ' ' + t.last_name)
-                    print ('Exception = %s (%s)' % (e.message, type(e)))
+                    print ('Exception2 from teacher views.py = %s (%s)' % (e.message, type(e)))
 
     return HttpResponse('OK')
 
@@ -101,7 +100,7 @@ def unset_subjects(request, teacher):
                 s = Subject.objects.get(school=school, subject_code=subject)
             except Exception as e:
                     print('unable to retrieve subject')
-                    print ('Exception = %s (%s)' % (e.message, type(e)))
+                    print ('Exception3 from teacher views.py = %s (%s)' % (e.message, type(e)))
 
             print ('now trying to set teacher subject')
 
@@ -114,7 +113,7 @@ def unset_subjects(request, teacher):
 
             except Exception as e:
                 print('subject ' + s.subject_name + ' was not set for teacher ' + t.first_name + ' ' + t.last_name)
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception4 from teacher views.py = %s (%s)' % (e.message, type(e)))
                 pass
 
     return HttpResponse('OK')

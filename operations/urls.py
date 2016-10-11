@@ -12,6 +12,6 @@ urlpatterns = patterns(
     url(r'^result_sms/$', views.result_sms, name='test_sms'),
     url(r'^send_message/(?P<school_id>\w+)/$', views.send_message, name='send_message'),
     url(r'^parents_communication_details/$', views.parents_communication_details, name='parents_communication_details'),
-
+    url(r'^sms_summary_school/$', views.sms_summary, name='sms_summmary_school'),
     url(r'send_bulk_sms/$', views.send_bulk_sms, name='send_bulk_sms'),
 )

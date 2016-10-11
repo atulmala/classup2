@@ -21,7 +21,7 @@ from .forms import ClassUpLoginForm
 
 # Create your views here.
 
-print ('in view.py for authentication')
+print ('in views.py for authentication')
 
 
 def auth_index(request):
@@ -46,7 +46,7 @@ def auth_login(request):
             l.string_ip = 'Unable to get'
             l.save()
             print('unable to store ip address')
-            print('Exception = %s (%s)' % (e.message, type(e)))
+            print('Exception1 from authentication views.py = %s (%s)' % (e.message, type(e)))
     else:
         print("we don't have an IP address for user")
 
@@ -86,6 +86,7 @@ def auth_login(request):
                         return render(request, 'classup/auth_login.html', context_dict)
                 except Exception as e:
                     print ('unable to retrieve schoo_id for ' + user.username)
+                    print('Exception8 from authentication views.py = %s (%s)' % (e.message, type(e)))
                 if user.groups.filter(name='school_admin').exists():
                     context_dict['user_type'] = 'school_admin'
                     request.session['user_type'] = 'school_admin'
@@ -156,7 +157,7 @@ def auth_login_from_device1(request):
             l.string_ip = 'Unable to get'
             l.save()
             print('unable to store ip address')
-            print('Exception = %s (%s)' % (e.message, type(e)))
+            print('Exception9 from authentication views.py = %s (%s)' % (e.message, type(e)))
     else:
         print("we don't have an IP address for user")
 
@@ -198,6 +199,7 @@ def auth_login_from_device1(request):
                         print ('school_id=' + str(school_id))
                     except Exception as e:
                         print ('unable to retrieve school_id for ' + user.username)
+                        print('Exception10 from authentication views.py = %s (%s)' % (e.message, type(e)))
                 else:
                     return_data['is_staff'] = "false"
                 return JSONResponse(return_data, status=200)
@@ -241,7 +243,7 @@ def change_password(request):
             return JSONResponse(return_data, status=200)
         except Exception as e:
             print('unable to change password for ' + user)
-            print('Exception = %s (%s)' % (e.message, type(e)))
+            print('Exception11 from authentication views.py = %s (%s)' % (e.message, type(e)))
             return_data["password_change"] = "Fail"
             return JSONResponse(return_data, status=400)
 
@@ -295,7 +297,7 @@ def forgot_password(request):
             return JSONResponse(return_data, status=200)
         except Exception as e:
             print('unable to reset password for ' + user)
-            print('Exception = %s (%s)' % (e.message, type(e)))
+            print('Exception6 from authentication views.py = %s (%s)' % (e.message, type(e)))
             return_data["forgot_password"] = "Fail"
             return JSONResponse(return_data, status=400)
 
@@ -328,6 +330,6 @@ def check_subscription(request, student_id):
             return JSONResponse(return_data, status=200)
         except Exception as e:
             print('unable to retrieve subscription status for  ' + school.school_name)
-            print('Exception = %s (%s)' % (e.message, type(e)))
+            print('Exception7 from authentication views.py = %s (%s)' % (e.message, type(e)))
             return JSONResponse(return_data, status=400)
     return JSONResponse(return_data, status=200)

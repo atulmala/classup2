@@ -90,7 +90,7 @@ def attendance_taken(request, school_id, the_class, section, subject, d, m, y, t
                 a.save()
         except Exception as e:
             print ('failed to recored AttendanceTaken')
-            print ('Exception = %s (%s)' % (e.message, type(e)))
+            print ('Exception1 from attendance views.py = %s (%s)' % (e.message, type(e)))
 
         # for the purpose of audit, make an entry in AttendanceUpdated table.
         try:
@@ -98,7 +98,7 @@ def attendance_taken(request, school_id, the_class, section, subject, d, m, y, t
             au.save()
         except Exception as e:
             print ('failed to record AttendanceUpdate')
-            print ('Exception = %s (%s)' % (e.message, type(e)))
+            print ('Exception2 from attendance views.py = %s (%s)' % (e.message, type(e)))
 
     return HttpResponse('OK')
 
@@ -151,7 +151,7 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                     except Exception as e:
                         print ('Exception occured during processing of: ')
                         print (student)
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception3 from attendance views.py = %s (%s)' % (e.message, type(e)))
 
                     print ("mobile1=" + m1)
                     print ("mobile2=" + m2)
@@ -175,7 +175,7 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
 
                         message += '. Please send an application. Regards, ' + school_name
                     except Exception as e:
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception4 from attendance views.py = %s (%s)' % (e.message, type(e)))
 
                     print (message)
 
@@ -204,7 +204,7 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                                                 sms.send_sms1(school, teacher, m2, message, message_type)
                             except Exception as e:
                                 print ('unable to send sms for ' + student_name)
-                                print ('Exception = %s (%s)' % (e.message, type(e)))
+                                print ('Exception5 from attendance views.py = %s (%s)' % (e.message, type(e)))
                         else:
                             if configuration.send_absence_sms:
                                 sms.send_sms1(school, teacher, m1, message, message_type)
@@ -212,7 +212,7 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                                     if configuration.send_absence_sms_both_to_parent:
                                         sms.send_sms1(school, teacher, m2, message, message_type)
             except Exception as e:
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception6 from attendance views.py = %s (%s)' % (e.message, type(e)))
 
     response_data['status'] = 'success'
     return JSONResponse(response_data, status=200)
@@ -251,7 +251,7 @@ def delete_attendance2(request, school_id, the_class, section, subject, d, m, y)
                     q.delete()
 
             except Exception as e:
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception7 from attendance views.py = %s (%s)' % (e.message, type(e)))
 
         # this view is being called from mobile. We use dummy template so that we dont' run into exception
         # return render(request, 'classup/dummy.html')

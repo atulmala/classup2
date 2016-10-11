@@ -95,13 +95,13 @@ def setup_routs(request):
                             print ('Bus Rout ' + bus_rout + ' for school '
                                    + school.school_name + ' already exist. Hence skipping...')
                     except Exception as e:
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception1 in bus_attendance views.py = %s (%s)' % (e.message, type(e)))
                         print ('Bus Rout ' + bus_rout + ' is a new rout. Hence inserting...')
                         try:
                             c = Bus_Rout(school=school, bus_root=bus_rout)
                             c.save()
                         except Exception as e:
-                            print ('Exception = %s (%s)' % (e.message, type(e)))
+                            print ('Exception2 in bus_attendance views.py = %s (%s)' % (e.message, type(e)))
                             error = 'Unable to save the Bus Rout ' + bus_rout + ' for school ' \
                                     + school.school_name + ' in table Bus_Rout'
                             form.errors['__all__'] = form.error_class([error])
@@ -112,7 +112,7 @@ def setup_routs(request):
                 messages.success(request, 'Bus Routs Uploaded. Please login from device to verify')
                 return render(request, 'classup/setup_index.html', context_dict)
             except Exception as e:
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception3 in bus_attendance views.py = %s (%s)' % (e.message, type(e)))
                 error = 'Invalid file uploaded. Please try again.'
                 form.errors['__all__'] = form.error_class([error])
                 print (error)
@@ -178,14 +178,14 @@ def setup_bus_stops(request):
                             print ('Bus Stop ' + stop_name + ' on bus rout ' +
                                    br.bus_root + ' already exist. Hence skipping...')
                     except Exception as e:
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception4 in bus_attendance views.py = %s (%s)' % (e.message, type(e)))
                         print ('Bus stop  ' + stop_name + ' on rout ' +
                                br.bus_root + ' is a new stop. Hence inserting...')
                         try:
                             c = BusStop(stop_name=stop_name, bus_rout=br)
                             c.save()
                         except Exception as e:
-                            print ('Exception = %s (%s)' % (e.message, type(e)))
+                            print ('Exception5 in bus_attendance views.py = %s (%s)' % (e.message, type(e)))
                             error = 'Unable to save the Bus stop ' + stop_name + 'on rout ' +\
                                     br.bus_root + ' in table Bus_Rout'
                             form.errors['__all__'] = form.error_class([error])
@@ -196,7 +196,7 @@ def setup_bus_stops(request):
                 messages.success(request, 'Bus Stops uploaded. Please login from mobile app to verify')
                 return render(request, 'classup/setup_index.html', context_dict)
             except Exception as e:
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception6 in bus_attendance views.py = %s (%s)' % (e.message, type(e)))
                 error = 'Invalid file uploaded. Please try again.'
                 form.errors['__all__'] = form.error_class([error])
                 print (error)
@@ -263,7 +263,7 @@ def student_bus_rout(request):
                         the_rout = Bus_Rout.objects.get(school=school, bus_root=bus_rout)
                     except Exception as e:
                         error = 'Unable to retrieve the Bus Rout: ' + bus_rout
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception7 in bus_attendance views.py = %s (%s)' % (e.message, type(e)))
                         form.errors['__all__'] = form.error_class([error])
                         print (error)
                         # todo - we should skip this student but report
@@ -275,7 +275,7 @@ def student_bus_rout(request):
                     except Exception as e:
 
                         error = 'Unable to retrieve the Bus stop: ' + stop_name
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception8 in bus_attendance views.py = %s (%s)' % (e.message, type(e)))
                         form.errors['__all__'] = form.error_class([error])
                         print (error)
                         # todo - we should skip this student but report this and move on to the next student <provide code>
@@ -284,7 +284,7 @@ def student_bus_rout(request):
                     try:
                         the_student = Student.objects.get(student_erp_id=student_id)
                     except Exception as e:
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception9 in bus_attendance views.py = %s (%s)' % (e.message, type(e)))
                         error = 'Unable to retrieve the student: ' + student_id + ' ' + \
                                 student_first_name + ' ' + student_last_name
                         form.errors['__all__'] = form.error_class([error])
@@ -314,7 +314,7 @@ def student_bus_rout(request):
                         except Exception as e:
                             error = 'Unable to create the new student-bus rout mapping in the database'
                             print (error)
-                            print ('Exception = %s (%s)' % (e.message, type(e)))
+                            print ('Exception10 in bus_attendance views.py = %s (%s)' % (e.message, type(e)))
                             form.errors['__all__'] = form.error_class([error])
                             # todo - we should skip this student but report this and move on to the next student <provide code>
                     try:
@@ -322,7 +322,7 @@ def student_bus_rout(request):
                         print ('updated Student with  ID: ' + student_id + ' & name: ' + student_first_name)
 
                     except Exception as e:
-                        print ('Exception = %s (%s)' % (e.message, type(e)))
+                        print ('Exception11 in bus_attendance views.py = %s (%s)' % (e.message, type(e)))
                         error = 'Unable to save the bus rout mapping for Student with ID: ' + student_id + \
                                 ' Name: ' + student_first_name + ' ' + student_last_name + ' in Table Student_Rout'
                         form.errors['__all__'] = form.error_class([error])
@@ -334,7 +334,7 @@ def student_bus_rout(request):
                                  ' uploaded. Please login from device to verify')
                 return render(request, 'classup/setup_index.html', context_dict)
             except Exception as e:
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception12 in bus_attendance views.py = %s (%s)' % (e.message, type(e)))
                 error = 'Invalid file uploaded. Please try again.'
                 form.errors['__all__'] = form.error_class([error])
                 print (error)
@@ -401,7 +401,7 @@ def attendance_taken_earlier(request, school_id, rout, d, m, y):
             return JSONResponse(return_data, status=200)
         except Exception as e:
             print ('unable to check whether bus attendance was taken on ' + rout + ' on ' + str(the_date))
-            print ('Exception = %s (%s)' % (e.message, type(e)))
+            print ('Exception13 in bus_attendance views.py = %s (%s)' % (e.message, type(e)))
     return JSONResponse(return_data, status=201)
 
 
@@ -426,7 +426,7 @@ def bus_attendance_taken(request, school_id, rout, t, d, m, y, teacher):
 
                 a.save()
         except Exception as e:
-            print ('Exception = %s (%s)' % (e.message, type(e)))
+            print ('Exception14 in bus_attendance views.py = %s (%s)' % (e.message, type(e)))
 
     return HttpResponse('OK')
 
@@ -492,7 +492,7 @@ def delete_bus_attendance1(request, att_type, d, m, y):
                     q.delete()
             except Exception as e:
                 print ('unable to delete the bus attendance for ' + student.fist_name + ' ' + student.last_name)
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception15 in bus_attendance views.py = %s (%s)' % (e.message, type(e)))
         response_data['status'] = 'success'
 
     return JSONResponse(response_data, status=200)
@@ -510,7 +510,7 @@ def process_bus_attendance1(request, att_type, d, m, y, teacher):
 
         except Exception as e:
             print ('unable to retrieve attendance type for ' + att_type)
-            print ('Exception = %s (%s)' % (e.message, type(e)))
+            print ('Exception16 in bus_attendance views.py = %s (%s)' % (e.message, type(e)))
         data = json.loads(request.body)
         print ('attendance processing data')
         print (data)
@@ -533,7 +533,7 @@ def process_bus_attendance1(request, att_type, d, m, y, teacher):
                 print ('unable to save the bus attendance for ' + st.fist_name + ' ' + st.last_name +
                        ' for rout ' + bus_rout.bus_root + ' ' + attendance_type.rout_type
                        + 'on date ' + str(the_date))
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print ('Exception17 in bus_attendance views.py = %s (%s)' % (e.message, type(e)))
                 response_data['status'] = 'failure'
             response_data['status'] = 'success'
 
@@ -580,5 +580,5 @@ def report_delay(request):
                 print (full_message)
         except Exception as e:
             print ('unable to send bus delay message')
-            print ('Exception = %s (%s)' % (e.message, type(e)))
+            print ('Exception18 in bus_attendance views.py = %s (%s)' % (e.message, type(e)))
     return JSONResponse(response, status=200)
