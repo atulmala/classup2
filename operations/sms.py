@@ -2,6 +2,7 @@ __author__ = 'atulgupta'
 
 import urllib
 
+import json
 from django.db.models import Q
 from teacher.models import Teacher
 from student.models import Parent
@@ -19,10 +20,23 @@ def send_sms1(school, sender, mobile, message, message_type):
 
     try:
         response = urllib.urlopen(url1)
-        print(response.read())
 
-        print(response)
-        print (response.read().decode('utf-8'))
+        try:
+            message_id = response.read()
+            url2 = 'http://bhashsms.com/api/recdlr.php?user=EMERGETECH&msgid='
+            url2 += message_id
+            url2 += '&phone='
+            url2 += mobile
+            url2 += '&msgtype='
+            url2 += message_id
+            outcome = urllib.urlopen(url2)
+            status = outcome.read()
+            status += ' (url = ' + url2 + ')'
+            print(status)
+        except Exception as e:
+            print('unable to get the staus of sms delivery. The url was: ')
+            print(url2)
+            print ('Exception10 from sms.py = %s (%s)' % (e.message, type(e)))
 
         # store into database
         try:
@@ -50,7 +64,7 @@ def send_sms1(school, sender, mobile, message, message_type):
                 sr = SMSRecord(school=school, sender1=sender_name, sender_type=sender_type,
                                recipient_name=recepient_name, recipient_type=recepient_type, recipient_number=mobile,
                                message=message, message_type=message_type,
-                               outcome=response)
+                               outcome=status)
                 sr.save()
             except Exception as e:
                 print ('error occured while sending sms to ' + str(mobile))
@@ -68,7 +82,7 @@ def send_sms1(school, sender, mobile, message, message_type):
                 sr = SMSRecord(school=school, sender1=sender_name, sender_type=sender_type,
                                recipient_name=recepient_name, recipient_type=recepient_type, recipient_number=mobile,
                                message=message, message_type=message_type,
-                               outcome=response)
+                               outcome=status)
                 sr.save()
             except Exception as e:
                 # this will happen when a parent tries to reset password. Both sender and receiver is parent,
@@ -84,14 +98,15 @@ def send_sms1(school, sender, mobile, message, message_type):
                     sr = SMSRecord(school=school, sender1=sender_name, sender_type=sender_type,
                                    recipient_name=recepient_name, recipient_type=recepient_type,
                                    recipient_number=mobile, message=message, message_type=message_type,
-                                   outcome=response)
+                                   outcome=status)
                     sr.save()
                 except Exception as e:
                     print ('error occured while trying to save sms for:  ' + str(mobile))
                     print ('Exception6 from sms.py = %s (%s)' % (e.message, type(e)))
 
     except Exception as e:
-        print ('error occured while sending sms to ' + str(mobile))
+        print ('error occured while sending sms to ' + str(mobile) + '. The url was: ')
+        print(url1)
         print ('Exception2 from sms.py = %s (%s)' % (e.message, type(e)))
 
 

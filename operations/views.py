@@ -282,19 +282,26 @@ def sms_summary(request):
         date_format = workbook.add_format({
             'num_format': 'dd/mm/yy'
         })
+        text_format = workbook.add_format({
+            'text_wrap': True})
 
         title_text = 'Monthly SMS Summary for ' + school_name
         title_text += ' for ' + month + '/' + y
+
+        f = workbook.add_format()
+        f.set_align('top')
         sms_sheet.merge_range('A2:Q2', title_text, title)
         sms_sheet.set_column('A:A', 4)
-        sms_sheet.set_column('B:B', 7)
+        sms_sheet.set_column('B:B', 10)
         sms_sheet.set_column('C:C', 15)
-        sms_sheet.set_column('D:D', 15)
+        sms_sheet.set_column('D:D', 10)
         sms_sheet.set_column('E:E', 15)
         sms_sheet.set_column('F:F', 15)
-        sms_sheet.set_column('G:G', 15)
+        sms_sheet.set_column('G:G', 10)
         sms_sheet.set_column('H:H', 100)
         sms_sheet.set_column('I:I', 15)
+        sms_sheet.set_column('J:J', 20)
+        sms_sheet.set_column('K:K', 20)
 
         current_row = 3
         sms_sheet.write(3, 0, ugettext("S No."), header)
@@ -307,8 +314,10 @@ def sms_summary(request):
         sms_sheet.write(3, 7, ugettext("Message"), header)
         sms_sheet.write(3, 8, ugettext("Message Type"), header)
         sms_sheet.write(3, 9, ugettext("Status"), header)
+        sms_sheet.write(3,10, ugettext("Credits Consumed"), header)
         try:
-            sms_list = SMSRecord.objects.filter(school=school, date__month=month_int, date__year=year_int)
+            sms_list = SMSRecord.objects.filter(school=school, date__month=month_int,
+                                                date__year=year_int).order_by('-date')
             sr_no = 1
             for s in sms_list:
                 current_row += 1
@@ -320,35 +329,49 @@ def sms_summary(request):
 
                 # sender of the sma
                 sender = s.sender1
-                sms_sheet.write(current_row, 2, ugettext(sender))
+                sms_sheet.write(current_row, 2, ugettext(sender), text_format)
 
                 # sender type
                 sender_type = s.sender_type
-                sms_sheet.write(current_row, 3, ugettext(sender_type))
+                sms_sheet.write(current_row, 3, ugettext(sender_type), text_format)
 
                 # recipient of the message
                 recipient = s.recipient_name
-                sms_sheet.write(current_row, 4, ugettext(recipient))
+                sms_sheet.write(current_row, 4, ugettext(recipient), text_format)
 
                 # recipient number
                 recipient_number = s.recipient_number
-                sms_sheet.write(current_row, 5, ugettext(recipient_number))
+                sms_sheet.write(current_row, 5, ugettext(recipient_number), text_format)
 
                 # recipient type
                 recipient_type = s.recipient_type
-                sms_sheet.write(current_row, 6, ugettext(recipient_type))
+                sms_sheet.write(current_row, 6, ugettext(recipient_type), text_format)
 
                 # message
                 message = s.message
-                sms_sheet.write(current_row, 7, ugettext(message))
+                sms_sheet.write(current_row, 7, ugettext(message), text_format)
 
                 # message type
                 message_type = s.message_type
-                sms_sheet.write(current_row, 8, ugettext(message_type))
+                sms_sheet.write(current_row, 8, ugettext(message_type), text_format)
+
+                if message_type == 'Forgot Password':
+                    message = '<Contents Hidden>'   # don't show the password in the Excel sheet
+                    sms_sheet.write(current_row, 7, ugettext(message), text_format)
+
 
                 # outcome
                 outcome = s.outcome
                 sms_sheet.write(current_row, 9, ugettext(outcome))
+
+                # calculate the sms credits consumed by this sms
+                total_char = len(message)
+                sms_credits = total_char/160
+                additional = total_char % 160
+                if additional > 0:
+                    sms_credits += 1
+
+                sms_sheet.write_number(current_row, 10, sms_credits)
 
                 sr_no += 1
 
