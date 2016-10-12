@@ -21,3 +21,7 @@ class UserSchoolMappingAdmin(admin.ModelAdmin):
     list_display = ['user', 'school']
 
 admin.site.register(UserSchoolMapping, UserSchoolMappingAdmin)
+
+
+class SchoolGroupAdmin(admin.ModelAdmin):
+    list_display = ['group_name',]
