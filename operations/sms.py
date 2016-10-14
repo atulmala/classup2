@@ -2,7 +2,6 @@ __author__ = 'atulgupta'
 
 import urllib
 
-import json
 from django.db.models import Q
 from teacher.models import Teacher
 from student.models import Parent
@@ -44,7 +43,8 @@ def send_sms1(school, sender, mobile, message, message_type):
             sender_name = t.first_name + ' ' + t.last_name + ' (' + sender + ')'    # include teacher's id also
 
             sender_type = 'Teacher'
-            if message_type == 'Bulk SMS (Web Interface)' or 'Welcome Parent' or 'Welcome Teacher':
+            if message_type == 'Bulk SMS (Web Interface)' or message_type == 'Welcome Parent' \
+                    or message_type == 'Welcome Teacher':
                 sender_type = 'Admin'
 
             try:

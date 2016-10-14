@@ -14,6 +14,9 @@ from django.utils.translation import ugettext
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.contrib import messages
+
+from rest_framework import generics
+
 from authentication.views import JSONResponse
 
 from .forms import SchoolAttSummaryForm, AttendanceRegisterForm
@@ -28,12 +31,24 @@ from parents.models import  ParentCommunication
 from setup.models import Configurations, School
 from .models import SMSRecord
 
+from .serializers import SMSDetailSerializer
+
 
 # Create your views here.
 
 
 def operations_index():
     pass
+
+
+class SMSHistoryList(generics.ListAPIView):
+    serializer_class = SMSDetailSerializer
+
+    def get_queryset(self):
+        recipient = self.kwargs['parent_mobile']
+        q = SMSRecord.objects.filter(recipient_number=recipient).order_by('-date')
+
+        return q
 
 
 def att_summary_school(request):
