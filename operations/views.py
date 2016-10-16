@@ -46,8 +46,8 @@ class SMSHistoryList(generics.ListAPIView):
 
     def get_queryset(self):
         recipient = self.kwargs['parent_mobile']
-        q = SMSRecord.objects.filter(recipient_number=recipient).order_by('-date')
-
+        q = SMSRecord.objects.filter(recipient_number=recipient).\
+            exclude(message_type='Forgot Password').order_by('-date')
         return q
 
 
