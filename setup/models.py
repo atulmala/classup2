@@ -32,6 +32,7 @@ class Configurations(models.Model):
     send_absence_sms_both_to_parent = models.BooleanField(default=True)
     send_period_bunk_sms = models.BooleanField(default=False)
     send_marks_sms = models.BooleanField(default=True)
+    include_max_avg_marks = models.BooleanField(default=True)
     send_results_sms = models.BooleanField(default=True)
     send_test_scheduled_sms = models.BooleanField(default=False)
     send_bus_reached_to_school_sms = models.BooleanField(default=False)
