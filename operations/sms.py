@@ -11,6 +11,7 @@ from .models import SMSRecord
 def send_sms1(school, sender, mobile, message, message_type):
     print('sending to=' + mobile)
     print('sender=' + sender)
+    print('message received in sms.py=' + message)
 
     url1 = 'http://bhashsms.com/api/sendmsg.php?user=EMERGETECH&pass=kawasaki&sender=ClssUp'
     url1 += '&phone=' + mobile
@@ -20,6 +21,7 @@ def send_sms1(school, sender, mobile, message, message_type):
     try:
         response = urllib.urlopen(url1)
 
+        # now get the outcome of the message sending call above
         try:
             message_id = response.read()
             url2 = 'http://bhashsms.com/api/recdlr.php?user=EMERGETECH&msgid='
@@ -54,9 +56,10 @@ def send_sms1(school, sender, mobile, message, message_type):
                 recepient_type = 'Parent'
             except Exception as e:
                 # from web interface bulk sms are also sent to teachers. In this case recipient is a teacher
+                # also, when a teacher tries to reset his/her password then also recipient is teacher
                 print('unable to associate parent with ' + mobile + ' May this belongs to teacher...')
                 print ('Exception4 from sms.py = %s (%s)' % (e.message, type(e)))
-                t = Teacher.objects.get(mobile=mobile)
+                t = Teacher.objects.get(school=school, mobile=mobile)
                 recepient_name = t.first_name + ' ' + t.last_name
                 recepient_type = 'Teacher'
 
@@ -76,7 +79,7 @@ def send_sms1(school, sender, mobile, message, message_type):
             sender_type = 'Parent'
 
             try:
-                t = Teacher.objects.get(mobile=mobile)
+                t = Teacher.objects.get(school=school, mobile=mobile)
                 recepient_name = t.first_name + ' ' + t.last_name
                 recepient_type = 'Teacher'
                 sr = SMSRecord(school=school, sender1=sender_name, sender_type=sender_type,

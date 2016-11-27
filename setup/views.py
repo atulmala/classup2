@@ -98,8 +98,14 @@ def setup_students(request):
                     # first, capture student data
                     # we need to explicitly cast student id to string. Else update will not function properly
                     student_id = str(sheet.cell(row, 0).value)
-                    student_first_name = sheet.cell(row, 1).value
-                    student_last_name = sheet.cell(row, 2).value
+
+                    # sometimes names are in lowercase. We need to convert the first letter to uppercase
+                    student_first_name_raw = sheet.cell(row, 1).value
+                    student_first_name = student_first_name_raw.title()
+
+                    student_last_name_raw = sheet.cell(row, 2).value
+                    student_last_name = student_last_name_raw.title()
+
                     current_class = sheet.cell(row, 3).value
                     current_section = sheet.cell(row, 4).value
                     current_roll_no_raw = sheet.cell(row, 5).value
@@ -111,7 +117,10 @@ def setup_students(request):
 
                     # now, capture the parent data
                     parent_name = sheet.cell(row, 6).value
-                    parent_email = sheet.cell(row, 7).value
+                    # 24/11/2016 - as of now we will not be using email. Hence use dummy
+                    # parent_email = sheet.cell(row, 7).value
+                    parent_email = 'dummy@testmail.com'
+
                     # we need to explicitly cast mobile number to string. Else update will not function properly
                     parent_mobile1_raw = sheet.cell(row, 8).value
                     parent_mobile2_raw = sheet.cell(row, 9).value
