@@ -116,7 +116,8 @@ def setup_students(request):
                     print (current_roll_no)
 
                     # now, capture the parent data
-                    parent_name = sheet.cell(row, 6).value
+                    parent_name_raw = sheet.cell(row, 6).value
+                    parent_name = parent_name_raw.title()
                     # 24/11/2016 - as of now we will not be using email. Hence use dummy
                     # parent_email = sheet.cell(row, 7).value
                     parent_email = 'dummy@testmail.com'
