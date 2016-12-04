@@ -124,6 +124,7 @@ def send_sms2(school, sender, mobile, message, message_type):
         print(url1)
         print ('Exception2 from sms.py = %s (%s)' % (e.message, type(e)))
 
+
 def send_sms1(school, sender, mobile, message, message_type):
     print('sending to=' + mobile)
     print('sender=' + sender)
@@ -134,9 +135,17 @@ def send_sms1(school, sender, mobile, message, message_type):
     url1 += '&text=' + message
     url1 += '&priority=ndnd&stype=normal'
 
+    url3 = 'http://login.bulksmsgateway.in/sendmessage.php?user=ETMPS&password=9871093296'
+    url3 += '&mobile=' + mobile
+    url3 += '&message=' + message
+    url3 += '&sender=ClssUp&type=3'
+    print(url3)
+
     try:
         # send the message
-        response = urllib.urlopen(url1)
+        #response = urllib.urlopen(url1)
+        response = urllib.urlopen(url3)
+        print(response)
 
         # now get the outcome of the message sending call above
         message_id = response.read()
@@ -196,7 +205,7 @@ def send_sms1(school, sender, mobile, message, message_type):
             sender_name = sender
             print ('sender type is Admin (Web Interface)')
 
-        if message_type == 'Teacher Communication' or message_type == 'Attendance':
+        if message_type == 'Teacher Communication' or message_type == 'Attendance' or message_type == 'Test Marks':
             # the sender must be a teacher
             sender_type = 'Teacher'
             print ('sender type is Teacher')

@@ -371,8 +371,10 @@ def submit_marks(request, school_id):
                 message += sub.subject_name + ' held on ' + dmy_date
 
                 if not grade_based:
-                    message += '. Highest marks secured in this test are ' + str(highest_marks)
-                    message += ' & Average marks secured in this test are ' + str(round(average_marks))
+                    # 04/12/2016 - some schools don't want to include max and average marks in the sms
+                    if conf.include_max_avg_marks:
+                        message += '. Highest marks secured in this test are ' + str(highest_marks)
+                        message += ' & Average marks secured in this test are ' + str(round(average_marks))
                 message += ". Regards, " + school_name
 
                 # print message
