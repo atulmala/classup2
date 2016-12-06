@@ -127,7 +127,7 @@ def send_sms2(school, sender, mobile, message, message_type):
 
 def send_sms1(school, sender, mobile, message, message_type):
     # 06/12/2016 - we don't want to send sms to a dummy number
-    if mobile != '1234567890':
+    if mobile == '1234567890':
         print ('skipping sending sms to dummy number 1234567890')
     else:
         print('sending to=' + mobile)
