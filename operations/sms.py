@@ -143,12 +143,12 @@ def send_sms1(school, sender, mobile, message, message_type):
         url3 += '&mobile=' + mobile
         url3 += '&message=' + message
         url3 += '&sender=ClssUp&type=3'
-        print(url3)
+        #print(url3)
 
         try:
             # send the message
-            #response = urllib.urlopen(url1)
-            response = urllib.urlopen(url3)
+            response = urllib.urlopen(url1)
+            #response = urllib.urlopen(url3)
             print(response)
 
             # now get the outcome of the message sending call above
