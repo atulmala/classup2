@@ -1201,8 +1201,8 @@ def parents_communication_details(request):
         main_sheet.write(current_row, 7, ugettext("Category"), header)
         main_sheet.write(current_row, 8, ugettext("Communication"), header)
 
-        communications = ParentCommunication.objects.filter(student__school=school,
-                                                            date_sent__month=month_int, date_sent__year=year_int)
+        communications = ParentCommunication.objects.filter(student__school=school, date_sent__month=month_int,
+                                                            date_sent__year=year_int).order_by('-date_sent')
         sr_no = 1
         for c in communications:
             current_row += 1
