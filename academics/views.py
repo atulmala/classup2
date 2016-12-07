@@ -655,7 +655,7 @@ def get_attendance_summary(request):
             if int(working_days) < 1:
                 dict_attendance_summary['percentage'] = 'N/A'
             else:
-                present_perc = round((float(present_days) / float(working_days)) * 100, 0)
+                present_perc = int(round((float(present_days) / float(working_days)) * 100, 0))
                 dict_attendance_summary['percentage'] = str(present_perc) + '%'
 
             print ('present days=' + str(present_days))
