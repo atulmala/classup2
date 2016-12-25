@@ -27,6 +27,8 @@ class Configurations(models.Model):
     school = models.ForeignKey(School)
     router_server_ip = models.CharField(max_length=50, default='0.0.0.0')
     school_group_id = models.CharField(max_length=10, default=None)
+    sender_id = models.CharField(max_length=10, default='ClssUp')
+    send_sms = models.BigIntegerField(default=True)
     enable_bus_attendance = models.BooleanField(default=False)
     send_absence_sms = models.BooleanField(default=True)
     send_absence_sms_both_to_parent = models.BooleanField(default=True)

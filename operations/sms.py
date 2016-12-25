@@ -1,8 +1,11 @@
 __author__ = 'atulgupta'
 
 import urllib
+import urllib2
+import json
 
 from django.db.models import Q
+from setup.models import School, Configurations
 from teacher.models import Teacher
 from student.models import Parent
 from .models import SMSRecord
@@ -126,156 +129,184 @@ def send_sms2(school, sender, mobile, message, message_type):
 
 
 def send_sms1(school, sender, mobile, message, message_type):
-    # 06/12/2016 - we don't want to send sms to a dummy number
-    if mobile == '1234567890':
-        print ('skipping sending sms to dummy number 1234567890')
-    else:
-        print('sending to=' + mobile)
-        print('sender=' + sender)
-        print('message received in sms.py=' + message)
+    # 25/12/2016 - added field to check whether sms sending is enabled for this school. Check that first
+    school = School.objects.get(id=school)
+    conf = Configurations.objects.get(school=school)
 
-        url1 = 'http://bhashsms.com/api/sendmsg.php?user=EMERGETECH&pass=kawasaki&sender=ClssUp'
-        url1 += '&phone=' + mobile
-        url1 += '&text=' + message
-        url1 += '&priority=ndnd&stype=normal'
+    if conf.send_sms:
+        # 06/12/2016 - we don't want to send sms to a dummy number
+        if mobile == '1234567890' or len(str(mobile)) != 10:
+            print ('skipping sending sms to dummy/invalid number ' + str(mobile))
+        else:
+            print('sending to=' + mobile)
+            print('sender=' + sender)
+            print('message received in sms.py=' + message)
 
-        url3 = 'http://login.bulksmsgateway.in/sendmessage.php?user=ETMPS&password=9871093296'
-        url3 += '&mobile=' + mobile
-        url3 += '&message=' + message
-        url3 += '&sender=ClssUp&type=3'
-        #print(url3)
+            # 25/12/2016 - there will be a unique sender id for each school
+            sender_id = conf.sender_id
+            url1 = 'http://bhashsms.com/api/sendmsg.php?user=EMERGETECH&pass=kawasaki'
+            url1 += '&sender=' + sender_id
+            url1 += '&phone=' + mobile
+            url1 += '&text=' + message
+            url1 += '&priority=ndnd&stype=normal'
 
-        try:
-            # send the message
-            response = urllib.urlopen(url1)
-            #response = urllib.urlopen(url3)
-            print(response)
+            url3 = 'http://smppsmshub.in/api/mt/SendSMS?user=atulg&password=atulg'
 
-            # now get the outcome of the message sending call above
-            message_id = response.read()
+            url3 += '&senderid=' + sender_id
+            url3 += '&channel=Trans&DCS=0&flashsms=0'
+            url3 += '&number=' + mobile
+            url3 += '&text=' + message
+            url3 += '&route=28'
+            print(url3)
 
-            # 29/11/2016 - in case of bulk messaging (bulk sms, welcome parent/teacher at the time of setup,
-            # retrieving outcome can be time consuming and result into 504 - Gateway timeout. Hence let us just
-            # store the message id which can be used to retrieve the status from Bhash SMS portal
-            if message_type == 'Bulk SMS (Web Interface)' or message_type == 'Welcome Parent' \
-                    or message_type == 'Welcome Teacher':
-                status = 'Please use this message id to retrieve from SMS provider portal: ' + message_id
-            else:
-                try:
-                    url2 = 'http://bhashsms.com/api/recdlr.php?user=EMERGETECH&msgid='
-                    url2 += message_id
-                    url2 += '&phone='
-                    url2 += mobile
-                    url2 += '&msgtype='
-                    url2 += message_id
-                    outcome = urllib.urlopen(url2)
-                    status = outcome.read()
-                    status += ' (url = ' + url2 + ')'
-                    print(status)
-                except Exception as e:
-                    print('unable to get the staus of sms delivery. The url was: ')
-                    print(url2)
-                    print ('Exception10 from sms.py = %s (%s)' % (e.message, type(e)))
-
-            # first, determine the recepient & receipient type
-            recepient_type = 'Undetermined'
-            recepient_name = 'Undetermined'
-
-            # in most of the cases, recepient will be parent. So, let's start with parent
             try:
-                p = Parent.objects.get(Q(parent_mobile1=mobile) | Q(parent_mobile2=mobile))
-                recepient_name = p.parent_name
-                recepient_type = 'Parent'
-                print ('recepient type is Parent')
-            except Exception as e:
-                print ('Exception50 from sms.py = %s (%s)' % (e.message, type(e)))
-                print('The recepient is not a parent. This must be a teacher')
+                # send the message
+                print ('sending to ' + mobile)
+                response = urllib.urlopen(url1)
 
-                try:
-                    t = Teacher.objects.get(school=school, mobile=mobile)
-                    recepient_name = t.first_name + ' ' + t.last_name
-                    recepient_type = 'Teacher'
-                    print ('recepient type is Teacher')
-                except Exception as e:
-                    print ('Exception51 from sms.py = %s (%s)' % (e.message, type(e)))
-                    print('The recepient type & name Undetermined')
+                #response = urllib.urlopen(url3)
+                print('response&=')
+                #print(response)
+                j = json.loads(response.read())
+                job_id = j['JobId']
+                print('job_id=' + job_id)
 
-            # next, determine the sender details
-            sender_type = 'Undetermined'
-            sender_name = sender
-            if message_type == 'Bulk SMS (Web Interface)' or message_type == 'Welcome Parent' \
-                    or message_type == 'Welcome Teacher':
-                sender_type = 'Admin (Web Interface)'
-                sender_name = sender
-                print ('sender type is Admin (Web Interface)')
 
-            if message_type == 'Teacher Communication' or message_type == 'Attendance' or message_type == 'Test Marks':
-                # the sender must be a teacher
-                sender_type = 'Teacher'
-                print ('sender type is Teacher')
-                try:
-                    t = Teacher.objects.get(email=sender)
-                    sender_name = t.first_name + ' ' + t.last_name + ' (' + sender + ')'    # include teacher's id also
-                except Exception as e:
-                    print ('Exception60 from sms.py = %s (%s)' % (e.message, type(e)))
-                    print('the message type is Teacher Communication/Attendance, '
-                          'but the teacher name Undetermined')
 
-            if message_type == 'Parent Communication':
-                # the sender must be a parent
-                sender_type = 'Parent'
-                print ('sender type is Parent')
+                url4 = 'http://smppsmshub.in/api/mt/GetDelivery?user=atulg&password=atulg&jobid=' + job_id
+                response = urllib.urlopen(url4)
+                print('response&=')
+                #print(response)
+                j2 = json.loads(response.read())
+                status = j2['DeliveryReports'][0]['DeliveryStatus']
+                print('status(smppsmshyb)=' + status)
+
+
+                # now get the outcome of the message sending call above
+                message_id = response.read()
+
+                # 29/11/2016 - in case of bulk messaging (bulk sms, welcome parent/teacher at the time of setup,
+                # retrieving outcome can be time consuming and result into 504 - Gateway timeout. Hence let us just
+                # store the message id which can be used to retrieve the status from Bhash SMS portal
+                if message_type == 'Bulk SMS (Web Interface)' or message_type == 'Welcome Parent' \
+                        or message_type == 'Welcome Teacher':
+                    status = 'Please use this message id to retrieve from SMS provider portal: ' + message_id
+                else:
+                    try:
+                        url2 = 'http://bhashsms.com/api/recdlr.php?user=EMERGETECH&msgid='
+                        url2 += message_id
+                        url2 += '&phone='
+                        url2 += mobile
+                        url2 += '&msgtype='
+                        url2 += message_id
+                        #outcome = urllib.urlopen(url2)
+                        #status = outcome.read()
+                        #status += ' (url = ' + url2 + ')'
+                        #print(status)
+                    except Exception as e:
+                        print('unable to get the staus of sms delivery. The url was: ')
+                        print(url2)
+                        print ('Exception10 from sms.py = %s (%s)' % (e.message, type(e)))
+
+                # first, determine the recepient & receipient type
+                recepient_type = 'Undetermined'
+                recepient_name = 'Undetermined'
+
+                # in most of the cases, recepient will be parent. So, let's start with parent
                 try:
                     p = Parent.objects.get(Q(parent_mobile1=mobile) | Q(parent_mobile2=mobile))
-                    sender_name = p.parent_name
+                    recepient_name = p.parent_name
+                    recepient_type = 'Parent'
+                    print ('recepient type is Parent')
                 except Exception as e:
-                    print ('Exception52 from sms.py = %s (%s)' % (e.message, type(e)))
-                    print('the message type is Parent Communication, '
-                          'but the parent name Undetermined')
+                    print ('Exception50 from sms.py = %s (%s)' % (e.message, type(e)))
+                    print('The recepient is not a parent. This must be a teacher')
 
-            if message_type == 'Forgot Password':
-                # in this case the sender can be either teacher or parent. We can figure that out from recepient_type
-                if recepient_type == 'Parent':
+                    try:
+                        t = Teacher.objects.get(school=school, mobile=mobile)
+                        recepient_name = t.first_name + ' ' + t.last_name
+                        recepient_type = 'Teacher'
+                        print ('recepient type is Teacher')
+                    except Exception as e:
+                        print ('Exception51 from sms.py = %s (%s)' % (e.message, type(e)))
+                        print('The recepient type & name Undetermined')
+
+                # next, determine the sender details
+                sender_type = 'Undetermined'
+                sender_name = sender
+                if message_type == 'Bulk SMS (Web Interface)' or message_type == 'Welcome Parent' \
+                        or message_type == 'Welcome Teacher':
+                    sender_type = 'Admin (Web Interface)'
+                    sender_name = sender
+                    print ('sender type is Admin (Web Interface)')
+
+                if message_type == 'Teacher Communication' or message_type == 'Attendance' or message_type == 'Test Marks':
+                    # the sender must be a teacher
+                    sender_type = 'Teacher'
+                    print ('sender type is Teacher')
+                    try:
+                        t = Teacher.objects.get(email=sender)
+                        sender_name = t.first_name + ' ' + t.last_name + ' (' + sender + ')'    # include teacher's id also
+                    except Exception as e:
+                        print ('Exception60 from sms.py = %s (%s)' % (e.message, type(e)))
+                        print('the message type is Teacher Communication/Attendance, '
+                              'but the teacher name Undetermined')
+
+                if message_type == 'Parent Communication':
+                    # the sender must be a parent
+                    sender_type = 'Parent'
                     print ('sender type is Parent')
-                    # the sender will also be a parent (actually sender and receiver would be the same)
                     try:
                         p = Parent.objects.get(Q(parent_mobile1=mobile) | Q(parent_mobile2=mobile))
                         sender_name = p.parent_name
-                        sender_type = 'Parent'
-
                     except Exception as e:
-                        print ('Exception53 from sms.py = %s (%s)' % (e.message, type(e)))
-                        print('the message type Password Reset for parent, '
+                        print ('Exception52 from sms.py = %s (%s)' % (e.message, type(e)))
+                        print('the message type is Parent Communication, '
                               'but the parent name Undetermined')
 
-                if recepient_type == 'Teacher':
-                    print ('sender type is Teacher')
-                    # the sender will also be a teacher (actually sender and receiver would be the same)
-                    try:
-                        #t = Teacher.objects.get(email=sender)
-                        t = Teacher.objects.get(school=school, mobile=mobile)
-                        sender_name = t.first_name + ' ' + t.last_name + ' (' + sender + ')'  # include teacher's id also
-                    except Exception as e:
-                        print ('Exception51 from sms.py = %s (%s)' % (e.message, type(e)))
-                        print('the message type Password Reset for teacher, '
-                              'but the teacher name Undetermined')
+                if message_type == 'Forgot Password':
+                    # in this case the sender can be either teacher or parent. We can figure that out from recepient_type
+                    if recepient_type == 'Parent':
+                        print ('sender type is Parent')
+                        # the sender will also be a parent (actually sender and receiver would be the same)
+                        try:
+                            p = Parent.objects.get(Q(parent_mobile1=mobile) | Q(parent_mobile2=mobile))
+                            sender_name = p.parent_name
+                            sender_type = 'Parent'
 
-            # finally, store everything into the database
-            print ('going to store this sms details into the database')
-            try:
-                sr = SMSRecord(school=school, sender1=sender_name, sender_type=sender_type,
-                                recipient_name=recepient_name, recipient_type=recepient_type, recipient_number=mobile,
-                                message=message, message_type=message_type,
-                                outcome=status)
-                sr.save()
+                        except Exception as e:
+                            print ('Exception53 from sms.py = %s (%s)' % (e.message, type(e)))
+                            print('the message type Password Reset for parent, '
+                                  'but the parent name Undetermined')
+
+                    if recepient_type == 'Teacher':
+                        print ('sender type is Teacher')
+                        # the sender will also be a teacher (actually sender and receiver would be the same)
+                        try:
+                            #t = Teacher.objects.get(email=sender)
+                            t = Teacher.objects.get(school=school, mobile=mobile)
+                            sender_name = t.first_name + ' ' + t.last_name + ' (' + sender + ')'  # include teacher's id also
+                        except Exception as e:
+                            print ('Exception51 from sms.py = %s (%s)' % (e.message, type(e)))
+                            print('the message type Password Reset for teacher, '
+                                  'but the teacher name Undetermined')
+
+                # finally, store everything into the database
+                print ('going to store this sms details into the database')
+                try:
+                    sr = SMSRecord(school=school, sender1=sender_name, sender_type=sender_type,
+                                    recipient_name=recepient_name, recipient_type=recepient_type, recipient_number=mobile,
+                                    message=message, message_type=message_type,
+                                    outcome=status)
+                    sr.save()
+                except Exception as e:
+                    print ('Exception54 from sms.py = %s (%s)' % (e.message, type(e)))
+                    print ('error occured while trying to save sms record for  ' + str(mobile))
+
             except Exception as e:
-                print ('Exception54 from sms.py = %s (%s)' % (e.message, type(e)))
-                print ('error occured while trying to save sms record for  ' + str(mobile))
-
-        except Exception as e:
-            print ('error occured while sending sms to ' + str(mobile) + '. The url was: ')
-            print(url1)
-            print ('Exception2 from sms.py = %s (%s)' % (e.message, type(e)))
+                print ('error occured while sending sms to ' + str(mobile) + '. The url was: ')
+                print(url1)
+                print ('Exception2 from sms.py = %s (%s)' % (e.message, type(e)))
 
 
 def send_sms(mobile, message):
