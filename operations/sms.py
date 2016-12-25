@@ -130,8 +130,11 @@ def send_sms2(school, sender, mobile, message, message_type):
 
 def send_sms1(school, sender, mobile, message, message_type):
     # 25/12/2016 - added field to check whether sms sending is enabled for this school. Check that first
-    school = School.objects.get(id=school)
-    conf = Configurations.objects.get(school=school)
+    try:
+        conf = Configurations.objects.get(school=school)
+    except Exception as e:
+        print('unable to retrieve configuration')
+        print ('Exception70 from sms.py = %s (%s)' % (e.message, type(e)))
 
     if conf.send_sms:
         # 06/12/2016 - we don't want to send sms to a dummy number
@@ -167,19 +170,19 @@ def send_sms1(school, sender, mobile, message, message_type):
                 #response = urllib.urlopen(url3)
                 print('response&=')
                 #print(response)
-                j = json.loads(response.read())
-                job_id = j['JobId']
-                print('job_id=' + job_id)
+                #j = json.loads(response.read())
+                #job_id = j['JobId']
+                #print('job_id=' + job_id)
 
 
 
-                url4 = 'http://smppsmshub.in/api/mt/GetDelivery?user=atulg&password=atulg&jobid=' + job_id
-                response = urllib.urlopen(url4)
-                print('response&=')
+                #url4 = 'http://smppsmshub.in/api/mt/GetDelivery?user=atulg&password=atulg&jobid=' + job_id
+                #response = urllib.urlopen(url4)
+                #print('response&=')
                 #print(response)
-                j2 = json.loads(response.read())
-                status = j2['DeliveryReports'][0]['DeliveryStatus']
-                print('status(smppsmshyb)=' + status)
+                #j2 = json.loads(response.read())
+                #status = j2['DeliveryReports'][0]['DeliveryStatus']
+                #print('status(smppsmshyb)=' + status)
 
 
                 # now get the outcome of the message sending call above
@@ -199,10 +202,10 @@ def send_sms1(school, sender, mobile, message, message_type):
                         url2 += mobile
                         url2 += '&msgtype='
                         url2 += message_id
-                        #outcome = urllib.urlopen(url2)
-                        #status = outcome.read()
-                        #status += ' (url = ' + url2 + ')'
-                        #print(status)
+                        outcome = urllib.urlopen(url2)
+                        status = outcome.read()
+                        status += ' (url = ' + url2 + ')'
+                        print(status)
                     except Exception as e:
                         print('unable to get the staus of sms delivery. The url was: ')
                         print(url2)
@@ -338,6 +341,3 @@ def send_sms(mobile, message):
 
     data = urllib.urlencode(values)
     data = data.encode('utf-8')
-
-
-
