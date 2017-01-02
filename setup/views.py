@@ -190,18 +190,17 @@ def setup_students(request):
                             iOS_link = conf.app_store_link
 
                             # send login id and password to parent via sms
-                            message = 'Dear Ms/Mr ' + parent_name + ', thanks for registering at ' \
-                                                                    'ClassUp(TM) mobile app. '
-                            message += "Now you can track your child's progress at " + school.school_name + ' '
-                            message += 'using ClassUp App. '
+                            message = 'Dear Ms/Mr ' + parent_name + ', Welcome to ClassUP. '
+                            message += "Now you can track your child's progress at " + school.school_name + '. '
+                            # message += 'using ClassUp App. '
                             message += 'Please install ClassUp from these links. Android: '
                             message += android_link
                             message += '. iPhone/iOS: '
                             message += iOS_link
                             message += '. Your user id is: ' + str(parent_mobile1) + ', and password is: '
                             message += str(password)
-                            message += '. You can change your password after first login. '
-                            message += 'In case of any problem please send an email to: info@classup.in'
+                            # message += '. You can change your password after first login. '
+                            message += '. For support, email to: support@classup.in'
                             print(message)
                             message_type = 'Welcome Parent'
                             sender = request.session['user']
@@ -612,7 +611,7 @@ def setup_teachers(request):
                             iOS_link = configuration.app_store_link
 
                             # send login id and password to teacher via sms
-                            message = 'Dear ' + f_name + ' ' + l_name + ', thanks for registering at ClassUp(TM).'
+                            message = 'Dear ' + f_name + ' ' + l_name + ', Welcome to ClassUp.'
                             message += 'Please install ClassUp from these links. Android: '
                             message += android_link
                             message += ', iPhone/iOS: '
@@ -620,7 +619,7 @@ def setup_teachers(request):
                             message += '. Your user id is: ' + email + ', and password is: ' + password + '. '
                             message += 'You can change your password after first login. '
                             message += 'Enjoy managing your class with ClassUp!'
-                            message += ' In case of any problem please send an email to: info@classup.in'
+                            message += ' For support, email to: support@classup.in'
                             message_type = 'Welcome Teacher'
                             sender = request.session['user']
 

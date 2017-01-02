@@ -310,7 +310,8 @@ def send_sms1(school, sender, mobile, message, message_type):
                 print ('error occured while sending sms to ' + str(mobile) + '. The url was: ')
                 print(url1)
                 print ('Exception2 from sms.py = %s (%s)' % (e.message, type(e)))
-
+    else:
+        print ('Send SMS is turned off for this school: ' + school.school_name + ', ' + school.school_address)
 
 def send_sms(mobile, message):
     url1 = 'http://bhashsms.com/api/sendmsg.php?user=EMERGETECH&pass=kawasaki&sender=ClssUp'
