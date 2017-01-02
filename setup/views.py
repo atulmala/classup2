@@ -466,7 +466,7 @@ def setup_sections(request):
                     try:
                         s = Section.objects.get(school=school, section=section)
                         if (s):
-                            print ('Section ' + section + 'for school ' + school.school_name
+                            print ('Section ' + section + ' for school ' + school.school_name
                                    + ' already exist. Hence skipping...')
                     except Exception as e:
                         print ('Exception18 from setup views.py = %s (%s)' % (e.message, type(e)))

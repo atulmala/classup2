@@ -102,6 +102,7 @@ class ClassTeacherAdmin(admin.ModelAdmin):
     get_class_teacher.short_name = 'Class Teacher'
 
     list_display = ('get_school_name', 'get_class', 'get_class_teacher',)
+    list_filter = ('school', )
 
 admin.site.register(ClassTeacher, ClassTeacherAdmin)
 
@@ -114,4 +115,8 @@ class ExamAdmin(admin.ModelAdmin):
     list_display = ('school', 'title', 'start_date', 'end_date', 'start_class', 'end_class',)
 
 admin.site.register(Exam, ExamAdmin)
+
+
+
+
 
