@@ -1,7 +1,6 @@
 __author__ = 'atulgupta'
 
 import urllib
-import urllib2
 import json
 
 from django.db.models import Q
@@ -147,14 +146,8 @@ def send_sms1(school, sender, mobile, message, message_type):
 
             # 25/12/2016 - there will be a unique sender id for each school
             sender_id = conf.sender_id
-            url1 = 'http://bhashsms.com/api/sendmsg.php?user=EMERGETECH&pass=kawasaki'
-            url1 += '&sender=' + sender_id
-            url1 += '&phone=' + mobile
-            url1 += '&text=' + message
-            url1 += '&priority=ndnd&stype=normal'
 
             url3 = 'http://smppsmshub.in/api/mt/SendSMS?user=atulg&password=atulg'
-
             url3 += '&senderid=' + sender_id
             url3 += '&channel=Trans&DCS=0&flashsms=0'
             url3 += '&number=' + mobile
@@ -165,50 +158,32 @@ def send_sms1(school, sender, mobile, message, message_type):
             try:
                 # send the message
                 print ('sending to ' + mobile)
-                response = urllib.urlopen(url1)
 
-                #response = urllib.urlopen(url3)
-                print('response&=')
-                #print(response)
-                #j = json.loads(response.read())
-                #job_id = j['JobId']
-                #print('job_id=' + job_id)
-
-
-
-                #url4 = 'http://smppsmshub.in/api/mt/GetDelivery?user=atulg&password=atulg&jobid=' + job_id
-                #response = urllib.urlopen(url4)
-                #print('response&=')
-                #print(response)
-                #j2 = json.loads(response.read())
-                #status = j2['DeliveryReports'][0]['DeliveryStatus']
-                #print('status(smppsmshyb)=' + status)
-
-
-                # now get the outcome of the message sending call above
-                message_id = response.read()
+                response = urllib.urlopen(url3)
+                j = json.loads(response.read())
+                job_id = j['JobId']
+                print('job_id=' + job_id)
 
                 # 29/11/2016 - in case of bulk messaging (bulk sms, welcome parent/teacher at the time of setup,
                 # retrieving outcome can be time consuming and result into 504 - Gateway timeout. Hence let us just
                 # store the message id which can be used to retrieve the status from Bhash SMS portal
-                if message_type == 'Bulk SMS (Web Interface)' or message_type == 'Welcome Parent' \
-                        or message_type == 'Welcome Teacher':
-                    status = 'Please use this message id to retrieve from SMS provider portal: ' + message_id
+                status = 'Undetermined (Job id = ' + job_id + ')'
+                if message_type == 'Bulk SMS (Web Interface)' \
+                        or message_type == 'Welcome Parent' or message_type == 'Welcome Teacher':
+                    status = 'Please use this job id to retrieve from SMS provider portal: ' + str(job_id)
                 else:
+                    url4 = 'http://smppsmshub.in/api/mt/GetDelivery?user=atulg&password=atulg&jobid=' + job_id
                     try:
-                        url2 = 'http://bhashsms.com/api/recdlr.php?user=EMERGETECH&msgid='
-                        url2 += message_id
-                        url2 += '&phone='
-                        url2 += mobile
-                        url2 += '&msgtype='
-                        url2 += message_id
-                        outcome = urllib.urlopen(url2)
-                        status = outcome.read()
-                        status += ' (url = ' + url2 + ')'
-                        print(status)
+                        response2 = urllib.urlopen(url4)
+                        j2 = json.loads(response2.read())
+                        print('j2=')
+                        print(j2)
+                        status = j2['DeliveryReports'][0]['DeliveryStatus'] + ' at '
+                        status += j2['DeliveryReports'][0]['DeliveryDate']
+                        print('status(smppsmshub)=' + str(status))
                     except Exception as e:
                         print('unable to get the staus of sms delivery. The url was: ')
-                        print(url2)
+                        print(url4)
                         print ('Exception10 from sms.py = %s (%s)' % (e.message, type(e)))
 
                 # first, determine the recepient & receipient type
@@ -308,7 +283,7 @@ def send_sms1(school, sender, mobile, message, message_type):
 
             except Exception as e:
                 print ('error occured while sending sms to ' + str(mobile) + '. The url was: ')
-                print(url1)
+                print(url3)
                 print ('Exception2 from sms.py = %s (%s)' % (e.message, type(e)))
     else:
         print ('Send SMS is turned off for this school: ' + school.school_name + ', ' + school.school_address)
