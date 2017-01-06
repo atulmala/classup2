@@ -161,30 +161,8 @@ def send_sms1(school, sender, mobile, message, message_type):
 
                 response = urllib.urlopen(url3)
                 j = json.loads(response.read())
-                job_id = j['JobId']
-                print('job_id=' + job_id)
-
-                # 29/11/2016 - in case of bulk messaging (bulk sms, welcome parent/teacher at the time of setup,
-                # retrieving outcome can be time consuming and result into 504 - Gateway timeout. Hence let us just
-                # store the message id which can be used to retrieve the status from Bhash SMS portal
-                status = 'Undetermined (Job id = ' + job_id + ')'
-                if message_type == 'Bulk SMS (Web Interface)' \
-                        or message_type == 'Welcome Parent' or message_type == 'Welcome Teacher':
-                    status = 'Please use this job id to retrieve from SMS provider portal: ' + str(job_id)
-                else:
-                    url4 = 'http://smppsmshub.in/api/mt/GetDelivery?user=atulg&password=atulg&jobid=' + job_id
-                    try:
-                        response2 = urllib.urlopen(url4)
-                        j2 = json.loads(response2.read())
-                        print('j2=')
-                        print(j2)
-                        status = j2['DeliveryReports'][0]['DeliveryStatus'] + ' at '
-                        status += j2['DeliveryReports'][0]['DeliveryDate']
-                        print('status(smppsmshub)=' + str(status))
-                    except Exception as e:
-                        print('unable to get the staus of sms delivery. The url was: ')
-                        print(url4)
-                        print ('Exception10 from sms.py = %s (%s)' % (e.message, type(e)))
+                status = str(j['JobId'])
+                print('status (job_id) = ' + status)
 
                 # first, determine the recepient & receipient type
                 recepient_type = 'Undetermined'
@@ -261,7 +239,6 @@ def send_sms1(school, sender, mobile, message, message_type):
                         print ('sender type is Teacher')
                         # the sender will also be a teacher (actually sender and receiver would be the same)
                         try:
-                            #t = Teacher.objects.get(email=sender)
                             t = Teacher.objects.get(school=school, mobile=mobile)
                             sender_name = t.first_name + ' ' + t.last_name + ' (' + sender + ')'  # include teacher's id also
                         except Exception as e:
