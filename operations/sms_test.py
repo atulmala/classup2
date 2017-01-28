@@ -51,8 +51,8 @@ try:
     # get delivery report through webhooks
     try:
         url5 = 'https://www.classupclient.com/operations/webhooks'
-        response3 = urllib2.urlopen(url5)
-        print(response3.read())
+        #response3 = urllib2.urlopen(url5)
+        #print(response3.read())
     except Exception as e:
         print('unable to get the status using webhook. The url was: ')
         print(url5)

@@ -1282,8 +1282,14 @@ def parents_communication_details(request):
 
 
 def webhooks(request):
-    jsondata = request.body
-    data = json.loads(jsondata)
-    print(data)
+    print('inside webhooks view')
+    try:
+        jsondata = request.body
+        print(jsondata)
+        data = json.loads(jsondata)
+        print(data)
+    except Exception as e:
+        print('error from operations view.py (webhooks)')
+        print ('Exception200 from operations views.py = %s (%s)' % (e.message, type(e)))
 
     return HttpResponse(status=200)
