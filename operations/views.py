@@ -1280,8 +1280,7 @@ def parents_communication_details(request):
 
     return render(request, 'classup/parents_communication_details.html', context_dict)
 
-@csrf_exempt
-@require_POST
+
 def webhooks(request):
     print('inside webhooks view')
     try:
