@@ -1285,6 +1285,7 @@ def webhooks(request):
     print('inside webhooks view')
     try:
         jsondata = request.body
+        jsondata = request.body
         print(jsondata)
         data = json.loads(jsondata)
         print(data)
