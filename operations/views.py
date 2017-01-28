@@ -4,13 +4,13 @@ import time
 import calendar
 from calendar import monthrange
 import StringIO
-import urllib
 
 import json
 
 import xlsxwriter
 
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.utils.translation import ugettext
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -1280,7 +1280,7 @@ def parents_communication_details(request):
 
     return render(request, 'classup/parents_communication_details.html', context_dict)
 
-
+@require_POST
 def webhooks(request):
     print('inside webhooks view')
     try:
