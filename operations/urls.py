@@ -15,4 +15,5 @@ urlpatterns = patterns(
     url(r'^sms_summary_school/$', views.sms_summary, name='sms_summmary_school'),
     url(r'send_bulk_sms/$', views.send_bulk_sms, name='send_bulk_sms'),
     url(r'retrieve_sms_history/(?P<parent_mobile>\w+)/$', views.SMSHistoryList.as_view()),
+    url(r'webhooks/$', views.webhooks, name='webhooks'),
 )

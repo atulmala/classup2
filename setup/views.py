@@ -90,6 +90,7 @@ def setup_students(request):
                 sheet = file_to_process.sheet_by_index(0)
                 if sheet:
                     print ('Successfully got hold of sheet!')
+
                 for row in range(sheet.nrows):
                     # skip the header row
                     if row == 0:
@@ -118,16 +119,21 @@ def setup_students(request):
                     # now, capture the parent data
                     parent_name_raw = sheet.cell(row, 6).value
                     parent_name = parent_name_raw.title()
+
                     # 24/11/2016 - as of now we will not be using email. Hence use dummy
                     # parent_email = sheet.cell(row, 7).value
                     parent_email = 'dummy@testmail.com'
 
                     # we need to explicitly cast mobile number to string. Else update will not function properly
                     parent_mobile1_raw = sheet.cell(row, 8).value
+                    print parent_mobile1_raw
                     parent_mobile2_raw = sheet.cell(row, 9).value
+                    print parent_mobile2_raw
+
 
                     # excel can put a decimal followed by zero in mobile numbers. This needs to be fixed
                     parent_mobile1 = int(parent_mobile1_raw)
+                    print parent_mobile1
 
                     # mobile 2 can be blank
                     if parent_mobile2_raw != '':

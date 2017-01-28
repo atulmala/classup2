@@ -329,7 +329,7 @@ def sms_summary(request):
         sms_sheet.write(3, 6, ugettext("Recipient Type"), header)
         sms_sheet.write(3, 7, ugettext("Message"), header)
         sms_sheet.write(3, 8, ugettext("Message Type"), header)
-        sms_sheet.write(3, 9, ugettext("Status"), header)
+        sms_sheet.write(3, 9, ugettext("Status/Job ID"), header)
         sms_sheet.write(3,10, ugettext("Credits Consumed"), header)
         try:
             sms_list = SMSRecord.objects.filter(school=school, date__month=month_int,
@@ -378,21 +378,23 @@ def sms_summary(request):
                 # 06/01/17 - we will fetch the exact status of sms delivery here.
                 status = s.outcome
                 job_id = s.outcome
-                if len(job_id) == 8:
-                    url4 = 'http://smppsmshub.in/api/mt/GetDelivery?user=atulg&password=atulg&jobid='
-                    url4 += job_id
-                    try:
-                        response2 = urllib.urlopen(url4)
-                        j2 = json.loads(response2.read())
-                        print('j2=')
-                        print(j2)
-                        status = j2['DeliveryReports'][0]['DeliveryStatus'] + ' at '
-                        status += j2['DeliveryReports'][0]['DeliveryDate']
-                        print('status(smppsmshub)=' + str(status))
-                    except Exception as e:
-                        print('unable to get the staus of sms delivery. The url was: ')
-                        print(url4)
-                        print ('Exception100 from operations sms_summary.py = %s (%s)' % (e.message, type(e)))
+                # 23/01/17 - As the status fetching consumes a lot of time, let's disable it. When we choose
+                # another bulk SMS provider, then we will look into it again
+                # if len(job_id) == 8:
+                #     url4 = 'http://smppsmshub.in/api/mt/GetDelivery?user=atulg&password=atulg&jobid='
+                #     url4 += job_id
+                #     try:
+                #         response2 = urllib.urlopen(url4)
+                #         j2 = json.loads(response2.read())
+                #         print('j2=')
+                #         print(j2)
+                #         status = j2['DeliveryReports'][0]['DeliveryStatus'] + ' at '
+                #         status += j2['DeliveryReports'][0]['DeliveryDate']
+                #         print('status(smppsmshub)=' + str(status))
+                #     except Exception as e:
+                #         print('unable to get the staus of sms delivery. The url was: ')
+                #         print(url4)
+                #         print ('Exception100 from operations sms_summary.py = %s (%s)' % (e.message, type(e)))
 
                 sms_sheet.write(current_row, 9, ugettext(status))
 
@@ -1277,3 +1279,11 @@ def parents_communication_details(request):
         context_dict['form'] = form
 
     return render(request, 'classup/parents_communication_details.html', context_dict)
+
+
+def webhooks(request):
+    jsondata = request.body
+    data = json.loads(jsondata)
+    print(data)
+
+    return HttpResponse(status=200)
