@@ -1283,17 +1283,7 @@ def parents_communication_details(request):
 
 def webhooks(request):
     print('inside webhooks view')
-    if request.method == 'POST':
-        print('method was POST')
-        try:
-            jsondata = request.body
-            print(jsondata)
-            data = json.loads(jsondata)
-            print(data)
-        except Exception as e:
-            print('error from operations view.py (webhooks)')
-            print ('Exception200 from operations views.py = %s (%s)' % (e.message, type(e)))
-    else:
-        print('method was GET. Hence doing nothing')
+
+    print(request.DATA)
 
     return HttpResponse(status=200)
