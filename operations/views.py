@@ -1284,6 +1284,6 @@ def parents_communication_details(request):
 def webhooks(request):
     print('inside webhooks view')
 
-    print(request.DATA)
+    print(request.GET.get('data'))
 
     return HttpResponse(status=200)
