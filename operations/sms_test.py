@@ -1,7 +1,6 @@
 import urllib
 import urllib2
 import json
-import requests, time
 
 
 mobile = '9871093296'
