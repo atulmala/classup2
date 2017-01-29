@@ -54,16 +54,16 @@ def send_sms1(school, sender, mobile, message, message_type):
                 # send the message
                 print ('sending to ' + mobile)
 
-                req = urllib2.Request(url3, postdata)
-                response = urllib2.urlopen(req)
-                j = json.loads(response.read())
-                message_id = j['message']
-                print(message_id)
-
-                # response = urllib.urlopen(url)
+                # req = urllib2.Request(url3, postdata)
+                # response = urllib2.urlopen(req)
                 # j = json.loads(response.read())
-                # message_id = str(j['JobId'])
-                # print('status (job_id) = ' + message_id)
+                # message_id = j['message']
+                # print(message_id)
+
+                response = urllib.urlopen(url)
+                j = json.loads(response.read())
+                message_id = str(j['JobId'])
+                print('status (job_id) = ' + message_id)
 
                 # first, determine the recepient & receipient type
                 recepient_type = 'Undetermined'
