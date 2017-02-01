@@ -10,7 +10,7 @@ try:
     data = cursor.fetchone()
     print('Database version is %s ' % data)
 
-    sql = 'select count(*) from operations_smsrecord'
+    sql = 'select outcome, status_extracted, status from operations_smsrecord where status_extracted='
     cursor.execute(sql)
     row =cursor.fetchone()
 
