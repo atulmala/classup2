@@ -21,6 +21,7 @@ class AttendanceTakenAdmin(admin.ModelAdmin):
 
     list_display = ('date', 'get_school_name', 'the_class', 'section',
                     'subject', 'taken_by', 'taken_time',)
+    list_filter = ('date',)
 
 admin.site.register(AttendanceTaken, AttendanceTakenAdmin)
 
@@ -32,5 +33,6 @@ class AttendanceUpdateAdmin(admin.ModelAdmin):
 
     list_display = ('date', 'get_school_name', 'the_class', 'section',
                     'subject', 'updated_by', 'update_date_time',)
+    list_filter = ('date',)
 
 admin.site.register(AttendanceUpdated, AttendanceUpdateAdmin)

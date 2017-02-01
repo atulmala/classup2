@@ -21,3 +21,5 @@ class SMSRecord(models.Model):
     message = models.TextField()
     message_type = models.CharField(max_length=30, default='Not Available')
     outcome = models.TextField(max_length=20, default='Delivered')
+    status_extracted = models.BooleanField(default=False)
+    status = models.CharField(max_length=200, default='Not Available')
