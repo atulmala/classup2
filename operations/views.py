@@ -375,27 +375,7 @@ def sms_summary(request):
                     message = '<Contents Hidden>'   # don't show the password in the Excel sheet
                     sms_sheet.write(current_row, 7, ugettext(message), text_format)
 
-                # 06/01/17 - we will fetch the exact status of sms delivery here.
-                status = s.outcome
-                job_id = s.outcome
-                # 23/01/17 - As the status fetching consumes a lot of time, let's disable it. When we choose
-                # another bulk SMS provider, then we will look into it again
-                # if len(job_id) == 8:
-                #     url4 = 'http://smppsmshub.in/api/mt/GetDelivery?user=atulg&password=atulg&jobid='
-                #     url4 += job_id
-                #     try:
-                #         response2 = urllib.urlopen(url4)
-                #         j2 = json.loads(response2.read())
-                #         print('j2=')
-                #         print(j2)
-                #         status = j2['DeliveryReports'][0]['DeliveryStatus'] + ' at '
-                #         status += j2['DeliveryReports'][0]['DeliveryDate']
-                #         print('status(smppsmshub)=' + str(status))
-                #     except Exception as e:
-                #         print('unable to get the staus of sms delivery. The url was: ')
-                #         print(url4)
-                #         print ('Exception100 from operations sms_summary.py = %s (%s)' % (e.message, type(e)))
-
+                status = s.status
                 sms_sheet.write(current_row, 9, ugettext(status))
 
                 # calculate the sms credits consumed by this sms
