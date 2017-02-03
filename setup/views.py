@@ -619,11 +619,12 @@ def setup_teachers(request):
 
                             # send login id and password to teacher via sms
                             message = 'Dear ' + f_name + ' ' + l_name + ', Welcome to ClassUp.'
+                            message += '. Your user id is: ' + email + ', and password is: ' + password + '. '
                             message += 'Please install ClassUp from these links. Android: '
                             message += android_link
                             message += ', iPhone/iOS: '
                             message += iOS_link
-                            message += '. Your user id is: ' + email + ', and password is: ' + password + '. '
+
                             message += 'You can change your password after first login. '
                             message += 'Enjoy managing your class with ClassUp!'
                             message += ' For support, email to: support@classup.in'
