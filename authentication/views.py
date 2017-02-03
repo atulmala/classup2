@@ -286,7 +286,7 @@ def forgot_password(request):
                 # we need to extract the school name this parent belong to. First get the parent
                 p = Parent.objects.get(Q(parent_mobile1=mobile) | Q(parent_mobile2=mobile))
                 # now get the children of this parent
-                ward_list = Student.objects.filter(parent=p)
+                ward_list = Student.objects.filter(parent=p, active_status=True)
                 # finally, get the school
                 for student in ward_list:
                     school = student.school

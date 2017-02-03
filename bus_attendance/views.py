@@ -366,7 +366,7 @@ class StudentListForRout1(generics.ListAPIView):
         bus_stop = self.kwargs['bus_stop']
         the_stop = BusStop.objects.get(stop_name=bus_stop, bus_rout=the_rout)
         q = Student.objects.filter(student_rout__bus_root=the_rout,
-                                   student_rout__bus_stop=the_stop).order_by('fist_name')
+                                   student_rout__bus_stop=the_stop, active_status=True).order_by('fist_name')
         return q
 
 

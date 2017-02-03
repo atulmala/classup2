@@ -62,7 +62,7 @@ class StudentListForParent(generics.ListAPIView):
         parent_mobile = self.kwargs['parent_mobile']
 
         the_parent = Parent.objects.get(parent_mobile1=parent_mobile)
-        q1 = Student.objects.filter(parent=the_parent).order_by('fist_name')
+        q1 = Student.objects.filter(parent=the_parent, active_status=True).order_by('fist_name')
         return q1
 
 

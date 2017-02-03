@@ -162,7 +162,7 @@ def att_summary_school(request):
         row_absentee = 3
         for c in Class.objects.filter(school=school):
             for s in Section.objects.filter(school=school):
-                total = Student.objects.filter(current_class=c, current_section=s).count()
+                total = Student.objects.filter(current_class=c, current_section=s, active_status=True).count()
                 grand_total += total
                 row = 3 + idx
 
@@ -538,7 +538,8 @@ def att_register_class(request):
 
         holiday_count = present_count = 0
         db_hit = 1
-        for s in Student.objects.filter(school=school, current_class=the_class, current_section=section):
+        for s in Student.objects.filter(school=school, current_class=the_class,
+                                        current_section=section, active_status=True):
             attendance_sheet.write_number(row, 0, idx+1, cell_center)
             attendance_sheet.write_number(row, 1, s.roll_number, cell_center)
             attendance_sheet.write_string(row, 2, ugettext(s.fist_name + ' ' + s.last_name), cell_left)
@@ -674,7 +675,7 @@ def send_bulk_sms(request):
         message_type = 'Bulk SMS (Web Interface)'
         for sc in selected_classes:
             the_class = Class.objects.get(school=school, standard=sc)
-            student_list = Student.objects.filter(current_class=the_class)
+            student_list = Student.objects.filter(current_class=the_class, active_status=True)
             start_time = time.time()
             for student in student_list:
                 parent = student.parent
@@ -836,7 +837,7 @@ def test_result(request):
             col += 2
 
             if not s_list_created:
-                for s in Student.objects.filter(current_class=the_class, current_section=section):
+                for s in Student.objects.filter(current_class=the_class, current_section=section, active_status=True):
                     s_list.append(s)
 
                     result_sheet.write_number(row+2, 0, idx+1, cell_center)
@@ -972,7 +973,7 @@ def result_sms(request):
             return render(request, 'classup/test_results.html', context_dict)
 
         try:
-            for s in Student.objects.filter(current_class=the_class, current_section=section):
+            for s in Student.objects.filter(current_class=the_class, current_section=section, active_status=True):
                 message = 'Dear Ms/Mr ' + s.parent.parent_name + ', please find subject-wise marks of your ward, '
                 message += ugettext(s.fist_name + ' ' + s.last_name)
                 message += ', for ' + term + ' test: '
@@ -1066,7 +1067,7 @@ def send_message(request, school_id):
 
                 # get the list of all students in this class/section
                 try:
-                    student_list = Student.objects.filter(current_class=c, current_section=sec)
+                    student_list = Student.objects.filter(current_class=c, current_section=sec, active_status=True)
                     for s in student_list:
                         p = s.parent
                         m1 = p.parent_mobile1

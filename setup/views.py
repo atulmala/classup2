@@ -198,13 +198,14 @@ def setup_students(request):
                             # send login id and password to parent via sms
                             message = 'Dear Ms/Mr ' + parent_name + ', Welcome to ClassUP. '
                             message += "Now you can track your child's progress at " + school.school_name + '. '
+                            message += 'Your user id is: ' + str(parent_mobile1) + ', and password is: '
+                            message += str(password)
                             # message += 'using ClassUp App. '
-                            message += 'Please install ClassUp from these links. Android: '
+                            message += '. Please install ClassUp from these links. Android: '
                             message += android_link
                             message += '. iPhone/iOS: '
                             message += iOS_link
-                            message += '. Your user id is: ' + str(parent_mobile1) + ', and password is: '
-                            message += str(password)
+
                             # message += '. You can change your password after first login. '
                             message += '. For support, email to: support@classup.in'
                             print(message)
