@@ -196,7 +196,7 @@ def setup_students(request):
                             iOS_link = conf.app_store_link
 
                             # send login id and password to parent via sms
-                            message = 'Dear Ms/Mr ' + parent_name + ', Welcome to ClassUP. '
+                            message = 'Dear Ms/Mr ' + parent_name + ', Welcome to ClassUp. '
                             message += "Now you can track your child's progress at " + school.school_name + '. '
                             message += 'Your user id is: ' + str(parent_mobile1) + ', and password is: '
                             message += str(password)
@@ -619,7 +619,7 @@ def setup_teachers(request):
 
                             # send login id and password to teacher via sms
                             message = 'Dear ' + f_name + ' ' + l_name + ', Welcome to ClassUp.'
-                            message += '. Your user id is: ' + email + ', and password is: ' + password + '. '
+                            message += ' Your user id is: ' + email + ', and password is: ' + password + '. '
                             message += 'Please install ClassUp from these links. Android: '
                             message += android_link
                             message += ', iPhone/iOS: '
