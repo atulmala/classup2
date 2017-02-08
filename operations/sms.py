@@ -51,19 +51,21 @@ def send_sms1(school, sender, mobile, message, message_type):
             url += '&route=28'
 
             try:
-                # send the message
-                print ('sending to ' + mobile)
+                # 07/02/17 - we will be sending bulk sms through separate batch job as it is time consuming
+                if message_type != 'Bulk SMS (Web Interface)':
+                    # send the message
+                    print ('sending to ' + mobile)
 
-                # req = urllib2.Request(url3, postdata)
-                # response = urllib2.urlopen(req)
-                # j = json.loads(response.read())
-                # message_id = j['message']
-                # print(message_id)
+                    # req = urllib2.Request(url3, postdata)
+                    # response = urllib2.urlopen(req)
+                    # j = json.loads(response.read())
+                    # message_id = j['message']
+                    # print(message_id)
 
-                response = urllib.urlopen(url)
-                j = json.loads(response.read())
-                message_id = str(j['JobId'])
-                print('status (job_id) = ' + message_id)
+                    response = urllib.urlopen(url)
+                    j = json.loads(response.read())
+                    message_id = str(j['JobId'])
+                    print('status (job_id) = ' + message_id)
 
                 # first, determine the recepient & receipient type
                 recepient_type = 'Undetermined'
@@ -152,9 +154,14 @@ def send_sms1(school, sender, mobile, message, message_type):
                 print ('going to store this sms details into the database')
                 try:
                     sr = SMSRecord(school=school, sender1=sender_name, sender_type=sender_type,
-                                    recipient_name=recepient_name, recipient_type=recepient_type, recipient_number=mobile,
+                                    recipient_name=recepient_name, recipient_type=recepient_type,
+                                   recipient_number=mobile,
                                     message=message, message_type=message_type,
                                     outcome=message_id)
+                    if message_type == 'Bulk SMS (Web Interface)':
+                        sr.api_called = False
+                    else:
+                        sr.api_called = True
                     sr.save()
                 except Exception as e:
                     print ('Exception54 from sms.py = %s (%s)' % (e.message, type(e)))

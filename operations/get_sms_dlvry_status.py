@@ -11,7 +11,8 @@ try:
     cursor1 = db.cursor()
 
     # extract message_id of all the sms sent after 31/01/17 for which sms delivery status has not been extracted
-    sql1 = "select outcome from operations_smsrecord where status_extracted=0 and date > '2017-01-31'"
+    sql1 = "select outcome from operations_smsrecord where api_called = 1 and " \
+           "status_extracted = 0 and date > '2017-01-31'"
     cursor1.execute(sql1)
 
     # now, try to extract delivery status of each sms by calling api of the bulk sms provider
