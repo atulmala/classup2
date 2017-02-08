@@ -52,6 +52,7 @@ def send_sms1(school, sender, mobile, message, message_type):
 
             try:
                 # 07/02/17 - we will be sending bulk sms through separate batch job as it is time consuming
+                message_id = 'Not Available'
                 if message_type != 'Bulk SMS (Web Interface)':
                     # send the message
                     print ('sending to ' + mobile)

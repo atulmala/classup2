@@ -2,7 +2,7 @@ import MySQLdb
 import json
 import urllib
 
-print('Starting to extract sms delivery status')
+print('Starting to send bulk sms')
 
 # 29/01/17 - values for msg91 vendor
 authkey = '138436Aff1HY1Vurw588743cf'
@@ -59,22 +59,22 @@ try:
             j = json.loads(response.read())
             message_id = str(j['JobId'])
             print('status (job_id) = ' + message_id)
+
+            # update the smsrecord table that this message has been sent
+            try:
+                cursor2 = db.cursor()
+                sql2 = "UPDATE operations_smsrecord SET api_called = 1, outcome ='" + message_id
+                sql2 += "' WHERE id=" + message_id
+                print(sql2)
+                cursor2.execute(sql2)
+                db.commit()
+                cursor2.close()
+            except Exception as e:
+                print('Error while trying to update the delivery status of sms with message_id = ' + message_id)
+                print ('Exception3 from operations get_sms_dlvry_status.py = %s (%s)' % (e.message, type(e)))
         except Exception as e:
             print ('Exception1 from send_bulk_sms.py = %s (%s)' % (e.message, type(e)))
             print('failed to send message: ' + message + ' to mobile number: ' + str(mobile))
-
-        # update the smsrecord table that this message has been sent
-        try:
-            cursor2 = db.cursor()
-            sql2 = "UPDATE operations_smsrecord SET outcome ='" + message_id
-            sql2 += "' WHERE id=" + message_id
-            print(sql2)
-            cursor2.execute(sql2)
-            db.commit()
-            cursor2.close()
-        except Exception as e:
-            print('Error while trying to update the delivery status of sms with message_id = ' + message_id)
-            print ('Exception3 from operations get_sms_dlvry_status.py = %s (%s)' % (e.message, type(e)))
         row = cursor1.fetchone()
 
     cursor1.close()
