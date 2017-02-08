@@ -64,7 +64,7 @@ try:
             try:
                 cursor2 = db.cursor()
                 sql2 = "UPDATE operations_smsrecord SET api_called = 1, outcome ='" + message_id
-                sql2 += "' WHERE id=" + message_id
+                sql2 += "' WHERE id=" + str(id)
                 print(sql2)
                 cursor2.execute(sql2)
                 db.commit()

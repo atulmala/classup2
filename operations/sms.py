@@ -154,7 +154,7 @@ def send_sms1(school, sender, mobile, message, message_type):
                 # finally, store everything into the database
                 print ('going to store this sms details into the database')
                 try:
-                    sr = SMSRecord(school=school, sender1=sender_name, sender_type=sender_type,
+                    sr = SMSRecord(school=school, sender1=sender_name, sender_type=sender_type, sender_code=sender_id,
                                     recipient_name=recepient_name, recipient_type=recepient_type,
                                    recipient_number=mobile,
                                     message=message, message_type=message_type,
