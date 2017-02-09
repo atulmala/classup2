@@ -1,6 +1,6 @@
 import MySQLdb
 import json
-import urllib
+import urllib, urllib2
 
 print('Starting to send bulk sms')
 
@@ -49,15 +49,16 @@ try:
             url += '&text=' + message
             url += '&route=28'
 
-            # req = urllib2.Request(url3, postdata)
-            # response = urllib2.urlopen(req)
-            # j = json.loads(response.read())
-            # message_id = j['message']
-            # print(message_id)
-
-            response = urllib.urlopen(url)
+            # 09/02/17 - old vendor (SMPPSMS Hub) credits exhausted. Turning on new vendor msg91's api
+            req = urllib2.Request(url3, postdata)
+            response = urllib2.urlopen(req)
             j = json.loads(response.read())
-            message_id = str(j['JobId'])
+            message_id = j['message']
+            print(message_id)
+
+            #response = urllib.urlopen(url)
+            #j = json.loads(response.read())
+            #message_id = str(j['JobId'])
             print('status (job_id) = ' + message_id)
 
             # update the smsrecord table that this message has been sent
