@@ -3,6 +3,7 @@ import json
 import urllib
 
 print('Starting to extract sms delivery status')
+authkey = '138436Aff1HY1Vurw588743cf'
 
 try:
     # connect to the database
@@ -22,15 +23,15 @@ try:
         print(message_id)
         status = 'Not Available'
         try:
-            url = 'http://smppsmshub.in/api/mt/GetDelivery?user=atulg&password=atulg&jobid='
+            url = 'https://control.msg91.com/api/getDlrReport.php?authkey=' + authkey + '&reqId='
             url += message_id
             response2 = urllib.urlopen(url)
             j2 = json.loads(response2.read())
             print('j2=')
             print(j2)
-            status = j2['DeliveryReports'][0]['DeliveryStatus'] + ' at '
-            status += j2['DeliveryReports'][0]['DeliveryDate']
-            print('status(smppsmshub)=' + str(status))
+            status = j2['reports'][0]['desc'] + ' at '
+            status += j2['reports'][0]['date']
+            print('status = ' + str(status))
         except Exception as e:
             print('unable to get the staus of sms delivery. The url was: ')
             print(url)
@@ -41,7 +42,7 @@ try:
         try:
             cursor2 = db.cursor()
             sql2 = "UPDATE operations_smsrecord SET status_extracted=1, status='" + status
-            sql2 += "' WHERE outcome=" + message_id
+            sql2 += "' WHERE outcome='" + message_id + "'"
             print(sql2)
             cursor2.execute(sql2)
             db.commit()

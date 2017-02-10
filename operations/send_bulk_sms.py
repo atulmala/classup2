@@ -35,30 +35,20 @@ try:
             'rout': rout,
             'response': 'json',
         }
-        url3 = 'https://control.msg91.com/api/sendhttp.php'
-        print(url3)
+        url = 'https://control.msg91.com/api/sendhttp.php'
+        print(url)
         postdata = urllib.urlencode(values)
 
         try:
             print('sending to=' + mobile)
             print('message received in send_bulk_sms.py=' + message)
-            url = 'http://smppsmshub.in/api/mt/SendSMS?user=atulg&password=atulg'
-            url += '&senderid=' + sender_id
-            url += '&channel=Trans&DCS=0&flashsms=0'
-            url += '&number=' + mobile
-            url += '&text=' + message
-            url += '&route=28'
 
             # 09/02/17 - old vendor (SMPPSMS Hub) credits exhausted. Turning on new vendor msg91's api
-            req = urllib2.Request(url3, postdata)
+            req = urllib2.Request(url, postdata)
             response = urllib2.urlopen(req)
             j = json.loads(response.read())
             message_id = j['message']
             print(message_id)
-
-            #response = urllib.urlopen(url)
-            #j = json.loads(response.read())
-            #message_id = str(j['JobId'])
             print('status (job_id) = ' + message_id)
 
             # update the smsrecord table that this message has been sent

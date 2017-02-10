@@ -13,8 +13,8 @@ from .models import SMSRecord
 def send_sms1(school, sender, mobile, message, message_type):
     # 25/12/2016 - added field to check whether sms sending is enabled for this school. Check that first
     try:
-        conf = Configurations.objects.get(school=school)
         # 25/12/2016 - there will be a unique sender id for each school
+        conf = Configurations.objects.get(school=school)
         sender_id = conf.sender_id
     except Exception as e:
         print('unable to retrieve configuration')
@@ -32,8 +32,8 @@ def send_sms1(school, sender, mobile, message, message_type):
             'rout': rout,
             'response': 'json',
         }
-        url3 = 'https://control.msg91.com/api/sendhttp.php'
-        print(url3)
+        url = 'https://control.msg91.com/api/sendhttp.php'
+        print(url)
         postdata = urllib.urlencode(values)
 
         # 06/12/2016 - we don't want to send sms to a dummy number
@@ -43,12 +43,6 @@ def send_sms1(school, sender, mobile, message, message_type):
             print('sending to=' + mobile)
             print('sender=' + sender)
             print('message received in sms.py=' + message)
-            url = 'http://smppsmshub.in/api/mt/SendSMS?user=atulg&password=atulg'
-            url += '&senderid=' + sender_id
-            url += '&channel=Trans&DCS=0&flashsms=0'
-            url += '&number=' + mobile
-            url += '&text=' + message
-            url += '&route=28'
 
             try:
                 # 07/02/17 - we will be sending bulk sms through separate batch job as it is time consuming
@@ -57,16 +51,10 @@ def send_sms1(school, sender, mobile, message, message_type):
                     # send the message
                     print ('sending to ' + mobile)
 
-                    # 09/02/17 - old vendor (SMPPSMS Hub) credits exhausted. Turning on new vendor msg91's api
-                    req = urllib2.Request(url3, postdata)
+                    req = urllib2.Request(url, postdata)
                     response = urllib2.urlopen(req)
                     j = json.loads(response.read())
                     message_id = j['message']
-                    print(message_id)
-
-                    #response = urllib.urlopen(url)
-                    #j = json.loads(response.read())
-                    #message_id = str(j['JobId'])
                     print('status (job_id) = ' + message_id)
 
                 # first, determine the recepient & receipient type
