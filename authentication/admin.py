@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import LoginRecord
+from .models import LoginRecord, LastPasswordReset
 
 # Register your models here.
 
@@ -11,3 +11,10 @@ class LoginRecordAdmin(admin.ModelAdmin):
     list_filter = ('date_and_time',)
 
 admin.site.register(LoginRecord, LoginRecordAdmin)
+
+
+class LastPasswordResetAdmin(admin.ModelAdmin):
+    list_display = ('login_id', 'last_reset_time',)
+    search_fields = ('login_id', 'last_reset_time',)
+
+admin.site.register(LastPasswordReset, LastPasswordResetAdmin)

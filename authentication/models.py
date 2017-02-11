@@ -13,3 +13,8 @@ class LoginRecord(models.Model):
     login_type = models.CharField(max_length=10, default='Device')
     outcome = models.CharField(max_length=10, default='Failed')
     comments = models.CharField(max_length=200)
+
+
+class LastPasswordReset(models.Model):
+    login_id = models.CharField(max_length=100)
+    last_reset_time = models.DateTimeField()
