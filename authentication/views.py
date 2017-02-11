@@ -290,6 +290,7 @@ def forgot_password(request):
                 else:
                     print('the user ' + user + ' tried to reset password less than 15 min ago. Hence not resetting now')
                     should_reset = False
+                    return_data["forgot_password"] = "successful"
             except Exception as e:
                 # this user is resetting the password for the first time
                 should_reset = True
@@ -341,7 +342,7 @@ def forgot_password(request):
             return_data["forgot_password"] = "Fail"
             return JSONResponse(return_data, status=400)
 
-    return HttpResponse('OK', status=200)
+    return JSONResponse(return_data, status=200)
 
 
 def logout_view(request):
