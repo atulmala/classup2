@@ -84,7 +84,7 @@ def send_sms1(school, sender, mobile, message, message_type):
                 sender_type = 'Undetermined'
                 sender_name = sender
                 if message_type == 'Bulk SMS (Web Interface)' or message_type == 'Welcome Parent' \
-                        or message_type == 'Welcome Teacher':
+                        or message_type == 'Welcome Teacher' or message_type == 'Run Batch':
                     sender_type = 'Admin (Web Interface)'
                     sender_name = sender
                     print ('sender type is Admin (Web Interface)')

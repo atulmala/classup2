@@ -10,7 +10,6 @@ import json
 import xlsxwriter
 
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
 from django.utils.translation import ugettext
 from django.shortcuts import render
 from django.http import HttpResponse
@@ -30,7 +29,7 @@ from teacher.models import Teacher
 from attendance.models import Attendance, AttendanceTaken
 from parents.models import  ParentCommunication
 from setup.models import Configurations, School
-from .models import SMSRecord
+from .models import SMSRecord, ClassUpAdmin
 
 from .serializers import SMSDetailSerializer
 
@@ -689,9 +688,6 @@ def send_bulk_sms(request):
                     if mobile != '':
                         sms.send_sms1(school, sender, mobile, message, message_type)
 
-        elapsed_time = time.time() - start_time
-        print('time taken to send sms=' + str(elapsed_time))
-
         for st in staff:
             if st == 'teacher':
                 for teacher in Teacher.objects.filter(school=school):
@@ -703,6 +699,17 @@ def send_bulk_sms(request):
                     teacher_mobile = teacher.mobile
                     print(teacher_mobile)
                     sms.send_sms1(school, sender, teacher_mobile, message, message_type)
+
+        elapsed_time = time.time() - start_time
+        print('time taken to send sms=' + str(elapsed_time))
+
+        # 11/02/17 - As we have made bulk sms sending a batch process, we need to send an sms to ClassUp Admin
+        # reminding to run the batch job
+        ca = ClassUpAdmin.objects.get(pk=1)
+        admin_mobile = ca.admin_mobile
+        message = school.school_name + ' has initiated bulk sms process. Run the batch'
+        message_type = 'Run Batch'
+        sms.send_sms1(school, sender, admin_mobile, message, message_type)
 
         context_dict['header'] = 'Operation Completed'
         messages.success(request, 'Messages Sent!')

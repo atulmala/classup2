@@ -417,7 +417,6 @@ def submit_marks(request, school_id):
         return JSONResponse(response, status=200)
 
 
-
 @csrf_exempt
 def get_working_days1(request):
     month_dict = {

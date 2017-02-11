@@ -25,3 +25,7 @@ class SMSRecord(models.Model):
     outcome = models.TextField(max_length=20, default='Delivered')
     status_extracted = models.BooleanField(default=False)
     status = models.CharField(max_length=200, default='Not Available')
+
+
+class ClassUpAdmin(models.Model):
+    admin_mobile = models.CharField(max_length=20, default='9873011186')
