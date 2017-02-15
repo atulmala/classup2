@@ -164,7 +164,7 @@ def auth_login_from_device1(request):
 
     return_data = {
     }
-
+    return_data['school_admin'] = 'false'
     return_data['subscription'] = 'na'
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -175,7 +175,9 @@ def auth_login_from_device1(request):
         print('user trying to login: ' + the_user + ', with password: ' + password)
         user = authenticate(username=the_user, password=password)
         if user is not None:
+            print('user ' + the_user + ' has been authenticated')
             if user.is_active:
+                print('user ' + the_user + ' is an active user')
                 login(request, user)
                 l.outcome = 'Success'
                 l.save()
@@ -185,6 +187,11 @@ def auth_login_from_device1(request):
 
                 if user.is_staff:
                     return_data['is_staff'] = "true"
+
+                    # 12/02/17 - checking if this user belong to school_admin group
+                    if user.groups.filter(name='school_admin').exists():
+                        print('this is a school admin')
+                        return_data["school_admin"] = "true"
                     try:
                         u = UserSchoolMapping.objects.get(user=user)
                         school_id = u.school.id

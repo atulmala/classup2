@@ -7,6 +7,7 @@ urlpatterns = patterns(
     '',
     url(r'^$', views.operations_index, name='operations_index'),
     url(r'^att_summary_school/$', views.att_summary_school, name='att_summary_school'),
+    url(r'^att_summary_school_device/$', views.att_summary_school_device, name='att_summary_school_device'),
     url(r'^att_register_class/$', views.att_register_class, name='att_register_class'),
     url(r'^test_results/$', views.test_result, name='test_results'),
     url(r'^result_sms/$', views.result_sms, name='test_sms'),

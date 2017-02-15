@@ -47,7 +47,7 @@ def send_sms1(school, sender, mobile, message, message_type):
             try:
                 # 07/02/17 - we will be sending bulk sms through separate batch job as it is time consuming
                 message_id = 'Not Available'
-                if message_type != 'Bulk SMS (Web Interface)':
+                if message_type != 'Bulk SMS (Web Interface)' or message_type != 'Bulk SMS (Device)':
                     # send the message
                     print ('sending to ' + mobile)
 
@@ -83,11 +83,12 @@ def send_sms1(school, sender, mobile, message, message_type):
                 # next, determine the sender details
                 sender_type = 'Undetermined'
                 sender_name = sender
-                if message_type == 'Bulk SMS (Web Interface)' or message_type == 'Welcome Parent' \
+                if message_type == 'Bulk SMS (Web Interface)' or message_type == 'Bulk SMS (Device)'\
+                        or message_type == 'Welcome Parent' \
                         or message_type == 'Welcome Teacher' or message_type == 'Run Batch':
-                    sender_type = 'Admin (Web Interface)'
+                    sender_type = 'Admin'
                     sender_name = sender
-                    print ('sender type is Admin (Web Interface)')
+                    print ('sender type is Admin')
 
                 if message_type == 'Teacher Communication' or message_type == 'Attendance' or \
                                 message_type == 'Test Marks':

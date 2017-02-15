@@ -51,6 +51,77 @@ class SMSHistoryList(generics.ListAPIView):
         return q
 
 
+def att_summary_school_device(request):
+    print('inside att_summary_school_device')
+    dict_attendance_summary = {
+
+    }
+
+    response_array = []
+
+    if request.method == 'GET':
+        school_id = request.GET.get('school_id')
+        try:
+            school = School.objects.get(id=school_id)
+        except Exception as e:
+            print ('unable to fetch the school for school with id:  ' + school_id)
+            print ('Exception400 from operations views.py = %s (%s)' % (e.message, type(e)))
+
+        dt = request.GET.get('date')
+        mn = request.GET.get('month')
+        yr = request.GET.get('year')
+
+        main = Subject.objects.get(school=school, subject_name='Main')
+
+        grand_total = p_total = a_total =  0
+
+        for c in Class.objects.filter(school=school):
+            for s in Section.objects.filter(school=school):
+                # check to see if this class/section combination exist in this school or not
+                total = Student.objects.filter(current_class=c, current_section=s, active_status=True).count()
+
+                if 0 != total:  # class/section exist
+                    grand_total += total
+                    print('class = ' + c.standard + ' ' + s.section)
+                    # check whether attendance for this class/section has been taken yet or not?
+                    att_taken = AttendanceTaken.objects.filter(date__day=dt, date__month=mn, date__year=yr, the_class=c,
+                                                               section=s, subject=main).count()
+                    if 0 == att_taken:  # attendance was not taken for this class/section
+                        dict_attendance_summary['class'] = c.standard + ' ' + s.section
+                        dict_attendance_summary['attendance'] = 'Not Taken'
+                        dict_attendance_summary['percentage'] = 'N/A'
+                        d = dict(dict_attendance_summary)
+                        response_array.append(d)
+                        continue
+
+                    # attendance has been taken for this class/section
+                    dict_attendance_summary['class'] = c.standard + ' ' + s.section
+                    absent = Attendance.objects.filter(date__day=dt, date__month=mn, date__year=yr,
+                                                       the_class=c, section=s, subject=main).count()
+                    present = total - absent
+                    dict_attendance_summary['attendance'] = str(present) + '/' + str(total)
+
+                    perc_present = int(round((float(present) / float(total)) * 100, 0))
+                    dict_attendance_summary['percentage'] = str(perc_present) + '%'
+                    d = dict(dict_attendance_summary)
+                    response_array.append(d)
+
+                    p_total += present
+                    a_total += absent
+
+        dict_attendance_summary['class'] = 'Total'
+        dict_attendance_summary['attendance'] = str(p_total) + '/' + str(grand_total)
+        if p_total == 0:
+            grand_present_perc = 'N/A'
+        else:
+            grand_present_perc = int(round((float(p_total) / float(grand_total)) * 100, 0))
+        dict_attendance_summary['percentage'] = str(grand_present_perc) + '%'
+        d = dict(dict_attendance_summary)
+        response_array.append(d)
+
+    return JSONResponse(response_array, status=200)
+
+
 def att_summary_school(request):
     context_dict = {
     }
@@ -636,91 +707,240 @@ def att_register_class(request):
     return render(request, 'classup/att_register.html', context_dict)
 
 
+@csrf_exempt
 def send_bulk_sms(request):
     context_dict = {
     }
     context_dict['header'] = 'Send Bulk SMS'
     context_dict['user_type'] = 'school_admin'
-    school_id = request.session['school_id']
-    school = School.objects.get(id=school_id)
-    configuration = Configurations.objects.get(school=school)
-
-    # first see whether the cancel button was pressed
-    if "cancel" in request.POST:
-        return render(request, 'classup/setup_index.html', context_dict)
+    staff = None
 
     if request.method == 'POST':
-        form = BulkSMSForm(request.POST, school_id=school_id)
-        context_dict['form'] = form
-        message_body = request.POST['message_text']
+        # 13/02/17 - as we have implemented the functionality to send bulk sms from device, we need to check here
+        # whether bulk sms is triggered from device or web interface? If json is decoded, request came from device
+        # otherwise from web interface
+        try:
+            data = json.loads(request.body)
+            print(data)
+            print('Bulk SMS process initiated from device')
+            from_device = True
+            message_type = 'Bulk SMS (Device)'
+            school_id = data['school_id']
+            school = School.objects.get(id=school_id)
 
-        if message_body == '':
-            error = 'Message is Empty'
-            form.errors['__all__'] = form.error_class([error])
-            print (error)
-            return render(request, 'classup/bulk_sms.html', context_dict)
+            message_body = data['message_text']
+            print(message_body)
 
-        selected_classes = request.POST.getlist('Class')
-        staff = request.POST.getlist('Staff')
+            whole_school = data['whole_school']
+            if whole_school == "true":
+                selected_classes = Class.objects.filter(school=school)
+            else:
+                print('trying to extract selected classes/teachers/staff...')
+                selected_classes = data['classes_array']
+                print(selected_classes)
+        except Exception as e:
+            print('Exception 225 from operations views.py = %s (%s)' % (e.message, type(e)))
+            print('Bulk SMS process initiated from web interface')
 
-        if len(selected_classes) == 0 and len(staff) == 0:
-            error = 'You have not selected any Class, Teacher, or Staff'
-            form.errors['__all__'] = form.error_class([error])
-            print (error)
-            return render(request, 'classup/bulk_sms.html', context_dict)
+            # first see whether the cancel button was pressed
+            if "cancel" in request.POST:
+                return render(request, 'classup/setup_index.html', context_dict)
+
+            from_device = False
+            school_id = request.session['school_id']
+            school = School.objects.get(id=school_id)
+            form = BulkSMSForm(request.POST, school_id=school_id)
+            context_dict['form'] = form
+
+            message_type = 'Bulk SMS (Web Interface)'
+            message_body = request.POST['message_text']
+
+            if message_body == '':
+                error = 'Message is Empty'
+                form.errors['__all__'] = form.error_class([error])
+                print (error)
+                return render(request, 'classup/bulk_sms.html', context_dict)
+
+            selected_classes = request.POST.getlist('Class')
+            print('selected classes from web interface = ' + str(selected_classes) )
+            staff = request.POST.getlist('Staff')
+
+            if len(selected_classes) == 0 and len(staff) == 0:
+                error = 'You have not selected any Class, Teacher, or Staff'
+                form.errors['__all__'] = form.error_class([error])
+                print (error)
+                return render(request, 'classup/bulk_sms.html', context_dict)
 
         start_time = time.time()
-        sender = request.session['user']
-        message_type = 'Bulk SMS (Web Interface)'
-        for sc in selected_classes:
-            the_class = Class.objects.get(school=school, standard=sc)
-            student_list = Student.objects.filter(current_class=the_class, active_status=True)
-            start_time = time.time()
-            for student in student_list:
-                parent = student.parent
-                message = 'Dear Ms/Mr. ' + parent.parent_name + ', '
-                message += message_body + ' Regards, ' + school.school_name
-                print(message)
-                mobile = parent.parent_mobile1
-                sms.send_sms1(school, sender, mobile, message, message_type)
-                if configuration.send_absence_sms_both_to_parent:
-                    mobile = parent.parent_mobile2
-                    if mobile != '':
-                        sms.send_sms1(school, sender, mobile, message, message_type)
 
-        for st in staff:
-            if st == 'teacher':
-                for teacher in Teacher.objects.filter(school=school):
-                    teacher_name = teacher.first_name + ' ' + teacher.last_name
-                    print(teacher_name)
-                    message = 'Dear Ms/Mr. ' + teacher_name + ', '
-                    message += message_body + ' Regards, ' + school.school_name
-                    print(message)
-                    teacher_mobile = teacher.mobile
-                    print(teacher_mobile)
-                    sms.send_sms1(school, sender, teacher_mobile, message, message_type)
+        if from_device:
+            sender = data['user']
+        else:
+            sender = request.session['user']
+        print('sender = ' + sender)
+
+        # send to parents
+        try:
+            configuration = Configurations.objects.get(school=school)
+            for sc in selected_classes:
+                print('class = ' + str(sc))
+                if sc != 'Teachers' and sc != 'Staff':
+                    the_class = Class.objects.get(school=school, standard=sc)
+                    student_list = Student.objects.filter(current_class=the_class, active_status=True)
+                    start_time = time.time()
+                    for student in student_list:
+                        parent = student.parent
+                        message = 'Dear Ms/Mr. ' + parent.parent_name + ', '
+                        message += message_body + ' Regards, ' + school.school_name
+                        print(message)
+                        mobile = parent.parent_mobile1
+                        sms.send_sms1(school, sender, mobile, message, message_type)
+                        if configuration.send_absence_sms_both_to_parent:
+                            mobile = parent.parent_mobile2
+                            if mobile != '':
+                                sms.send_sms1(school, sender, mobile, message, message_type)
+                if sc == 'Teachers':
+                    staff = ['teacher']
+                if sc == 'Staff':
+                    if staff is not None:
+                        staff.append('Staff')
+                    else:
+                        staff = ['Staff']
+        except Exception as e:
+            print('Exception 255 from opertions views.py = %s (%s)' % (e.message, type(e)))
+            print('failed to send sms to parents of students of selected classes')
+
+        # send to teachers/staff
+        print('now sending bulk sms to teacher & staff')
+        if staff is not None:
+            for st in staff:
+                print('st = ' + str(st))
+                if st == 'teacher' or st == 'Teachers':
+                    for teacher in Teacher.objects.filter(school=school):
+                        teacher_name = teacher.first_name + ' ' + teacher.last_name
+                        print(teacher_name)
+                        message = 'Dear Ms/Mr. ' + teacher_name + ', '
+                        message += message_body + ' Regards, ' + school.school_name
+                        print(message)
+                        teacher_mobile = teacher.mobile
+                        print(teacher_mobile)
+                        sms.send_sms1(school, sender, teacher_mobile, message, message_type)
 
         elapsed_time = time.time() - start_time
         print('time taken to send sms=' + str(elapsed_time))
 
         # 11/02/17 - As we have made bulk sms sending a batch process, we need to send an sms to ClassUp Admin
         # reminding to run the batch job
-        ca = ClassUpAdmin.objects.get(pk=1)
-        admin_mobile = ca.admin_mobile
-        message = school.school_name + ' has initiated bulk sms process. Run the batch'
-        message_type = 'Run Batch'
-        sms.send_sms1(school, sender, admin_mobile, message, message_type)
+        print('now sending sms to ClassUp Admin to run the batch process to deliver bulk sms...')
+        try:
+            ca = ClassUpAdmin.objects.get(pk=1)
+            admin_mobile = ca.admin_mobile
+            print(admin_mobile)
+            message = school.school_name + ' has initiated bulk sms process. Run the batch'
+            print(message)
+            message_type = 'Run Batch'
+            sms.send_sms1(school, sender, admin_mobile, message, message_type)
+        except Exception as e:
+            print('Failed to retrieve the mobile number of ClassUp Admin. '
+                  'Cannot send sms for running the batch process for sending bulk sms')
+            print('Exception 125 fron operations views.py = %s (%s)' % (e.message, type(e)))
 
         context_dict['header'] = 'Operation Completed'
         messages.success(request, 'Messages Sent!')
-        return render(request, 'classup/setup_index.html', context_dict)
+        if from_device:
+            return JSONResponse(context_dict, status=200)
+        else:
+            return render(request, 'classup/setup_index.html', context_dict)
 
     if request.method == 'GET':
+        school_id = request.session['school_id']
         print('getting the bulk sms form')
         form = BulkSMSForm(school_id=school_id)
         context_dict['form'] = form
 
     return render(request, 'classup/bulk_sms.html', context_dict)
+
+
+@csrf_exempt
+def send_message(request, school_id):
+    if request.method == 'POST':
+        response = {
+
+        }
+        message_type = 'Teacher Communication'
+        try:
+            school = School.objects.get(id=school_id)
+            configuration = Configurations.objects.get(school=school)
+            data = json.loads(request.body)
+            print(data)
+            message_content = data['message']
+            email = data['teacher']
+            t = Teacher.objects.get(email=email)
+            teacher_name = t.first_name + ' ' + t.last_name
+            school_name = school.school_name
+            message_trailer = '. Regards, ' + teacher_name + ', ' + school_name
+
+            # check if the message is to be sent to all the parents
+            if data["whole_class"] == "true":
+                the_class = data["class"]
+                c = Class.objects.get(school=school, standard=the_class)
+                the_section = data["section"]
+                sec = Section.objects.get(school=school, section=the_section)
+
+                # get the list of all students in this class/section
+                try:
+                    student_list = Student.objects.filter(current_class=c, current_section=sec, active_status=True)
+                    for s in student_list:
+                        p = s.parent
+                        m1 = p.parent_mobile1
+                        m2 = p.parent_mobile2
+
+                        message_header = 'Dear Ms/Mr ' + p.parent_name + ', this is message regarding your ward ' + \
+                                         s.fist_name + ' ' + s.last_name + ': '
+                        message = message_header + message_content + message_trailer
+                        print (message)
+
+                        sms.send_sms1(school, email, m1, message, message_type)
+                        if configuration.send_absence_sms_both_to_parent:
+                            if m2 != '':
+                                sms.send_sms1(school, email, m2, message, message_type)
+                except Exception as e:
+                    print ('Unable to send message while trying for whole class')
+                    print ('Exception11 from operations views.py = %s (%s)' % (e.message, type(e)))
+                response["status"] = "success"
+
+            # the message is to be sent to parents of selected students only
+            else:
+                for key in data:
+                    if (key != 'message') and (key != 'teacher') and (key != 'whole_class'):
+                        student_id = data[key]
+
+                        s = Student.objects.get(pk=student_id)
+                        p = s.parent
+                        m1 = p.parent_mobile1
+                        print (m1)
+                        m2 = p.parent_mobile2
+                        print (m2)
+
+                        message_header = 'Dear Ms/Mr ' + p.parent_name + ', message regarding your ward ' + \
+                                             s.fist_name + ': '
+                        message = message_header + message_content + message_trailer
+                        print ('message=' + message)
+                        try:
+                            sms.send_sms1(school, email, m1, message, message_type)
+                            if configuration.send_absence_sms_both_to_parent:
+                                if m2 != '':
+                                    sms.send_sms1(school, email, m2, message, message_type)
+                        except Exception as e:
+                            print ('Unable to send message to ' + p.parent_name + 'with mobile number: ' + m1)
+                            print ('Exception12 from operations views.py = %s (%s)' % (e.message, type(e)))
+
+                response["status"] = "success"
+        except Exception as e:
+            print ('Unable to send message')
+            print ('Exception13 from operations views.py = %s (%s)' % (e.message, type(e)))
+
+    return JSONResponse(response, status=200)
 
 
 def test_result(request):
@@ -1044,88 +1264,6 @@ def result_sms(request):
         context_dict['form'] = form
 
     return render(request, 'classup/test_results.html', context_dict)
-
-
-@csrf_exempt
-def send_message(request, school_id):
-    if request.method == 'POST':
-        response = {
-
-        }
-        message_type = 'Teacher Communication'
-        try:
-            school = School.objects.get(id=school_id)
-            configuration = Configurations.objects.get(school=school)
-            data = json.loads(request.body)
-            print(data)
-            message_content = data['message']
-            email = data['teacher']
-            t = Teacher.objects.get(email=email)
-            teacher_name = t.first_name + ' ' + t.last_name
-            school_name = school.school_name
-            message_trailer = '. Regards, ' + teacher_name + ', ' + school_name
-
-            # check if the message is to be sent to all the parents
-            if data["whole_class"] == "true":
-                the_class = data["class"]
-                c = Class.objects.get(school=school, standard=the_class)
-                the_section = data["section"]
-                sec = Section.objects.get(school=school, section=the_section)
-
-                # get the list of all students in this class/section
-                try:
-                    student_list = Student.objects.filter(current_class=c, current_section=sec, active_status=True)
-                    for s in student_list:
-                        p = s.parent
-                        m1 = p.parent_mobile1
-                        m2 = p.parent_mobile2
-
-                        message_header = 'Dear Ms/Mr ' + p.parent_name + ', this is message regarding your ward ' + \
-                                         s.fist_name + ' ' + s.last_name + ': '
-                        message = message_header + message_content + message_trailer
-                        print (message)
-
-                        sms.send_sms1(school, email, m1, message, message_type)
-                        if configuration.send_absence_sms_both_to_parent:
-                            if m2 != '':
-                                sms.send_sms1(school, email, m2, message, message_type)
-                except Exception as e:
-                    print ('Unable to send message while trying for whole class')
-                    print ('Exception11 from operations views.py = %s (%s)' % (e.message, type(e)))
-                response["status"] = "success"
-
-            # the message is to be sent to parents of selected students only
-            else:
-                for key in data:
-                    if (key != 'message') and (key != 'teacher') and (key != 'whole_class'):
-                        student_id = data[key]
-
-                        s = Student.objects.get(pk=student_id)
-                        p = s.parent
-                        m1 = p.parent_mobile1
-                        print (m1)
-                        m2 = p.parent_mobile2
-                        print (m2)
-
-                        message_header = 'Dear Ms/Mr ' + p.parent_name + ', this is message regarding your ward ' + \
-                                             s.fist_name + ' ' + s.last_name + ': '
-                        message = message_header + message_content + message_trailer
-                        print ('message=' + message)
-                        try:
-                            sms.send_sms1(school, email, m1, message, message_type)
-                            if configuration.send_absence_sms_both_to_parent:
-                                if m2 != '':
-                                    sms.send_sms1(school, email, m2, message, message_type)
-                        except Exception as e:
-                            print ('Unable to send message to ' + p.parent_name + 'with mobile number: ' + m1)
-                            print ('Exception12 from operations views.py = %s (%s)' % (e.message, type(e)))
-
-                response["status"] = "success"
-        except Exception as e:
-            print ('Unable to send message')
-            print ('Exception13 from operations views.py = %s (%s)' % (e.message, type(e)))
-
-    return JSONResponse(response, status=200)
 
 
 def parents_communication_details(request):

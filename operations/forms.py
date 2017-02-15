@@ -73,5 +73,6 @@ class BulkSMSForm(forms.Form):
                                       widget=forms.CheckboxSelectMultiple(renderer=HorizontalRenderer))
 
 
+
 class SMSSummaryForm(forms.Form):
     date = forms.CharField(widget=MonthInput(), label='Select Month & Year')
