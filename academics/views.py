@@ -350,31 +350,39 @@ def submit_marks(request, school_id):
 
             try:
                 sub = test.subject
-                message = 'Dear Ms/Mr ' + student.parent.parent_name + ', your ward ' + student.fist_name + \
-                          ' ' + student.last_name + ' '
+                message = 'Dear ' + student.parent.parent_name
+                if grade_based:
+                    message += ', Grade secured by '
+                else:
+                    message += ', Marks secured by '
 
+                # 17/02/17 we are looking to use student first name in messages. However, some schools store entire
+                # name as first name. This need to be checke and split first name if entire name is stored as first name
+                the_name = student.fist_name
+                if ' ' in student.fist_name:
+                    (f_name, l_name) = the_name.split(' ')
+                else:
+                    f_name = the_name
+                message += f_name + ' in '
+                message += sub.subject_name + ' test on ' + dmy_date + ': '
                 if grade_based:
                     if data[key] == '-1000.00' or data[key] == '-1000':
-                        message += 'was ABSENT in the test of '
+                        message += 'ABSENT'
                     else:
-                        message += 'has secured ' + tr.grade + ' grade in the test of '
+                        message +=  tr.grade + ' Grade'
                 else:
                     if data[key] == '-1000.00' or data[key] == '-1000':
-                        message += 'was ABSENT in the test of '
+                        message += 'ABSENT'
                     else:
                         marks = float(tr.marks_obtained)
                         if marks.is_integer():
                             marks = int(marks)
-                        message += 'has secured ' + str(marks) + ' marks out of ' + str(int(test.max_marks))
-                        message += ' in the test of '
-
-                message += sub.subject_name + ' held on ' + dmy_date
-
+                        message += str(marks) + '/' + str(int(test.max_marks))
                 if not grade_based:
                     # 04/12/2016 - some schools don't want to include max and average marks in the sms
                     if conf.include_max_avg_marks:
-                        message += '. Highest marks secured in this test are ' + str(highest_marks)
-                        message += ' & Average marks secured in this test are ' + str(round(average_marks))
+                        message += '. Highest marks: ' + str(highest_marks)
+                        message += ' & Avg marks: ' + str(round(average_marks))
                 message += ". Regards, " + school_name
 
                 # print message
