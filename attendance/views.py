@@ -163,8 +163,15 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                     # prepare the message
                     try:
                         parent_name = student.parent.parent_name
-                        student_name = student.fist_name + ' ' + student.last_name
-                        message = 'Dear Ms/Mr ' + parent_name + ', your ward ' + student_name
+
+                        # 17/02/17 we are looking to use student first name in messages. However, some schools store entire
+                        # name as first name. This need to be checke and split first name if entire name is stored as first name
+                        the_name = student.fist_name
+                        if ' ' in student.fist_name:
+                            (f_name, l_name) = the_name.split(' ')
+                        else:
+                            f_name = the_name
+                        message = 'Dear ' + parent_name + ', your ward ' + f_name
 
                         # if subject is main then we need to tell that student was absent
                         if subject == 'Main' or subject == 'main' or subject == 'MAIN':

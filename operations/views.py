@@ -761,6 +761,16 @@ def send_bulk_sms(request):
                 print (error)
                 return render(request, 'classup/bulk_sms.html', context_dict)
 
+            # 17/02/17 we are restricting the lenght of message to 140 char. Salutations will be added automatically
+            if len(message_body) > 140:
+                error = 'Message to long (' + str(len(message_body)) + ' characters). Please restrict it to 140 chars'
+                form.errors['__all__'] = form.error_class([error])
+                print (error)
+                return render(request, 'classup/bulk_sms.html', context_dict)
+            else:
+                print('message size is well within limits')
+
+
             selected_classes = request.POST.getlist('Class')
             print('selected classes from web interface = ' + str(selected_classes) )
             staff = request.POST.getlist('Staff')
@@ -894,11 +904,15 @@ def send_message(request, school_id):
                         p = s.parent
                         m1 = p.parent_mobile1
                         m2 = p.parent_mobile2
-
-                        message_header = 'Dear Ms/Mr ' + p.parent_name + ', this is message regarding your ward ' + \
-                                         s.fist_name + ' ' + s.last_name + ': '
+                        the_name = s.fist_name
+                        if ' ' in s.fist_name:
+                            (f_name, l_name) = the_name.split(' ')
+                        else:
+                            f_name = the_name
+                        message_header = 'Dear ' + p.parent_name + ', message regarding ' + \
+                                         f_name + ': '
                         message = message_header + message_content + message_trailer
-                        print (message)
+                        print ('message = ' + message)
 
                         sms.send_sms1(school, email, m1, message, message_type)
                         if configuration.send_absence_sms_both_to_parent:
@@ -922,10 +936,16 @@ def send_message(request, school_id):
                         m2 = p.parent_mobile2
                         print (m2)
 
-                        message_header = 'Dear Ms/Mr ' + p.parent_name + ', message regarding your ward ' + \
-                                             s.fist_name + ': '
+                        the_name = s.fist_name
+                        if ' ' in s.fist_name:
+                            (f_name, l_name) = the_name.split(' ')
+                        else:
+                            f_name = the_name
+                        message_header = 'Dear ' + p.parent_name + ', message regarding ' + \
+                                         f_name + ': '
                         message = message_header + message_content + message_trailer
-                        print ('message=' + message)
+                        print ('message = ' + message)
+
                         try:
                             sms.send_sms1(school, email, m1, message, message_type)
                             if configuration.send_absence_sms_both_to_parent:
@@ -1201,8 +1221,15 @@ def result_sms(request):
 
         try:
             for s in Student.objects.filter(current_class=the_class, current_section=section, active_status=True):
-                message = 'Dear Ms/Mr ' + s.parent.parent_name + ', please find subject-wise marks of your ward, '
-                message += ugettext(s.fist_name + ' ' + s.last_name)
+                the_name = s.fist_name
+                if ' ' in s.fist_name:
+                    (f_name, l_name) = the_name.split(' ')
+                else:
+                    f_name = the_name
+                the_name = f_name
+                message = 'Dear ' + s.parent.parent_name + ', subject-wise marks of your ward, '
+
+                message += ugettext(the_name)
                 message += ', for ' + term + ' test: '
                 try:
                     for test in ClassTest.objects.filter(the_class=the_class, section=section,
