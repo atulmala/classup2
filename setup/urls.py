@@ -15,4 +15,6 @@ urlpatterns = patterns('',
                     url(r'^upload_exam/$', views.setup_exam, name='upload_exam'),
                     url(r'^bus_attendance_enabled/(?P<school_id>\w+)/$',
                         views.ConfigurationList.as_view(), name='bus_attendance_enabled'),
+                    url(r'^check_reg_no/$', views.check_reg_no, name='check_reg_no'),
+                    url(r'^add_student/$', views.add_student, name='add_student'),
                 )

@@ -905,6 +905,7 @@ def send_message(request, school_id):
                         m1 = p.parent_mobile1
                         m2 = p.parent_mobile2
                         the_name = s.fist_name
+
                         if ' ' in s.fist_name:
                             (f_name, l_name) = the_name.split(' ')
                         else:

@@ -1,16 +1,18 @@
 import os
 import datetime
 import xlrd
+import json
 
 from rest_framework import generics
 from django.views.decorators.csrf import csrf_exempt
 
 from django.contrib import messages
 from django.contrib.auth.models import User, Group
-from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
+
 from django.shortcuts import render
 from setup.forms import ExcelFileUploadForm
+
+from authentication.views import JSONResponse
 
 from setup.models import School, UserSchoolMapping
 from academics.models import Class, Section, Subject, WorkingDays, TestResults, ClassTest, ClassTeacher, Exam
@@ -48,6 +50,180 @@ def validate_excel_extension(file_handle, form, context_dict):
 def setup_index(request):
     response = render(request, 'classup/setup_index.html')
     return response
+
+
+def check_reg_no(request):
+    print('inside check_reg_no')
+    response_dict = {
+
+    }
+    school_id = request.GET.get('school_id')
+    try:
+        school = School.objects.get(id=school_id)
+    except Exception as e:
+        print ('Exception 210 from setup views.py = %s (%s)' % (e.message, type(e)))
+        print ('unable to fetch the school for school with id:  ' + school_id)
+
+    reg_no = request.GET.get('reg_no')
+    try:
+        student = Student.objects.get(school=school, student_erp_id=reg_no)
+        name = student.fist_name + ' ' + student.last_name
+        the_class = student.current_class.standard + ' ' + student.current_section.section
+        error_message = 'Reg No ' + reg_no + ' is already associated with '
+        error_message += name
+        error_message += ' of class '
+        error_message += the_class
+        response_dict['status'] = 'error'
+        response_dict['error_message'] = error_message
+        return JSONResponse(response_dict, status=201)
+    except Exception as e:
+        print ('Exception 220 from setup views.py = %s (%s)' % (e.message, type(e)))
+        print ('registrton number:  ' + reg_no + ' is available')
+        response_dict['status'] = 'success'
+        return JSONResponse(response_dict, status=200)
+
+
+@csrf_exempt
+def add_student(request):
+    context_dict = {
+    }
+
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            print(data)
+            sender = data['user']
+            school_id = data['school_id']
+            school = School.objects.get(id=school_id)
+            student_id = data['reg_no']
+            student_first_name = data['first_name']
+            student_last_name = data['last_name']
+            parent_name = data['parent_name']
+            parent_mobile1 = data['mobile1']
+            parent_mobile2 = data['mobile2']
+            if parent_mobile2 == '':
+                parent_mobile2 = '1234567890'
+            current_class = data['the_class']
+            current_section = data['section']
+            parent_email = 'dummy@testmail.com'
+
+            # create parent into database
+            try:
+                p = Parent.objects.get(parent_mobile1=parent_mobile1)
+
+                if p:
+                    print ('Parent ' + parent_name + ' already exist. This will be updated!')
+                    p.parent_name = parent_name
+                    p.parent_mobile1 = parent_mobile1
+                    p.parent_mobile2 = parent_mobile2
+                    p.parent_email = parent_email
+            except Exception as e:
+                print ('Exception 230 from setup views.py = %s (%s)' % (e.message, type(e)))
+                print ('Parent ' + parent_name + ' is a new entry. This will be created!')
+                p = Parent(parent_name=parent_name, parent_mobile1=parent_mobile1,
+                           parent_mobile2=parent_mobile2, parent_email=parent_email)
+            try:
+                p.save()
+            except Exception as e:
+                print ('Exception 240 from setup views.py = %s (%s)' % (e.message, type(e)))
+                print('Unable to save the parent data for ' + parent_name + ' in Table Parent')
+
+            # now, create a user for this parent
+
+            whether_new_user = False
+            try:
+                if User.objects.filter(username=parent_mobile1).exists():
+                    print('user for parent ' + p.parent_name + ' already exists!')
+                    whether_new_user = False
+                else:
+                    whether_new_user = True
+                    # the user name would be the mobile, and password would be a random string
+                    password = User.objects.make_random_password(length=5, allowed_chars='1234567890')
+
+                    print ('Initial password = ' + password)
+                    user = User.objects.create_user(parent_mobile1, parent_email, password)
+                    user.first_name = parent_name
+                    user.is_staff = False
+                    user.save()
+
+                    print ('Successfully created user for ' + parent_name)
+            except Exception as e:
+                print ('Exception 250 from setup views.py = %s (%s)' % (e.message, type(e)))
+                print ('Unable to create user for ' + parent_name)
+
+            try:
+                conf = Configurations.objects.get(school=school)
+                if whether_new_user:
+                    android_link = conf.google_play_link
+                    iOS_link = conf.app_store_link
+
+                    # send login id and password to parent via sms
+                    message = 'Dear Ms/Mr ' + parent_name + ', Welcome to ClassUp. '
+                    message += "Now you can track your child's progress at " + school.school_name + '. '
+                    message += 'Your user id is: ' + str(parent_mobile1) + ', and password is: '
+                    message += str(password)
+                    message += '. Please install ClassUp from these links. Android: '
+                    message += android_link
+                    message += '. iPhone/iOS: '
+                    message += iOS_link
+
+                    message += '. For support, email to: support@classup.in'
+                    print(message)
+                    message_type = 'Welcome Parent'
+
+                    sms.send_sms1(school, sender, str(parent_mobile1), message, message_type)
+            except Exception as e:
+                print ('Exception 260 in setup view.py = %s (%s)' % (e.message, type(e)))
+                print ('Failed to send welcome sms to ' + parent_name)
+
+            # now, start creating the student. The parent created above will be the parent of this student.
+
+            # class and section are foreign keys. Get hold of the relevant objects
+            print ('Class = ' + current_class)
+
+            the_class = Class.objects.get(school=school, standard=current_class)
+            the_section = Section.objects.get(school=school, section=current_section)
+
+            # create student
+            try:
+                # we need to generate a roll no for this student. Should be the current count of student in this
+                # class plus 1
+                max_roll_no = Student.objects.filter(school=school,
+                                                     current_class=the_class,
+                                                     current_section=the_section).latest('roll_number').roll_number
+                current_roll_no = max_roll_no + 1
+                s = Student(school=school, student_erp_id=student_id, fist_name=student_first_name,
+                                last_name=student_last_name, current_class=the_class, current_section=the_section,
+                                roll_number=current_roll_no, parent=p)
+                s.save()
+                print ('saving successful!')
+
+                # this student should appear in all the pending test for this class & section
+                print ('creating an entry for this student in all pending test for this class/section')
+                try:
+                    tests = ClassTest.objects.filter(the_class=the_class, section=the_section, is_completed=False)
+                    for t in tests:
+                        test_result = TestResults(class_test=t, roll_no=current_roll_no,
+                                                          student=s, marks_obtained=-5000.00, grade='')
+                        try:
+                            test_result.save()
+                            print (' test results successfully created')
+                        except Exception as e:
+                            print ('failed to create test results')
+                            print ('Exception 270 from setup views.py = %s (%s)' % (e.message, type(e)))
+                except Exception as e:
+                    print ('Currently no pending tests for this class/section')
+                    print ('Exception 280 from setup views.py = %s (%s)' % (e.message, type(e)))
+            except Exception as e:
+                error = 'Unable to create the new student in the database'
+                print (error)
+                print ('Exception 290 from setup views.py = %s (%s)' % (e.message, type(e)))
+        except Exception as e:
+            print ('Exception 300 in setup view.py = %s (%s)' % (e.message, type(e)))
+            print ('Failed to add student ' + student_first_name + ' ' + student_last_name +
+                   ' to ' + current_class + ' ' + current_section)
+
+    return JSONResponse(context_dict, status=200)
 
 
 @csrf_exempt
@@ -166,7 +342,6 @@ def setup_students(request):
                         continue
                     # now, create a user for this parent
 
-                    user = None
                     whether_new_user = False
                     try:
                         if User.objects.filter(username=parent_mobile1).exists():
