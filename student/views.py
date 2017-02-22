@@ -88,6 +88,28 @@ def get_parent(request, student_id):
         return JSONResponse(parent_detail, status=201)
 
 
+def get_student_detail(request, student_id):
+    student_detail =    {
+
+    }
+    if request.method == 'GET':
+        try:
+            student = Student.objects.get(id=student_id)
+            student_detail['erp_id'] = student.student_erp_id
+            student_detail['first_name'] = student.fist_name
+            student_detail['last_name'] = student.last_name
+            student_detail['class'] = student.current_class.standard
+            student_detail['section'] = student.current_section.section
+            student_detail['roll_no'] = str(student.roll_number)
+            student_detail['parent_name'] = student.parent.parent_name
+            student_detail['parent_mobile1'] = str(student.parent.parent_mobile1)
+            student_detail['parent_mobile2'] = str(student.parent.parent_mobile2)
+        except Exception as e:
+            print('Exception 10 from student views.py = %s (%s)' % (e.message, type(e)))
+            print('unable to get student details with student id ' + student_id)
+        return JSONResponse(student_detail)
+
+
 class ParentList(generics.ListAPIView):
     serializer_class = ParentSerializer
 

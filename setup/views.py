@@ -58,6 +58,9 @@ def check_reg_no(request):
 
     }
     school_id = request.GET.get('school_id')
+    the_class = request.GET.get('the_class')
+    section = request.GET.get('section')
+    roll_no = request.GET.get('roll_no')
     try:
         school = School.objects.get(id=school_id)
     except Exception as e:
@@ -75,12 +78,29 @@ def check_reg_no(request):
         error_message += the_class
         response_dict['status'] = 'error'
         response_dict['error_message'] = error_message
+        print(error_message)
         return JSONResponse(response_dict, status=201)
     except Exception as e:
         print ('Exception 220 from setup views.py = %s (%s)' % (e.message, type(e)))
         print ('registrton number:  ' + reg_no + ' is available')
-        response_dict['status'] = 'success'
-        return JSONResponse(response_dict, status=200)
+
+        # now check if roll number is supplied, it is not already allotted to another student
+        if roll_no != '':
+            try:
+                c = Class.objects.get(school=school, standard=the_class)
+                sec = Section.objects.get(school=school, section=section)
+                student = Student.objects.get(school=school, current_class=c, current_section=sec, roll_number=roll_no)
+                response_dict['status'] = 'error'
+                error_message = 'Roll No ' + str(roll_no) + ' is already associated with '
+                error_message += student.fist_name + ' ' + student.last_name
+                response_dict['error_message'] = error_message
+                print(error_message)
+                return JSONResponse(response_dict, status=201)
+            except Exception as e:
+                print('Exception 310 from setup view.py = %s (%s)' % (e.message, type(e)))
+                print('No conflict of registration number and roll number ')
+                response_dict['status'] = 'success'
+                return JSONResponse(response_dict, status=200)
 
 
 @csrf_exempt
@@ -105,6 +125,7 @@ def add_student(request):
                 parent_mobile2 = '1234567890'
             current_class = data['the_class']
             current_section = data['section']
+            current_roll_no = data['roll_no']
             parent_email = 'dummy@testmail.com'
 
             # create parent into database
@@ -186,16 +207,23 @@ def add_student(request):
 
             # create student
             try:
-                # we need to generate a roll no for this student. Should be the current count of student in this
-                # class plus 1
-                max_roll_no = Student.objects.filter(school=school,
-                                                     current_class=the_class,
-                                                     current_section=the_section).latest('roll_number').roll_number
-                current_roll_no = max_roll_no + 1
-                s = Student(school=school, student_erp_id=student_id, fist_name=student_first_name,
+                # if roll no was provided by School Admin, use it.
+                if current_roll_no != '':
+                    s = Student(school=school, student_erp_id=student_id, fist_name=student_first_name,
                                 last_name=student_last_name, current_class=the_class, current_section=the_section,
                                 roll_number=current_roll_no, parent=p)
-                s.save()
+                    s.save()
+                    print ('saving successful!')
+                else:
+                    # we need to generate a roll no for this student. Should be the current count of student in this
+                    # class plus 1
+                    max_roll_no = Student.objects.filter(school=school, current_class=the_class,
+                                                         current_section=the_section).latest('roll_number').roll_number
+                    current_roll_no = max_roll_no + 1
+                    s = Student(school=school, student_erp_id=student_id, fist_name=student_first_name,
+                                    last_name=student_last_name, current_class=the_class, current_section=the_section,
+                                    roll_number=current_roll_no, parent=p)
+                    s.save()
                 print ('saving successful!')
 
                 # this student should appear in all the pending test for this class & section
