@@ -104,6 +104,145 @@ def check_reg_no(request):
 
 
 @csrf_exempt
+def delete_stuednt(request):
+    context_dict =  {
+
+    }
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            student_id = data['student_id']
+            student = Student.objects.get(id=student_id)
+            student.active_status = False
+            student.save()
+            context_dict['status'] = 'success'
+            return JSONResponse(context_dict, status=200)
+        except Exception as e:
+            error_message = 'Failed to set active_status of ' + student.fist_name + ' ' \
+                            + student.last_name + ' to False'
+            context_dict['status'] = 'failed'
+            context_dict['error_message'] = error_message
+            return JSONResponse(context_dict, status=201)
+
+
+@csrf_exempt
+def update_student(request):
+    context_dict = {
+
+    }
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            print(data)
+            sender = data['user']
+            school_id = data['school_id']
+            school = School.objects.get(id=school_id)
+            student_id = data['student_id']
+            student_first_name = data['first_name']
+            student_last_name = data['last_name']
+            parent_name = data['parent_name']
+            parent_mobile1 = data['mobile1']
+            parent_mobile2 = data['mobile2']
+            if parent_mobile2 == '':
+                parent_mobile2 = '1234567890'
+            current_class = data['the_class']
+            current_section = data['section']
+            current_roll_no = data['roll_no']
+            parent_email = 'dummy@testmail.com'
+
+            # check to see if the primary mobile of parent has been changed. If it is then we need to create a new
+            # user for parent and send them sms
+            try:
+                p = Parent.objects.get(parent_mobile1=parent_mobile1)
+
+                if p:
+                    print ('Parent ' + parent_name + ' already exist. This will be updated!')
+                    p.parent_name = parent_name
+                    p.parent_mobile1 = parent_mobile1
+                    p.parent_mobile2 = parent_mobile2
+                    p.parent_email = parent_email
+            except Exception as e:
+                print ('Exception 350 from setup views.py = %s (%s)' % (e.message, type(e)))
+                print ('Parent ' + parent_name + ' is a new entry. This will be created!')
+                p = Parent(parent_name=parent_name, parent_mobile1=parent_mobile1,
+                           parent_mobile2=parent_mobile2, parent_email=parent_email)
+            try:
+                p.save()
+            except Exception as e:
+                print ('Exception 360 from setup views.py = %s (%s)' % (e.message, type(e)))
+                print('Unable to save the parent data for ' + parent_name + ' in Table Parent')
+
+            # now, create a user for this parent (only if the primary mobile has changed)
+            whether_new_user = False
+            try:
+                if User.objects.filter(username=parent_mobile1).exists():
+                    print('user for parent ' + p.parent_name + ' already exists!')
+                    whether_new_user = False
+                else:
+                    whether_new_user = True
+                    # the user name would be the mobile, and password would be a random string
+                    password = User.objects.make_random_password(length=5, allowed_chars='1234567890')
+
+                    print ('Initial password = ' + password)
+                    user = User.objects.create_user(parent_mobile1, parent_email, password)
+                    user.first_name = parent_name
+                    user.is_staff = False
+                    user.save()
+
+                    print ('Successfully created user for ' + parent_name)
+            except Exception as e:
+                print ('Exception 370 from setup views.py = %s (%s)' % (e.message, type(e)))
+                print ('Unable to create user for ' + parent_name)
+
+            try:
+                conf = Configurations.objects.get(school=school)
+                if whether_new_user:
+                    android_link = conf.google_play_link
+                    iOS_link = conf.app_store_link
+
+                    # send login id and password to parent via sms
+                    message = 'Dear Ms/Mr ' + parent_name + ', Welcome to ClassUp. '
+                    message += 'Now you can track ' +  student_first_name +  "'s progress at " + school.school_name
+                    message += '. Your user id is: ' + str(parent_mobile1) + ', and password is: '
+                    message += str(password)
+                    message += '. Please install ClassUp from these links. Android: '
+                    message += android_link
+                    message += '. iPhone/iOS: '
+                    message += iOS_link
+                    message += '. For support, email to: support@classup.in'
+                    print(message)
+                    message_type = 'Welcome Parent'
+                    sms.send_sms1(school, sender, str(parent_mobile1), message, message_type)
+            except Exception as e:
+                print ('Exception 380 in setup view.py = %s (%s)' % (e.message, type(e)))
+                print ('Failed to send welcome sms to ' + parent_name)
+
+            # update the student
+            student = Student.objects.get(id=student_id)
+            student.parent = p
+            student.fist_name = student_first_name
+            student.last_name = student_last_name
+
+            the_class = Class.objects.get(school=school, standard=current_class)
+            student.current_class = the_class
+
+            the_section = Section.objects.get(school=school, section=current_section)
+            student.current_section= the_section
+
+            student.roll_number = current_roll_no
+            student.save()
+            context_dict['status'] = 'success'
+            return JSONResponse(context_dict, status=200)
+        except Exception as e:
+            print('Exception 390 in setup views.py = %s (%s)' % (e.message, type(e)))
+            error_message = 'unable to update student ' + student_first_name + ' class: ' \
+                            + current_class + ' ' + current_section
+            print(error_message)
+            context_dict['status'] = 'error'
+            return JSONResponse(context_dict, status=201)
+
+
+@csrf_exempt
 def add_student(request):
     context_dict = {
     }

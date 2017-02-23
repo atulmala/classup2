@@ -17,4 +17,6 @@ urlpatterns = patterns('',
                         views.ConfigurationList.as_view(), name='bus_attendance_enabled'),
                     url(r'^check_reg_no/$', views.check_reg_no, name='check_reg_no'),
                     url(r'^add_student/$', views.add_student, name='add_student'),
+                    url(r'^update_student/$', views.update_student, name='update_student'),
+                    url(r'^delete_student/$', views.delete_stuednt, name='delete_student'),
                 )
