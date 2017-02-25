@@ -15,7 +15,7 @@ from setup.forms import ExcelFileUploadForm
 from authentication.views import JSONResponse
 
 from setup.models import School, UserSchoolMapping
-from academics.models import Class, Section, Subject, WorkingDays, TestResults, ClassTest, ClassTeacher, Exam
+from academics.models import Class, Section, Subject, TestResults, ClassTest, ClassTeacher, Exam
 from teacher.models import Teacher
 from student.models import Student, Parent
 from .models import Configurations

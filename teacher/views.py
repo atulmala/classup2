@@ -1,6 +1,5 @@
 import json
 
-
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
@@ -8,11 +7,16 @@ from academics.models import Subject
 
 # Create your views here.
 
+from django.contrib.auth.models import User, Group
 from rest_framework import generics
-
-from .models import Teacher
+from operations import sms
+from setup.models import School, UserSchoolMapping, Configurations
 from academics.models import TeacherSubjects
+from .models import Teacher
+
 from .serializers import TeacherSubjectSerializer
+
+from authentication.views import JSONResponse
 
 
 class TeacherSubjectList(generics.ListCreateAPIView):
@@ -26,6 +30,132 @@ class TeacherSubjectList(generics.ListCreateAPIView):
         q = TeacherSubjects.objects.filter(teacher=the_teacher).order_by('subject__subject_sequence')
 
         return q
+
+
+@csrf_exempt
+def add_teacher(request):
+    print('adding teacher from device...')
+    response_dict = {
+
+    }
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            print(data)
+            user = data['user']
+            school_id = data['school_id']
+            employee_id = data['employee_id']
+            email = data['email']
+            mobile = data['mobile']
+            first_name = data['full_name']
+            last_name = ''
+
+            school = School.objects.get(id=school_id)
+
+            # check to see if any other teacher in this school has the same employee id (teacher_erp_id)
+            try:
+                t = Teacher.objects.get(school=school, teacher_erp_id=employee_id)
+                response_dict['status'] = 'failed'
+                message = 'Employee ID ' + employee_id + ' is already assigned to ' \
+                                + t.first_name + ' ' + t.last_name
+                print(message)
+                response_dict['message'] = message
+                response_dict['status'] = 'failed'
+                return JSONResponse(response_dict, status=201)
+            except Exception as e:
+                # employee id is available, now check email
+                print('Excpetion 10 from teacher views.py = %s (%s)' % (e.message, type(e)))
+                print('employee id ' + employee_id + ' is available. Now checking for availability of login id')
+
+                try:
+                    t = Teacher.objects.get(school=school, email=email)
+                    response_dict['status'] = 'failed'
+                    message = 'login id ' + email + ' is already assigned to ' + t.first_name + ' ' + t.last_name
+                    print(message)
+                    response_dict['message'] = message
+                    response_dict['status'] = 'failed'
+                    return JSONResponse(response_dict, status=201)
+                except Exception as e:
+                    print('Exception 20 from teacher views.py = %s (%s) ' % (e.message, type(e)))
+                    print('employee id and login id are available. Hence this teacher can be added...')
+                    t = Teacher(teacher_erp_id=employee_id)
+                    t.school = school
+                    t.first_name = first_name
+                    t.email = email
+                    t.mobile = mobile
+                    t.active_status = True
+                    try:
+                        t.save()
+                        # now, create a user for this teacher
+                        # the user name would be the email, and password would be a random string
+                        password = User.objects.make_random_password(length=5, allowed_chars='1234567890')
+
+                        print ('Initial password = ' + password)
+                        user = None
+                        try:
+                            user = User.objects.create_user(email, email, password)
+                            user.first_name = first_name
+                            user.last_name = last_name
+                            user.is_staff = True
+                            user.save()
+                            print ('Successfully created user for ' + first_name + ' ' + last_name)
+
+                            mapping = UserSchoolMapping(user=user, school=school)
+                            mapping.save()
+                        except Exception as e:
+                            print ('Exception 50 from student views.py = %s (%s)' % (e.message, type(e)))
+                            print ('Unable to create user or user-school mapping for ' + first_name + ' ' + last_name)
+
+                        # make this user part of the Teachers group
+                        try:
+                            group = Group.objects.get(name='teachers')
+                            user.groups.add(group)
+                            print ('Successfully added ' + first_name + ' ' + last_name + ' to the Teachers group')
+                        except Exception as e:
+                            print ('Exception 60 from student views.py = %s (%s)' % (e.message, type(e)))
+                            print ('Unable to add ' + first_name + ' ' + last_name + ' to the Teachers group')
+
+                        # get the links of app on Google Play and Apple App store
+                        configuration = Configurations.objects.get(school=school)
+                        android_link = configuration.google_play_link
+                        iOS_link = configuration.app_store_link
+
+                        # send login id and password to teacher via sms
+                        message = 'Dear ' + last_name + ' ' + last_name + ', Welcome to ClassUp.'
+                        message += ' Your user id is: ' + email + ', and password is: ' + password + '. '
+                        message += 'Please install ClassUp from these links. Android: '
+                        message += android_link
+                        message += ', iPhone/iOS: '
+                        message += iOS_link
+
+                        message += 'You can change your password after first login. '
+                        message += 'Enjoy managing your class with ClassUp!'
+                        message += ' For support, email to: support@classup.in'
+                        message_type = 'Welcome Teacher'
+                        sender = user
+
+                        sms.send_sms1(school, sender, str(mobile), message, message_type)
+                        response_dict['status'] = 'success'
+                        response_dict['message'] = "Teacher created. Welcome SMS sent to the teacher' mobile"
+                        return JSONResponse(response_dict, status=200)
+                    except Exception as e:
+                        print('Exception 30 from student views.py = %s (%s)' % (e.message, type(e)))
+                        message = 'Failed to create Teacher. Please contact ClassUp Support'
+                        print(message)
+                        response_dict['message'] = message
+                        response_dict['status'] = 'failed'
+                        return JSONResponse(response_dict, status=201)
+        except Exception as e:
+            print('Exception 40 from teachers views.py = %s (%s)' % (e.message, type(e)))
+            message = 'Failed to create Teacher. Please contact ClassUp Support'
+            response_dict['message'] = message
+            response_dict['status'] = 'failed'
+            print(message)
+            return JSONResponse(response_dict, status=201)
+
+
+
+
 
 
 @csrf_exempt
