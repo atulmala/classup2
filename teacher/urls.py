@@ -10,6 +10,10 @@ urlpatterns = [
     url(r'^set_subjects/(?P<teacher>[\w.@+-]+)/$', views.set_subjects, name='set_subjects'),
     url(r'^unset_subjects/(?P<teacher>[\w.@+-]+)/$', views.unset_subjects, name='unset_subjects'),
     url(r'^add_teacher/$', views.add_teacher, name='add_teacher'),
+    url(r'^teacher_list/(?P<school_id>\w+)/$', views.TeacherList.as_view()),
+    url(r'^whether_class_teacher/(?P<teacher_id>\w+)/$', views.whether_class_teacher, name='(?P<school_id>\w+)/$'),
+    url(r'^delete_teaher/$', views.delete_teacher, name='delete_teacher'),
+    url(r'^update_teacher/$', views.update_teacher, name='update_teacher'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

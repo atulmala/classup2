@@ -3,7 +3,7 @@ import json
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from academics.models import Subject
+from academics.models import Subject, ClassTeacher, Class, Section
 
 # Create your views here.
 
@@ -14,7 +14,7 @@ from setup.models import School, UserSchoolMapping, Configurations
 from academics.models import TeacherSubjects
 from .models import Teacher
 
-from .serializers import TeacherSubjectSerializer
+from .serializers import TeacherSubjectSerializer, TeacherSerializer
 
 from authentication.views import JSONResponse
 
@@ -30,6 +30,137 @@ class TeacherSubjectList(generics.ListCreateAPIView):
         q = TeacherSubjects.objects.filter(teacher=the_teacher).order_by('subject__subject_sequence')
 
         return q
+
+
+class TeacherList(generics.ListAPIView):
+    serializer_class = TeacherSerializer
+
+    def get_queryset(self):
+        school_id = self.kwargs['school_id']
+        school = School.objects.get(id=school_id)
+
+        q = Teacher.objects.filter(school=school, active_status=True).order_by('first_name')
+        return q
+
+
+def whether_class_teacher(request, teacher_id):
+    response_dict = {
+
+    }
+
+    if request.method == 'GET':
+        try:
+            t = Teacher.objects.get(id=teacher_id)
+            response_dict['status'] = 'success'
+            if ClassTeacher.objects.filter(class_teacher=t).first():
+                ct = ClassTeacher.objects.filter(class_teacher=t)[0]
+                response_dict['is_class_teacher'] = 'true'
+                response_dict['the_class'] = ct.standard.standard
+                response_dict['section'] = ct.section.section
+            else:
+                response_dict['is_class_teacher'] = 'false'
+        except Exception as e:
+            print('Exception 70 from teachers views.py %s %s' % (e.message, type(e)))
+            response_dict['status'] = 'failure'
+
+    return JSONResponse(response_dict, status=200)
+
+
+@csrf_exempt
+def delete_teacher(request):
+    response_dict = {
+
+    }
+
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            teacher_id = data['teacher_id']
+            teacher = Teacher.objects.get(id=teacher_id)
+            teacher.active_status = False
+            teacher.save()
+            response_dict['status'] = 'success'
+            return JSONResponse(response_dict, status=200)
+        except Exception as e:
+            print('Exception 80 from teachers views.py = %s (%s) ' % (e.message, type(e)))
+            error_message = 'Failed to set active_status of ' + teacher.first_name + ' ' \
+                            + teacher.last_name + ' to False'
+            teacher['status'] = 'failed'
+            teacher['error_message'] = error_message
+            return JSONResponse(response_dict, status=201)
+
+@csrf_exempt
+def update_teacher(request):
+    response_dict = {
+
+    }
+    if request.method == 'POST':
+        try:
+            data = json.load(request.body)
+            print(data)
+            teacher_id = data['teacher_id']
+            teacher_name = data['teacher_name']
+            teacher_login = data['teacher_login']
+            teacher_mobile = data['teacher_mobile']
+            class_teacher = ClassTeacher.objects.get(id=teacher_id)
+            class_teacher.first_name = teacher_name
+            class_teacher.email = teacher_login
+            class_teacher.mobile = teacher_mobile
+            class_teacher.save()
+
+            message = 'Teacher ' + teacher_name + ' updated. '
+            print (message)
+            response_dict['status'] = 'success'
+            response_dict['message'] = message
+
+            if data['is_class_teacher'] == 'true':
+                school_id = data['school_id']
+                school = School.objecrs.get(id=school_id)
+                the_class = data['the_class']
+                c = Class.objects.get(standard=the_class)
+                section = data['section']
+                s = Section.objects.get(section=section)
+                t = Teacher.objects.get(id=teacher_id)
+                try:
+                    ct = ClassTeacher.objects.get(school=school, standard=c, section=s)
+                    cct = ct.class_teacher  # current class teacher?
+                    ct.class_teacher = t
+                    message += cct.first_name + ' ' + cct.last_name +  ' was the Class Teacher for class '
+                    message += the_class + ' ' + section + '. Now the new Class Teacher is '
+                    message += teacher_name
+                    response_dict['message'] = message
+                    response_dict['status'] = 'success'
+                    return JSONResponse(response_dict, status=200)
+                except Exception as e:
+                    print('Exception 90 from teachers views.py = %s (%s) ' % (e.message, type(e)))
+                    print('no Class Teacher was set for class ' + the_class + ' ' + section + '. Setting now...')
+                    try:
+                        ct = ClassTeacher()
+                        ct.school = school
+                        ct.standard = c
+                        ct.section = s
+                        ct.class_teacher = t
+                        ct.save()
+                        message += teacher_name + ' is now assigned as Class Teacher for class '
+                        message += the_class + ' ' + section
+                        response_dict['message'] = message
+                        response_dict['status'] = 'success'
+                        return JSONResponse(response_dict, status=200)
+                    except Exception as e:
+                        print ('Exception 100 from teachers views.py = %s (%s) ' % (e.message, type(e)))
+                        error_message = 'failed to set ' + teacher_name + ' as Class Teacher for class: '
+                        error_message +=  the_class + ' ' + section
+                        print(error_message)
+                        response_dict['error_message'] = error_message
+                        return JSONResponse(response_dict, status=201)
+            return JSONResponse(response_dict, status=200)
+        except Exception as e:
+            print ('Exception 110 from teachers views.py = %s (%s) ' % (e.message, type(e)))
+            error_message = 'Failed to update teacher'
+            print(error_message)
+            response_dict['status'] = 'failure'
+            response_dict['error_message'] = error_message
+            return JSONResponse(response_dict, status=201)
 
 
 @csrf_exempt
@@ -103,7 +234,7 @@ def add_teacher(request):
                             mapping = UserSchoolMapping(user=user, school=school)
                             mapping.save()
                         except Exception as e:
-                            print ('Exception 50 from student views.py = %s (%s)' % (e.message, type(e)))
+                            print ('Exception 50 from teacher views.py = %s (%s)' % (e.message, type(e)))
                             print ('Unable to create user or user-school mapping for ' + first_name + ' ' + last_name)
 
                         # make this user part of the Teachers group
@@ -112,7 +243,7 @@ def add_teacher(request):
                             user.groups.add(group)
                             print ('Successfully added ' + first_name + ' ' + last_name + ' to the Teachers group')
                         except Exception as e:
-                            print ('Exception 60 from student views.py = %s (%s)' % (e.message, type(e)))
+                            print ('Exception 60 from teacher views.py = %s (%s)' % (e.message, type(e)))
                             print ('Unable to add ' + first_name + ' ' + last_name + ' to the Teachers group')
 
                         # get the links of app on Google Play and Apple App store
@@ -139,7 +270,7 @@ def add_teacher(request):
                         response_dict['message'] = "Teacher created. Welcome SMS sent to the teacher' mobile"
                         return JSONResponse(response_dict, status=200)
                     except Exception as e:
-                        print('Exception 30 from student views.py = %s (%s)' % (e.message, type(e)))
+                        print('Exception 30 from teacher views.py = %s (%s)' % (e.message, type(e)))
                         message = 'Failed to create Teacher. Please contact ClassUp Support'
                         print(message)
                         response_dict['message'] = message
@@ -152,10 +283,6 @@ def add_teacher(request):
             response_dict['status'] = 'failed'
             print(message)
             return JSONResponse(response_dict, status=201)
-
-
-
-
 
 
 @csrf_exempt
@@ -247,6 +374,3 @@ def unset_subjects(request, teacher):
                 pass
 
     return HttpResponse('OK')
-
-
-

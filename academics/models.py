@@ -48,7 +48,6 @@ class Subject(models.Model):
 
 
 class ClassTest(models.Model):
-    # school = models.ForeignKey(School)
     date_conducted = models.DateField()
     teacher = models.ForeignKey(Teacher)
     subject = models.ForeignKey(Subject)
