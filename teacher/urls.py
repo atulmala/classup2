@@ -12,7 +12,7 @@ urlpatterns = [
     url(r'^add_teacher/$', views.add_teacher, name='add_teacher'),
     url(r'^teacher_list/(?P<school_id>\w+)/$', views.TeacherList.as_view()),
     url(r'^whether_class_teacher/(?P<teacher_id>\w+)/$', views.whether_class_teacher, name='(?P<school_id>\w+)/$'),
-    url(r'^delete_teaher/$', views.delete_teacher, name='delete_teacher'),
+    url(r'^delete_teacher/$', views.delete_teacher, name='delete_teacher'),
     url(r'^update_teacher/$', views.update_teacher, name='update_teacher'),
 ]
 

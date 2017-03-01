@@ -96,17 +96,17 @@ def update_teacher(request):
     }
     if request.method == 'POST':
         try:
-            data = json.load(request.body)
+            data = json.loads(request.body)
             print(data)
             teacher_id = data['teacher_id']
             teacher_name = data['teacher_name']
             teacher_login = data['teacher_login']
             teacher_mobile = data['teacher_mobile']
-            class_teacher = ClassTeacher.objects.get(id=teacher_id)
-            class_teacher.first_name = teacher_name
-            class_teacher.email = teacher_login
-            class_teacher.mobile = teacher_mobile
-            class_teacher.save()
+            teacher = Teacher.objects.get(id=teacher_id)
+            teacher.first_name = teacher_name
+            teacher.email = teacher_login
+            teacher.mobile = teacher_mobile
+            teacher.save()
 
             message = 'Teacher ' + teacher_name + ' updated. '
             print (message)
@@ -114,17 +114,19 @@ def update_teacher(request):
             response_dict['message'] = message
 
             if data['is_class_teacher'] == 'true':
+                print('starting to set this teacher as Class Teacher...')
                 school_id = data['school_id']
-                school = School.objecrs.get(id=school_id)
+                school = School.objects.get(id=school_id)
                 the_class = data['the_class']
-                c = Class.objects.get(standard=the_class)
+                c = Class.objects.get(school=school, standard=the_class)
                 section = data['section']
-                s = Section.objects.get(section=section)
+                s = Section.objects.get(school=school, section=section)
                 t = Teacher.objects.get(id=teacher_id)
                 try:
                     ct = ClassTeacher.objects.get(school=school, standard=c, section=s)
                     cct = ct.class_teacher  # current class teacher?
                     ct.class_teacher = t
+                    ct.save()
                     message += cct.first_name + ' ' + cct.last_name +  ' was the Class Teacher for class '
                     message += the_class + ' ' + section + '. Now the new Class Teacher is '
                     message += teacher_name

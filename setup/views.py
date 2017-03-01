@@ -889,6 +889,7 @@ def setup_teachers(request):
                     # we need to explicitly cast employee id to string. Else update will not function properly
                     employee_id = str(sheet.cell(row, 0).value)
                     f_name = sheet.cell(row, 1).value
+
                     l_name = sheet.cell(row, 2).value
                     email = sheet.cell(row, 3).value
 
