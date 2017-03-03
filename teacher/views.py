@@ -89,6 +89,7 @@ def delete_teacher(request):
             teacher['error_message'] = error_message
             return JSONResponse(response_dict, status=201)
 
+
 @csrf_exempt
 def update_teacher(request):
     response_dict = {
@@ -130,6 +131,7 @@ def update_teacher(request):
                     message += cct.first_name + ' ' + cct.last_name +  ' was the Class Teacher for class '
                     message += the_class + ' ' + section + '. Now the new Class Teacher is '
                     message += teacher_name
+                    print(message)
                     response_dict['message'] = message
                     response_dict['status'] = 'success'
                     return JSONResponse(response_dict, status=200)
@@ -145,6 +147,7 @@ def update_teacher(request):
                         ct.save()
                         message += teacher_name + ' is now assigned as Class Teacher for class '
                         message += the_class + ' ' + section
+                        print(message)
                         response_dict['message'] = message
                         response_dict['status'] = 'success'
                         return JSONResponse(response_dict, status=200)
@@ -177,7 +180,7 @@ def add_teacher(request):
             print(data)
             user = data['user']
             school_id = data['school_id']
-            employee_id = data['employee_id']
+            #employee_id = data['employee_id']
             email = data['email']
             mobile = data['mobile']
             first_name = data['full_name']
@@ -185,99 +188,86 @@ def add_teacher(request):
 
             school = School.objects.get(id=school_id)
 
-            # check to see if any other teacher in this school has the same employee id (teacher_erp_id)
+            # check to see if any other teacher in this school has the same login id
+
             try:
-                t = Teacher.objects.get(school=school, teacher_erp_id=employee_id)
+                t = Teacher.objects.get(school=school, email=email)
                 response_dict['status'] = 'failed'
-                message = 'Employee ID ' + employee_id + ' is already assigned to ' \
-                                + t.first_name + ' ' + t.last_name
+                message = 'login id ' + email + ' is already assigned to ' + t.first_name + ' ' + t.last_name
                 print(message)
                 response_dict['message'] = message
                 response_dict['status'] = 'failed'
                 return JSONResponse(response_dict, status=201)
             except Exception as e:
-                # employee id is available, now check email
-                print('Excpetion 10 from teacher views.py = %s (%s)' % (e.message, type(e)))
-                print('employee id ' + employee_id + ' is available. Now checking for availability of login id')
-
+                print('Exception 20 from teacher views.py = %s (%s) ' % (e.message, type(e)))
+                print('login id are available. Hence this teacher can be added...')
+                t = Teacher()
+                t.school = school
+                t.first_name = first_name
+                t.email = email
+                t.mobile = mobile
+                t.active_status = True
                 try:
-                    t = Teacher.objects.get(school=school, email=email)
-                    response_dict['status'] = 'failed'
-                    message = 'login id ' + email + ' is already assigned to ' + t.first_name + ' ' + t.last_name
+                    t.save()
+                    # now, create a user for this teacher
+                    # the user name would be the email, and password would be a random string
+                    password = User.objects.make_random_password(length=5, allowed_chars='1234567890')
+
+                    print ('Initial password = ' + password)
+                    user = None
+                    try:
+                        user = User.objects.create_user(email, email, password)
+                        user.first_name = first_name
+                        user.last_name = last_name
+                        user.is_staff = True
+                        user.save()
+                        print ('Successfully created user for ' + first_name + ' ' + last_name)
+
+                        mapping = UserSchoolMapping(user=user, school=school)
+                        mapping.save()
+                    except Exception as e:
+                        print ('Exception 50 from teacher views.py = %s (%s)' % (e.message, type(e)))
+                        print ('Unable to create user or user-school mapping for ' + first_name + ' ' + last_name)
+
+                    # make this user part of the Teachers group
+                    try:
+                        group = Group.objects.get(name='teachers')
+                        user.groups.add(group)
+                        print ('Successfully added ' + first_name + ' ' + last_name + ' to the Teachers group')
+                    except Exception as e:
+                        print ('Exception 60 from teacher views.py = %s (%s)' % (e.message, type(e)))
+                        print ('Unable to add ' + first_name + ' ' + last_name + ' to the Teachers group')
+
+                    # get the links of app on Google Play and Apple App store
+                    configuration = Configurations.objects.get(school=school)
+                    android_link = configuration.google_play_link
+                    iOS_link = configuration.app_store_link
+
+                    # send login id and password to teacher via sms
+                    message = 'Dear ' + last_name + ' ' + last_name + ', Welcome to ClassUp.'
+                    message += ' Your user id is: ' + email + ', and password is: ' + password + '. '
+                    message += 'Please install ClassUp from these links. Android: '
+                    message += android_link
+                    message += ', iPhone/iOS: '
+                    message += iOS_link
+
+                    message += 'You can change your password after first login. '
+                    message += 'Enjoy managing your class with ClassUp!'
+                    message += ' For support, email to: support@classup.in'
+                    message_type = 'Welcome Teacher'
+                    sender = user
+
+                    sms.send_sms1(school, sender, str(mobile), message, message_type)
+                    response_dict['status'] = 'success'
+                    response_dict['message'] = "Teacher created. Welcome SMS sent to the teacher' mobile"
+                    return JSONResponse(response_dict, status=200)
+                except Exception as e:
+                    print('Exception 30 from teacher views.py = %s (%s)' % (e.message, type(e)))
+                    message = 'Failed to create Teacher. Please contact ClassUp Support'
                     print(message)
                     response_dict['message'] = message
                     response_dict['status'] = 'failed'
                     return JSONResponse(response_dict, status=201)
-                except Exception as e:
-                    print('Exception 20 from teacher views.py = %s (%s) ' % (e.message, type(e)))
-                    print('employee id and login id are available. Hence this teacher can be added...')
-                    t = Teacher(teacher_erp_id=employee_id)
-                    t.school = school
-                    t.first_name = first_name
-                    t.email = email
-                    t.mobile = mobile
-                    t.active_status = True
-                    try:
-                        t.save()
-                        # now, create a user for this teacher
-                        # the user name would be the email, and password would be a random string
-                        password = User.objects.make_random_password(length=5, allowed_chars='1234567890')
-
-                        print ('Initial password = ' + password)
-                        user = None
-                        try:
-                            user = User.objects.create_user(email, email, password)
-                            user.first_name = first_name
-                            user.last_name = last_name
-                            user.is_staff = True
-                            user.save()
-                            print ('Successfully created user for ' + first_name + ' ' + last_name)
-
-                            mapping = UserSchoolMapping(user=user, school=school)
-                            mapping.save()
-                        except Exception as e:
-                            print ('Exception 50 from teacher views.py = %s (%s)' % (e.message, type(e)))
-                            print ('Unable to create user or user-school mapping for ' + first_name + ' ' + last_name)
-
-                        # make this user part of the Teachers group
-                        try:
-                            group = Group.objects.get(name='teachers')
-                            user.groups.add(group)
-                            print ('Successfully added ' + first_name + ' ' + last_name + ' to the Teachers group')
-                        except Exception as e:
-                            print ('Exception 60 from teacher views.py = %s (%s)' % (e.message, type(e)))
-                            print ('Unable to add ' + first_name + ' ' + last_name + ' to the Teachers group')
-
-                        # get the links of app on Google Play and Apple App store
-                        configuration = Configurations.objects.get(school=school)
-                        android_link = configuration.google_play_link
-                        iOS_link = configuration.app_store_link
-
-                        # send login id and password to teacher via sms
-                        message = 'Dear ' + last_name + ' ' + last_name + ', Welcome to ClassUp.'
-                        message += ' Your user id is: ' + email + ', and password is: ' + password + '. '
-                        message += 'Please install ClassUp from these links. Android: '
-                        message += android_link
-                        message += ', iPhone/iOS: '
-                        message += iOS_link
-
-                        message += 'You can change your password after first login. '
-                        message += 'Enjoy managing your class with ClassUp!'
-                        message += ' For support, email to: support@classup.in'
-                        message_type = 'Welcome Teacher'
-                        sender = user
-
-                        sms.send_sms1(school, sender, str(mobile), message, message_type)
-                        response_dict['status'] = 'success'
-                        response_dict['message'] = "Teacher created. Welcome SMS sent to the teacher' mobile"
-                        return JSONResponse(response_dict, status=200)
-                    except Exception as e:
-                        print('Exception 30 from teacher views.py = %s (%s)' % (e.message, type(e)))
-                        message = 'Failed to create Teacher. Please contact ClassUp Support'
-                        print(message)
-                        response_dict['message'] = message
-                        response_dict['status'] = 'failed'
-                        return JSONResponse(response_dict, status=201)
         except Exception as e:
             print('Exception 40 from teachers views.py = %s (%s)' % (e.message, type(e)))
             message = 'Failed to create Teacher. Please contact ClassUp Support'

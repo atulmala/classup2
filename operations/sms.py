@@ -47,7 +47,7 @@ def send_sms1(school, sender, mobile, message, message_type):
             try:
                 # 07/02/17 - we will be sending bulk sms through separate batch job as it is time consuming
                 message_id = 'Not Available'
-                if message_type != 'Bulk SMS (Web Interface)' or message_type != 'Bulk SMS (Device)':
+                if message_type != 'Bulk SMS (Web Interface)' and message_type != 'Bulk SMS (Device)':
                     # send the message
                     print ('sending to ' + mobile)
 
@@ -56,6 +56,8 @@ def send_sms1(school, sender, mobile, message, message_type):
                     j = json.loads(response.read())
                     message_id = j['message']
                     print('status (job_id) = ' + message_id)
+                else:
+                    print('message type was Bulk SMS. Batch process to send those SMS will have to be run!')
 
                 # first, determine the recepient & receipient type
                 recepient_type = 'Undetermined'
@@ -83,6 +85,7 @@ def send_sms1(school, sender, mobile, message, message_type):
                 # next, determine the sender details
                 sender_type = 'Undetermined'
                 sender_name = sender
+                print('message type = %s' % message_type)
                 if message_type == 'Bulk SMS (Web Interface)' or message_type == 'Bulk SMS (Device)'\
                         or message_type == 'Welcome Parent' \
                         or message_type == 'Welcome Teacher' or message_type == 'Run Batch':
@@ -146,12 +149,13 @@ def send_sms1(school, sender, mobile, message, message_type):
                 try:
                     sr = SMSRecord(school=school, sender1=sender_name, sender_type=sender_type, sender_code=sender_id,
                                     recipient_name=recepient_name, recipient_type=recepient_type,
-                                   recipient_number=mobile,
-                                    message=message, message_type=message_type,
+                                   recipient_number=mobile, message=message, message_type=message_type,
                                     outcome=message_id)
-                    if message_type == 'Bulk SMS (Web Interface)':
+                    if message_type == 'Bulk SMS (Web Interface)' or message_type == 'Bulk SMS (Device)':
+                        print('api called status has been set to false. Can be turned true only by running batch job')
                         sr.api_called = False
                     else:
+                        print('api called status has been set to true. ')
                         sr.api_called = True
                     sr.save()
                 except Exception as e:

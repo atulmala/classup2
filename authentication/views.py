@@ -318,7 +318,7 @@ def forgot_password(request):
                 u.set_password(new_password)
                 u.save()
                 message_type = 'Forgot Password'
-                message = 'Dear Ms/Mr ' + u.first_name + ' ' + u.last_name + ', your new password is ' + new_password
+                message = 'Dear ' + u.first_name + ' ' + u.last_name + ', your new password is ' + new_password
                 message += '. Regards, ClassUp Support'
                 print(message)
 

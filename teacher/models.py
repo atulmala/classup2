@@ -6,7 +6,7 @@ from setup.models import School
 
 # Create your models here.
 class Teacher(models.Model):
-    teacher_erp_id = models.CharField(max_length=30)    # this can be the existing employee id of the teacher
+    teacher_erp_id = models.CharField(max_length=30, default='NA')    # this can be the existing employee id of the teacher
     school = models.ForeignKey(School)
     first_name = models.CharField(max_length=50, blank=False, null=False)
     last_name = models.CharField(max_length=50, null=True, blank=True)
@@ -15,4 +15,4 @@ class Teacher(models.Model):
     active_status = models.BooleanField(default=True)
 
     def __unicode__(self):
-        return self.first_name + ' ' + self.last_name
+        return self.first_name

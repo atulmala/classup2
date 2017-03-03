@@ -25,6 +25,7 @@ class School(models.Model):
 
 class Configurations(models.Model):
     school = models.ForeignKey(School)
+    login_prefix = models.CharField(max_length=20, default='@classup.com')
     router_server_ip = models.CharField(max_length=50, default='0.0.0.0')
     school_group_id = models.CharField(max_length=10, default=None)
     sender_id = models.CharField(max_length=10, default='ClssUp')

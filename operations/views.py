@@ -800,7 +800,7 @@ def send_bulk_sms(request):
                     start_time = time.time()
                     for student in student_list:
                         parent = student.parent
-                        message = 'Dear Ms/Mr. ' + parent.parent_name + ', '
+                        message = 'Dear ' + parent.parent_name + ', '
                         message += message_body + ' Regards, ' + school.school_name
                         print(message)
                         mobile = parent.parent_mobile1
@@ -829,7 +829,7 @@ def send_bulk_sms(request):
                     for teacher in Teacher.objects.filter(school=school):
                         teacher_name = teacher.first_name + ' ' + teacher.last_name
                         print(teacher_name)
-                        message = 'Dear Ms/Mr. ' + teacher_name + ', '
+                        message = 'Dear ' + teacher_name + ', '
                         message += message_body + ' Regards, ' + school.school_name
                         print(message)
                         teacher_mobile = teacher.mobile

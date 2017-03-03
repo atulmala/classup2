@@ -566,7 +566,7 @@ def report_delay(request):
                 m1 = parent.parent_mobile1
                 m2 = parent.parent_mobile2
 
-                full_message = 'Dear Ms/Mr ' + parent.parent_name + ', Delay on Bus rout ' + rout
+                full_message = 'Dear ' + parent.parent_name + ', Delay on Bus rout ' + rout
                 full_message += ': ' + message + '. Regards, ' + teacher.first_name + ' ' + teacher.last_name
                 full_message += ', ' + school_name
 
