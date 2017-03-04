@@ -271,83 +271,94 @@ def forgot_password(request):
         user = data["user"]
         print (user)
 
-        should_reset = False
         try:
             u = User.objects.get(username=user)
-            # 10/02/17 - users sometimes (well, most times) press the forgot password button repeatedly several times.
-            # This causes multiple password generation and sms sending. User receives multiple password so, gets
-            # confused and multiple sms are sent which impacts our profitability. Hence we will not reset pssword,
-            # if it has been reset in last 15 minutes
-            try:
-                lpt = LastPasswordReset.objects.get(login_id=user)
-                last_reset_time = lpt.last_reset_time
-                current_time = datetime.datetime.now()
-                time_difference = current_time - last_reset_time
-                print('time_difference = ' + str(time_difference))
-                if time_difference > datetime.timedelta(minutes=15):
-                    print('time difference between last password reset and current attempt is more than 15 min.')
-                    should_reset = True
-                    lpt.last_reset_time = datetime.datetime.now()
 
+            # 04/03/17 - admin users should not be allowed to reset password from device. They should contact us
+            if u.first_name == 'admin' or u.first_name == 'Admin':
+                return_data["forgot_password"] = "fail"
+                error_message = 'For password reset of Admin user, please contact ClassUp Support'
+                print(error_message)
+                return_data['error_message'] = error_message
+                return JSONResponse(return_data, status=201)
+            else:
+                # 10/02/17 - users sometimes (well, most times) press the forgot password button repeatedly several times.
+                # This causes multiple password generation and sms sending. User receives multiple password so, gets
+                # confused and multiple sms are sent which impacts our profitability. Hence we will not reset pssword,
+                # if it has been reset in last 15 minutes
+                try:
+                    lpt = LastPasswordReset.objects.get(login_id=user)
+                    last_reset_time = lpt.last_reset_time
+                    current_time = datetime.datetime.now()
+                    time_difference = current_time - last_reset_time
+                    print('time_difference = ' + str(time_difference))
+                    if time_difference > datetime.timedelta(minutes=15):
+                        print('time difference between last password reset and current attempt is more than 15 min.')
+                        should_reset = True
+                        lpt.last_reset_time = datetime.datetime.now()
+
+                        try:
+                            lpt.save()
+                        except Exception as e:
+                            print('unable to reset the last password reset time for user ' + user)
+                            print('Exception 22 from authentication views.py %s (%s)' % (e.message, type(e)))
+                    else:
+                        print('the user ' + user + ' tried to reset password less than 15 min ago. Hence not resetting now')
+                        should_reset = False
+                        return_data["forgot_password"] = "successful"
+                except Exception as e:
+                    # this user is resetting the password for the first time
+                    should_reset = True
+                    print(user + ' is changing password for the first time')
+                    print('Exception 20 from authentication views.py = %s (%s)' % (e.message, type(e)))
+
+                    # create an entry for this user in the LastPasswordReset table
                     try:
+                        lpt = LastPasswordReset(login_id=user, last_reset_time=datetime.datetime.now())
                         lpt.save()
                     except Exception as e:
-                        print('unable to reset the last password reset time for user ' + user)
-                        print('Exception 22 from authentication views.py %s (%s)' % (e.message, type(e)))
-                else:
-                    print('the user ' + user + ' tried to reset password less than 15 min ago. Hence not resetting now')
-                    should_reset = False
+                        print('unable to create an entry in the LastPasswordReset table for user ' + user)
+                        print('Exception 21 from authentication views.py %s (%s)' % (e.message, type(e)))
+
+                if should_reset:
+                    new_password = User.objects.make_random_password(length=5, allowed_chars='1234567890')
+                    print (new_password)
+                    u.set_password(new_password)
+                    u.save()
+                    message_type = 'Forgot Password'
+                    message = 'Dear ' + u.first_name + ' ' + u.last_name + ', your new password is ' + new_password
+                    message += '. Regards, ClassUp Support'
+                    print(message)
+
+                    # check if user is teacher or parent
+                    if u.is_staff:
+                        # a teacher's user is created as his/her email id
+                        teacher = Teacher.objects.get(email=u.email)
+                        mobile = teacher.mobile
+                        school = teacher.school
+                    else:
+                        # a parent's mobile is their username
+                        mobile = user
+                        # we need to extract the school name this parent belong to. First get the parent
+                        p = Parent.objects.get(Q(parent_mobile1=mobile) | Q(parent_mobile2=mobile))
+                        # now get the children of this parent
+                        ward_list = Student.objects.filter(parent=p, active_status=True)
+                        # finally, get the school
+                        for student in ward_list:
+                            school = student.school
+
+                    sms.send_sms1(school, user, mobile, message, message_type)
+
                     return_data["forgot_password"] = "successful"
-            except Exception as e:
-                # this user is resetting the password for the first time
-                should_reset = True
-                print(user + ' is changing password for the firs time')
-                print('Exception 20 from authentication views.py = %s (%s)' % (e.message, type(e)))
-
-                # create an entry for this user in the LastPasswordReset table
-                try:
-                    lpt = LastPasswordReset(login_id=user, last_reset_time=datetime.datetime.now())
-                    lpt.save()
-                except Exception as e:
-                    print('unable to create an entry in the LastPasswordReset table for user ' + user)
-                    print('Exception 21 from authentication views.py %s (%s)' % (e.message, type(e)))
-
-            if should_reset:
-                new_password = User.objects.make_random_password(length=5, allowed_chars='1234567890')
-                print (new_password)
-                u.set_password(new_password)
-                u.save()
-                message_type = 'Forgot Password'
-                message = 'Dear ' + u.first_name + ' ' + u.last_name + ', your new password is ' + new_password
-                message += '. Regards, ClassUp Support'
-                print(message)
-
-                # check if user is teacher or parent
-                if u.is_staff:
-                    # a teacher's user is created as his/her email id
-                    teacher = Teacher.objects.get(email=u.email)
-                    mobile = teacher.mobile
-                    school = teacher.school
-                else:
-                    # a parent's mobile is their username
-                    mobile = user
-                    # we need to extract the school name this parent belong to. First get the parent
-                    p = Parent.objects.get(Q(parent_mobile1=mobile) | Q(parent_mobile2=mobile))
-                    # now get the children of this parent
-                    ward_list = Student.objects.filter(parent=p, active_status=True)
-                    # finally, get the school
-                    for student in ward_list:
-                        school = student.school
-
-                sms.send_sms1(school, user, mobile, message, message_type)
-
-                return_data["forgot_password"] = "successful"
-                return JSONResponse(return_data, status=200)
+                    return JSONResponse(return_data, status=200)
         except Exception as e:
             print('unable to reset password for ' + user)
             print('Exception 6 from authentication views.py = %s (%s)' % (e.message, type(e)))
             return_data["forgot_password"] = "Fail"
-            return JSONResponse(return_data, status=400)
+            error_message = 'User does not exist'
+            print(error_message)
+            return_data['error_message'] = error_message
+            return JSONResponse(return_data, status=201)
 
     return JSONResponse(return_data, status=200)
 
