@@ -15,7 +15,7 @@ from rest_framework.renderers import JSONRenderer
 from setup.models import UserSchoolMapping
 from teacher.models import Teacher
 from student.models import Student, Parent
-from .models import LoginRecord, LastPasswordReset
+from .models import LoginRecord, LastPasswordReset, user_device_mapping
 from operations import sms
 
 from .forms import ClassUpLoginForm
@@ -226,6 +226,79 @@ def auth_login_from_device1(request):
             return_data["login"] = "failed"
             print (return_data)
             return JSONResponse(return_data, status=200)
+
+
+@csrf_exempt
+def map_device_token(request):
+    print('inside map_device_token')
+    response_dict = {
+
+    }
+    if request.method == 'POST':
+        print('request body = ' + request.body)
+        data = json.loads(request.body)
+        print (data)
+        user = data['user']
+        print('user = ' + user)
+        device_token = data['device_token']
+        print('device_token = ' + device_token)
+        device_type = data['device_type']
+        print('device_type = ' + device_type)
+
+        try:
+            # the user can be either a teacher or a parent. Look into parent first
+            p = Parent.objects.get(parent_mobile1=user)
+            the_mobile = p.parent_mobile1
+            response_dict['user_type'] = 'Parent'
+        except Exception as e:
+            print('Exception 100 from authentication views.py = %s (%s)' % (e.message, type(e)))
+            print('the user is not a parent. Can be a teacher or admin')
+            try:
+                t = Teacher.objects.get(email=user)
+                the_mobile = t.mobile
+                response_dict['user_type'] = 'Teacher/Admin'
+            except Exception as e:
+                print('Exception 110 from authentication views.py = %s (%s)' % (e.message, type(e)))
+                print('no teacher or parent could be mapped to the user ' + user)
+                action_performed = 'Could not create user device mapping for ' + user
+                print (action_performed)
+                response_dict['action_performed'] = action_performed
+                response_dict['user_type'] = 'Undetermined'
+                response_dict['status'] = 'failed'
+                return JSONResponse(response_dict, status=201)
+        try:
+            u = User.objects.get(username=user)
+            mapping = user_device_mapping.objects.get(user=u)
+            mapping.mobile_number = the_mobile
+            mapping.token_id = device_token
+            mapping.device_type = device_type
+            mapping.save()
+            response_dict['status'] = 'success'
+            action_performed = 'Existing Mapping Updated for user ' + user
+            print(action_performed)
+            response_dict['action_performed'] = action_performed
+            return JSONResponse(response_dict, status=200)
+        except Exception as e:
+            print('Exception 120 from authentication views.py = %s (%s)' % (e.message , type(e)))
+            print('user device mapping does not exist for ' + user + '. Hence Creating')
+            try:
+                mapping = user_device_mapping(user=u)
+                mapping.mobile_number = the_mobile
+                mapping.token_id = device_token
+                mapping.device_type = device_type
+                mapping.save()
+                action_performed = 'Created Mapping for user ' + user
+                print(action_performed)
+                response_dict['action_performed'] = action_performed
+                response_dict['status'] = 'success'
+                return JSONResponse(response_dict, status=200)
+            except Exception as e:
+                print('Exception 130 from authentication views.py = %s (%s)' % (e.message, type(e)))
+                action_performed = 'Could not create mapping for user ' + user
+                print (action_performed)
+                response_dict['action_performed'] = action_performed
+                response_dict['status'] = 'failed'
+                return JSONResponse(response_dict, status=201)
 
 
 @csrf_exempt

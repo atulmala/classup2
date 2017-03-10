@@ -13,4 +13,5 @@ urlpatterns = patterns('',
     url(r'auth/change_password/$', views.change_password, name="change_password"),
     url(r'auth/forgot_password/$', views.forgot_password, name='forgot_password'),
     url(r'auth/check_subscription/(?P<student_id>\w+)/$', views.check_subscription, name='check_subscription'),
+    url(r'auth/map_device_token/$', views.map_device_token, name='map_device_token'),
 )

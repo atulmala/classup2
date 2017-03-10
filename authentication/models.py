@@ -1,4 +1,6 @@
 from datetime import datetime
+
+from django.contrib.auth.models import User
 from django.db import models
 
 
@@ -18,3 +20,10 @@ class LoginRecord(models.Model):
 class LastPasswordReset(models.Model):
     login_id = models.CharField(max_length=100)
     last_reset_time = models.DateTimeField()
+
+
+class user_device_mapping(models.Model):
+    user = models.ForeignKey(User)
+    mobile_number = models.CharField(max_length=20)
+    token_id = models.CharField(max_length=200)
+    device_type = models.CharField(max_length=20)

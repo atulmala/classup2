@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import LoginRecord, LastPasswordReset
+from .models import LoginRecord, LastPasswordReset, user_device_mapping
 
 # Register your models here.
 
@@ -18,3 +18,9 @@ class LastPasswordResetAdmin(admin.ModelAdmin):
     search_fields = ('login_id', 'last_reset_time',)
 
 admin.site.register(LastPasswordReset, LastPasswordResetAdmin)
+
+
+class UserDeviceMappingAdmin(admin.ModelAdmin):
+    list_display = ('user', 'mobile_number', 'token_id', 'device_type',)
+
+admin.site.register(user_device_mapping, UserDeviceMappingAdmin)
