@@ -248,27 +248,12 @@ def map_device_token(request):
         device_type = data['device_type']
         print('device_type = ' + device_type)
 
-        # create the fcm device
-        try:
-            fcm_device, created = GCMDevice.objects.get_or_create(registration_id=device_token)
-            if created:
-                print('device create')
-                fcm_device.send_message('Welcome to ClassUp')
-            else:
-                print('device already existed')
-                fcm_device.send_message('Welcome to ClassUp')
-        except urllib2.HTTPError, err:
-            print('Exception 150 from authentication views.py %s (%s)' % (err.message, type(err)))
-            print err.code
-        except Exception as e:
-            print('Exception 140 from authentication views.py %s (%s)' % (e.message, type(e)))
-            print('device creation failed')
-
         # create the device user mapping
         try:
             # the user can be either a teacher or a parent. Look into parent first
             p = Parent.objects.get(parent_mobile1=user)
             the_mobile = p.parent_mobile1
+            user_name = p.parent_name
             response_dict['user_type'] = 'Parent'
         except Exception as e:
             print('Exception 100 from authentication views.py = %s (%s)' % (e.message, type(e)))
@@ -276,6 +261,7 @@ def map_device_token(request):
             try:
                 t = Teacher.objects.get(email=user)
                 the_mobile = t.mobile
+                user_name = t.first_name
                 response_dict['user_type'] = 'Teacher/Admin'
             except Exception as e:
                 print('Exception 110 from authentication views.py = %s (%s)' % (e.message, type(e)))
@@ -288,6 +274,24 @@ def map_device_token(request):
                 return JSONResponse(response_dict, status=201)
         try:
             u = User.objects.get(username=user)
+            # create the fcm device
+            try:
+                fcm_device, created = GCMDevice.objects.get_or_create(name=user_name,
+                                                                      registration_id=device_token, user=u)
+                if created:
+                    print('device create')
+                    fcm_device.send_message('Welcome to ClassUp')
+                else:
+                    print('device already existed')
+                    fcm_device.send_message('Welcome to ClassUp')
+            except urllib2.HTTPError, err:
+                print('Exception 150 from authentication views.py %s (%s)' % (err.message, type(err)))
+                print err.code
+            except Exception as e:
+                print('Exception 140 from authentication views.py %s (%s)' % (e.message, type(e)))
+                print('device creation failed')
+
+            # now, create the mapping
             mapping = user_device_mapping.objects.get(user=u)
             mapping.mobile_number = the_mobile
             mapping.token_id = device_token
