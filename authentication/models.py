@@ -25,5 +25,5 @@ class LastPasswordReset(models.Model):
 class user_device_mapping(models.Model):
     user = models.ForeignKey(User)
     mobile_number = models.CharField(max_length=20)
-    token_id = models.CharField(max_length=200)
+    token_id = models.CharField(max_length=500)
     device_type = models.CharField(max_length=20)

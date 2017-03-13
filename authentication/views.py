@@ -1,5 +1,7 @@
 import json
 import datetime
+import urllib2
+
 
 from ipware.ip import get_ip
 
@@ -11,6 +13,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework.renderers import JSONRenderer
+from push_notifications.models import GCMDevice
 
 from setup.models import UserSchoolMapping
 from teacher.models import Teacher
@@ -245,6 +248,23 @@ def map_device_token(request):
         device_type = data['device_type']
         print('device_type = ' + device_type)
 
+        # create the fcm device
+        try:
+            fcm_device, created = GCMDevice.objects.get_or_create(registration_id=device_token)
+            if created:
+                print('device create')
+                fcm_device.send_message('Welcome to ClassUp')
+            else:
+                print('device already existed')
+                fcm_device.send_message('Welcome to ClassUp')
+        except urllib2.HTTPError, err:
+            print('Exception 150 from authentication views.py %s (%s)' % (err.message, type(err)))
+            print err.code
+        except Exception as e:
+            print('Exception 140 from authentication views.py %s (%s)' % (e.message, type(e)))
+            print('device creation failed')
+
+        # create the device user mapping
         try:
             # the user can be either a teacher or a parent. Look into parent first
             p = Parent.objects.get(parent_mobile1=user)
