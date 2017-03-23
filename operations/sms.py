@@ -47,7 +47,7 @@ def send_sms1(school, sender, mobile, message, message_type):
             try:
                 # 07/02/17 - we will be sending bulk sms through separate batch job as it is time consuming
                 message_id = 'Not Available'
-                if message_type != 'Bulk SMS (Web Interface)' and message_type != 'Bulk SMS (Device)':
+                if message_type != 'Bulk SMS (Web Interface)':
                     # send the message
                     print ('sending to ' + mobile)
 
@@ -57,7 +57,8 @@ def send_sms1(school, sender, mobile, message, message_type):
                     message_id = j['message']
                     print('status (job_id) = ' + message_id)
                 else:
-                    print('message type was Bulk SMS. Batch process to send those SMS will have to be run!')
+                    print('message type was Bulk SMS (Web Interface). '
+                          'Batch process to send those SMS will have to be run!')
 
                 # first, determine the recepient & receipient type
                 recepient_type = 'Undetermined'

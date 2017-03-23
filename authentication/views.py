@@ -14,6 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework.renderers import JSONRenderer
 from push_notifications.models import GCMDevice
+from push_notifications.gcm import gcm_send_message
 
 from setup.models import UserSchoolMapping
 from teacher.models import Teacher
@@ -279,11 +280,15 @@ def map_device_token(request):
                 fcm_device, created = GCMDevice.objects.get_or_create(name=user_name,
                                                                       registration_id=device_token, user=u)
                 if created:
-                    print('device create')
-                    fcm_device.send_message('Welcome to ClassUp')
+                    print('device created')
                 else:
                     print('device already existed')
+                try:
                     fcm_device.send_message('Welcome to ClassUp')
+                    gcm_send_message(device_token, {'body': 'welcome to classup'})
+                except Exception as e:
+                    print('Exception 160 from authentication views.py %s (%s)' % (e.message , type(e)))
+                    print('failed to send welcome message to ' + user_name)
             except urllib2.HTTPError, err:
                 print('Exception 150 from authentication views.py %s (%s)' % (err.message, type(err)))
                 print err.code
