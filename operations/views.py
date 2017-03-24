@@ -762,8 +762,8 @@ def send_bulk_sms(request):
                 return render(request, 'classup/bulk_sms.html', context_dict)
 
             # 17/02/17 we are restricting the lenght of message to 140 char. Salutations will be added automatically
-            if len(message_body) > 140:
-                error = 'Message to long (' + str(len(message_body)) + ' characters). Please restrict it to 140 chars'
+            if len(message_body) > 250:
+                error = 'Message to long (' + str(len(message_body)) + ' characters). Please restrict it to 250 chars'
                 form.errors['__all__'] = form.error_class([error])
                 print (error)
                 return render(request, 'classup/bulk_sms.html', context_dict)

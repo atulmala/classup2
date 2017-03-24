@@ -5,10 +5,14 @@ import urllib2
 import json
 
 from django.db.models import Q
-from setup.models import School, Configurations
+from authentication.models import user_device_mapping
+from push_notifications.models import GCMDevice
+from setup.models import Configurations
 from teacher.models import Teacher
 from student.models import Parent
 from .models import SMSRecord
+
+from push_notifications.gcm import gcm_send_message
 
 def send_sms1(school, sender, mobile, message, message_type):
     # 25/12/2016 - added field to check whether sms sending is enabled for this school. Check that first
@@ -56,6 +60,23 @@ def send_sms1(school, sender, mobile, message, message_type):
                     j = json.loads(response.read())
                     message_id = j['message']
                     print('status (job_id) = ' + message_id)
+
+                    # 23/03/17 send notification also if we have the device token of this mobile number
+                    try:
+                        device_token = user_device_mapping.objects.get(mobile_number=mobile)
+                        print('device token exist for ' + str(mobile))
+                        print('now trying to send push notification to ' + str(mobile))
+                        try:
+                            fcm_device = GCMDevice.objects.get(registration_id=device_token)
+                            fcm_device.send_message(message)
+                        except Exception as e:
+                            print('Exception 170 from sms.py  %s (%s)' % (e.message, type(e)))
+                            print('failed to push notification via fcm_device.send() to ' + str(mobile))
+                        gcm_send_message(device_token, {'body': message})
+                    except Exception as e:
+                        print('Exception 160 from sms.py  %s (%s)' % (e.message, type(e)))
+                        print('failed to push notification to ' + str(mobile))
+
                 else:
                     print('message type was Bulk SMS (Web Interface). '
                           'Batch process to send those SMS will have to be run!')
@@ -169,3 +190,4 @@ def send_sms1(school, sender, mobile, message, message_type):
                 print ('Exception2 from sms.py = %s (%s)' % (e.message, type(e)))
     else:
         print ('Send SMS is turned off for this school: ' + school.school_name + ', ' + school.school_address)
+
