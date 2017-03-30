@@ -101,6 +101,7 @@ def check_reg_no(request):
                 print('No conflict of registration number and roll number ')
                 response_dict['status'] = 'success'
                 return JSONResponse(response_dict, status=200)
+    return JSONResponse(response_dict, status=200)
 
 
 @csrf_exempt
