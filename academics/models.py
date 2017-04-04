@@ -118,3 +118,15 @@ class WorkingDays(models.Model):
 
     def __unicode__(self):
         return str(self.year) + '/' + str(self.month)
+
+
+class HomeWork(models.Model):
+    teacher = models.ForeignKey(Teacher)
+    the_class = models.ForeignKey(Class)
+    section = models.ForeignKey(Section)
+    subject = models.ForeignKey(Subject)
+    creation_date = models.DateField
+    due_date = models.DateField()
+    notes = models.CharField(max_length=200)
+    location = models.FileField(upload_to='homework/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
