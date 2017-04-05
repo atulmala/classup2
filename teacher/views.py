@@ -216,14 +216,14 @@ def add_teacher(request):
                     print ('Initial password = ' + password)
                     user = None
                     try:
-                        user = User.objects.create_user(email, email, password)
-                        user.first_name = first_name
-                        user.last_name = last_name
-                        user.is_staff = True
-                        user.save()
+                        u = User.objects.create_user(email, email, password)
+                        u.first_name = first_name
+                        u.last_name = last_name
+                        u.is_staff = True
+                        u.save()
                         print ('Successfully created user for ' + first_name + ' ' + last_name)
 
-                        mapping = UserSchoolMapping(user=user, school=school)
+                        mapping = UserSchoolMapping(user=u, school=school)
                         mapping.save()
                     except Exception as e:
                         print ('Exception 50 from teacher views.py = %s (%s)' % (e.message, type(e)))
@@ -232,7 +232,7 @@ def add_teacher(request):
                     # make this user part of the Teachers group
                     try:
                         group = Group.objects.get(name='teachers')
-                        user.groups.add(group)
+                        u.groups.add(group)
                         print ('Successfully added ' + first_name + ' ' + last_name + ' to the Teachers group')
                     except Exception as e:
                         print ('Exception 60 from teacher views.py = %s (%s)' % (e.message, type(e)))
