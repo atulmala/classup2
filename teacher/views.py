@@ -214,7 +214,7 @@ def add_teacher(request):
                     password = User.objects.make_random_password(length=5, allowed_chars='1234567890')
 
                     print ('Initial password = ' + password)
-                    user = None
+                    u = None
                     try:
                         u = User.objects.create_user(email, email, password)
                         u.first_name = first_name
