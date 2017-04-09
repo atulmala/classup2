@@ -173,7 +173,9 @@ def send_sms1(school, sender, mobile, message, message_type):
                                     recipient_name=recepient_name, recipient_type=recepient_type,
                                    recipient_number=mobile, message=message, message_type=message_type,
                                     outcome=message_id)
-                    if message_type == 'Bulk SMS (Web Interface)' or message_type == 'Bulk SMS (Device)':
+                    # 09/04/17 when bulk sms are sent from device, they are fired instantly. The batch job need not to be run
+                    #if message_type == 'Bulk SMS (Web Interface)' or message_type == 'Bulk SMS (Device)':
+                    if message_type == 'Bulk SMS (Web Interface)':
                         print('api called status has been set to false. Can be turned true only by running batch job')
                         sr.api_called = False
                     else:

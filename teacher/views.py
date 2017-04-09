@@ -244,7 +244,7 @@ def add_teacher(request):
                     iOS_link = configuration.app_store_link
 
                     # send login id and password to teacher via sms
-                    message = 'Dear ' + last_name + ' ' + last_name + ', Welcome to ClassUp.'
+                    message = 'Dear ' + first_name + ' ' + last_name + ', Welcome to ClassUp.'
                     message += ' Your user id is: ' + email + ', and password is: ' + password + '. '
                     message += 'Please install ClassUp from these links. Android: '
                     message += android_link
