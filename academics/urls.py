@@ -30,8 +30,6 @@ urlpatterns = [
 
     url(r'^submit_marks/(?P<school_id>\w+)/$', views.submit_marks, name='submit_marks'),
 
-
-
     url(r'get_working_days1/', views.get_working_days1, name='get_working_days1'),
 
     url(r'get_attendance_summary/', views.get_attendance_summary, name='get_attendance_summary'),
@@ -41,6 +39,8 @@ urlpatterns = [
     url(r'get_test_type/(?P<test_id>\w+)/$', views.TestType.as_view()),
 
     url(r'^get_exam_list/(?P<student_id>[\w.@+-]+)/$', views.ExamList.as_view(), name='get_exam_list'),
+
+    url(r'^create_hw/', views.create_hw, name='create_hw'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

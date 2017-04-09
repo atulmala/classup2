@@ -125,8 +125,21 @@ class HomeWork(models.Model):
     the_class = models.ForeignKey(Class)
     section = models.ForeignKey(Section)
     subject = models.ForeignKey(Subject)
-    creation_date = models.DateField
+    creation_date = models.DateTimeField(null=True, auto_now_add=True)
     due_date = models.DateField()
     notes = models.CharField(max_length=200)
     location = models.FileField(upload_to='homework/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
+
+
+class HW(models.Model):
+    teacher = models.CharField(max_length=50)
+    the_class = models.CharField(max_length=10)
+    section = models.CharField(max_length=10)
+    subject = models.CharField(max_length=100)
+    creation_date = models.DateTimeField(null=True, auto_now_add=True)
+    due_date = models.DateField()
+    notes = models.CharField(max_length=200)
+    location = models.FileField(upload_to='homework/')
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+

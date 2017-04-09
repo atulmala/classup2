@@ -6,6 +6,7 @@ import json
 import datetime
 from datetime import date
 
+from django.core.files.base import ContentFile
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.test import RequestFactory
@@ -19,7 +20,7 @@ from attendance.models import Attendance, AttendanceTaken
 from teacher.models import Teacher
 from student.models import Student
 from setup.models import Configurations, School
-from .models import Class, Section, Subject, ClassTest, TestResults, Exam
+from .models import Class, Section, Subject, ClassTest, TestResults, Exam, HW
 from .serializers import ClassSerializer, SectionSerializer, \
     SubjectSerializer, TestSerializer, ClassSectionForTestSerializer, \
     TestMarksSerializer, TestTypeSerializer, ExamSerializer
@@ -127,6 +128,59 @@ class MarksListForTest(generics.ListCreateAPIView):
 
         q = TestResults.objects.filter(class_test=t).order_by('roll_no')
         return q
+
+@csrf_exempt
+def create_hw(request):
+    context_dict = {
+    }
+    context_dict['header'] = 'Create HW'
+    if request.method == 'POST':
+        try:
+
+            print('create hw process started')
+            school_id = request.POST.get('school_id')
+            school = School.objects.get(id=school_id)
+            teacher = request.POST.get('teacher')
+            t = Teacher.objects.get(email=teacher)
+            print (t)
+            print(teacher)
+            the_class = request.POST.get('class')
+            print(the_class)
+            c = Class.objects.get(school=school, standard=the_class)
+            print (c)
+            section = request.POST.get('section')
+            print(section)
+            s = Section.objects.get(school=school, section=section)
+            print (s)
+            subject = request.POST.get('subject')
+            print(subject)
+            sub = Subject.objects.get(school=school, subject_name=subject)
+            print (sub)
+
+            d = request.POST.get('d')
+            m = request.POST.get('m')
+            y = request.POST.get('y')
+            the_date = date(int(y), int(m), int(d))
+            print (the_date)
+
+            image_name = request.POST.get('image_name')
+            print(image_name)
+            hw_image = request.POST.get('hw_image')
+            print(hw_image)
+
+            hw_image_file = ContentFile(hw_image)
+            hw_image_file.n
+
+
+
+        except Exception as e:
+            print('failed to get the POST data for create hw')
+            print('Exception 300 from academics views.py = %s (%s)' % (e.message, type(e)))
+            context_dict['status'] = 'failed'
+            return JSONResponse(context_dict, status=201)
+    context_dict['status'] = 'success'
+    return JSONResponse(context_dict, status=200)
+
 
 
 # we need to exempt this view from csrf verification. Will be updated in next version when
@@ -697,6 +751,7 @@ def delete_test(request, test_id):
             print('Unable to delete test with id=' + test_id)
             print ('Exception10 from academics views.py = %s (%s)' % (e.message, type(e)))
             return JSONResponse(response, status=404)
+
 
 
 
