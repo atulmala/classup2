@@ -2,7 +2,7 @@ __author__ = 'atulgupta'
 
 from rest_framework import serializers
 
-from .models import Class, Section, Subject, ClassTest, TestResults, WorkingDays, Exam, HomeWork
+from .models import Class, Section, Subject, ClassTest, TestResults, WorkingDays, Exam, HomeWork, HW
 
 
 class ClassSerializer(serializers.ModelSerializer):
@@ -71,4 +71,10 @@ class WorkingDaysSerializer(serializers.ModelSerializer):
 class HomeWorkSerializer(serializers.ModelSerializer):
     class Meta:
         model = HomeWork
+        fields = ('id', 'teacher', 'the_class', 'section', 'subject', 'due_date', 'notes')
+
+
+class HWSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=HW
         fields = ('id', 'teacher', 'the_class', 'section', 'subject', 'due_date', 'notes')

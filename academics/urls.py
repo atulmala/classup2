@@ -41,6 +41,8 @@ urlpatterns = [
     url(r'^get_exam_list/(?P<student_id>[\w.@+-]+)/$', views.ExamList.as_view(), name='get_exam_list'),
 
     url(r'^create_hw/', views.create_hw, name='create_hw'),
+
+    url(r'^retrieve_hw/(?P<teacher>[\w.@+-]+)/$', views.HWList.as_view(), name='retrieve_hw'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

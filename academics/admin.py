@@ -117,6 +117,17 @@ class ExamAdmin(admin.ModelAdmin):
 admin.site.register(Exam, ExamAdmin)
 
 
+class HWAdmin(admin.ModelAdmin):
+    def get_school_name(self, obj):
+        return obj.school
+    get_school_name.short_description = 'School'
+
+    list_display = ('school', 'teacher', 'the_class', 'section', 'subject',
+                    'due_date', 'creation_date', 'uploaded_at', 'location',)
+
+admin.site.register(HW, HWAdmin)
+
+
 
 
 

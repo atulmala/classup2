@@ -23,7 +23,7 @@ from setup.models import Configurations, School
 from .models import Class, Section, Subject, ClassTest, TestResults, Exam, HW
 from .serializers import ClassSerializer, SectionSerializer, \
     SubjectSerializer, TestSerializer, ClassSectionForTestSerializer, \
-    TestMarksSerializer, TestTypeSerializer, ExamSerializer
+    TestMarksSerializer, TestTypeSerializer, ExamSerializer, HWSerializer
 
 from operations import sms
 
@@ -129,6 +129,14 @@ class MarksListForTest(generics.ListCreateAPIView):
         q = TestResults.objects.filter(class_test=t).order_by('roll_no')
         return q
 
+class HWList(generics.ListCreateAPIView):
+    serializer_class = HWSerializer
+
+    def get_queryset(self):
+        teacher = self.kwargs['teacher']
+        q = HW.objects.filter(teacher=teacher).order_by('due_date')
+        return q
+
 @csrf_exempt
 def create_hw(request):
     context_dict = {
@@ -166,12 +174,31 @@ def create_hw(request):
             image_name = request.POST.get('image_name')
             print(image_name)
             hw_image = request.POST.get('hw_image')
-            print(hw_image)
+            #print(hw_image)
 
-            hw_image_file = ContentFile(hw_image)
-            hw_image_file.n
+            hw_image_file = ContentFile(hw_image, name=image_name)
+            print(hw_image_file)
 
+            # save the home work
+            hw = HW()
+            hw.location = hw_image_file
+            hw.school = school
+            hw.teacher = teacher
+            hw.the_class = the_class
+            hw.section = section
+            hw.subject = subject
+            hw.due_date = the_date
 
+            try:
+                hw.save()
+                context_dict['status'] = 'success'
+                print(hw.location)
+                return JSONResponse(context_dict, status=200)
+            except Exception as e:
+                print('Exception 310 from academics views.py = %s (%s)' % (e.message, type(e)))
+                print('error while trying to save the homework uploaded by ' + teacher)
+                context_dict['status'] = 'failed'
+                return JSONResponse(context_dict, status=201)
 
         except Exception as e:
             print('failed to get the POST data for create hw')
@@ -180,7 +207,6 @@ def create_hw(request):
             return JSONResponse(context_dict, status=201)
     context_dict['status'] = 'success'
     return JSONResponse(context_dict, status=200)
-
 
 
 # we need to exempt this view from csrf verification. Will be updated in next version when
