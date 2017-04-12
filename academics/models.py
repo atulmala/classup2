@@ -145,3 +145,9 @@ class HW(models.Model):
     location = models.ImageField(upload_to='homework/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
+    def image_tag(self):
+        return u'<img src="/homework/%s" width="150" height="150" />' % (self.image)
+
+    image_tag.short_description = 'Image'
+    image_tag.allow_tags = True
+

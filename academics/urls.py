@@ -43,6 +43,8 @@ urlpatterns = [
     url(r'^create_hw/', views.create_hw, name='create_hw'),
 
     url(r'^retrieve_hw/(?P<teacher>[\w.@+-]+)/$', views.HWList.as_view(), name='retrieve_hw'),
+
+    url(r'^get_hw_image/(?P<hw_id>\w+)/$', views.get_hw_image, name='get_hw_image'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

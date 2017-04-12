@@ -2,18 +2,20 @@ from django.shortcuts import render
 
 # Create your views here.
 
+import os
+import mimetypes
 import json
 import datetime
 from datetime import date
 
 from django.core.files.base import ContentFile
+from django.core.servers.basehttp import FileWrapper
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.test import RequestFactory
 
 from authentication.views import JSONResponse
 from rest_framework import generics
-from threading import Thread
 import Queue
 
 from attendance.models import Attendance, AttendanceTaken
@@ -26,6 +28,9 @@ from .serializers import ClassSerializer, SectionSerializer, \
     TestMarksSerializer, TestTypeSerializer, ExamSerializer, HWSerializer
 
 from operations import sms
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 class ClassList(generics.ListCreateAPIView):
@@ -137,6 +142,36 @@ class HWList(generics.ListCreateAPIView):
         q = HW.objects.filter(teacher=teacher).order_by('due_date')
         return q
 
+
+def get_hw_image(request, hw_id):
+    context_dict =  {
+
+    }
+    context_dict['header'] = 'Send HW Image'
+    if request.method == 'GET':
+        try:
+            hw = HW.objects.get(pk=hw_id)
+            location = hw.location
+            print('location = %s' % location)
+            #path = os.path.join(MEDIA_ROOT, location)
+            path = MEDIA_ROOT + '/' + str(location)
+            print('filepath = %s' % path)
+            wrapper = FileWrapper(open(path))
+            content_type = mimetypes.guess_type(path)[0]
+            print('content_type %s' % content_type)
+            response = HttpResponse(wrapper, content_type=content_type)
+            print(response)
+            response['Content-Disposition'] = "attachment; filename=%s" % path
+            return response
+        except Exception as e:
+            print('Exception 330 from academics views.py %s %s' % (e.message, type(e)))
+            response = HttpResponse(status=201)
+            return response
+
+
+
+
+
 @csrf_exempt
 def create_hw(request):
     context_dict = {
@@ -144,7 +179,6 @@ def create_hw(request):
     context_dict['header'] = 'Create HW'
     if request.method == 'POST':
         try:
-
             print('create hw process started')
             school_id = request.POST.get('school_id')
             school = School.objects.get(id=school_id)
