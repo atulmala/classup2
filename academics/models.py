@@ -142,6 +142,6 @@ class HW(models.Model):
     creation_date = models.DateTimeField(null=True, auto_now_add=True)
     due_date = models.DateField()
     notes = models.CharField(max_length=200, default='No comments')
-    location = models.FileField(upload_to='homework/')
+    location = models.ImageField(upload_to='homework/')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
