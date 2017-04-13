@@ -5,6 +5,7 @@ from django.shortcuts import render
 import os
 import mimetypes
 import json
+import base64
 import datetime
 from datetime import date
 
@@ -160,17 +161,13 @@ def get_hw_image(request, hw_id):
             content_type = mimetypes.guess_type(path)[0]
             print('content_type %s' % content_type)
             response = HttpResponse(wrapper, content_type=content_type)
-            print(response)
+            #print(response)
             response['Content-Disposition'] = "attachment; filename=%s" % path
             return response
         except Exception as e:
             print('Exception 330 from academics views.py %s %s' % (e.message, type(e)))
             response = HttpResponse(status=201)
             return response
-
-
-
-
 
 @csrf_exempt
 def create_hw(request):
@@ -210,8 +207,9 @@ def create_hw(request):
             hw_image = request.POST.get('hw_image')
             #print(hw_image)
 
-            hw_image_file = ContentFile(hw_image, name=image_name)
+            hw_image_file = ContentFile(base64.b64decode(hw_image), name=image_name)
             print(hw_image_file)
+            print(base64.b64decode(hw_image))
 
             # save the home work
             hw = HW()
