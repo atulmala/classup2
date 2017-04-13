@@ -208,8 +208,8 @@ def create_hw(request):
             #print(hw_image)
 
             hw_image_file = ContentFile(base64.b64decode(hw_image), name=image_name)
-            print(hw_image_file)
-            print(base64.b64decode(hw_image))
+            #print(hw_image_file)
+            #print(base64.b64decode(hw_image))
 
             # save the home work
             hw = HW()
