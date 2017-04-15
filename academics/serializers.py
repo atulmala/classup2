@@ -77,4 +77,4 @@ class HomeWorkSerializer(serializers.ModelSerializer):
 class HWSerializer(serializers.ModelSerializer):
     class Meta:
         model=HW
-        fields = ('id', 'teacher', 'the_class', 'section', 'subject', 'due_date', 'notes')
+        fields = ('id', 'teacher', 'the_class', 'section', 'subject', 'due_date', 'notes', 'location',)
