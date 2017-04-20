@@ -828,5 +828,23 @@ def delete_test(request, test_id):
             return JSONResponse(response, status=404)
 
 
+@csrf_exempt
+def delete_hw(request, hw_id):
+    response = {
+
+    }
+    if request.method == 'DELETE':
+        try:
+            t = HW.objects.get(pk=int(hw_id))
+            t.delete()
+            response["status"] = "success"
+            return JSONResponse(response, status=200)
+        except Exception as e:
+            response["status"] = "failed"
+            print('Unable to delete test with id=' + hw_id)
+            print ('Exception 10 from academics views.py = %s (%s)' % (e.message, type(e)))
+            return JSONResponse(response, status=404)
+
+
 
 
