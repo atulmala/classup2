@@ -140,9 +140,25 @@ class HWList(generics.ListCreateAPIView):
     serializer_class = HWSerializer
 
     def get_queryset(self):
-        teacher = self.kwargs['teacher']
-        q = HW.objects.filter(teacher=teacher).order_by('due_date')
-        return q
+        user = self.kwargs['user']
+
+        try:
+            t = Teacher.objects.get(email=user)
+            q = HW.objects.filter(teacher=t.email).order_by('due_date')
+            return q
+        except Exception as e:
+            print('Exception 350 from academics view.py %s %s' % (e.message, type(e)))
+            print('We need to retrieve the HW list for student')
+            try:
+                student = Student.objects.get(pk=user)
+                the_class = student.current_class
+                section = student.current_section
+                q = HW.objects.filter(the_class=the_class.standard, section=section.section)
+                return q
+            except Exception as e:
+                print ('Exception 360 from academics views.py %s %s' % (e.message, type(e)))
+                print('could not retrieve student with id %s' % user)
+
 
 
 def get_hw_image(request, hw_id):
