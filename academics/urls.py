@@ -34,9 +34,9 @@ urlpatterns = [
 
     url(r'get_attendance_summary/', views.get_attendance_summary, name='get_attendance_summary'),
 
-    url(r'delete_test/>\w+)/(?P<test_id$', views.delete_test, name='delete_test'),
+    url(r'delete_test/>\w+)/(?P<test_id>\w+)/$', views.delete_test, name='delete_test'),
 
-    url(r'delete_hw/(?P<test_id', views.delete_hw, name='delete_hw'),
+    url(r'delete_hw/(?P<hw_id>\w+)$', views.delete_hw, name='delete_hw'),
 
     url(r'get_test_type/(?P<test_id>\w+)/$', views.TestType.as_view()),
 

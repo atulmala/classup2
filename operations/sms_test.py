@@ -3,7 +3,7 @@ import urllib2
 import json
 
 
-mobile = '9873011186'
+mobile = '7678660426'
 message = "your ward was absent & you need to send an application"
 sender_id = 'ClssUp'
 
@@ -20,16 +20,16 @@ print('url5 = %s' % url5)
 
 try:
     print ('sending to ' + mobile)
-
-    # now try to get the output through api
-    try:
-        response3 = urllib2.urlopen(url5)
-        print('response3 = ')
-        print(response3.read())
-    except Exception as e:
-        print('unable to send the sms. The url was: ')
-        print(url5)
-        print ('Exception2 from sms.py = %s (%s)' % (e.message, type(e)))
+    for n in range(0, 25):
+        # now try to get the output through api
+        try:
+            response3 = urllib2.urlopen(url5)
+            print('response3 = ')
+            print(response3.read())
+        except Exception as e:
+            print('unable to send the sms. The url was: ')
+            print(url5)
+            print ('Exception2 from sms.py = %s (%s)' % (e.message, type(e)))
 except Exception as e:
     print('unable to send sms. The url was: ')
     print(url5)
