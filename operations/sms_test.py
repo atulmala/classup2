@@ -3,60 +3,34 @@ import urllib2
 import json
 
 
-mobile = '9871093296'
-message = 'testing for delivery confirmation see whether & character is delivered or not'
-sender_id = 'MDLSCL'
-authkey = '138436Aff1HY1Vurw588743cf'
-rout = 'default'
-values = {
-    'authkey': authkey,
-    'mobiles': mobile,
-    'message': message,
-    'sender': sender_id,
-    'rout': rout,
-    'response': 'json',
-    'flash': 1
-}
-url3 = 'https://control.msg91.com/api/sendhttp.php'
-print(url3)
+mobile = '9873011186'
+message = "your ward was absent & you need to send an application"
+sender_id = 'ClssUp'
 
+print(message)
+m1 = message.replace(" ", "+")
+print(m1)
+m2 = m1.replace("&", "%26")
+print(m2)
+url5 = 'http://softsms.in/app/smsapi/index.php?key=58fc1def26489&type=Text'
+url5 +=  '&contacts=%s' % mobile
+url5 += '&senderid=ClssUp&msg=%s' % m2
+
+print('url5 = %s' % url5)
 
 try:
     print ('sending to ' + mobile)
-    postdata = urllib.urlencode(values)
-    req = urllib2.Request(url3, postdata)
-    # job_id = '33922227'
-    response = urllib2.urlopen(req)
-    #print(response.read())
-    j = json.loads(response.read())
-    message_id = j['message']
-    print(message_id)
 
     # now try to get the output through api
     try:
-        url4 = 'https://control.msg91.com/api/getDlrReport.php?authkey='
-        url4 += authkey
-        url4 += '&reqId='
-        url4 += message_id
-        print(url4)
-        response2 = urllib2.urlopen(url4)
-        j1 = json.loads(response2.read())
-        print j1
+        response3 = urllib2.urlopen(url5)
+        print('response3 = ')
+        print(response3.read())
     except Exception as e:
-        print('unable to get the staus of sms delivery through api. The url was: ')
-        print(url4)
-        print ('Exception1 from sms.py = %s (%s)' % (e.message, type(e)))
-
-    # get delivery report through webhooks
-    try:
-        url5 = 'https://www.classupclient.com/operations/webhooks'
-        #response3 = urllib2.urlopen(url5)
-        #print(response3.read())
-    except Exception as e:
-        print('unable to get the status using webhook. The url was: ')
+        print('unable to send the sms. The url was: ')
         print(url5)
         print ('Exception2 from sms.py = %s (%s)' % (e.message, type(e)))
 except Exception as e:
     print('unable to send sms. The url was: ')
-    print(url3)
+    print(url5)
     print ('Exception3 from sms.py = %s (%s)' % (e.message, type(e)))

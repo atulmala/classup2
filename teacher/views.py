@@ -184,7 +184,7 @@ def add_teacher(request):
             email = data['email']
             mobile = data['mobile']
             first_name = data['full_name']
-            last_name = ''
+            last_name = ' '
 
             school = School.objects.get(id=school_id)
 
