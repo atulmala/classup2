@@ -4,8 +4,9 @@ import urllib, urllib2
 
 print('Starting to send bulk sms')
 
-# 30/04/2017 - values for softsms vendor
-key = '58fc1def26489'
+# 29/01/17 - values for msg91 vendor
+authkey = '138436Aff1HY1Vurw588743cf'
+rout = 'default'
 
 try:
     # connect to the database
@@ -26,30 +27,29 @@ try:
         mobile = row[2]
         message = row[3]
 
+        values = {
+            'authkey': authkey,
+            'mobiles': mobile,
+            'message': message,
+            'sender': sender_id,
+            'rout': rout,
+            'response': 'json',
+        }
         url = 'https://control.msg91.com/api/sendhttp.php'
         print(url)
-        m1 = message.replace(" ", "+")
-        print(m1)
-        m2 = m1.replace("&", "%26")
-        print(m2)
-
-        url = 'http://softsms.in/app/smsapi/index.php?'
-        url += 'key=%s' % key
-        url += '&type=Text'
-        url += '&contacts=%s' % mobile
-        url += '&senderid=%s' % sender_id
-        url += '&msg=%s' % m2
-        print('url=%s' % url)
-        print(url)
+        postdata = urllib.urlencode(values)
 
         try:
             print('sending to=' + mobile)
             print('message received in send_bulk_sms.py=' + message)
 
-            response = urllib2.urlopen(url)
-            print('response = ')
-            message_id = response.read()
+            # 09/02/17 - old vendor (SMPPSMS Hub) credits exhausted. Turning on new vendor msg91's api
+            req = urllib2.Request(url, postdata)
+            response = urllib2.urlopen(req)
+            j = json.loads(response.read())
+            message_id = j['message']
             print(message_id)
+            print('status (job_id) = ' + message_id)
 
             # update the smsrecord table that this message has been sent
             try:

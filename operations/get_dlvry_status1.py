@@ -3,8 +3,7 @@ import json
 import urllib
 
 print('Starting to extract sms delivery status')
-# 30/04/2017 - values for softsms vendor
-key = '58fc1def26489'
+authkey = '138436Aff1HY1Vurw588743cf'
 
 try:
     # connect to the database
@@ -14,7 +13,7 @@ try:
 
     # extract message_id of all the sms sent after 31/01/17 for which sms delivery status has not been extracted
     sql1 = "select outcome from operations_smsrecord where api_called = 1 and " \
-           "status_extracted = 0 and date > '2017-04-30' and date < DATE_SUB(NOW(), INTERVAL 3 HOUR)"
+           "status_extracted = 0 and date > '2017-01-31'"
     cursor1.execute(sql1)
 
     # now, try to extract delivery status of each sms by calling api of the bulk sms provider
@@ -24,14 +23,14 @@ try:
         print(message_id)
         status = 'Not Available'
         try:
-            url = 'http://softsms.in/app/miscapi/'
-            url += key
-            url += '/getDLR/'
+            url = 'https://control.msg91.com/api/getDlrReport.php?authkey=' + authkey + '&reqId='
             url += message_id
-            print('url=%s' % url)
-
-            response = urllib.urlopen(url)
-            status = response.read()
+            response2 = urllib.urlopen(url)
+            j2 = json.loads(response2.read())
+            print('j2=')
+            print(j2)
+            status = j2['reports'][0]['desc'] + ' at '
+            status += j2['reports'][0]['date']
             print('status = ' + str(status))
         except Exception as e:
             print('unable to get the staus of sms delivery. The url was: ')
