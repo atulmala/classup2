@@ -21,6 +21,7 @@ admin.site.register(Class, ClassAdmin)
 class SubjectAdmin(admin.ModelAdmin):
     search_fields = ['subject_name']
     list_display = ['school', 'subject_name', 'subject_code']
+    list_filter = ['school',]
 
 admin.site.register(Subject, SubjectAdmin)
 

@@ -1,4 +1,5 @@
 from django.contrib import admin
+from setup.models import School
 from .models import *
 
 # Register your models here.
@@ -19,6 +20,7 @@ admin.site.register(Configurations, ConfigurationsAdmin)
 
 class UserSchoolMappingAdmin(admin.ModelAdmin):
     list_display = ['user', 'school']
+    search_fields = ['school__school_name',]
 
 admin.site.register(UserSchoolMapping, UserSchoolMappingAdmin)
 

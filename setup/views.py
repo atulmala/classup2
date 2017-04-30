@@ -424,6 +424,7 @@ def setup_students(request):
                 print ('now starting to process the uploaded file for setting up Student data for school ' +
                        school.school_name)
                 file_to_process_handle = request.FILES['excelFile']
+                conf = Configurations.objects.get(school=school)
 
                 # check that the file uploaded should be a valid excel
                 # file with .xls or .xlsx
@@ -534,7 +535,6 @@ def setup_students(request):
                         # todo implement the code to send password to the user through an sms and email
 
                     try:
-                        conf = Configurations.objects.get(school=school)
                         if whether_new_user:
                             android_link = conf.google_play_link
                             iOS_link = conf.app_store_link
@@ -579,7 +579,7 @@ def setup_students(request):
                     try:
                         the_section = Section.objects.get(school=school, section=current_section)
                     except Exception as e:
-                        print ('Exception6 from setup views.py = %s (%s)' % (e.message, type(e)))
+                        print ('Exception 6 from setup views.py = %s (%s)' % (e.message, type(e)))
                         error = 'Unable to retrieve the relevant object for section: ' + current_section
                         form.errors['__all__'] = form.error_class([error])
                         print (error)

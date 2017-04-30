@@ -279,27 +279,27 @@ def add_teacher(request):
 
 @csrf_exempt
 def set_subjects(request, teacher):
-    print ('request.body=')
+    print ('request.body(set_subjects)=')
     if request.method == 'POST':
         t = Teacher.objects.get(email=teacher)
         print (t)
-        print ('request.body=')
+        print ('request.body(set_subjects)=')
         print (request.body)
         school = t.school
 
         data = json.loads(request.body)
-        print ('data=')
+        print ('data(set_subjects)=')
         print (data)
 
         for key in data:
-            print('key=' + key)
+            print('key(set_subjects)=' + key)
             subject = data[key]
-            print('subject=' + subject)
-            print ('now trying to extract subject')
+            print('subject(set_subjects)=' + subject)
+            print ('now trying to extract subject(set_subjects)')
             try:
                 s = Subject.objects.get(school=school, subject_code=subject)
             except Exception as e:
-                    print('unable to retrieve subject')
+                    print('unable to retrieve subject(set_subjects)')
                     print ('Exception1 from teacher views.py = %s (%s)' % (e.message, type(e)))
 
             print ('now trying to set teacher subject')
@@ -328,30 +328,30 @@ def set_subjects(request, teacher):
 
 @csrf_exempt
 def unset_subjects(request, teacher):
-    print ('request.body=')
+    print ('request.body(unset_subjects)=')
     if request.method == 'POST':
         t = Teacher.objects.get(email=teacher)
         print (t)
-        print ('request.body=')
+        print ('request.body(unset_subjects)=')
         print (request.body)
         school = t.school
 
         data = json.loads(request.body)
-        print ('data=')
+        print ('data(unset_subjects)=')
         print (data)
 
         for key in data:
-            print('key=' + key)
+            print('key(unset_subjects)=' + key)
             subject = data[key]
-            print('subject=' + subject)
-            print ('now trying to extract subject')
+            print('subject(unset_subjects)=' + subject)
+            print ('now trying to extract subject(unset_subjects)')
             try:
                 s = Subject.objects.get(school=school, subject_code=subject)
             except Exception as e:
-                    print('unable to retrieve subject')
+                    print('unable to retrieve subject(unset_subjects)')
                     print ('Exception3 from teacher views.py = %s (%s)' % (e.message, type(e)))
 
-            print ('now trying to set teacher subject')
+            print ('now trying to unset teacher subject')
 
             try:
                 ts = TeacherSubjects.objects.get(teacher=t, subject=s)
