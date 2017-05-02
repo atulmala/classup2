@@ -688,6 +688,7 @@ def att_register_class(request):
             except Exception as e:
                 print ('unable to calculate attendance till date')
                 print ('Exception4 from operations views.py = %s (%s)' % (e.message, type(e)))
+            attendance_sheet.write(row, d+7, ugettext(s.student_erp_id), cell_left)
 
             row += 1
             idx += 1
