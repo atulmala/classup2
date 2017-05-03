@@ -29,7 +29,7 @@ class StudentList(generics.ListAPIView):
 
         q1 = Student.objects.filter(school=school, current_section__section=section,
                                     current_class__standard=the_class, active_status=True)
-        q2 = q1.order_by('roll_number')
+        q2 = q1.order_by('fist_name')
         return q2
 
 
@@ -51,7 +51,7 @@ class StudentListForTest(generics.ListCreateAPIView):
 
         q1 = Student.objects.filter(current_section__section=section,
                                     current_class__standard=the_class, active_status=True)
-        q2 = q1.order_by('roll_number')
+        q2 = q1.order_by('fist_name')
         return q2
 
 
