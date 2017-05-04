@@ -356,11 +356,19 @@ def add_student(request):
                     s.save()
                     print ('saving successful!')
                 else:
-                    # we need to generate a roll no for this student. Should be the current count of student in this
-                    # class plus 1
-                    max_roll_no = Student.objects.filter(school=school, current_class=the_class,
-                                                         current_section=the_section).latest('roll_number').roll_number
-                    current_roll_no = max_roll_no + 1
+                    try:
+                        # we need to generate a roll no for this student. Should be the current count of student in this
+                        # class plus 1
+                        max_roll_no = Student.objects.filter(school=school, current_class=the_class,
+                                                             current_section=
+                                                             the_section).latest('roll_number').roll_number
+                        if max_roll_no is not None:
+                            current_roll_no = max_roll_no + 1
+                    except Exception as e:
+                        print ('Exception 320 from setup views.py = %s (%s)' % (e.message, type(e)))
+                        print('looks like this is the first student in this class. Hence roll no would be 1')
+                        current_roll_no = 1
+
                     s = Student(school=school, student_erp_id=student_id, fist_name=student_first_name,
                                     last_name=student_last_name, current_class=the_class, current_section=the_section,
                                     roll_number=current_roll_no, parent=p)
