@@ -195,46 +195,38 @@ def create_hw(request):
         try:
             data = json.loads(request.body)
             print(data)
+
             print('create hw process started')
             school_id = data['school_id']
-            #school_id = request.POST.get('school_id')
             school = School.objects.get(id=school_id)
             teacher = data['teacher']
-            #teacher = request.POST.get('teacher')
             t = Teacher.objects.get(email=teacher)
             print (t)
             print(teacher)
             the_class = data['class']
-            #the_class = request.POST.get('class')
             print(the_class)
             c = Class.objects.get(school=school, standard=the_class)
             print (c)
             section = data['section']
-            #section = request.POST.get('section')
             print(section)
             s = Section.objects.get(school=school, section=section)
             print (s)
             subject = data['subject']
-            #subject = request.POST.get('subject')
             print(subject)
             sub = Subject.objects.get(school=school, subject_name=subject)
             print (sub)
             d = data['d']
             m = data['m']
             y = data['y']
-            #d = request.POST.get('d')
-            #m = request.POST.get('m')
-            #y = request.POST.get('y')
+
 
             the_date = date(int(y), int(m), int(d))
             print (the_date)
 
             image_name = data['image_name']
-            #image_name = request.POST.get('image_name')
             print(image_name)
 
             hw_image = data['hw_image']
-            #hw_image = request.POST.get('hw_image')
 
             hw_image_file = ContentFile(base64.b64decode(hw_image), name=image_name)
 
