@@ -194,7 +194,6 @@ def create_hw(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            print(data)
 
             print('create hw process started')
             school_id = data['school_id']
