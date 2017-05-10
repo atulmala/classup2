@@ -179,8 +179,11 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                         else:
                             message += ' was absent on ' + str(d) + '/' + str(m) + '/' + str(y) + \
                                        ' in the attendance of ' + subject
-
-                        message += '. Please send an application. Regards, ' + school_name
+                        # 04/05/2017 - coaching classes does not require application for absence
+                        if configuration.type != 'school':
+                            message += '. Regards %s ' % school_name
+                        else:
+                            message += '. Please send an application. Regards, ' + school_name
                     except Exception as e:
                         print ('Exception4 from attendance views.py = %s (%s)' % (e.message, type(e)))
 
