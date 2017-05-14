@@ -151,14 +151,14 @@ class HWList(generics.ListCreateAPIView):
             print('We need to retrieve the HW list for student')
             try:
                 student = Student.objects.get(pk=user)
+                school = student.school
                 the_class = student.current_class
                 section = student.current_section
-                q = HW.objects.filter(the_class=the_class.standard, section=section.section)
+                q = HW.objects.filter(school=school, the_class=the_class.standard, section=section.section)
                 return q
             except Exception as e:
                 print ('Exception 360 from academics views.py %s %s' % (e.message, type(e)))
                 print('could not retrieve student with id %s' % user)
-
 
 
 def get_hw_image(request, hw_id):
