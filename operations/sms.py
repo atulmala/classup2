@@ -33,14 +33,15 @@ def send_sms1(school, sender, mobile, message, message_type):
         m1 = message.replace(" ", "+")
         print(m1)
         m2 = m1.replace("&", "%26")
-        print(m2)
+        m3 = m2.replace("\r\n", "+")
+        print(m3)
 
         url = 'http://softsms.in/app/smsapi/index.php?'
         url+= 'key=%s' % key
         url += '&type=Text'
         url += '&contacts=%s' % mobile
         url += '&senderid=%s' % sender_id
-        url += '&msg=%s' % m2
+        url += '&msg=%s' % m3
         print('url=%s' % url)
 
         # 06/12/2016 - we don't want to send sms to a dummy number
