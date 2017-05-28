@@ -16,7 +16,7 @@ class StudentAdmin(admin.ModelAdmin):
 
     search_fields = ['fist_name', 'last_name']
     list_display = ('fist_name', 'last_name', 'school',
-                    'current_class', 'current_section', 'get_parent_name',)
+                    'current_class', 'current_section', 'get_parent_name', 'active_status',)
     list_filter = ('school',)
 
 
