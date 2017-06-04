@@ -58,7 +58,7 @@ class ClassTest(models.Model):
     passing_marks = models.DecimalField(max_digits=6, decimal_places=2)
     grade_based = models.BooleanField()
     is_completed = models.BooleanField(default=False)
-    test_type = models.CharField(max_length=30, default='Terminal')
+    test_type = models.CharField(max_length=200, default='Terminal')
 
     def __unicode__(self):
         return self.the_class.standard + ' ' + self.section.section + ' ' \
