@@ -19,7 +19,7 @@ urlpatterns = [
     url(r'^create_test/(?P<school_id>\w+)/(?P<the_class>[\w.@+-]+)/(?P<section>[\w.@+-]+)/'
         r'(?P<subject>[\w\ ]+)/(?P<teacher>[\w.@+-]+)'
         r'/(?P<d>\w+)/(?P<m>\w+)/(?P<y>\w+)/'
-        r'(?P<max_marks>\w+)/(?P<pass_marks>\w+)/(?P<grade_based>\w+)/(?P<comments>[\w\ ]+)/$',
+        r'(?P<max_marks>\w+)/(?P<pass_marks>\w+)/(?P<grade_based>\w+)/(?P<comments>[\w.@,&\ ]+)/$',
         views.create_test, name='create_test'),
 
     url(r'^class_section_for_test/(?P<id>\w+)/$', views.ClassSectionForTest.as_view()),
