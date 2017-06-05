@@ -113,6 +113,25 @@ class PendingTestList(generics.ListCreateAPIView):
         return q
 
 
+class PendingTestListParents(generics.ListAPIView):
+    serializer_class = TestSerializer
+
+    def get_queryset(self):
+        s = self.kwargs['student']
+
+        try:
+            student = Student.objects.get(pk=s)
+            the_class = student.current_class
+            section = student.current_section
+
+            q = ClassTest.objects.filter(the_class=the_class, section=section,
+                                         date_conducted__gte=date.today()).order_by('date_conducted')
+            return q
+        except Exception as e:
+            print ('Exception 370 from academics views.py %s %s' % (e.message, type(e)))
+            print ('failed to retrieve pending test list for parents')
+
+
 class ClassSectionForTest(generics.ListCreateAPIView):
     serializer_class = ClassSectionForTestSerializer
 
