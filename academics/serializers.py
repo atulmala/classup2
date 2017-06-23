@@ -43,10 +43,14 @@ class TestTypeSerializer(serializers.ModelSerializer):
 
 class TestMarksSerializer(serializers.ModelSerializer):
     student = serializers.StringRelatedField()
+    parent = serializers.SerializerMethodField()
 
     class Meta:
         model = TestResults
-        fields = ('id', 'roll_no', 'student', 'marks_obtained', 'grade',)
+        fields = ('id', 'roll_no', 'student', 'parent', 'marks_obtained', 'grade',)
+
+    def get_parent(self, obj):
+        return obj.student.parent.parent_name
 
 
 # serializer to return the class and section of test
