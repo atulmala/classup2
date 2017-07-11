@@ -180,13 +180,16 @@ def auth_login_from_device1(request):
         # 11/07/2017 we are now capturing the
         try:
             login_type = data['device_type']
+            model = data['model']
             os = data['os']
             size = data['size']
             resolution = data['resolution']
             l.login_type = login_type
+            l.model = model
             l.os = os
             l.size = size
             l.resolution = resolution
+            l.save()
         except Exception as e:
             print ('User %s is still using an older version of app' % the_user)
             print('Exception 250 from authentication views.py = %s (%s)' % (e.message, type(e)))
