@@ -176,6 +176,23 @@ def auth_login_from_device1(request):
         password = data['password']
         l.login_id = the_user
         l.password = password
+
+        # 11/07/2017 we are now capturing the
+        try:
+            login_type = data['device_type']
+            os = data['os']
+            size = data['size']
+            resolution = data['resolution']
+            l.login_type = login_type
+            l.os = os
+            l.size = size
+            l.resolution = resolution
+        except Exception as e:
+            print ('User %s is still using an older version of app' % the_user)
+            print('Exception 250 from authentication views.py = %s (%s)' % (e.message, type(e)))
+
+
+
         print('user trying to login: ' + the_user + ', with password: ' + password)
         user = authenticate(username=the_user, password=password)
         if user is not None:
@@ -188,6 +205,7 @@ def auth_login_from_device1(request):
                 return_data["login"] = "successful"
                 return_data["user_status"] = "active"
                 return_data['user_name'] = user.first_name + ' ' + user.last_name
+                return_data['welcome_message'] = 'Welcome, ' + user.first_name + ' ' + user.last_name
 
                 if user.is_staff:
                     return_data['is_staff'] = "true"

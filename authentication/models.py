@@ -15,6 +15,11 @@ class LoginRecord(models.Model):
     login_type = models.CharField(max_length=10, default='Device')
     outcome = models.CharField(max_length=10, default='Failed')
     comments = models.CharField(max_length=200)
+    # 10/07/2017 - for getting the make & model, os version, screen resolution and size of the device
+    model = models.CharField(max_length=200, default="Not available")
+    os = models.CharField(max_length=200, default="Not available")
+    resolution = models.CharField(max_length=100, default='Not available')
+    size = models.CharField(max_length=100, default='Not available')
 
 
 class LastPasswordReset(models.Model):
