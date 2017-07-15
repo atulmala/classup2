@@ -258,6 +258,36 @@ def add_teacher(request):
                     sender = user
 
                     sms.send_sms1(school, sender, str(mobile), message, message_type)
+
+                    # 15/07/2017 - Set up Main as default subject for this teacher
+                    try:
+                        print ('now trying to set teacher subject')
+                        s = Subject.objects.get(school=school, subject_name='Main')
+                    except Exception as e:
+                        print('unable to retrieve Main subject as default for ')
+                        print ('Exception 210 from teachers views.py = %s (%s)' % (e.message, type(e)))
+
+                    try:
+                        ts = TeacherSubjects.objects.get(teacher=t, subject=s)
+                        if ts:
+                            print('subject ' + s.subject_name + ' has already been selected by teacher '
+                                  + t.first_name + ' ' + t.last_name)
+                            pass
+
+                    except Exception as e:
+                        print(
+                            'now setting subject ' + s.subject_name + ' for teacher ' +
+                            t.first_name + ' ' + t.last_name)
+                        ts = TeacherSubjects(teacher=t, subject=s)
+                        try:
+                            ts.save()
+                            print('successfully set subject ' + s.subject_name +
+                                  ' for teacher ' + t.first_name + ' ' + t.last_name)
+                        except Exception as e:
+                            print('unable to set subject ' + s.subject_name +
+                                  ' for teacher ' + t.first_name + ' ' + t.last_name)
+                            print ('Exception 211 from teachers views.py = %s (%s)' % (e.message, type(e)))
+
                     response_dict['status'] = 'success'
                     response_dict['message'] = "Teacher created. Welcome SMS sent to the teacher' mobile"
                     return JSONResponse(response_dict, status=200)

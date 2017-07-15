@@ -15,7 +15,7 @@ from setup.forms import ExcelFileUploadForm
 from authentication.views import JSONResponse
 
 from setup.models import School, UserSchoolMapping
-from academics.models import Class, Section, Subject, TestResults, ClassTest, ClassTeacher, Exam
+from academics.models import Class, Section, Subject, TestResults, ClassTest, ClassTeacher, Exam, TeacherSubjects
 from teacher.models import Teacher
 from student.models import Student, Parent
 from .models import Configurations
@@ -985,6 +985,35 @@ def setup_teachers(request):
                             sender = request.session['user']
 
                             sms.send_sms1(school, sender, str(mobile), message, message_type)
+
+                            # 15/07/2017 - Set up Main as default subject for this teacher
+                            try:
+                                print ('now trying to set teacher subject')
+                                s = Subject.objects.get(school=school, subject_name='Main')
+                            except Exception as e:
+                                print('unable to retrieve Main subject as default for ')
+                                print ('Exception 100 from setup views.py = %s (%s)' % (e.message, type(e)))
+
+                            try:
+                                ts = TeacherSubjects.objects.get(teacher=t, subject=s)
+                                if ts:
+                                    print('subject ' + s.subject_name + ' has already been selected by teacher '
+                                          + t.first_name + ' ' + t.last_name)
+                                    pass
+
+                            except Exception as e:
+                                print(
+                                'now setting subject ' + s.subject_name + ' for teacher ' +
+                                t.first_name + ' ' + t.last_name)
+                                ts = TeacherSubjects(teacher=t, subject=s)
+                                try:
+                                    ts.save()
+                                    print('successfully set subject ' + s.subject_name +
+                                          ' for teacher ' + t.first_name + ' ' + t.last_name)
+                                except Exception as e:
+                                    print('unable to set subject ' + s.subject_name +
+                                          ' for teacher ' + t.first_name + ' ' + t.last_name)
+                                    print ('Exception 101 from setup views.py = %s (%s)' % (e.message, type(e)))
 
                         except Exception as e:
                             print ('Exception23 from setup views.py = %s (%s)' % (e.message, type(e)))
