@@ -3,6 +3,8 @@ from datetime import datetime
 from django.contrib.auth.models import User
 from django.db import models
 
+from setup.models import School
+
 
 # Create your models here.
 
@@ -32,3 +34,12 @@ class user_device_mapping(models.Model):
     mobile_number = models.CharField(max_length=20)
     token_id = models.CharField(max_length=500)
     device_type = models.CharField(max_length=20)
+
+
+# 22/07/2017 - start logging important events & actions performed by users
+class log_book(models.Model):
+    date_and_time = models.DateTimeField(default=datetime.now)
+    user = models.ForeignKey(User)
+    user_name = models.CharField(max_length=100)
+    school = models.ForeignKey(School)
+
