@@ -96,7 +96,7 @@ def log_entry(user, event, category, outcome):
             print('not a staff. Checking whether parent...')
             p = Parent.objects.get(parent_mobile1=user)
             q = Student.objects.filter(parent=p, active_status=True).order_by('fist_name')
-            for s in q.objects.all():
+            for s in q:
                 school = s.school.school_name
                 break
             log['school'] = school
