@@ -39,7 +39,10 @@ class user_device_mapping(models.Model):
 # 22/07/2017 - start logging important events & actions performed by users
 class log_book(models.Model):
     date_and_time = models.DateTimeField(default=datetime.now)
-    user = models.ForeignKey(User)
+    user = models.CharField(max_length=100)
     user_name = models.CharField(max_length=100)
-    school = models.ForeignKey(School)
+    school = models.CharField(max_length=100)
+    event = models.CharField(max_length=200)
+    category = models.CharField(max_length=20)
+    outcome = models.BooleanField()
 

@@ -1,32 +1,117 @@
 import json
 import datetime
 import urllib2
+import requests
 
 
 from ipware.ip import get_ip
 
 from django.contrib.auth.models import User
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpRequest
 from django.shortcuts import render
+from django.test import RequestFactory
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 
+from rest_framework import generics
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework.test import APIRequestFactory
 from rest_framework.renderers import JSONRenderer
 from push_notifications.models import GCMDevice
 from push_notifications.gcm import gcm_send_message
 
-from setup.models import UserSchoolMapping
+from setup.models import UserSchoolMapping, GlobalConf
 from teacher.models import Teacher
 from student.models import Student, Parent
 from .models import LoginRecord, LastPasswordReset, user_device_mapping
+from .serializers import LogBookSerializer
 from operations import sms
 
 from .forms import ClassUpLoginForm
 
-# Create your views here.
 
 print ('in views.py for authentication')
+
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    def enforce_csrf(self, request):
+        return  # To not perform the csrf check previously happening
+
+
+class LogEntry(generics.ListCreateAPIView):
+    print('inside LogEntry')
+    #authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+    serializer_class = LogBookSerializer
+
+
+# 23/07/2017 now we are implementing logging
+def log_entry(user, event, category, outcome):
+    print('Inside log_entry')
+    log = {}
+    log['user'] = user
+    log['event'] = event
+    log['category'] = category
+    log['outcome'] = outcome
+    print(log)
+
+    headers = {'content-type': 'application/json'}
+    global_conf = GlobalConf.objects.get(pk=1)
+    server = global_conf.server_url + 'auth/logbook_entry/'
+    print(server)
+
+    # get the name of the user. Can be a teacher or parent or admin. Try teacher first
+    try:
+        t = Teacher.objects.get(email=user)
+        name = t.first_name + ' ' + t.last_name
+        print(name)
+        school = t.school.school_name
+        log['user_name'] = name
+        log['school'] = school
+        print(json.dumps(log))
+
+        r = requests.post(server, data=json.dumps(log), headers=headers)
+        print(r.text)
+        return
+    except Exception as e:
+        print('Exception 210 from authentication views.py = %s (%s)' % (e.message, type(e)))
+        print('will now check to see if this is an Administrator or Parent')
+    # the user is not teacher. Can be are parent or admin
+    try:
+        u = User.objects.get(username=user)
+        print('retrieved user')
+        name = u.first_name + ' ' + u.last_name
+        log['user_name'] = name
+        print(name)
+        if u.is_staff:
+            print('chances of being and Admin user...')
+            if u.groups.filter(name='school_admin').exists():
+                mapping = UserSchoolMapping.objects.get(user=u)
+                school = mapping.school.school_name
+                log["school"] = school
+                r = requests.post(server, data=json.dumps(log), headers=headers)
+                print(r.text)
+                return
+        else:   # user is parent
+            print('not a staff. Checking whether parent...')
+            p = Parent.objects.get(parent_mobile1=user)
+            q = Student.objects.filter(parent=p, active_status=True).order_by('fist_name')
+            for s in q.objects.all():
+                school = s.school.school_name
+                break
+            log['school'] = school
+            r = requests.post(server, data=json.dumps(log), headers=headers)
+            print(r.text)
+            return
+    except Exception as e:
+        print(user + ' is neither a teacher, nor a parent, nor an administrator. Perhaps a fake user '  )
+        print('Exception 212 from authentication views.py = %s (%s)' % (e.message, type(e)))
+        log["user_name"] = "Un-registered User"
+        log["school"] = "Undetermined"
+        r = requests.post(server, data=json.dumps(log), headers=headers)
+        print(r.text)
+
+        return
 
 
 def auth_index(request):
@@ -72,7 +157,6 @@ def auth_login(request):
 
                 try:
                     login(request, user)
-                    l.outcome = 'Success'
                     l.save()
                     u = UserSchoolMapping.objects.get(user=user)
                     school = u.school
@@ -102,7 +186,6 @@ def auth_login(request):
                 return render(request, 'classup/setup_index.html', context_dict)
             else:
                 error = 'User: ' + user_name + ' is disabled. Please contact your administrator'
-                l.outcome = 'Failed'
                 l.comments = error
                 l.save()
                 login_form.errors['__all__'] = login_form.error_class([error])
@@ -110,7 +193,6 @@ def auth_login(request):
                 return render(request, 'classup/auth_login.html', context_dict)
         else:
             error = 'Invalid username/password or blank entry. Please try again.'
-            l.outcome = 'Failed'
             l.comments = error
             l.save()
             login_form.errors['__all__'] = login_form.error_class([error])
@@ -144,6 +226,8 @@ class JSONResponse(HttpResponse):
 
 @csrf_exempt
 def auth_login_from_device1(request):
+    event = "Login attempt from device"
+    category = "Normal"
     print ('Inside login from device view!')
 
     l = LoginRecord()
@@ -166,8 +250,8 @@ def auth_login_from_device1(request):
     else:
         print("we don't have an IP address for user")
 
-    return_data = {
-    }
+    return_data = {}
+
     return_data['school_admin'] = 'false'
     return_data['subscription'] = 'na'
     if request.method == 'POST':
@@ -194,8 +278,6 @@ def auth_login_from_device1(request):
             print ('User %s is still using an older version of app' % the_user)
             print('Exception 250 from authentication views.py = %s (%s)' % (e.message, type(e)))
 
-
-
         print('user trying to login: ' + the_user + ', with password: ' + password)
         user = authenticate(username=the_user, password=password)
         if user is not None:
@@ -207,8 +289,9 @@ def auth_login_from_device1(request):
                 l.save()
                 return_data["login"] = "successful"
                 return_data["user_status"] = "active"
-                return_data['user_name'] = user.first_name + ' ' + user.last_name
-                return_data['welcome_message'] = 'Welcome, ' + user.first_name + ' ' + user.last_name
+                full_name = user.first_name + ' ' + user.last_name
+                return_data['user_name'] = full_name
+                return_data['welcome_message'] = 'Welcome, ' + full_name
 
                 if user.is_staff:
                     return_data['is_staff'] = "true"
@@ -235,6 +318,11 @@ def auth_login_from_device1(request):
                         print('Exception 10 from authentication views.py = %s (%s)' % (e.message, type(e)))
                 else:
                     return_data['is_staff'] = "false"
+                try:
+                    log_entry(the_user, event, category, True)
+                except Exception as e:
+                    print('failed to create log entry for log: ')
+                    print('Exception 211 from authentication views.py = %s (%s)' % (e.message, type(e)))
                 return JSONResponse(return_data, status=200)
             else:
                 l.outcome = 'Failed'
@@ -244,12 +332,14 @@ def auth_login_from_device1(request):
                 return_data['user_name'] = user.first_name + ' ' + user.last_name
                 return_data["user_status"] = "inactive"
                 print (return_data)
+                log_entry(the_user, event, category, False)
                 return JSONResponse(return_data, status=200)
         else:
             l.outcome = 'Failed'
             l.save()
             return_data["login"] = "failed"
             print (return_data)
+            log_entry(the_user, event, category, False)
             return JSONResponse(return_data, status=200)
 
 

@@ -18,6 +18,12 @@ class ConfigurationsAdmin(admin.ModelAdmin):
 admin.site.register(Configurations, ConfigurationsAdmin)
 
 
+class GlobalConfAdmin(admin.ModelAdmin):
+    pass
+
+admin.site.register(GlobalConf, GlobalConfAdmin)
+
+
 class UserSchoolMappingAdmin(admin.ModelAdmin):
     list_display = ['user', 'school']
     search_fields = ['school__school_name',]

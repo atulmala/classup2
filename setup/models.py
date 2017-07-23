@@ -22,6 +22,9 @@ class School(models.Model):
     def __unicode__(self):
         return str(self.school_name)
 
+class GlobalConf(models.Model):
+    server_url = models.CharField(max_length=100, default="https://www.classupclient.com/")
+
 
 class Configurations(models.Model):
     school = models.ForeignKey(School)

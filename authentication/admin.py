@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import LoginRecord, LastPasswordReset, user_device_mapping
+from .models import LoginRecord, LastPasswordReset, user_device_mapping, log_book
 
 # Register your models here.
 
@@ -24,3 +24,9 @@ class UserDeviceMappingAdmin(admin.ModelAdmin):
     list_display = ('user', 'mobile_number', 'token_id', 'device_type',)
 
 admin.site.register(user_device_mapping, UserDeviceMappingAdmin)
+
+
+class LogBookAdmin(admin.ModelAdmin):
+    list_display = ('date_and_time', 'user', 'school', 'user_name', 'event', 'category', 'outcome',)
+
+admin.site.register(log_book, LogBookAdmin)
