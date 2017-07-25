@@ -48,6 +48,10 @@ class LogEntry(generics.ListCreateAPIView):
     def dispatch(self, request, *args, **kwargs):
         return super(LogEntry, self).dispatch(request, *args, **kwargs)
 
+    @method_decorator(csrf_exempt)
+    def post(self, request, *args, **kwargs):
+        pass
+
 
 # 23/07/2017 now we are implementing logging
 def log_entry(user, event, category, outcome):
