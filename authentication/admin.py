@@ -28,6 +28,7 @@ admin.site.register(user_device_mapping, UserDeviceMappingAdmin)
 
 class LogBookAdmin(admin.ModelAdmin):
     list_display = ('date_and_time', 'user', 'school', 'user_name', 'event', 'category', 'outcome',)
-    list_filter = ('user', 'user_name',)
+    search_fields = ('user', 'user_name',)
+    list_filter = ('date_and_time',)
 
 admin.site.register(log_book, LogBookAdmin)
