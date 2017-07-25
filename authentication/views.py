@@ -44,6 +44,10 @@ class LogEntry(generics.ListCreateAPIView):
     #authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     serializer_class = LogBookSerializer
 
+    @method_decorator(csrf_exempt)
+    def dispatch(self, request, *args, **kwargs):
+        return super(LogEntry, self).dispatch(request, *args, **kwargs)
+
 
 # 23/07/2017 now we are implementing logging
 def log_entry(user, event, category, outcome):
