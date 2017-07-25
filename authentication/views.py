@@ -8,16 +8,13 @@ from ipware.ip import get_ip
 
 from django.contrib.auth.models import User
 from django.db.models import Q
-from django.http import HttpResponse, HttpRequest
+from django.http import HttpResponse
 from django.shortcuts import render
-from django.test import RequestFactory
 from django.contrib.auth import authenticate, login, logout
 from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
 
 from rest_framework import generics
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
-from rest_framework.test import APIRequestFactory
 from rest_framework.renderers import JSONRenderer
 from push_notifications.models import GCMDevice
 from push_notifications.gcm import gcm_send_message
@@ -43,10 +40,6 @@ class LogEntry(generics.ListCreateAPIView):
     print('inside LogEntry')
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     serializer_class = LogBookSerializer
-
-
-
-
 
 
 # 23/07/2017 now we are implementing logging
@@ -464,9 +457,11 @@ def change_password(request):
             u = User.objects.get(username=user)
             u.set_password(new_password)
             u.save()
+            log_entry(user, "Password Change", "Normal", True)
             return_data["password_change"] = "Successful"
             return JSONResponse(return_data, status=200)
         except Exception as e:
+            log_entry(user, "Password Change", "Normal", False)
             print('unable to change password for ' + user)
             print('Exception 11 from authentication views.py = %s (%s)' % (e.message, type(e)))
             return_data["password_change"] = "Fail"
@@ -493,6 +488,7 @@ def forgot_password(request):
 
             # 04/03/17 - admin users should not be allowed to reset password from device. They should contact us
             if u.first_name == 'admin' or u.first_name == 'Admin':
+                log_entry(user, "Forgot Password", "Normal", False)
                 return_data["forgot_password"] = "fail"
                 error_message = 'For password reset of Admin user, please contact ClassUp Support'
                 print(error_message)
@@ -517,10 +513,14 @@ def forgot_password(request):
                         try:
                             lpt.save()
                         except Exception as e:
+                            log_entry(user,
+                                      "Password Change exception (authentication view.py Exception 22", "Normal", False)
                             print('unable to reset the last password reset time for user ' + user)
                             print('Exception 22 from authentication views.py %s (%s)' % (e.message, type(e)))
                     else:
-                        print('the user ' + user + ' tried to reset password less than 15 min ago. Hence not resetting now')
+                        log_entry(user, "Password Change in less than 15 minutes", "Normal", False)
+                        print('the user ' + user +
+                              ' tried to reset password less than 15 min ago. Hence not resetting now')
                         should_reset = False
                         return_data["forgot_password"] = "successful"
                 except Exception as e:
@@ -528,6 +528,8 @@ def forgot_password(request):
                     should_reset = True
                     print(user + ' is changing password for the first time')
                     print('Exception 20 from authentication views.py = %s (%s)' % (e.message, type(e)))
+                    log_entry(user,
+                              "Password Change exception (authentication view.py Exception 20", "Normal", True)
 
                     # create an entry for this user in the LastPasswordReset table
                     try:
@@ -536,16 +538,20 @@ def forgot_password(request):
                     except Exception as e:
                         print('unable to create an entry in the LastPasswordReset table for user ' + user)
                         print('Exception 21 from authentication views.py %s (%s)' % (e.message, type(e)))
+                        log_entry(user,
+                                  "Password Change exception (authentication view.py Exception 21", "Normal", False)
 
                 if should_reset:
                     new_password = User.objects.make_random_password(length=5, allowed_chars='1234567890')
                     print (new_password)
+                    log_entry(user, "New Password Generated", "Normal", True)
                     u.set_password(new_password)
                     u.save()
                     message_type = 'Forgot Password'
                     message = 'Dear ' + u.first_name + ' ' + u.last_name + ', your new password is ' + new_password
                     message += '. Regards, ClassUp Support'
                     print(message)
+                    log_entry(user, "Forgot password SMS created", "Normal", True)
 
                     # check if user is teacher or parent
                     if u.is_staff:
@@ -563,14 +569,17 @@ def forgot_password(request):
                         # finally, get the school
                         for student in ward_list:
                             school = student.school
-
+                    log_entry(user, "New Password SMS sending initiated", "Normal", True)
                     sms.send_sms1(school, user, mobile, message, message_type)
+                    log_entry(user, "New Password SMS Sending completed", "Normal", True)
 
                     return_data["forgot_password"] = "successful"
+                    log_entry(user, "Forgot Password process completed", "Normal", True)
                     return JSONResponse(return_data, status=200)
         except Exception as e:
             print('unable to reset password for ' + user)
             print('Exception 6 from authentication views.py = %s (%s)' % (e.message, type(e)))
+            log_entry(user, "Forgot Password process failed authentication view.py Exception 6", "Normal", True)
             return_data["forgot_password"] = "Fail"
             error_message = 'User does not exist'
             print(error_message)
