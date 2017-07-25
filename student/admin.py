@@ -15,7 +15,7 @@ class StudentAdmin(admin.ModelAdmin):
     get_school_name.short_description = 'School'
 
     search_fields = ['fist_name', 'last_name']
-    list_display = ('fist_name', 'last_name', 'school',
+    list_display = ('student_erp_id', 'fist_name', 'last_name', 'school',
                     'current_class', 'current_section', 'get_parent_name', 'active_status',)
     list_filter = ('school',)
 
