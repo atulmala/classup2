@@ -41,7 +41,7 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
 
 class LogEntry(generics.ListCreateAPIView):
     print('inside LogEntry')
-    #authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     serializer_class = LogBookSerializer
 
     @method_decorator(csrf_exempt)
