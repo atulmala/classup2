@@ -254,6 +254,7 @@ def auth_login_from_device1(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         the_user = data['user']
+        log_entry(the_user, "Login from device initiated", "Normal", True)
         password = data['password']
         l.login_id = the_user
         l.password = password
@@ -279,8 +280,10 @@ def auth_login_from_device1(request):
         user = authenticate(username=the_user, password=password)
         if user is not None:
             print('user ' + the_user + ' has been authenticated')
+            log_entry(the_user, "User has been authenticated", "Normal", True)
             if user.is_active:
                 print('user ' + the_user + ' is an active user')
+                log_entry(user, "Found to be an Active User", "Normal", True)
                 login(request, user)
                 l.outcome = 'Success'
                 l.save()
@@ -296,6 +299,7 @@ def auth_login_from_device1(request):
                     # 12/02/17 - checking if this user belong to school_admin group
                     if user.groups.filter(name='school_admin').exists():
                         print('this is a school admin')
+                        log_entry(user, "User is an Admin User", "Normal", True)
                         return_data["school_admin"] = "true"
                     try:
                         u = UserSchoolMapping.objects.get(user=user)
@@ -311,6 +315,9 @@ def auth_login_from_device1(request):
                         return_data['school_id'] = school_id
                         print ('school_id=' + str(school_id))
                     except Exception as e:
+                        log_entry(the_user,
+                                  "School could not be determined. Exception 10 from authentication views.py",
+                                  "Normal", True)
                         print ('unable to retrieve school_id for ' + user.username)
                         print('Exception 10 from authentication views.py = %s (%s)' % (e.message, type(e)))
                 else:
@@ -324,6 +331,7 @@ def auth_login_from_device1(request):
             else:
                 l.outcome = 'Failed'
                 l.comments = 'Inactive User'
+                log_entry(the_user, "Found to be an Inactive User", "Normal", True)
                 l.save()
                 return_data["login"] = "successful"
                 return_data['user_name'] = user.first_name + ' ' + user.last_name
@@ -336,7 +344,7 @@ def auth_login_from_device1(request):
             l.save()
             return_data["login"] = "failed"
             print (return_data)
-            log_entry(the_user, event, category, False)
+            log_entry(the_user, "Login Failed", category, False)
             return JSONResponse(return_data, status=200)
 
 
@@ -450,6 +458,7 @@ def change_password(request):
         print (data)
         user = data["user"]
         print (user)
+        log_entry(user, "Password Change Initiated", "Normal", True)
         new_password = data["new_password"]
         print (new_password)
 
@@ -457,11 +466,11 @@ def change_password(request):
             u = User.objects.get(username=user)
             u.set_password(new_password)
             u.save()
-            log_entry(user, "Password Change", "Normal", True)
+            log_entry(user, "Password Change Successful", "Normal", True)
             return_data["password_change"] = "Successful"
             return JSONResponse(return_data, status=200)
         except Exception as e:
-            log_entry(user, "Password Change", "Normal", False)
+            log_entry(user, "Password Change Failed", "Normal", False)
             print('unable to change password for ' + user)
             print('Exception 11 from authentication views.py = %s (%s)' % (e.message, type(e)))
             return_data["password_change"] = "Fail"
