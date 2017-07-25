@@ -18,7 +18,7 @@ from student.models import Student
 from teacher.models import Teacher
 from setup.models import Configurations, School
 
-from authentication.views import JSONResponse
+from authentication.views import JSONResponse, log_entry
 
 from .serializers import AttendanceSerializer
 
@@ -72,6 +72,8 @@ def attendance_taken(request, school_id, the_class, section, subject, d, m, y, t
         sub = Subject.objects.get(school=school, subject_name=subject)
         print (sub)
         t = Teacher.objects.get(email=teacher)
+        log_entry(teacher, "Attendance Taken Started", "Normal", True)
+
         print (t)
 
         the_date = date(int(y), int(m), int(d))
@@ -81,6 +83,7 @@ def attendance_taken(request, school_id, the_class, section, subject, d, m, y, t
         try:
             q = AttendanceTaken.objects.filter(date=the_date, the_class=c, section=s, subject=sub)
             if 0 == q.count():
+                log_entry(teacher, "Attendance not taken earlier", "Normal", True)
                 a = AttendanceTaken(date=the_date)
                 a.the_class = c
                 a.section = s
@@ -88,17 +91,23 @@ def attendance_taken(request, school_id, the_class, section, subject, d, m, y, t
                 a.taken_by = t
 
                 a.save()
+                log_entry(teacher, "Attendance Taken Recorded", "Normal", True)
         except Exception as e:
             print ('failed to recored AttendanceTaken')
             print ('Exception1 from attendance views.py = %s (%s)' % (e.message, type(e)))
+            log_entry(teacher, "failed to recored AttendanceTaken. Exception 1 from attendance views.py",
+                      "Normal", False)
 
         # for the purpose of audit, make an entry in AttendanceUpdated table.
         try:
             au = AttendanceUpdated(date=the_date, the_class=c, section=s, subject=sub, updated_by=t)
             au.save()
+            log_entry(teacher, "Attendance Updated recorded", "Normal", True)
         except Exception as e:
             print ('failed to record AttendanceUpdate')
             print ('Exception2 from attendance views.py = %s (%s)' % (e.message, type(e)))
+            log_entry(teacher, "failed to record AttendanceUpdate. Exepction 2 from attendance views.py",
+                      "Normal", False)
 
     return HttpResponse('OK')
 
@@ -111,6 +120,7 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
     message_type = 'Attendance'
 
     if request.method == 'POST':
+        log_entry(teacher, "Attendance Processing Started", "Normal", True)
         school = School.objects.get(id=school_id)
 
         # all of the above except date are foreign key in Attendance model. Hence we need to get the actual object
@@ -132,6 +142,7 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
 
                 # make an entry to database only it is a fresh entry
                 if q.count() == 0:
+                    log_entry(teacher, "Absence marked", "Normal", True)
                     attendance = Attendance(date=the_date)
                     attendance.the_class = c
                     attendance.section = s
@@ -140,7 +151,8 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                     attendance.taken_by = t
 
                     attendance.save()
-
+                    log_entry(teacher, "Absence marked", "Normal", True)
+                    log_entry(teacher, "Starting to send SMS of absence", "Normal", True)
                     # send sms to the parents of absent students
                     m1 = ''
                     m2 = ''
@@ -152,6 +164,8 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                         print ('Exception occured during processing of: ')
                         print (student)
                         print ('Exception3 from attendance views.py = %s (%s)' % (e.message, type(e)))
+                        log_entry(teacher, "Attendance Processing Error. Exception 3 from attendance views.py",
+                                  "Normal", True)
 
                     print ("mobile1=" + m1)
                     print ("mobile2=" + m2)
@@ -161,6 +175,7 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                     school_name = school.school_name
 
                     # prepare the message
+                    log_entry(teacher, "Absence SMS Drafting started", "Normal", True)
                     try:
                         parent_name = student.parent.parent_name
 
@@ -186,15 +201,19 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                             message += '. Please send an application. Regards, ' + school_name
                     except Exception as e:
                         print ('Exception4 from attendance views.py = %s (%s)' % (e.message, type(e)))
+                        log_entry(teacher, "Error in drafting Absence SMS. Exception 4 from attendance views.py",
+                                  "Normal", True)
 
                     print (message)
 
                     # for coaching classes and colleges we need to send sms for any kind of absence
                     if configuration.send_period_bunk_sms:
                         sms.send_sms1(school, teacher, m1, message, message_type)
+                        log_entry(teacher, "Absence SMS Sent", "Normal", True)
                         if m2 != '':
                             if configuration.send_absence_sms_both_to_parent:
                                 sms.send_sms1(school, teacher, m2, message, message_type)
+                                log_entry(teacher, "Absence SMS Sent", "Normal", True)
                     else:
                         # for schools
                         # if this subject is NOT the main subject, then we will send sms only if the student was present
@@ -207,24 +226,30 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                                 if q.count() == 0:
                                     print ('this student was not absent in Main attendance. '
                                            'Looks he has bunked this class...')
+                                    log_entry(teacher, "Student found to be bunking the Class!!!", "Normal", True)
                                     if configuration.send_period_bunk_sms:
                                         sms.send_sms1(school, teacher, m1, message, message_type)
+                                        log_entry(teacher, "Absence SMS Sent", "Normal", True)
                                         if m2 != '':
                                             if configuration.send_absence_sms_both_to_parent:
                                                 sms.send_sms1(school, teacher, m2, message, message_type)
                             except Exception as e:
-                                print ('unable to send sms for ' + student_name)
+                                print ('unable to send sms for ' + f_name)
                                 print ('Exception5 from attendance views.py = %s (%s)' % (e.message, type(e)))
                         else:
                             if configuration.send_absence_sms:
                                 sms.send_sms1(school, teacher, m1, message, message_type)
+                                log_entry(teacher, "Absence SMS Sent", "Normal", True)
                                 if m2 != '':
                                     if configuration.send_absence_sms_both_to_parent:
                                         sms.send_sms1(school, teacher, m2, message, message_type)
+                                        log_entry(teacher, "Absence SMS Sent", "Normal", True)
             except Exception as e:
                 print ('Exception6 from attendance views.py = %s (%s)' % (e.message, type(e)))
+                log_entry(teacher, "Absence was already marked. Exception 6 from attendance views.py", "Normal", True)
 
     response_data['status'] = 'success'
+    log_entry(teacher, "Attendance Processing Complete", "Normal", True)
     return JSONResponse(response_data, status=200)
 
 

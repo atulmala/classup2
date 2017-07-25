@@ -144,7 +144,7 @@ def auth_login(request):
         login_form = ClassUpLoginForm(request.POST)
         context_dict['form'] = login_form
         user_name = request.POST['username']
-        log_entry(user_name, "Trying to login from web", "Normal", True)
+        log_entry(user_name, "Login attempt from web", "Normal", True)
         l.login_id = user_name
         password = request.POST['password']
         l.password = password
