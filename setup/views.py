@@ -610,6 +610,9 @@ def setup_students(request):
                                 update_marks_list = True
                             s.roll_number = current_roll_no
                             s.parent = p
+
+                            # 25/07/2017 - it might be possible that the student was deleted (de-activated) earlier
+                            s.active_status = True
                     except Exception as e:
                         print ('Exception7 from setup views.py = %s (%s)' % (e.message, type(e)))
                         print ('Student with ID:  ' + student_id + ' Name: '
@@ -651,7 +654,7 @@ def setup_students(request):
 
                         # 04/01/2016 - if the roll number has been changed, we need to update the marks entry list
                         if update_marks_list:
-                            print ('going to update the roll number')
+                            print ('going to update the roll number in Class Test Results')
                             try:
                                 results = TestResults.objects.filter(student=s, class_test__is_completed=False)
                                 for r in results:
