@@ -17,5 +17,5 @@ urlpatterns = patterns('',
     url(r'auth/forgot_password/$', views.forgot_password, name='forgot_password'),
     url(r'auth/check_subscription/(?P<student_id>\w+)/$', views.check_subscription, name='check_subscription'),
     url(r'auth/map_device_token/$', views.map_device_token, name='map_device_token'),
-    url(r'auth/logbook_entry/$', csrf_exempt(LogEntry.as_view())),
+    url(r'auth/logbook_entry/$', LogEntry.as_view()),
 )
