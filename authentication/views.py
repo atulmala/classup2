@@ -83,12 +83,16 @@ def log_entry(user, event, category, outcome):
         if u.is_staff:
             print('chances of being and Admin user...')
             if u.groups.filter(name='school_admin').exists():
+                print('user is an admin')
                 mapping = UserSchoolMapping.objects.get(user=u)
                 school = mapping.school.school_name
-                log["school"] = school
+                print('school = ' + school)
+                log["school"] = school.school_name
                 r = requests.post(server, data=json.dumps(log), headers=headers)
                 print(r.text)
                 return
+            else:
+                print('user is not an admin may be a parent')
         else:   # user is parent
             print('not a staff. Checking whether parent...')
             p = Parent.objects.get(parent_mobile1=user)
@@ -101,7 +105,7 @@ def log_entry(user, event, category, outcome):
             print(r.text)
             return
     except Exception as e:
-        print(user + ' is neither a teacher, nor a parent, nor an administrator. Perhaps a fake user '  )
+        print('user is neither a teacher, nor a parent, nor an administrator. Perhaps a fake user '  )
         print('Exception 212 from authentication views.py = %s (%s)' % (e.message, type(e)))
         log["user_name"] = "Un-registered User"
         log["school"] = "Undetermined"
@@ -292,7 +296,7 @@ def auth_login_from_device1(request):
             log_entry(the_user, "User has been authenticated", "Normal", True)
             if user.is_active:
                 print('user ' + the_user + ' is an active user')
-                log_entry(user, "Found to be an Active User", "Normal", True)
+                log_entry(the_user, "Found to be an Active User", "Normal", True)
                 login(request, user)
                 l.outcome = 'Success'
                 l.save()
@@ -308,7 +312,7 @@ def auth_login_from_device1(request):
                     # 12/02/17 - checking if this user belong to school_admin group
                     if user.groups.filter(name='school_admin').exists():
                         print('this is a school admin')
-                        log_entry(user, "User is an Admin User", "Normal", True)
+                        log_entry(the_user, "User is an Admin User", "Normal", True)
                         return_data["school_admin"] = "true"
                     try:
                         u = UserSchoolMapping.objects.get(user=user)
