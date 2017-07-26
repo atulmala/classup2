@@ -188,6 +188,8 @@ def get_hw_image(request, hw_id):
     if request.method == 'GET':
         try:
             hw = HW.objects.get(pk=hw_id)
+            teacher = hw.teacher.email
+
             location = hw.location
             print('location = %s' % location)
             #path = os.path.join(MEDIA_ROOT, location)
