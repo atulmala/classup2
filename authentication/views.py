@@ -87,7 +87,7 @@ def log_entry(user, event, category, outcome):
                 mapping = UserSchoolMapping.objects.get(user=u)
                 school = mapping.school.school_name
                 print('school = ' + school)
-                log['school'] = school.school_name
+                log['school'] = school
                 r = requests.post(server, data=json.dumps(log), headers=headers)
                 print(r.text)
                 return
