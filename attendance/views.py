@@ -142,7 +142,8 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
 
                 # make an entry to database only it is a fresh entry
                 if q.count() == 0:
-                    log_entry(teacher, "Absence marked", "Normal", True)
+                    action = 'Absence marked for ' + student.fist_name + ' ' + student.last_name
+
                     attendance = Attendance(date=the_date)
                     attendance.the_class = c
                     attendance.section = s
@@ -151,8 +152,9 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                     attendance.taken_by = t
 
                     attendance.save()
-                    log_entry(teacher, "Absence marked", "Normal", True)
-                    log_entry(teacher, "Starting to send SMS of absence", "Normal", True)
+                    log_entry(teacher, action, "Normal", True)
+                    action = 'Starting to send sms to parents of  ' + student.fist_name + ' ' + student.last_name
+                    log_entry(teacher, action, "Normal", True)
                     # send sms to the parents of absent students
                     m1 = ''
                     m2 = ''
@@ -174,10 +176,12 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                     configuration = Configurations.objects.get(school=school)
                     school_name = school.school_name
 
-                    # prepare the message
-                    log_entry(teacher, "Absence SMS Drafting started", "Normal", True)
+
                     try:
                         parent_name = student.parent.parent_name
+                        # prepare the message
+                        action = 'Absence SMS Drafting for ' + parent_name + ' started'
+                        log_entry(teacher, action, "Normal", True)
 
                         # 17/02/17 we are looking to use student first name in messages. However, some schools store entire
                         # name as first name. This need to be checke and split first name if entire name is stored as first name
@@ -201,7 +205,8 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                             message += '. Please send an application. Regards, ' + school_name
                     except Exception as e:
                         print ('Exception4 from attendance views.py = %s (%s)' % (e.message, type(e)))
-                        log_entry(teacher, "Error in drafting Absence SMS. Exception 4 from attendance views.py",
+                        action = 'Error in drafting SMS for ' + parent_name + '. Exception 4 from attendance views.py'
+                        log_entry(teacher, action,
                                   "Normal", True)
 
                     print (message)
@@ -209,11 +214,12 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                     # for coaching classes and colleges we need to send sms for any kind of absence
                     if configuration.send_period_bunk_sms:
                         sms.send_sms1(school, teacher, m1, message, message_type)
-                        log_entry(teacher, "Absence SMS Sent", "Normal", True)
+                        action = 'Absence SMS sent to ' + parent_name
+                        log_entry(teacher, action, "Normal", True)
                         if m2 != '':
                             if configuration.send_absence_sms_both_to_parent:
                                 sms.send_sms1(school, teacher, m2, message, message_type)
-                                log_entry(teacher, "Absence SMS Sent", "Normal", True)
+                                log_entry(teacher, action, "Normal", True)
                     else:
                         # for schools
                         # if this subject is NOT the main subject, then we will send sms only if the student was present
@@ -224,26 +230,36 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                                 q = Attendance.objects.filter(date=the_date, the_class=c,
                                                               section=s, subject=main, student=student)
                                 if q.count() == 0:
-                                    print ('this student was not absent in Main attendance. '
+                                    print (student.fist_name + ' ' + student.last_name +
+                                           '  was not absent in Main attendance. '
                                            'Looks he has bunked this class...')
-                                    log_entry(teacher, "Student found to be bunking the Class!!!", "Normal", True)
+                                    action = student.fist_name + ' ' + student.last_name
+                                    action += ' found to be bunking the Class!!!'
+                                    log_entry(teacher, action, "Normal", True)
                                     if configuration.send_period_bunk_sms:
                                         sms.send_sms1(school, teacher, m1, message, message_type)
-                                        log_entry(teacher, "Absence SMS Sent", "Normal", True)
+                                        action = 'Absence SMS sent to ' + student.parent.parent_name
+                                        log_entry(teacher, action, "Normal", True)
                                         if m2 != '':
                                             if configuration.send_absence_sms_both_to_parent:
                                                 sms.send_sms1(school, teacher, m2, message, message_type)
+                                                action = 'Absence SMS sent to Mrs. ' + student.parent.parent_name
+                                                log_entry(teacher, action, "Normal", True)
                             except Exception as e:
+                                action = 'Unable to send SMS to ' + student.parent.parent_name
+                                log_entry(teacher, action, "Normal", True)
                                 print ('unable to send sms for ' + f_name)
                                 print ('Exception5 from attendance views.py = %s (%s)' % (e.message, type(e)))
                         else:
                             if configuration.send_absence_sms:
                                 sms.send_sms1(school, teacher, m1, message, message_type)
-                                log_entry(teacher, "Absence SMS Sent", "Normal", True)
+                                action = 'Absence SMS sent to ' + student.parent.parent_name
+                                log_entry(teacher, action, "Normal", True)
                                 if m2 != '':
                                     if configuration.send_absence_sms_both_to_parent:
                                         sms.send_sms1(school, teacher, m2, message, message_type)
-                                        log_entry(teacher, "Absence SMS Sent", "Normal", True)
+                                        action = 'Absence SMS sent to Mrs. ' + student.parent.parent_name
+                                        log_entry(teacher, action, "Normal", True)
             except Exception as e:
                 print ('Exception6 from attendance views.py = %s (%s)' % (e.message, type(e)))
                 log_entry(teacher, "Absence was already marked. Exception 6 from attendance views.py", "Normal", True)
@@ -283,10 +299,17 @@ def delete_attendance2(request, school_id, the_class, section, subject, d, m, y)
                 print (q.count())
                 # make an entry to database only it is a fresh entry
                 if q.count() > 0:
+                    try:
+                        teacher = q.taken_by.email
+                        action = 'Deleted a previously taken attendance for ' +\
+                                 student.fist_name + ' ' + student.last_name
+                        log_entry(teacher, action, "Normal", True)
+                    except Exception as e:
+                        print ('Exception 7 from attendance views.py = %s (%s)' % (e.message, type(e)))
                     q.delete()
-
+                print ('Exception 8 from attendance views.py = %s (%s)' % (e.message, type(e)))
             except Exception as e:
-                print ('Exception7 from attendance views.py = %s (%s)' % (e.message, type(e)))
+                print ('Exception 9 from attendance views.py = %s (%s)' % (e.message, type(e)))
 
         # this view is being called from mobile. We use dummy template so that we dont' run into exception
         # return render(request, 'classup/dummy.html')

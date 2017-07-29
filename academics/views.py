@@ -15,7 +15,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.test import RequestFactory
 
-from authentication.views import JSONResponse
+from authentication.views import JSONResponse, log_entry
 from rest_framework import generics
 import Queue
 
@@ -76,6 +76,15 @@ class ExamList(generics.ListCreateAPIView):
         class_sequence = the_class.sequence
         q = Exam.objects.filter(school=school, start_class_sequence__lte=class_sequence,
                                 end_class_sequence__gte=class_sequence)
+
+        try:
+            action = 'Retrieving exam list for ' + student.fist_name + ' ' + student.last_name
+            parent = student.parent.parent_mobile1
+            log_entry(parent, action, "Normal", True)
+        except Exception as e:
+            print('unable to crete logbook entry')
+            print ('Exception 500 from academics views.py %s %s' % (e.message, type(e)))
+
         return q.order_by('start_date')
 
 
@@ -96,8 +105,15 @@ class CompletedTestList(generics.ListCreateAPIView):
         t = self.kwargs['teacher']
 
         the_teacher = Teacher.objects.get(email=t)
-
         q = ClassTest.objects.filter(teacher=the_teacher, is_completed=True).order_by('date_conducted')
+
+        try:
+            action = 'Retrieving completed test list for ' + the_teacher.first_name + ' ' + the_teacher.last_name
+            log_entry(t, action, 'Normal', True)
+        except Exception as e:
+            print ('unable to create logbook entry. Exception 50 from academics views.py')
+            print ('Exception 501 from academics views.py %s %s' % (e.message, type(e)))
+
         return q
 
 
@@ -108,8 +124,15 @@ class PendingTestList(generics.ListCreateAPIView):
         t = self.kwargs['teacher']
 
         the_teacher = Teacher.objects.get(email=t)
-
         q = ClassTest.objects.filter(teacher=the_teacher, is_completed=False).order_by('date_conducted')
+
+        try:
+            action = 'Retrieving pending test list for ' + the_teacher.first_name + ' ' + the_teacher.last_name
+            log_entry(t, action, 'Normal', True)
+        except Exception as e:
+            print ('unable to create logbook entry. Exception 50 from academics views.py')
+            print ('Exception 502 from academics views.py %s %s' % (e.message, type(e)))
+
         return q
 
 
@@ -123,9 +146,18 @@ class PendingTestListParents(generics.ListAPIView):
             student = Student.objects.get(pk=s)
             the_class = student.current_class
             section = student.current_section
-
             q = ClassTest.objects.filter(the_class=the_class, section=section,
                                          date_conducted__gte=date.today()).order_by('date_conducted')
+
+            try:
+                parent_name = student.parent.parent_name
+                action = 'Retrieving pending test list for ' + parent_name
+                mobile = student.parent.parent_mobile1
+                log_entry(mobile, action, 'Normal', True)
+            except Exception as e:
+                print ('unable to create logbook entry. Exception 50 from academics views.py')
+                print ('Exception 503 from academics views.py %s %s' % (e.message, type(e)))
+
             return q
         except Exception as e:
             print ('Exception 370 from academics views.py %s %s' % (e.message, type(e)))
@@ -164,6 +196,13 @@ class HWList(generics.ListCreateAPIView):
         try:
             t = Teacher.objects.get(email=user)
             q = HW.objects.filter(teacher=t.email).order_by('due_date')
+
+            try:
+                action = 'Retrieving HW list for ' + t.first_name + ' ' + t.last_name
+                log_entry(t.email, action, 'Normal', True)
+            except Exception as e:
+                print('unable to crete logbook entry')
+                print ('Exception 504 from academics views.py %s %s' % (e.message, type(e)))
             return q
         except Exception as e:
             print('Exception 350 from academics view.py %s %s' % (e.message, type(e)))
@@ -174,6 +213,13 @@ class HWList(generics.ListCreateAPIView):
                 the_class = student.current_class
                 section = student.current_section
                 q = HW.objects.filter(school=school, the_class=the_class.standard, section=section.section)
+                try:
+                    action = 'Retrieving HW list for ' + student.fist_name + ' ' + student.last_name
+                    parent_mobile = student.parent.parent_mobile1
+                    log_entry(parent_mobile, action, 'Normal', True)
+                except Exception as e:
+                    print('unable to crete logbook entry')
+                    print ('Exception 505 from academics views.py %s %s' % (e.message, type(e)))
                 return q
             except Exception as e:
                 print ('Exception 360 from academics views.py %s %s' % (e.message, type(e)))
@@ -188,19 +234,22 @@ def get_hw_image(request, hw_id):
     if request.method == 'GET':
         try:
             hw = HW.objects.get(pk=hw_id)
-            teacher = hw.teacher.email
-
             location = hw.location
             print('location = %s' % location)
-            #path = os.path.join(MEDIA_ROOT, location)
             path = MEDIA_ROOT + '/' + str(location)
             print('filepath = %s' % path)
             wrapper = FileWrapper(open(path))
             content_type = mimetypes.guess_type(path)[0]
             print('content_type %s' % content_type)
             response = HttpResponse(wrapper, content_type=content_type)
-            #print(response)
             response['Content-Disposition'] = "attachment; filename=%s" % path
+            try:
+                action = 'Retrieving HW image created by ' + hw.teacher.first_name + ' ' + hw.teacher.last_name
+                teacher = hw.teacher.email
+                log_entry(teacher, action, 'Normal', True)
+            except Exception as e:
+                print('unable to crete logbook entry')
+                print ('Exception 506 from academics views.py %s %s' % (e.message, type(e)))
             return response
         except Exception as e:
             print('Exception 330 from academics views.py %s %s' % (e.message, type(e)))
@@ -264,6 +313,12 @@ def create_hw(request):
                 hw.save()
                 context_dict['status'] = 'success'
                 print(hw.location)
+                try:
+                    action = 'Creating HW by ' + t.first_name + ' ' + t.last_name
+                    log_entry(teacher, action, 'Normal', True)
+                except Exception as e:
+                    print('unable to crete logbook entry')
+                    print ('Exception 508 from academics views.py %s %s' % (e.message, type(e)))
                 return JSONResponse(context_dict, status=200)
             except Exception as e:
                 print('Exception 310 from academics views.py = %s (%s)' % (e.message, type(e)))
@@ -329,11 +384,18 @@ def create_test(request, school_id, the_class, section, subject,
 
                 try:
                     test.save()
+                    try:
+                        action = 'Created test for ' + subject + ' class: ' + the_class + '-' + section
+                        action += ' by ' + t.first_name  + ' ' + t.last_name
+                        log_entry(t.email, action, 'Normal', True)
+                    except Exception as e:
+                        print('unable to crete logbook entry')
+                        print ('Exception 510 from academics views.py %s %s' % (e.message, type(e)))
                     print ('test successfully created')
 
                 except Exception as e:
                     print ('Test creation failed')
-                    print ('Exception = %s (%s)' % (e.message, type(e)))
+                    print ('Exception 509 from academics views.py Exception = %s (%s)' % (e.message, type(e)))
                     return HttpResponse('Test Creation Failed')
 
                 # now, create entry for each student in table TestResults. We need to retrieve the list of student
@@ -402,10 +464,18 @@ def save_marks(request):
 
             try:
                 tr.save()
+                try:
+                    action = 'Saved Test Results for ' + tr.student.fist_name + ' ' + tr.student.last_name
+                    action += ' ' + test.the_class.standard + '-' + test.section.section
+                    action += ' ' + test.subject.subject_name
+                    teacher = test.teacher.email
+                    log_entry(teacher, action, 'Normal', True)
+                except Exception as e:
+                    print('unable to create logbook entry')
+                    print ('Exception 511 from academics views.py %s %s' % (e.message, type(e)))
             except Exception as e:
                 print('unable to save marks')
-                print ('Exception = %s (%s)' % (e.message, type(e)))
-
+                print ('Exception 512 from academics viws.py = %s (%s)' % (e.message, type(e)))
         response["status"] = "success"
 
         return JSONResponse(response, status=200)
@@ -464,9 +534,18 @@ def submit_marks(request, school_id):
                         average_marks = int(average_marks)
             try:
                 tr.save()
+                try:
+                    action = 'Saved Test Results for ' + tr.student.fist_name + ' ' + tr.student.last_name
+                    action += ' ' + test.the_class.standard + '-' + test.section.section
+                    action += ' ' + test.subject.subject_name
+                    teacher = test.teacher.email
+                    log_entry(teacher, action, 'Normal', True)
+                except Exception as e:
+                    print('unable to create logbook entry')
+                    print ('Exception 514 from academics views.py %s %s' % (e.message, type(e)))
             except Exception as e:
-                print('unable to save marks')
-                print ('Exception = %s (%s)' % (e.message, type(e)))
+                print('unable to submit marks')
+                print ('Exception 513 from academics views.py = %s (%s)' % (e.message, type(e)))
 
         # get the id of the associated test and mark it as complete
         test = ClassTest.objects.get(testresults__id=key)
@@ -501,6 +580,12 @@ def submit_marks(request, school_id):
 
             try:
                 sub = test.subject
+                action = 'Preapring to draft test result SMS for ' + student.parent.parent_name
+                try:
+                    log_entry(sender, action, 'Normal', True)
+                except Exception as e:
+                    print('unable to create logbook entry')
+                    print ('Exception 515 from academics views.py %s %s' % (e.message, type(e)))
                 message = 'Dear ' + student.parent.parent_name
                 if grade_based:
                     message += ', Grade secured by '
@@ -536,6 +621,13 @@ def submit_marks(request, school_id):
                         message += ' & Avg marks: ' + str(round(average_marks))
                 message += ". Regards, " + school_name
 
+                try:
+                    action = 'Test Marks SMS Drafted for ' + student.parent.parent_name
+                    log_entry(sender, action, 'Normal', True)
+                except Exception as e:
+                    print('unable to create logbook entry')
+                    print ('Exception 516 from academics views.py %s %s' % (e.message, type(e)))
+
                 # print message
 
                 p = student.parent
@@ -556,13 +648,25 @@ def submit_marks(request, school_id):
 
                 if conf.send_marks_sms:
                     sms.send_sms1(school, sender, m1, message, message_type)
+                    try:
+                        action = 'Test Result SMS sent to ' + p.parent_name + '(' + p.parent_mobile1 + ')'
+                        log_entry(sender, action, 'Normal', True)
+                    except Exception as e:
+                        print('unable to create logbook entry')
+                        print ('Exception 516 from academics views.py %s %s' % (e.message, type(e)))
                     if conf.send_absence_sms_both_to_parent:
                         if m2 != '':
                             sms.send_sms1(school, sender, m2, message, message_type)
+                            try:
+                                action = 'Test Result SMS sent to ' + p.parent_name + '(' + p.parent_mobile2 + ')'
+                                log_entry(sender, action, 'Normal', True)
+                            except Exception as e:
+                                print('unable to create logbook entry')
+                                print ('Exception 517 from academics views.py %s %s' % (e.message, type(e)))
 
             except Exception as e1:
                 print ('unable send sms for ' + student.fist_name + ' ' + student.last_name)
-                print ('Exception = %s (%s)' % (e1.message, type(e1)))
+                print ('Exception 518 from academics viws.py = %s (%s)' % (e1.message, type(e1)))
 
         count = 0
         for mobile in message_list:
@@ -615,7 +719,7 @@ def get_working_days1(request):
             session_start_month = configuration.session_start_month
         except Exception as e:
             print ('unable to fetch the session_start_month for school with id:  ' + school_id)
-            print ('Exception1 from academics views.py = %s (%s)' % (e.message, type(e)))
+            print ('Exception 1 from academics views.py = %s (%s)' % (e.message, type(e)))
 
         the_class = Class.objects.get(school=school, standard=cl)
         section = Section.objects.get(school=school, section=the_section)
@@ -636,7 +740,7 @@ def get_working_days1(request):
                 return JSONResponse(response, status=200)
             except Exception as e:
                 print ('unable to fetch the number of days for ' + str(m) + '/' + str(y))
-                print ('Exception2 from academics views.py = %s (%s)' % (e.message, type(e)))
+                print ('Exception 2 from academics views.py = %s (%s)' % (e.message, type(e)))
                 return JSONResponse('Failed', status=201)
         else:
             # logic: if current month is less than session_start_month,
@@ -655,6 +759,7 @@ def get_working_days1(request):
                         print ('days in ' + str(m) + '/' + str(now.year - 1) + '=' + str(total_days))
                         days_till_last_month += total_days
                     except Exception as e:
+                        print
                         print ('unable to fetch the number of days for ' + str(m) + '/' + str(now.year - 1))
                         print ('Exception = %s (%s)' % (e.message, type(e)))
                         return JSONResponse('Failed', status=404)
@@ -846,7 +951,7 @@ def delete_test(request, test_id):
         except Exception as e:
             response["status"] = "failed"
             print('Unable to delete test with id=' + test_id)
-            print ('Exception10 from academics views.py = %s (%s)' % (e.message, type(e)))
+            print ('Exception 11 from academics views.py = %s (%s)' % (e.message, type(e)))
             return JSONResponse(response, status=404)
 
 
