@@ -314,7 +314,7 @@ def create_hw(request):
                 context_dict['status'] = 'success'
                 print(hw.location)
                 try:
-                    action = 'Creating HW by ' + t.first_name + ' ' + t.last_name
+                    action = 'Creating HW for:  ' + the_class + '-' + section + ', Subject: ' + subject
                     log_entry(teacher, action, 'Normal', True)
                 except Exception as e:
                     print('unable to crete logbook entry')
@@ -385,8 +385,7 @@ def create_test(request, school_id, the_class, section, subject,
                 try:
                     test.save()
                     try:
-                        action = 'Created test for ' + subject + ' class: ' + the_class + '-' + section
-                        action += ' by ' + t.first_name  + ' ' + t.last_name
+                        action = 'Created test for '  + the_class + '-' + section + ', Subject: ' + subject
                         log_entry(t.email, action, 'Normal', True)
                     except Exception as e:
                         print('unable to crete logbook entry')
@@ -649,7 +648,7 @@ def submit_marks(request, school_id):
                 if conf.send_marks_sms:
                     sms.send_sms1(school, sender, m1, message, message_type)
                     try:
-                        action = 'Test Result SMS sent to ' + p.parent_name + '(' + p.parent_mobile1 + ')'
+                        action = 'Test Result SMS sent to ' + p.parent_name + ' (' + p.parent_mobile1 + ')'
                         log_entry(sender, action, 'Normal', True)
                     except Exception as e:
                         print('unable to create logbook entry')
@@ -658,7 +657,7 @@ def submit_marks(request, school_id):
                         if m2 != '':
                             sms.send_sms1(school, sender, m2, message, message_type)
                             try:
-                                action = 'Test Result SMS sent to ' + p.parent_name + '(' + p.parent_mobile2 + ')'
+                                action = 'Test Result SMS sent to ' + p.parent_name + ' (' + p.parent_mobile2 + ')'
                                 log_entry(sender, action, 'Normal', True)
                             except Exception as e:
                                 print('unable to create logbook entry')
@@ -867,7 +866,7 @@ def get_attendance_summary(request):
                         (student=s, subject=subject, date__month=month_dict[m], date__year=y)
                     absent_days = query.count()
                 except Exception as e:
-                    print ('Exception7 from academics views.py = %s (%s)' % (e.message, type(e)))
+                    print ('Exception 7 from academics views.py = %s (%s)' % (e.message, type(e)))
             else:
                 # logic: if current month is less than session_start_month,
                 # this means that the session started last year. So we need to add the working day for each month from
@@ -945,7 +944,15 @@ def delete_test(request, test_id):
     if request.method == 'DELETE':
         try:
             t = ClassTest.objects.get(pk=int(test_id))
+            teacher = t.teacher.email
             t.delete()
+            try:
+                action = 'Deleted test '  + t.the_class.standard + '-' + t.section.section
+                action += ', Subject' + t.subject.subject_name
+                log_entry(teacher, action, 'Normal', True)
+            except Exception as e:
+                print('unable to create logbook entry')
+                print ('Exception 521 from academics views.py %s %s' % (e.message, type(e)))
             response["status"] = "success"
             return JSONResponse(response, status=200)
         except Exception as e:
@@ -963,12 +970,19 @@ def delete_hw(request, hw_id):
     if request.method == 'DELETE':
         try:
             t = HW.objects.get(pk=int(hw_id))
+            teacher = t.teacher
             t.delete()
+            try:
+                action = 'Deleted HW '  + t.the_class + '-' + t.section + ', Subject: ' + t.subject
+                log_entry(teacher, action, 'Normal', True)
+            except Exception as e:
+                print('unable to create logbook entry')
+                print ('Exception 522 from academics views.py %s %s' % (e.message, type(e)))
             response["status"] = "success"
             return JSONResponse(response, status=200)
         except Exception as e:
             response["status"] = "failed"
-            print('Unable to delete test with id=' + hw_id)
+            print('Unable to delete HW with id=' + hw_id)
             print ('Exception 10 from academics views.py = %s (%s)' % (e.message, type(e)))
             return JSONResponse(response, status=404)
 

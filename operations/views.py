@@ -17,7 +17,7 @@ from django.contrib import messages
 
 from rest_framework import generics
 
-from authentication.views import JSONResponse
+from authentication.views import JSONResponse, log_entry
 
 from .forms import SchoolAttSummaryForm, AttendanceRegisterForm
 from .forms import TestResultForm, ParentsCommunicationDetailsForm, BulkSMSForm, SMSSummaryForm
@@ -46,6 +46,12 @@ class SMSHistoryList(generics.ListAPIView):
 
     def get_queryset(self):
         recipient = self.kwargs['parent_mobile']
+        try:
+            action = 'Retrieving SMS History'
+            log_entry(recipient, action, 'Normal', True)
+        except Exception as e:
+            print('unable to create logbook entry')
+            print('Exception 500 from operations views.py = %s (%s)' % (e.message, type(e)))
         q = SMSRecord.objects.filter(recipient_number=recipient).\
             exclude(message_type='Forgot Password').order_by('-date')
         return q
@@ -65,7 +71,7 @@ def att_summary_school_device(request):
             school = School.objects.get(id=school_id)
         except Exception as e:
             print ('unable to fetch the school for school with id:  ' + school_id)
-            print ('Exception400 from operations views.py = %s (%s)' % (e.message, type(e)))
+            print ('Exception 400 from operations views.py = %s (%s)' % (e.message, type(e)))
 
         dt = request.GET.get('date')
         mn = request.GET.get('month')
@@ -898,6 +904,14 @@ def send_message(request, school_id):
                 the_section = data["section"]
                 sec = Section.objects.get(school=school, section=the_section)
 
+                try:
+                    action = 'Sending message to whole class ' + the_class + '-' + the_section
+                    action += ', Message: ' + message_content
+                    log_entry(email, action, 'Normal', True)
+                except Exception as e:
+                    print('unable to create logbook entry')
+                    print ('Exception 500 from operations views.py %s %s' % (e.message, type(e)))
+
                 # get the list of all students in this class/section
                 try:
                     student_list = Student.objects.filter(current_class=c, current_section=sec, active_status=True)
@@ -929,6 +943,13 @@ def send_message(request, school_id):
             else:
                 for key in data:
                     if (key != 'message') and (key != 'teacher') and (key != 'whole_class'):
+                        try:
+                            action = 'Sending message to Selected Students. Message:  '
+                            action += message_content
+                            log_entry(email, action, 'Normal', True)
+                        except Exception as e:
+                            print('unable to create logbook entry')
+                            print ('Exception 501 from operations views.py %s %s' % (e.message, type(e)))
                         student_id = data[key]
 
                         s = Student.objects.get(pk=student_id)
@@ -950,9 +971,23 @@ def send_message(request, school_id):
 
                         try:
                             sms.send_sms1(school, email, m1, message, message_type)
+                            try:
+                                action = 'SMS sent to ' + p.parent_name + ' (' + p.parent_mobile1 + ')'
+                                action += ', Message: ' + message_content
+                                log_entry(email, action, 'Normal', True)
+                            except Exception as e:
+                                print('unable to create logbook entry')
+                                print ('Exception 502 from operations views.py %s %s' % (e.message, type(e)))
                             if configuration.send_absence_sms_both_to_parent:
                                 if m2 != '':
                                     sms.send_sms1(school, email, m2, message, message_type)
+                                    try:
+                                        action = 'SMS sent to ' + p.parent_name + ' (' + p.parent_mobile2 + ')'
+                                        action += ', Message: ' + message_content
+                                        log_entry(email, action, 'Normal', True)
+                                    except Exception as e:
+                                        print('unable to create logbook entry')
+                                        print ('Exception 503 from operations views.py %s %s' % (e.message, type(e)))
                         except Exception as e:
                             print ('Unable to send message to ' + p.parent_name + 'with mobile number: ' + m1)
                             print ('Exception12 from operations views.py = %s (%s)' % (e.message, type(e)))
