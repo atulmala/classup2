@@ -3,15 +3,12 @@ import json
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from academics.models import Subject, ClassTeacher, Class, Section
-
-# Create your views here.
-
 from django.contrib.auth.models import User, Group
 from rest_framework import generics
 from operations import sms
+from authentication.views import log_entry
+from academics.models import Subject, ClassTeacher, Class, Section, TeacherSubjects
 from setup.models import School, UserSchoolMapping, Configurations
-from academics.models import TeacherSubjects
 from .models import Teacher
 
 from .serializers import TeacherSubjectSerializer, TeacherSerializer
@@ -351,7 +348,13 @@ def set_subjects(request, teacher):
                 except Exception as e:
                     print('unable to set subject ' + s.subject_name +
                           ' for teacher ' + t.first_name + ' ' + t.last_name)
-                    print ('Exception2 from teacher views.py = %s (%s)' % (e.message, type(e)))
+                    print ('Exception 2 from teacher views.py = %s (%s)' % (e.message, type(e)))
+        try:
+            action = 'Subjects Set'
+            log_entry(teacher, action, 'Normal', True)
+        except Exception as e:
+            print('unable to create logbook entry')
+            print ('Exception 500 from teachers views.py %s %s' % (e.message, type(e)))
 
     return HttpResponse('OK')
 
@@ -394,5 +397,10 @@ def unset_subjects(request, teacher):
                 print('subject ' + s.subject_name + ' was not set for teacher ' + t.first_name + ' ' + t.last_name)
                 print ('Exception4 from teacher views.py = %s (%s)' % (e.message, type(e)))
                 pass
-
+        try:
+            action = 'Subjects unSet'
+            log_entry(teacher, action, 'Normal', True)
+        except Exception as e:
+            print('unable to create logbook entry')
+            print ('Exception 501 from teachers views.py %s %s' % (e.message, type(e)))
     return HttpResponse('OK')
