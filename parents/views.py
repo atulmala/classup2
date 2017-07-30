@@ -6,7 +6,7 @@ from rest_framework import generics
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
-from authentication.views import JSONResponse
+from authentication.views import JSONResponse, log_entry
 from student.models import Student
 from setup.models import Configurations
 from academics.models import Subject, ClassTeacher, ClassTest, TestResults, Exam
@@ -48,6 +48,15 @@ def submit_parents_communication(request):
                                      communication_text=communication_text)
             pc.save()
             print ('successfully saved the message "' + communication_text + '" in the database')
+
+            try:
+                parent_mobile = student.parent.parent_mobile1
+                action = 'Submitted Parent Communication'
+                log_entry(parent_mobile, action, 'Normal', True)
+            except Exception as e:
+                print('unable to create logbook entry')
+                print ('Exception 500 from parents views.py %s %s' % (e.message, type(e)))
+
             # if the message was for Class Teacher/Principal's immediate attention an sms need to be sent to them
             if cat == 'Class Teacher/Principal Attention' or cat == 'Leave Application' \
                     or configuration.send_all_parent_sms_to_principal:
@@ -73,22 +82,38 @@ def submit_parents_communication(request):
                             teacher = ct.class_teacher
                             teacher_mobile = teacher.mobile
                             sms.send_sms1(school, parent_name, teacher_mobile, message, message_type)
+                            try:
+                                parent_mobile = student.parent.parent_mobile1
+                                action = 'Parent Communication SMS sent to Class Teacher: '
+                                action += teacher.first_name + ' ' + teacher.last_name
+                                log_entry(parent_mobile, action, 'Normal', True)
+                            except Exception as e:
+                                print('unable to create logbook entry')
+                                print ('Exception 501 from parents views.py %s %s' % (e.message, type(e)))
                     except Exception as e:
                         print('Class Teacher not set for ' + the_class.standard + '-' + section.section)
-                        print ('Exception1 from parents views.py = %s (%s)' % (e.message, type(e)))
+                        print ('Exception 1 from parents views.py = %s (%s)' % (e.message, type(e)))
 
                     principal_mobile = configuration.principal_mobile
                     sms.send_sms1(school, parent_name, principal_mobile, message, message_type)
+                    try:
+                        parent_mobile = student.parent.parent_mobile1
+                        action = 'Parent Communication SMS sent to Principal'
+                        log_entry(parent_mobile, action, 'Normal', True)
+                    except Exception as e:
+                        print('unable to create logbook entry')
+                        print ('Exception 502 from parents views.py %s %s' % (e.message, type(e)))
+
                 except Exception as e:
                     print ('failed to send message ' + communication_text + ' to Class Teacher of class ' +
                            the_class.standard + '-' + section.section)
-                    print ('Exception2 from parents views.py = %s (%s)' % (e.message, type(e)))
+                    print ('Exception 2 from parents views.py = %s (%s)' % (e.message, type(e)))
 
             return HttpResponse('Success')
         except Exception as e:
             print ('Error occured while trying to save comments from parents of '
                    + student.fist_name + ' ' + student.last_name)
-            print ('Exception3 from parents views.py = %s (%s)' % (e.message, type(e)))
+            print ('Exception 3 from parents views.py = %s (%s)' % (e.message, type(e)))
             return HttpResponse('Failed')
 
     return HttpResponse('OK')
@@ -249,6 +274,14 @@ def retrieve_stu_att_summary(request):
             response_array.append(d)
     print (response_array.__len__())
 
+    try:
+        parent_mobile = student.parent.parent_mobile1
+        action = 'Retrieved ' + student.fist_name + ' ' + student.last_name + ' Attendance History'
+        log_entry(parent_mobile, action, 'Normal', True)
+    except Exception as e:
+        print('unable to create logbook entry')
+        print ('Exception 505 from parents views.py %s %s' % (e.message, type(e)))
+
     return JSONResponse(response_array, status=200)
 
 
@@ -272,6 +305,14 @@ def retrieve_student_subjects(request):
                 subject_list['subject'] = subject
                 d = dict(subject_list)
                 response_array.append(d)
+            try:
+                parent_mobile = student.parent.parent_mobile1
+                action = 'Retrieved Subject List for ' + student.fist_name + ' ' + student.last_name
+                log_entry(parent_mobile, action, 'Normal', True)
+            except Exception as e:
+                print('unable to create logbook entry')
+                print ('Exception 506 from parents views.py %s %s' % (e.message, type(e)))
+
             return JSONResponse(response_array, status=200)
         except Exception as e:
             print ('unable to retrieve list of subjects for ' + s.fist_name + ' ' + s.last_name)
@@ -309,9 +350,17 @@ def retrieve_stu_sub_marks_history(request, subject):
                     marks_history['marks'] = test_result.marks_obtained
                 d = dict(marks_history)
                 response_array.append(d)
+            try:
+                parent_mobile = s.parent.parent_mobile1
+                action = 'Retrieved ' + sub.subject_name + ' marks history for ' + s.fist_name + ' ' + s.last_name
+                log_entry(parent_mobile, action, 'Normal', True)
+            except Exception as e:
+                print('unable to create logbook entry')
+                print ('Exception 507 from parents views.py %s %s' % (e.message, type(e)))
+
             return JSONResponse(response_array, status=200)
         except Exception as e:
-            print ('Exception12 from parents views.py = %s (%s)' % (e.message, type(e)))
+            print ('Exception 12 from parents views.py = %s (%s)' % (e.message, type(e)))
             print ('unable to retrieve ' + sub.subject_name + ' marks history for '
                    + s.fist_name + ' ' + s.last_name)
 
@@ -360,10 +409,17 @@ def get_exam_result(request, student_id, exam_id):
 
                     d = dict(exam_result)
                     response_array.append(d)
+            try:
+                parent_mobile = student.parent.parent_mobile1
+                action = 'Retrieved ' + exam.title + ' results for ' + student.fist_name + ' ' + student.last_name
+                log_entry(parent_mobile, action, 'Normal', True)
+            except Exception as e:
+                print('unable to create logbook entry')
+                print ('Exception 508 from parents views.py %s %s' % (e.message, type(e)))
             return JSONResponse(response_array, status=200)
         except Exception as e:
             print (exam_result)
-            print ('Exception13 from parents views.py = %s (%s)' % (e.message, type(e)))
+            print ('Exception 13 from parents views.py = %s (%s)' % (e.message, type(e)))
             print ('unable to retrieve ' + exam.title + ' results for ' +
                    student.fist_name + ' ' + student.last_name)
     return JSONResponse(response_array, status=201)
