@@ -306,8 +306,8 @@ def retrieve_student_subjects(request):
                 d = dict(subject_list)
                 response_array.append(d)
             try:
-                parent_mobile = student.parent.parent_mobile1
-                action = 'Retrieved Subject List for ' + student.fist_name + ' ' + student.last_name
+                parent_mobile = s.parent.parent_mobile1
+                action = 'Retrieved Subject List for ' + s.fist_name + ' ' + s.last_name
                 log_entry(parent_mobile, action, 'Normal', True)
             except Exception as e:
                 print('unable to create logbook entry')
