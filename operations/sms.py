@@ -14,6 +14,7 @@ from .models import SMSRecord
 
 from push_notifications.gcm import gcm_send_message
 
+
 def send_sms(school, sender, mobile, message, message_type):
     # 25/12/2016 - added field to check whether sms sending is enabled for this school. Check that first
     try:
@@ -28,8 +29,6 @@ def send_sms(school, sender, mobile, message, message_type):
         # values for softsms vendor
         key = '58fc1def26489'
 
-        url = 'https://control.msg91.com/api/sendhttp.php'
-        print(url)
         m1 = message.replace(" ", "+")
         print(m1)
         m2 = m1.replace("&", "%26")
@@ -197,7 +196,7 @@ def send_sms(school, sender, mobile, message, message_type):
         print ('Send SMS is turned off for this school: ' + school.school_name + ', ' + school.school_address)
 
 
-def send_sms1(school, sender, mobile, message, message_type):
+def send_sms(school, sender, mobile, message, message_type):
     # 25/12/2016 - added field to check whether sms sending is enabled for this school. Check that first
     try:
         # 25/12/2016 - there will be a unique sender id for each school
