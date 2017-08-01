@@ -32,7 +32,11 @@ def send_sms1(school, sender, mobile, message, message_type):
         m1 = message.replace(" ", "+")
         print(m1)
         m2 = m1.replace("&", "%26")
-        m3 = m2.replace("\r\n", "+")
+        m0 = m2.replace("\n", "+")
+        m00 = m0.replace("\r", "+")
+
+        m3 = m00.replace("\r\n", "+")
+
         print(m3)
 
         url = 'http://softsms.in/app/smsapi/index.php?'

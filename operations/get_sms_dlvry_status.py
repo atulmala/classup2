@@ -14,11 +14,13 @@ try:
 
     # extract message_id of all the sms sent after 31/01/17 for which sms delivery status has not been extracted
     sql1 = "select outcome from operations_smsrecord where api_called = 1 and " \
-           "status_extracted = 0 and date > '2017-04-30' and date < DATE_SUB(NOW(), INTERVAL 3 HOUR)"
+           "status_extracted = 0 and date > '2017-07-30' and date < DATE_SUB(NOW(), INTERVAL 3 HOUR)"
     cursor1.execute(sql1)
 
     # now, try to extract delivery status of each sms by calling api of the bulk sms provider
     row = cursor1.fetchone()
+    print('row=')
+    print(row)
     while row is not None:
         message_id = row[0]
         print(message_id)
