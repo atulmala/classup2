@@ -300,14 +300,14 @@ def delete_attendance2(request, school_id, the_class, section, subject, d, m, y)
                 # make an entry to database only it is a fresh entry
                 if q.count() > 0:
                     try:
+                        q.delete()
                         teacher = q.taken_by.email
                         action = 'Deleted a previously taken attendance for ' +\
                                  student.fist_name + ' ' + student.last_name
                         log_entry(teacher, action, "Normal", True)
                     except Exception as e:
                         print ('Exception 7 from attendance views.py = %s (%s)' % (e.message, type(e)))
-                    q.delete()
-                print ('Exception 8 from attendance views.py = %s (%s)' % (e.message, type(e)))
+
             except Exception as e:
                 print ('Exception 9 from attendance views.py = %s (%s)' % (e.message, type(e)))
 
