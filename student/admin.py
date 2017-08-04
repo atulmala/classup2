@@ -14,7 +14,7 @@ class StudentAdmin(admin.ModelAdmin):
         return obj.school
     get_school_name.short_description = 'School'
 
-    search_fields = ['fist_name', 'last_name']
+    search_fields = ['fist_name', 'last_name', 'student_erp_id',]
     list_display = ('student_erp_id', 'fist_name', 'last_name', 'school',
                     'current_class', 'current_section', 'get_parent_name', 'active_status',)
     list_filter = ('school',)
