@@ -17,7 +17,7 @@ class StudentAdmin(admin.ModelAdmin):
     search_fields = ['fist_name', 'last_name', 'student_erp_id',]
     list_display = ('student_erp_id', 'fist_name', 'last_name', 'school',
                     'current_class', 'current_section', 'get_parent_name', 'active_status',)
-    list_filter = ('school',)
+    list_filter = ('active_status', 'school', )
 
 
 admin.site.register(Student, StudentAdmin)
@@ -25,6 +25,6 @@ admin.site.register(Student, StudentAdmin)
 
 class ParentAdmin(admin.ModelAdmin):
     search_fields = ['parent_name', 'parent_mobile1', 'parent_mobile2', 'parent_email',]
-    list_display = ['parent_name', 'parent_mobile1', 'parent_mobile2', 'parent_email']
+    list_display = ['parent_name', 'parent_mobile1', 'parent_mobile2', 'parent_email',]
 
 admin.site.register(Parent, ParentAdmin)
