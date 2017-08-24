@@ -238,12 +238,13 @@ def att_summary_school(request):
         row_absentee = 3
         for c in Class.objects.filter(school=school):
             for s in Section.objects.filter(school=school):
-                print('class = %s-%s' % (c.standard, s.section))
+
                 total = Student.objects.filter(current_class=c, current_section=s, active_status=True).count()
                 grand_total += total
                 row = 3 + idx
 
                 if 0 != total:
+                    print('class = %s-%s' % (c.standard, s.section))
                     # check whether attendance for this class/section has been taken yet or not?
                     att_taken = AttendanceTaken.objects.filter(date=converted_date, the_class=c,
                                                                section=s, subject=main).count()
