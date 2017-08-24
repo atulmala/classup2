@@ -238,6 +238,7 @@ def att_summary_school(request):
         row_absentee = 3
         for c in Class.objects.filter(school=school):
             for s in Section.objects.filter(school=school):
+                print('class = %s-%s' % (c.standard, s.section))
                 total = Student.objects.filter(current_class=c, current_section=s, active_status=True).count()
                 grand_total += total
                 row = 3 + idx
