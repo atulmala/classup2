@@ -255,7 +255,7 @@ def att_summary_school(request):
                         summary_sheet.write_number(row, 3, total, cell_center)
                         merge_range = 'E' + str(row+1) + ':' + 'G' + str(row+1)
                         summary_sheet.merge_range(merge_range, "Attendance Not Taken", summary_row)
-                        print('Attendance not taken')
+
                         idx += 1
                         continue
 
@@ -292,9 +292,9 @@ def att_summary_school(request):
                         absentee_sheet.write_string(row_absentee, 5, student.student.parent.parent_mobile1, cell_left)
                         row_absentee += 1
                     # to make a gap between rows of subsequent classes
-                    row_absentee += 1
+                    row_absentee += 2
         if 0 != p_total:
-            merge_range = 'A' + str(row+2) + ':' 'C' + str(row+1)
+            merge_range = 'A' + str(row+1) + ':' 'C' + str(row+1)
             summary_sheet.merge_range(merge_range, "Grand Total", summary_row)
             summary_sheet.write_number(row, 3, grand_total, summary_row)
             summary_sheet.write_number(row, 4, p_total, summary_row)
