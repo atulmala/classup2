@@ -453,25 +453,32 @@ def setup_students(request):
                     # first, capture student data
                     # we need to explicitly cast student id to string. Else update will not function properly
                     student_id = str(sheet.cell(row, 0).value)
+                    print('student id =',  student_id)
 
                     # sometimes names are in lowercase. We need to convert the first letter to uppercase
                     student_first_name_raw = sheet.cell(row, 1).value
+                    print ('first name =', student_first_name_raw)
                     student_first_name = student_first_name_raw.title()
 
                     student_last_name_raw = sheet.cell(row, 2).value
+                    print('last name = ', student_first_name_raw)
                     student_last_name = student_last_name_raw.title()
 
                     current_class = sheet.cell(row, 3).value
+                    print('current class = ', current_class)
                     current_section = sheet.cell(row, 4).value
+                    print('current section = ', current_section)
                     current_roll_no_raw = sheet.cell(row, 5).value
 
                     # excel may add a decimal to the roll number. We need to convert it to integer
                     current_roll_no = int(current_roll_no_raw)
+                    print('roll no = ', current_roll_no)
                     print (current_roll_no_raw)
                     print (current_roll_no)
 
                     # now, capture the parent data
                     parent_name_raw = sheet.cell(row, 6).value
+                    print('parent name = ', parent_name_raw)
                     parent_name = parent_name_raw.title()
 
                     # 24/11/2016 - as of now we will not be using email. Hence use dummy
@@ -480,8 +487,10 @@ def setup_students(request):
 
                     # we need to explicitly cast mobile number to string. Else update will not function properly
                     parent_mobile1_raw = sheet.cell(row, 8).value
+                    print('mobile 1 = ', parent_mobile1_raw)
                     print parent_mobile1_raw
                     parent_mobile2_raw = sheet.cell(row, 9).value
+                    print('mobile 2= ', parent_mobile2_raw )
                     print parent_mobile2_raw
 
 

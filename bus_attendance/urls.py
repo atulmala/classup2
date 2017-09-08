@@ -11,7 +11,7 @@ urlpatterns = patterns('',
         url(r'^setup_bus_stops/', views.setup_bus_stops),
         url(r'^setup_student_routs/', views.student_bus_rout),
 
-        url(r'^list_rout_students1/(?P<school_id>\w+)/(?P<rout>[\w.@+-]+)/(?P<bus_stop>[\w\ ]+)/',
+        url(r'^list_rout_students1/(?P<school_id>\w+)/(?P<rout>[\w.@+-]+)/(?P<bus_stop>[\w.@+-]+)/',
             views.StudentListForRout1.as_view()),
 
         url(r'^bus_attendance_taken/(?P<school_id>\w+)/(?P<rout>[\w.@+-]+)/(?P<t>[\w.@+-]+)/'
