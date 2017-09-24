@@ -618,6 +618,8 @@ def submit_marks(request, school_id):
         response = {
 
         }
+        print ('request.body=')
+        print (request.body)
         school = School.objects.get(id=school_id)
         conf = Configurations.objects.get(school=school)
         # convert the raw data received to json
@@ -648,17 +650,39 @@ def submit_marks(request, school_id):
             if grade_based:
                 tr.grade = data[key]
             else:
-                tr.marks_obtained = float(data[key])
-                if float(data[key]) > highest_marks:
-                    highest_marks = float(data[key])
+                tr.marks_obtained = float(data[key]['marks'])
+                if float(data[key]['marks']) > highest_marks:
+                    highest_marks = float(data[key]['marks'])
                     if highest_marks.is_integer():
                         highest_marks = int(highest_marks)
-                if float(data[key]) != float(-1000):
-                    mark_total += float(data[key])
+                if float(data[key]['marks']) != float(-1000):
+                    mark_total += float(data[key]['marks'])
                     present_count += 1
                     average_marks = float(mark_total / present_count)
                     if average_marks.is_integer():
                         average_marks = int(average_marks)
+                if test.test_type == 'term':
+                    print('term test')
+                    ttr = TermTestResult.objects.get(test_result=tr)
+                    print(ttr)
+                    ttr.periodic_test_marks = float(data[key]['pa'])
+                    ttr.note_book_marks = float(data[key]['notebook'])
+                    ttr.sub_enrich_marks = float(data[key]['subject_enrich'])
+                    try:
+                        ttr.save()
+                        try:
+                            action = 'Saved Term Test Results for ' + tr.student.fist_name \
+                                     + ' ' + tr.student.last_name
+                            action += ' ' + test.the_class.standard + '-' + test.section.section
+                            action += ' ' + test.subject.subject_name
+                            teacher = test.teacher.email
+                            log_entry(teacher, action, 'Normal', True)
+                        except Exception as e:
+                            print('unable to create logbook entry')
+                            print ('Exception 511-B from academics views.py %s %s' % (e.message, type(e)))
+                    except Exception as e:
+                        print('unable to save Term Test Marks')
+                        print ('Exception 512-B from academics views.py %s %s' % (e.message, type(e)))
             try:
                 tr.save()
                 try:
@@ -729,18 +753,26 @@ def submit_marks(request, school_id):
                 message += f_name + ' in '
                 message += sub.subject_name + ' test on ' + dmy_date + ': '
                 if grade_based:
-                    if data[key] == '-1000.00' or data[key] == '-1000':
+                    if data[key]['marks'] == '-1000.00' or data[key]['marks'] == '-1000':
                         message += 'ABSENT'
                     else:
                         message +=  tr.grade + ' Grade'
                 else:
-                    if data[key] == '-1000.00' or data[key] == '-1000':
+                    if data[key]['marks'] == '-1000.00' or data[key]['marks'] == '-1000':
                         message += 'ABSENT'
                     else:
                         marks = float(tr.marks_obtained)
                         if marks.is_integer():
                             marks = int(marks)
                         message += str(marks) + '/' + str(int(test.max_marks))
+
+                    # 24/09/2017 - if this is a term test, we need to include marks for Periodic Assessment,
+                    # Notebook submission, and Subject Enrichment
+                    if test.test_type == 'term':
+                        message += '. Periodic Test: ' + str(ttr.periodic_test_marks) + '/10, '
+                        message += 'Notebook Submission: ' + str(ttr.note_book_marks) + '/5, '
+                        message += 'Subject Enrichment: ' + str(ttr.sub_enrich_marks) + '/5'
+
                 if not grade_based:
                     # 04/12/2016 - some schools don't want to include max and average marks in the sms
                     if conf.include_max_avg_marks:
