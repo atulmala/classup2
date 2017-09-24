@@ -24,6 +24,13 @@ urlpatterns = [
         r'(?P<max_marks>\w+)/(?P<pass_marks>\w+)/(?P<grade_based>\w+)/(?P<comments>[\w.@,&\ ]+)/$',
         views.create_test, name='create_test'),
 
+    url(r'^create_test1/(?P<school_id>\w+)/(?P<the_class>[\w.@+-]+)/(?P<section>[\w.@+-]+)/'
+        r'(?P<subject>[\w\ ]+)/(?P<teacher>[\w.@+-]+)'
+        r'/(?P<d>\w+)/(?P<m>\w+)/(?P<y>\w+)/'
+        r'(?P<max_marks>\w+)/(?P<pass_marks>\w+)/(?P<grade_based>\w+)'
+        r'/(?P<comments>[\w.@,&\ ]+)/(?P<test_type>[\w.@+-]+)/$',
+        views.create_test1, name='create_test1'),
+
     url(r'^class_section_for_test/(?P<id>\w+)/$', views.ClassSectionForTest.as_view()),
 
     url(r'^get_test_marks_list/(?P<test_id>\w+)/$', views.MarksListForTest.as_view()),

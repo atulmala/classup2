@@ -58,7 +58,8 @@ class ClassTest(models.Model):
     passing_marks = models.DecimalField(max_digits=6, decimal_places=2)
     grade_based = models.BooleanField()
     is_completed = models.BooleanField(default=False)
-    test_type = models.CharField(max_length=200, default='Terminal')
+    test_type = models.CharField(max_length=200, default='unit')
+    syllabus = models.CharField(max_length=200, default=" ")
 
     def __unicode__(self):
         return self.the_class.standard + ' ' + self.section.section + ' ' \
@@ -76,6 +77,13 @@ class TestResults(models.Model):
         return self.student.fist_name + ' ' + self.student.last_name + ' ' + \
                self.class_test.the_class.standard + ' ' + self.class_test.section.section + ' ' \
                + self.class_test.subject.subject_name + ' ' + (self.class_test.date_conducted).strftime('%d/%m/%Y')
+
+class TermTestResult(models.Model):
+    # 21/09/2017 for CBSE evaluation. Below fields will be applicable only if the test is Term Test
+    test_result = models.ForeignKey(TestResults)
+    periodic_test_marks = models.DecimalField(max_digits=6, decimal_places=2, default=0.0)
+    note_book_marks = models.DecimalField(max_digits=6, decimal_places=2, default=0.0)
+    sub_enrich_marks = models.DecimalField(max_digits=6, decimal_places=2, default=0.0)
 
 
 class Exam(models.Model):
@@ -150,4 +158,7 @@ class HW(models.Model):
 
     image_tag.short_description = 'Image'
     image_tag.allow_tags = True
+
+
+
 

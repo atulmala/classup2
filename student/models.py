@@ -31,3 +31,8 @@ class Student(models.Model):
     def __unicode__(self):
         return self.fist_name + ' ' + self.last_name
 
+
+class DOB(models.Model):
+    student = models.ForeignKey(Student)
+    dob = models.DateField()
+

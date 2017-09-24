@@ -69,8 +69,41 @@ class TestResultsAdmin(admin.ModelAdmin):
     list_display = ('get_school_name', 'get_class', 'get_subject', 'get_date', 'student', 'get_max_marks',
                     'marks_obtained', 'grade',)
 
-
 admin.site.register(TestResults, TestResultsAdmin)
+
+
+class TermTestResultsAdmin(admin.ModelAdmin):
+    def get_school_name(self, obj):
+        return obj.test_result.class_test.the_class.school.school_name
+    get_school_name.short_description = 'School'
+
+    def get_student(self, obj):
+        return obj.test_result.student
+    get_student.short_description = 'Student'
+
+    def get_class(self, obj):
+        return obj.test_result.class_test.the_class.standard + '-' + obj.test_result.class_test.section.section
+    get_class.short_description = 'Class'
+
+    def get_subject(self, obj):
+        return obj.test_result.class_test.subject
+    get_subject.short_description = 'Subject'
+
+    def get_date(self, obj):
+        return obj.test_result.class_test.date_conducted
+    get_date.short_description = 'Date Conducted'
+
+    def get_max_marks(self, obj):
+        return obj.test_result.class_test.max_marks
+    get_max_marks.short_description = 'Max Marks'
+
+    def get_marks_obtained(self, obj):
+        return obj.test_result.marks_obtained
+    get_marks_obtained.short_description = "Marks Obtained"
+
+    list_display = ('get_school_name', 'get_class', 'get_subject', 'get_date', 'get_student', 'get_max_marks',
+                    'get_marks_obtained',)
+admin.site.register(TermTestResult, TermTestResultsAdmin)
 
 
 class TeacherSubjectAdmin(admin.ModelAdmin):

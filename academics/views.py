@@ -9,6 +9,7 @@ import base64
 import datetime
 from datetime import date
 
+from django.core import serializers
 from django.core.files.base import ContentFile
 from django.core.servers.basehttp import FileWrapper
 from django.views.decorators.csrf import csrf_exempt
@@ -23,7 +24,7 @@ from attendance.models import Attendance, AttendanceTaken
 from teacher.models import Teacher
 from student.models import Student
 from setup.models import Configurations, School
-from .models import Class, Section, Subject, ClassTest, TestResults, Exam, HW
+from .models import Class, Section, Subject, ClassTest, TestResults, Exam, HW, TermTestResult
 from .serializers import ClassSerializer, SectionSerializer, \
     SubjectSerializer, TestSerializer, ClassSectionForTestSerializer, \
     TestMarksSerializer, TestTypeSerializer, ExamSerializer, HWSerializer
@@ -187,6 +188,7 @@ class MarksListForTest(generics.ListCreateAPIView):
         q = TestResults.objects.filter(class_test=t).order_by('roll_no')
         return q
 
+
 class HWList(generics.ListCreateAPIView):
     serializer_class = HWSerializer
 
@@ -335,6 +337,112 @@ def create_hw(request):
     return JSONResponse(context_dict, status=200)
 
 
+@csrf_exempt
+def create_test1(request, school_id, the_class, section, subject,
+                teacher, d, m, y, max_marks, pass_marks, grade_based, comments, test_type):
+    context_dict = {
+    }
+    context_dict['header'] = 'Create Test'
+    if request.method == 'POST':
+        # all of the above except date are foreign key in Attendance model. Hence we need to get the actual object
+        school = School.objects.get(id=school_id)
+        c = Class.objects.get(school=school, standard=the_class)
+        print (c)
+        s = Section.objects.get(school=school, section=section)
+        print (s)
+        sub = Subject.objects.get(school=school, subject_name=subject)
+        print (sub)
+        t = Teacher.objects.get(email=teacher)
+        print (t)
+        the_date = date(int(y), int(m), int(d))
+        print (the_date)
+
+        # check to see if this test has already been created.
+        try:
+            q = ClassTest.objects.filter(date_conducted=the_date, the_class=c, section=s, subject=sub, teacher=t)
+            print (q.count())
+
+            # make an entry to database only it is a fresh entry
+            if q.count() == 0:
+                test = ClassTest(date_conducted=the_date)
+                test.the_class = c
+                test.section = s
+                test.subject = sub
+                test.teacher = t
+                test.max_marks = float(max_marks)  # max_marks and pass_marks are passed as strings
+                test.passing_marks = float(pass_marks)
+                test.test_type = test_type
+
+                if grade_based == '0':
+                    print ('grade_based is 0')
+                    test.grade_based = True
+
+                if grade_based == '1':
+                    print ('grade_based is 1')
+                    test.grade_based = False
+
+                print (grade_based)
+
+                test.syllabus = comments
+                test.test_type = test_type
+                test.is_completed = False
+
+                try:
+                    test.save()
+                    try:
+                        action = 'Created test for '  + the_class + '-' + section + ', Subject: ' + subject
+                        log_entry(t.email, action, 'Normal', True)
+                    except Exception as e:
+                        print('unable to crete logbook entry')
+                        print ('Exception 510 from academics views.py %s %s' % (e.message, type(e)))
+                    print ('test successfully created')
+
+                except Exception as e:
+                    print ('Test creation failed')
+                    print ('Exception 509 from academics views.py Exception = %s (%s)' % (e.message, type(e)))
+                    return HttpResponse('Test Creation Failed')
+
+                # now, create entry for each student in table TestResults. We need to retrieve the list of student
+                # of the class associated with this test
+                student_list = Student.objects.filter(school=school, current_section__section=section,
+                                                      current_class__standard=the_class, active_status=True)
+                for student in student_list:
+                    # -5000.00 marks indicate null value
+                    test_result = TestResults(class_test=test, roll_no=student.roll_number,
+                                              student=student, marks_obtained=-5000.00, grade='')
+                    try:
+                        test_result.save()
+                        print (' test results successfully created for % s %s' % (student.fist_name, student.last_name))
+
+                        # 21/09/2017 some more data need to be created for a Term test
+                        try:
+                            if test_type == 'term':
+                                term_test_result = TermTestResult(test_result=test_result, periodic_test_marks=-5000.0,
+                                                                  note_book_marks=-5000.0, sub_enrich_marks=-5000.0)
+                                term_test_result.save()
+                                print (' term test results successfully created for % s %s' %
+                                       (student.fist_name, student.last_name))
+                        except Exception as e:
+                            print ('failed to create term test results')
+                            print ('Exception 600-A from acacemics views.py = %s (%s)' % (e.message, type(e)))
+                            return HttpResponse('Failed to create term test results')
+                    except Exception as e:
+                        print ('failed to create test results')
+                        print ('Exception 600 from acacemics views.py = %s (%s)' % (e.message, type(e)))
+                        return HttpResponse('Failed to create test results')
+            else:
+                print ('Test already exist')
+                return HttpResponse('Test already exist')
+        except Exception as e:
+            print ('Exception 601 fro academics views.py = %s (%s)' % (e.message, type(e)))
+            return HttpResponse('Failed')
+
+    # this view is being called from mobile. We use dummy template so that we dont' run into exception
+    # return render(request, 'classup/dummy.html')
+    return HttpResponse('OK')
+
+
+
 # we need to exempt this view from csrf verification. Will be updated in next version when
 # we will implement authentication
 @csrf_exempt
@@ -388,7 +496,7 @@ def create_test(request, school_id, the_class, section, subject,
                         action = 'Created test for '  + the_class + '-' + section + ', Subject: ' + subject
                         log_entry(t.email, action, 'Normal', True)
                     except Exception as e:
-                        print('unable to crete logbook entry')
+                        print('unable to create logbook entry')
                         print ('Exception 510 from academics views.py %s %s' % (e.message, type(e)))
                     print ('test successfully created')
 
@@ -459,8 +567,28 @@ def save_marks(request):
                 print ('saving grade....')
                 tr.grade = data[key]
             else:
-                tr.marks_obtained = float(data[key])
-
+                tr.marks_obtained = float(data[key]['marks'])
+                if test.test_type == 'term':
+                    print('term test')
+                    ttr = TermTestResult.objects.get(test_result=tr)
+                    print(ttr)
+                    ttr.periodic_test_marks = float(data[key]['pa'])
+                    ttr.note_book_marks = float(data[key]['notebook'])
+                    ttr.sub_enrich_marks = float(data[key]['subject_enrich'])
+                    try:
+                        ttr.save()
+                        try:
+                            action = 'Saved Term Test Results for ' + tr.student.fist_name + ' ' + tr.student.last_name
+                            action += ' ' + test.the_class.standard + '-' + test.section.section
+                            action += ' ' + test.subject.subject_name
+                            teacher = test.teacher.email
+                            log_entry(teacher, action, 'Normal', True)
+                        except Exception as e:
+                            print('unable to create logbook entry')
+                            print ('Exception 511-A from academics views.py %s %s' % (e.message, type(e)))
+                    except Exception as e:
+                        print('unable to save Term Test Marks')
+                        print ('Exception 512-A from academics views.py %s %s' % (e.message, type(e)))
             try:
                 tr.save()
                 try:

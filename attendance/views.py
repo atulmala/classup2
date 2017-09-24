@@ -202,12 +202,11 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                         if configuration.type != 'school':
                             message += '. Regards %s ' % school_name
                         else:
-                            message += '. Please send an application. Regards, ' + school_name
+                            message += '. Please send an application (Ignore if already done). Regards, ' + school_name
                     except Exception as e:
                         print ('Exception4 from attendance views.py = %s (%s)' % (e.message, type(e)))
                         action = 'Error in drafting SMS for ' + parent_name + '. Exception 4 from attendance views.py'
-                        log_entry(teacher, action,
-                                  "Normal", True)
+                        log_entry(teacher, action,"Normal", True)
 
                     print (message)
 

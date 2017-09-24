@@ -2,7 +2,7 @@ __author__ = 'atulgupta'
 
 from rest_framework import serializers
 
-from .models import Class, Section, Subject, ClassTest, TestResults, WorkingDays, Exam, HomeWork, HW
+from .models import Class, Section, Subject, ClassTest, TestResults, TermTestResult, WorkingDays, Exam, HomeWork, HW
 
 
 class ClassSerializer(serializers.ModelSerializer):
@@ -31,8 +31,8 @@ class TestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ClassTest
-        fields = ('id', 'date_conducted', 'teacher', 'subject', 'the_class',
-                  'section', 'max_marks', 'passing_marks', 'grade_based', 'is_completed', 'test_type',)
+        fields = ('id', 'date_conducted', 'teacher', 'subject', 'the_class', 'section',
+                  'max_marks', 'passing_marks', 'grade_based', 'is_completed', 'syllabus', 'test_type',)
 
 
 class TestTypeSerializer(serializers.ModelSerializer):
@@ -44,13 +44,44 @@ class TestTypeSerializer(serializers.ModelSerializer):
 class TestMarksSerializer(serializers.ModelSerializer):
     student = serializers.StringRelatedField()
     parent = serializers.SerializerMethodField()
+    periodic_test_marks = serializers.SerializerMethodField()
+    notebook_marks = serializers.SerializerMethodField()
+    sub_enrich_marks = serializers.SerializerMethodField()
 
     class Meta:
         model = TestResults
-        fields = ('id', 'roll_no', 'student', 'parent', 'marks_obtained', 'grade',)
+        fields = ('id', 'roll_no', 'student', 'parent', 'marks_obtained', 'grade',
+                  'periodic_test_marks', 'notebook_marks', 'sub_enrich_marks')
 
     def get_parent(self, obj):
         return obj.student.parent.parent_name
+
+    def get_notebook_marks(self, obj):
+        try:
+            term_test_result = TermTestResult.objects.get(test_result=obj)
+            return term_test_result.note_book_marks
+        except Exception as e:
+            print ('Failed to retrieve notebook marks. This is not a Term Test but a Unit Test')
+            print ('Exception 10 from academics serializer Exception = %s (%s)' % (e.message, type(e)))
+            return "N/A"
+
+    def get_periodic_test_marks(self, obj):
+        try:
+            term_test_result = TermTestResult.objects.get(test_result=obj)
+            return term_test_result.periodic_test_marks
+        except Exception as e:
+            print ('Failed to retrieve periodic test marks. This is not a Term Test but a Unit Test')
+            print ('Exception 20 from academics serializer Exception = %s (%s)' % (e.message, type(e)))
+            return "N/A"
+
+    def get_sub_enrich_marks(self, obj):
+        try:
+            term_test_result = TermTestResult.objects.get(test_result=obj)
+            return term_test_result.sub_enrich_marks
+        except Exception as e:
+            print ('Failed to retrieve subject enrichment test marks. This is not a Term Test but a Unit Test')
+            print ('Exception 30 from academics serializer Exception = %s (%s)' % (e.message, type(e)))
+            return "N/A"
 
 
 # serializer to return the class and section of test
