@@ -136,7 +136,8 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
             student_id = data[key]
             student = Student.objects.get(id=student_id)
 
-            # check to see if absence for this student for this date, class, section and subject has already been marked
+            # check to see if absence for this student for this date, class, section and subject has already
+            #  been marked
             try:
                 q = Attendance.objects.filter(date=the_date, the_class=c, section=s, subject=sub, student=student)
 

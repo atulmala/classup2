@@ -769,6 +769,7 @@ def submit_marks(request, school_id):
                     # 24/09/2017 - if this is a term test, we need to include marks for Periodic Assessment,
                     # Notebook submission, and Subject Enrichment
                     if test.test_type == 'term':
+                        ttr = TermTestResult.objects.get(test_result=tr)
                         message += '. Periodic Test: ' + str(ttr.periodic_test_marks) + '/10, '
                         message += 'Notebook Submission: ' + str(ttr.note_book_marks) + '/5, '
                         message += 'Subject Enrichment: ' + str(ttr.sub_enrich_marks) + '/5'
