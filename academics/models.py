@@ -78,12 +78,42 @@ class TestResults(models.Model):
                self.class_test.the_class.standard + ' ' + self.class_test.section.section + ' ' \
                + self.class_test.subject.subject_name + ' ' + (self.class_test.date_conducted).strftime('%d/%m/%Y')
 
+
+    
+
+class Term(models.Model):
+    term = models.CharField(max_length=10, default='Term 1')
+    def __unicode__(self):
+        return self.term
+    
+    
 class TermTestResult(models.Model):
     # 21/09/2017 for CBSE evaluation. Below fields will be applicable only if the test is Term Test
     test_result = models.ForeignKey(TestResults)
     periodic_test_marks = models.DecimalField(max_digits=6, decimal_places=2, default=0.0)
     note_book_marks = models.DecimalField(max_digits=6, decimal_places=2, default=0.0)
     sub_enrich_marks = models.DecimalField(max_digits=6, decimal_places=2, default=0.0)
+
+
+class Grade(models.Model):
+    grade = models.CharField(max_length=4)
+    
+    def __unicode__(self):
+        return self.grade
+
+
+class CoScholastics(models.Model):
+    term = models.CharField(max_length=10)
+    student = models.ForeignKey(Student)
+    work_education = models.CharField(max_length=4, default=' ')
+    art_education = models.CharField(max_length=4, default=' ')
+    health_education = models.CharField(max_length=4, default=' ')
+    discipline = models.CharField(max_length=4, default=' ')
+    teacher_remarks = models.CharField(max_length=100, blank=True, null=True)
+    promoted_to_class = models.CharField(max_length=10, blank=True, null=True)
+    
+
+
 
 
 class Exam(models.Model):

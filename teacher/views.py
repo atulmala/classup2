@@ -63,6 +63,29 @@ def whether_class_teacher(request, teacher_id):
     return JSONResponse(response_dict, status=200)
 
 
+def whether_class_teacher2(request, teacher):
+    response_dict = {
+
+    }
+
+    if request.method == 'GET':
+        try:
+            t = Teacher.objects.get(email=teacher)
+            response_dict['status'] = 'success'
+            if ClassTeacher.objects.filter(class_teacher=t).first():
+                ct = ClassTeacher.objects.filter(class_teacher=t)[0]
+                response_dict['is_class_teacher'] = 'true'
+                response_dict['the_class'] = ct.standard.standard
+                response_dict['section'] = ct.section.section
+            else:
+                response_dict['is_class_teacher'] = 'false'
+        except Exception as e:
+            print('Exception 70 from teachers views.py %s %s' % (e.message, type(e)))
+            response_dict['status'] = 'failure'
+
+    return JSONResponse(response_dict, status=200)
+
+
 @csrf_exempt
 def delete_teacher(request):
     response_dict = {

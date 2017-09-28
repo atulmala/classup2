@@ -2,7 +2,8 @@ __author__ = 'atulgupta'
 
 from rest_framework import serializers
 
-from .models import Class, Section, Subject, ClassTest, TestResults, TermTestResult, WorkingDays, Exam, HomeWork, HW
+from .models import Class, Section, Subject, ClassTest, TestResults
+from .models import TermTestResult, WorkingDays, Exam, HomeWork, HW, CoScholastics
 
 
 class ClassSerializer(serializers.ModelSerializer):
@@ -39,6 +40,15 @@ class TestTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = ClassTest
         fields = ('grade_based', 'max_marks', 'passing_marks',)
+
+
+class CoScholasticSerializer(serializers.ModelSerializer):
+    student = serializers.StringRelatedField
+
+    class Meta:
+        model = CoScholastics
+        fields = ('term', 'student', 'work_education', 'art_education', 'health_education',
+                  'discipline', 'teacher_remarks', 'promoted_to_class',)
 
 
 class TestMarksSerializer(serializers.ModelSerializer):
