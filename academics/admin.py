@@ -8,12 +8,14 @@ class SectionAdmin(admin.ModelAdmin):
     list_display = ['school', 'section']
     list_filter = ['school']
 
+
 admin.site.register(Section, SectionAdmin)
 
 
 class ClassAdmin(admin.ModelAdmin):
     list_display = ['school', 'standard']
     list_filter = ['school']
+
 
 admin.site.register(Class, ClassAdmin)
 
@@ -22,6 +24,7 @@ class SubjectAdmin(admin.ModelAdmin):
     search_fields = ['subject_name']
     list_display = ['school', 'subject_name', 'subject_code']
     list_filter = ['school',]
+
 
 admin.site.register(Subject, SubjectAdmin)
 
@@ -41,6 +44,7 @@ class TestAdmin(admin.ModelAdmin):
 
     list_display = ('get_school_name', 'get_class', 'subject', 'teacher', 'date_conducted', 'max_marks',
                     'passing_marks', 'is_completed', )
+
 
 admin.site.register(ClassTest, TestAdmin)
 
@@ -69,7 +73,28 @@ class TestResultsAdmin(admin.ModelAdmin):
     list_display = ('get_school_name', 'get_class', 'get_subject', 'get_date', 'student', 'get_max_marks',
                     'marks_obtained', 'grade',)
 
+
 admin.site.register(TestResults, TestResultsAdmin)
+
+
+class CoScholasticAdmin(admin.ModelAdmin):
+    def get_school_name(self, obj):
+        return obj.the_class.school.school_name
+    get_school_name.short_description = 'School'
+
+    def get_student(self, obj):
+        return obj.student
+    get_student.short_description = 'Student'
+
+    def get_class(self, obj):
+        return obj.the_class.standard + '-' + obj.section.section
+    get_class.short_description = 'Class'
+
+    list_display = ('get_school_name', 'get_class', 'get_student', 'term', 'art_education',
+                    'health_education', 'discipline', 'teacher_remarks', 'promoted_to_class',)
+
+
+admin.site.register(CoScholastics, CoScholasticAdmin)
 
 
 class TermTestResultsAdmin(admin.ModelAdmin):
@@ -103,6 +128,8 @@ class TermTestResultsAdmin(admin.ModelAdmin):
 
     list_display = ('get_school_name', 'get_class', 'get_subject', 'get_date', 'get_student', 'get_max_marks',
                     'get_marks_obtained',)
+
+
 admin.site.register(TermTestResult, TermTestResultsAdmin)
 
 
@@ -112,6 +139,7 @@ class TeacherSubjectAdmin(admin.ModelAdmin):
     get_school_name.short_description = 'School'
 
     list_display = ('get_school_name', 'teacher', 'subject',)
+
 
 admin.site.register(TeacherSubjects, TeacherSubjectAdmin)
 
@@ -138,6 +166,7 @@ class ClassTeacherAdmin(admin.ModelAdmin):
     list_display = ('get_school_name', 'get_class', 'get_class_teacher',)
     list_filter = ('school', )
 
+
 admin.site.register(ClassTeacher, ClassTeacherAdmin)
 
 
@@ -147,6 +176,7 @@ class ExamAdmin(admin.ModelAdmin):
     get_school_name.short_description = 'School'
 
     list_display = ('school', 'title', 'start_date', 'end_date', 'start_class', 'end_class',)
+
 
 admin.site.register(Exam, ExamAdmin)
 
@@ -161,6 +191,7 @@ class HWAdmin(admin.ModelAdmin):
 
     fields = ('image_tag',)
     readonly_fields = ('image_tag',)
+
 
 admin.site.register(HW, HWAdmin)
 

@@ -43,12 +43,18 @@ class TestTypeSerializer(serializers.ModelSerializer):
 
 
 class CoScholasticSerializer(serializers.ModelSerializer):
-    student = serializers.StringRelatedField
+    student = serializers.StringRelatedField()
+    parent = serializers.SerializerMethodField()
 
     class Meta:
         model = CoScholastics
-        fields = ('term', 'student', 'work_education', 'art_education', 'health_education',
+        fields = ('id', 'term', 'student', 'parent', 'work_education', 'art_education', 'health_education',
                   'discipline', 'teacher_remarks', 'promoted_to_class',)
+
+    def get_parent(self, obj):
+        return obj.student.parent.parent_name
+
+
 
 
 class TestMarksSerializer(serializers.ModelSerializer):

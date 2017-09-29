@@ -9,7 +9,6 @@ import base64
 import datetime
 from datetime import date
 
-from django.core import serializers
 from django.core.files.base import ContentFile
 from django.core.servers.basehttp import FileWrapper
 from django.views.decorators.csrf import csrf_exempt
@@ -24,10 +23,10 @@ from attendance.models import Attendance, AttendanceTaken
 from teacher.models import Teacher
 from student.models import Student
 from setup.models import Configurations, School
-from .models import Class, Section, Subject, ClassTest, TestResults, Exam, HW, TermTestResult
+from .models import Class, Section, Subject, ClassTest, TestResults, Exam, HW, TermTestResult, CoScholastics
 from .serializers import ClassSerializer, SectionSerializer, \
     SubjectSerializer, TestSerializer, ClassSectionForTestSerializer, \
-    TestMarksSerializer, TestTypeSerializer, ExamSerializer, HWSerializer
+    TestMarksSerializer, TestTypeSerializer, ExamSerializer, HWSerializer, CoScholasticSerializer
 
 from operations import sms
 
@@ -189,6 +188,52 @@ class MarksListForTest(generics.ListCreateAPIView):
         return q
 
 
+class TheCoScholastics(generics.ListCreateAPIView):
+    serializer_class = CoScholasticSerializer
+
+    def get_queryset(self):
+        t = self.kwargs['teacher']
+        c = self.kwargs['class']
+        s = self.kwargs['section']
+        term = self.kwargs['term']
+        teacher = Teacher.objects.get(email=t)
+        school = teacher.school
+        the_class = Class.objects.get(standard=c, school=school)
+        section = Section.objects.get(section=s, school=school)
+
+        # retrieve the grade list for this class/section/term, if it is already created
+        q = CoScholastics.objects.filter(the_class=the_class, section=section, term=term)
+        if q.exists():
+            print('CoScholastics for ' + c + '-' + s + ' ' + term + ' already exists!')
+            return q
+        else:
+            # the grade list for this class has not been created yet. Create for each student
+            print('CoScholastics for ' + c + '-' + s + ' ' + term + ' not yet created. Hence creating...')
+            students = Student.objects.filter(current_class=the_class, current_section=section)
+            for s in students:
+                coscholastic = CoScholastics(term=term, the_class=the_class, section=section, student=s)
+
+                # if this is the second term, the student is most likely to be promoted to the next class
+                if term == 'term2':
+                    try:
+                        next_class_sequence = the_class.sequence + 1
+                        next_class_standard = Class.objects.get(school=school, sequence=next_class_sequence)
+                        coscholastic.promoted_to_class = next_class_standard
+                    except Exception as e:
+                        print('failed to determine the class to be promoted for ' + s.fist_name + ' ' + s.last_name)
+                        print ('Exception 710 from academics views.py %s %s' % (e.message, type(e)))
+                try:
+                    coscholastic.save()
+                    print('created ' + term + ' CoScholastic entry for ' + s.fist_name + ' ' + s.last_name)
+                except Exception as e:
+                    print('failed to created ' + term + ' CoScholastic entry for ' +
+                          s.fist_name + ' ' + s.last_name)
+                    print ('Exception 700 from academics views.py %s %s' % (e.message, type(e)))
+            # now the complete list has been created, it can be send to device
+            q = CoScholastics.objects.filter(the_class=the_class, section=section, term=term)
+            return q
+
+
 class HWList(generics.ListCreateAPIView):
     serializer_class = HWSerializer
 
@@ -257,6 +302,7 @@ def get_hw_image(request, hw_id):
             print('Exception 330 from academics views.py %s %s' % (e.message, type(e)))
             response = HttpResponse(status=201)
             return response
+
 
 @csrf_exempt
 def create_hw(request):

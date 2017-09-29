@@ -104,13 +104,15 @@ class Grade(models.Model):
 
 class CoScholastics(models.Model):
     term = models.CharField(max_length=10)
+    the_class = models.ForeignKey(Class, null=True)
+    section = models.ForeignKey(Section, null=True)
     student = models.ForeignKey(Student)
     work_education = models.CharField(max_length=4, default=' ')
     art_education = models.CharField(max_length=4, default=' ')
     health_education = models.CharField(max_length=4, default=' ')
     discipline = models.CharField(max_length=4, default=' ')
-    teacher_remarks = models.CharField(max_length=100, blank=True, null=True)
-    promoted_to_class = models.CharField(max_length=10, blank=True, null=True)
+    teacher_remarks = models.CharField(max_length=100, default='All the Best')
+    promoted_to_class = models.CharField(max_length=10, default=' ')
     
 
 

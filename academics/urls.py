@@ -28,8 +28,10 @@ urlpatterns = [
         r'(?P<subject>[\w\ ]+)/(?P<teacher>[\w.@+-]+)'
         r'/(?P<d>\w+)/(?P<m>\w+)/(?P<y>\w+)/'
         r'(?P<max_marks>\w+)/(?P<pass_marks>\w+)/(?P<grade_based>\w+)'
-        r'/(?P<comments>[\w.@,&\ ]+)/(?P<test_type>[\w.@+-]+)/$',
-        views.create_test1, name='create_test1'),
+        r'/(?P<comments>[\w.@,&\ ]+)/(?P<test_type>[\w.@+-]+)/$',views.create_test1, name='create_test1'),
+
+    url(r'^get_co_cscholastics/(?P<teacher>[\w.@+-]+)/(?P<class>[\w.@+-]+)/(?P<section>[\w.@+-]+)/(?P<term>[\w\ ]+)/$',
+        views.TheCoScholastics.as_view(), name='coscholastic'),
 
     url(r'^class_section_for_test/(?P<id>\w+)/$', views.ClassSectionForTest.as_view()),
 
