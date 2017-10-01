@@ -12,10 +12,12 @@ from datetime import date
 from django.core.files.base import ContentFile
 from django.core.servers.basehttp import FileWrapper
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
 from django.http import HttpResponse
 from django.test import RequestFactory
 
 from authentication.views import JSONResponse, log_entry
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework import generics
 import Queue
 
@@ -33,6 +35,10 @@ from operations import sms
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    def enforce_csrf(self, request):
+        return  # To not perform the csrf check previously happening
 
 
 class ClassList(generics.ListCreateAPIView):
@@ -189,6 +195,7 @@ class MarksListForTest(generics.ListCreateAPIView):
 
 
 class TheCoScholastics(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     serializer_class = CoScholasticSerializer
 
     def get_queryset(self):
@@ -232,6 +239,36 @@ class TheCoScholastics(generics.ListCreateAPIView):
             # now the complete list has been created, it can be send to device
             q = CoScholastics.objects.filter(the_class=the_class, section=section, term=term)
             return q
+
+    def post(self, request, *args, **kwargs):
+        context_dict = {
+
+        }
+        print('starting to save Scholastic Grades')
+        print('request=')
+        print(request.body)
+        data = json.loads(request.body)
+        print ('json=')
+        print (data)
+
+        for key in data:
+            result = CoScholastics.objects.get(pk=key)
+            result.work_education = data[key]['work_education']
+            result.art_education = data[key]['art_education']
+            result.health_education = data[key]['health_education']
+            result.discipline = data[key]['discipline']
+            result.teacher_remarks = data[key]['teacher_remarks']
+            result.promoted_to_class = data[key]['promoted_to_class']
+            try:
+                result.save()
+                print('successfully saved CoScholastic Grades for ' +
+                      result.student.fist_name + ' ' + result.student.last_name)
+            except Exception as e:
+                print('failed to save CoScholastic Grades')
+                print ('Exception 750 from academics views.py %s %s' % (e.message, type(e)))
+                context_dict['status'] = 'failed'
+        context_dict['status'] = 'success'
+        return JSONResponse(context_dict, status=200)
 
 
 class HWList(generics.ListCreateAPIView):

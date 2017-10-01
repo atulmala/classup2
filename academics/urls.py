@@ -33,6 +33,8 @@ urlpatterns = [
     url(r'^get_co_cscholastics/(?P<teacher>[\w.@+-]+)/(?P<class>[\w.@+-]+)/(?P<section>[\w.@+-]+)/(?P<term>[\w\ ]+)/$',
         views.TheCoScholastics.as_view(), name='coscholastic'),
 
+    url(r'^save_co_scholastics/$', views.TheCoScholastics.as_view()),
+
     url(r'^class_section_for_test/(?P<id>\w+)/$', views.ClassSectionForTest.as_view()),
 
     url(r'^get_test_marks_list/(?P<test_id>\w+)/$', views.MarksListForTest.as_view()),

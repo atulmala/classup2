@@ -43,6 +43,10 @@ class TestTypeSerializer(serializers.ModelSerializer):
 
 
 class CoScholasticSerializer(serializers.ModelSerializer):
+    def __init__(self, *args, **kwargs):
+        many = kwargs.pop('many', True)
+        super(CoScholasticSerializer, self).__init__(many=many, *args, **kwargs)
+
     student = serializers.StringRelatedField()
     parent = serializers.SerializerMethodField()
 
@@ -53,8 +57,6 @@ class CoScholasticSerializer(serializers.ModelSerializer):
 
     def get_parent(self, obj):
         return obj.student.parent.parent_name
-
-
 
 
 class TestMarksSerializer(serializers.ModelSerializer):

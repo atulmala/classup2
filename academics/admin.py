@@ -90,7 +90,7 @@ class CoScholasticAdmin(admin.ModelAdmin):
         return obj.the_class.standard + '-' + obj.section.section
     get_class.short_description = 'Class'
 
-    list_display = ('get_school_name', 'get_class', 'get_student', 'term', 'art_education',
+    list_display = ('get_school_name', 'get_class', 'get_student', 'term', 'work_education', 'art_education',
                     'health_education', 'discipline', 'teacher_remarks', 'promoted_to_class',)
 
 
