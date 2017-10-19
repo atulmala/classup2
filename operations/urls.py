@@ -1,6 +1,7 @@
 __author__ = 'atulmala'
 
 from django.conf.urls import url, patterns
+from student import views as student_view
 from operations import views
 
 urlpatterns = patterns(
@@ -10,6 +11,9 @@ urlpatterns = patterns(
     url(r'^att_summary_school_device/$', views.att_summary_school_device, name='att_summary_school_device'),
     url(r'^att_register_class/$', views.att_register_class, name='att_register_class'),
     url(r'^test_results/$', views.test_result, name='test_results'),
+    url(r'^term_results/$', views.term_results, name='term results'),
+    url(r'^term_results/student/get_students/(?P<school_id>\w+)/(?P<the_class>[\w.@+-]+)/(?P<section>[\w.@+-]+)/$',
+        student_view.StudentList.as_view()),
     url(r'^result_sms/$', views.result_sms, name='test_sms'),
     url(r'^send_message/(?P<school_id>\w+)/$', views.send_message, name='send_message'),
     url(r'^parents_communication_details/$', views.parents_communication_details, name='parents_communication_details'),

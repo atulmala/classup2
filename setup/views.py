@@ -3,6 +3,7 @@ import datetime
 import xlrd
 import json
 
+
 from rest_framework import generics
 from django.views.decorators.csrf import csrf_exempt
 
@@ -960,11 +961,14 @@ def setup_teachers(request):
                                 user.is_staff = True
                                 user.save()
                                 print ('Successfully created user for ' + f_name + ' ' + l_name)
-
+                            except Exception as e:
+                                print ('Exception 22B from setup views.py = %s (%s)' % (e.message, type(e)))
+                                print ('Unable to create user  ' + f_name + ' ' + l_name)
+                            try:
                                 mapping = UserSchoolMapping(user=user, school=school)
                                 mapping.save()
                             except Exception as e:
-                                print ('Exception = %s (%s)' % (e.message, type(e)))
+                                print ('Exception 22A from setup views.py = %s (%s)' % (e.message, type(e)))
                                 print ('Unable to create user or user-school mapping for ' + f_name + ' ' + l_name)
                             # todo implement the code to send password to the user through an sms and email
 

@@ -1229,7 +1229,3 @@ def delete_hw(request, hw_id):
             print('Unable to delete HW with id=' + hw_id)
             print ('Exception 10 from academics views.py = %s (%s)' % (e.message, type(e)))
             return JSONResponse(response, status=404)
-
-
-
-

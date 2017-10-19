@@ -19,7 +19,7 @@ from rest_framework import generics
 
 from authentication.views import JSONResponse, log_entry
 
-from .forms import SchoolAttSummaryForm, AttendanceRegisterForm
+from .forms import SchoolAttSummaryForm, AttendanceRegisterForm, TermResultForm
 from .forms import TestResultForm, ParentsCommunicationDetailsForm, BulkSMSForm, SMSSummaryForm
 import sms
 
@@ -486,12 +486,52 @@ def sms_summary(request):
     return render(request, 'classup/sms_summary.html', context_dict)
 
 
+def term_results(request):
+    context_dict = {
+
+    }
+    # first see whether the cancel button was pressed
+    context_dict['school_name'] = request.session['school_name']
+
+    if request.session['user_type'] == 'school_admin':
+        context_dict['user_type'] = 'school_admin'
+
+    # first see whether the cancel button was pressed
+    if "cancel" in request.POST:
+        return render(request, 'classup/setup_index.html', context_dict)
+
+    context_dict['header'] = 'Term Results'
+    if request.method == 'POST':
+        school_id = request.session['school_id']
+        school = School.objects.get(id=school_id)
+        form = TermResultForm(request.POST, school_id=school_id)
+
+        if form.is_valid():
+            the_class = form.cleaned_data['the_class']
+            section = form.cleaned_data['section']
+            response = HttpResponse(content_type='application/pdf')
+            response['Content-Disposition'] = 'attachment; filename="somefilename.pdf"'
+            return response
+        else:
+            error = 'You have missed to select either Class, or Section'
+            form = TermResultForm(request)
+            context_dict['form'] = form
+            form.errors['__all__'] = form.error_class([error])
+            return render(request, 'classup/term_result.html', context_dict)
+
+    if request.method == 'GET':
+        school_id = request.session['school_id']
+        form = TermResultForm(school_id=school_id)
+        context_dict['form'] = form
+
+    return render(request, 'classup/term_result.html', context_dict)
+
+
 def att_register_class(request):
     context_dict = {
     }
 
     # first see whether the cancel button was pressed
-    context_dict['header'] = 'Daily Class-wise Attendance Summary'
     context_dict['school_name'] = request.session['school_name']
 
     if request.session['user_type'] == 'school_admin':

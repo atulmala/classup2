@@ -1,0 +1,83 @@
+{% extends 'classup/base.html' %}
+
+{% load staticfiles %}
+{% load bootstrap %}
+
+{{ form|bootstrap }}
+
+{% block title %}
+    Setup Module
+{% endblock %}
+
+{% block body_block %}
+    <script type="text/javascript">
+        $(document).ready(function() {
+            get_students()
+            $("#id_select_students").prop('checked', false);
+            $("#id_students").prop("disabled", true);
+
+            $("#id_select_students").click(function() {
+                 if ($(this).is(":checked")) {
+                     $("#id_students").prop("disabled", false);
+                 } else {
+                     $("#id_students").prop("disabled", true);
+                 }
+            });
+        });
+        function get_students(){
+                u1 = "student/get_students/"
+                school_id =  $('#id_school_id').val()
+
+                u2 = u1.concat(school_id)
+
+                u3 = u2.concat("/")
+                the_class = $('#id_the_class option:selected').text()
+                u4 = u3.concat(the_class)
+                u5 = u4.concat("/")
+                section = $('#id_section option:selected').text()
+                u6 = u5.concat(section)
+                url = u6.concat("/")
+
+                $.ajax({
+                    url : url, // the endpoint
+                    type : "GET", // http method
+                    contentType: "application/json",
+                    data : { }, // data sent with the post request
+
+                    // handle a successful response
+                    success : function(json) {
+                        //alert(json)
+                        $('#id_students').html('')
+                        $.each(json, function(key, val){
+                                $('#id_students').append('<option id="' + json[key].id + '">' +
+                                json[key].fist_name + ' ' + json[key].last_name +
+                                '   (' + json[key].student_erp_id + ')</option>');
+                        })
+                    },
+
+                    // handle a non-successful response
+                    error : function(xhr,errmsg,err) {
+
+                    }
+                });
+        }
+
+    </script>
+
+    <form action="" enctype="multipart/form-data"  method="post">
+        {% csrf_token %}
+        <header>{{ header }}</header>
+
+        {{ form.non_field_errors }}
+
+        <table>
+            {{ form.as_table }}
+        </table>
+        <p>
+            <br/>
+            <input class="btn-primary" type="submit" name="submit" value="Download Result(s)">
+            <input class="btn-primary" type="submit" name="cancel" value="Done/Cancel">
+        </p>
+    </form>
+
+{% endblock %}

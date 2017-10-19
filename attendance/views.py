@@ -295,13 +295,16 @@ def delete_attendance2(request, school_id, the_class, section, subject, d, m, y)
 
             # check to see if absence for this student for this date, class, section and subject has already been marked
             try:
-                q = Attendance.objects.filter(date=the_date, the_class=c, section=s, subject=sub, student=student)
+                q = Attendance.objects.filter(date=the_date, the_class=c,
+                                              section=s, subject=sub, student=student)
                 print (q.count())
                 # make an entry to database only it is a fresh entry
                 if q.count() > 0:
                     try:
+                        q1 = q[:1].get()
+                        teacher = q1.taken_by.email
                         q.delete()
-                        teacher = q.taken_by.email
+
                         action = 'Deleted a previously taken attendance for ' +\
                                  student.fist_name + ' ' + student.last_name
                         log_entry(teacher, action, "Normal", True)

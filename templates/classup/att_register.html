@@ -1,13 +1,15 @@
 {% extends 'classup/base.html' %}
 
 {% load staticfiles %}
+{% load bootstrap %}
+
+{{ form|bootstrap }}
 
 {% block title %}
     Setup Module
 {% endblock %}
 
 {% block body_block %}
-
     <script>
         $(document).ready(function(){
 

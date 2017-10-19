@@ -1,6 +1,9 @@
 {% extends 'classup/base.html' %}
 
 {% load staticfiles %}
+{% load bootstrap %}
+
+{{ form|bootstrap }}
 
 {% block title %}
     Setup Module
@@ -33,6 +36,7 @@
                 <a href="/operations/test_results/">Download Test Results For Class</a><p/>
                 <a href="/operations/result_sms/">Send Test Results SMS to Parents</a><p/>
                 <a href="/operations/parents_communication_details/">Download Parents Communications</a><p/>
+                <a href="/operations/term_results/">Term 1 (Half Yearly) Results</a><p/>
             </div>
         </div>
     </div>

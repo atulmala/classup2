@@ -9,7 +9,7 @@ class AttendanceAdmin(admin.ModelAdmin):
     def get_school_name(self, obj):
         return obj.the_class.school
     get_school_name.short_description = 'School'
-    list_display = ('date', 'get_school_name', 'the_class', 'section', 'subject', 'student',)
+    list_display = ('date', 'get_school_name', 'the_class', 'section', 'subject', 'taken_by', 'student',)
 
 admin.site.register(Attendance, AttendanceAdmin)
 
