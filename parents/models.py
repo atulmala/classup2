@@ -16,7 +16,7 @@ class ParentCommunication(models.Model):
     student = models.ForeignKey(Student)
     date_sent = models.DateField()
     category = models.ForeignKey(ParentCommunicationCategories)
-    communication_text = models.CharField(max_length=200)
+    communication_text = models.CharField(max_length=400)
 
     def __unicode__(self):
         return self.student.fist_name + ' ' + self.student.last_name

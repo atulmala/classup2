@@ -487,6 +487,7 @@ def sms_summary(request):
 
 
 def term_results(request):
+
     context_dict = {
 
     }
@@ -503,12 +504,19 @@ def term_results(request):
     context_dict['header'] = 'Term Results'
     if request.method == 'POST':
         school_id = request.session['school_id']
+        print(school_id)
         school = School.objects.get(id=school_id)
+        print(school)
+        print('yes, the request method is post!')
+
         form = TermResultForm(request.POST, school_id=school_id)
 
         if form.is_valid():
+            print('form is valid')
             the_class = form.cleaned_data['the_class']
+            print(the_class)
             section = form.cleaned_data['section']
+            print(section)
             response = HttpResponse(content_type='application/pdf')
             response['Content-Disposition'] = 'attachment; filename="somefilename.pdf"'
             return response
@@ -520,6 +528,7 @@ def term_results(request):
             return render(request, 'classup/term_result.html', context_dict)
 
     if request.method == 'GET':
+        print('form method is get')
         school_id = request.session['school_id']
         form = TermResultForm(school_id=school_id)
         context_dict['form'] = form

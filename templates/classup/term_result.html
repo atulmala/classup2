@@ -17,51 +17,101 @@
             $("#id_students").prop("disabled", true);
 
             $("#id_select_students").click(function() {
-                 if ($(this).is(":checked")) {
-                     $("#id_students").prop("disabled", false);
-                 } else {
-                     $("#id_students").prop("disabled", true);
-                 }
+                if ($(this).is(":checked")) {
+                    $("#id_students").prop("disabled", false);
+                } else {
+                    $("#id_students").prop("disabled", true);
+                }
             });
         });
         function get_students(){
-                u1 = "student/get_students/"
-                school_id =  $('#id_school_id').val()
+            u1 = "student/get_students/"
+            school_id =  $('#id_school_id').val()
 
-                u2 = u1.concat(school_id)
+            u2 = u1.concat(school_id)
 
-                u3 = u2.concat("/")
-                the_class = $('#id_the_class option:selected').text()
-                u4 = u3.concat(the_class)
-                u5 = u4.concat("/")
-                section = $('#id_section option:selected').text()
-                u6 = u5.concat(section)
-                url = u6.concat("/")
+            u3 = u2.concat("/")
+            the_class = $('#id_the_class option:selected').text()
+            u4 = u3.concat(the_class)
+            u5 = u4.concat("/")
+            section = $('#id_section option:selected').text()
+            u6 = u5.concat(section)
+            url = u6.concat("/")
 
-                $.ajax({
-                    url : url, // the endpoint
-                    type : "GET", // http method
-                    contentType: "application/json",
-                    data : { }, // data sent with the post request
+            $.ajax({
+                 url : url, // the endpoint
+                 type : "GET", // http method
+                 contentType: "application/json",
+                 data : { }, // data sent with the post request
 
-                    // handle a successful response
-                    success : function(json) {
-                        //alert(json)
-                        $('#id_students').html('')
-                        $.each(json, function(key, val){
-                                $('#id_students').append('<option id="' + json[key].id + '">' +
-                                json[key].fist_name + ' ' + json[key].last_name +
-                                '   (' + json[key].student_erp_id + ')</option>');
-                        })
-                    },
+                 // handle a successful response
+                 success : function(json) {
+                     //alert(json)
+                     $('#id_students').html('')
+                     $.each(json, function(key, val){
+                         $('#id_students').append('<option id="' + json[key].id + '">' +
+                             json[key].fist_name + ' ' + json[key].last_name +
+                             '   (' + json[key].student_erp_id + ')</option>');
+                     })
+                 },
 
-                    // handle a non-successful response
-                    error : function(xhr,errmsg,err) {
+                 // handle a non-successful response
+                 error : function(xhr,errmsg,err) {
 
-                    }
-                });
+                 }
+            });
         }
 
+        function prepare_result()   {
+            u1 = "academics/prepare_results/"
+            u2 = u1.concat(school_id)
+
+            u3 = u2.concat("/")
+            the_class = $('#id_the_class option:selected').text()
+            u4 = u3.concat(the_class)
+            u5 = u4.concat("/")
+            section = $('#id_section option:selected').text()
+            u6 = u5.concat(section)
+            url = u6.concat("/")
+
+            if ($("#id_select_students").is(":checked"))  {
+                whole_class = "false"
+                selected_student = $("#id_students").val()
+
+
+                alert(selected_student)
+            }
+            else    {
+                whole_class = "true"
+                selected_student = 'No Student Selected'
+                alert(selected_student)
+            }
+
+            $.ajax({
+                url :url,
+                type : "GET", // http method
+                data : {
+                        whole_class : whole_class,
+                        selected_student: selected_student
+                },
+                success: function(data) {
+                    var blob=new Blob([data]);
+                    var link=document.createElement('a');
+                    link.href=window.URL.createObjectURL(blob);
+                    file_name = the_class + "-" + section + "_Term1_Results";
+                    link.download=file_name;
+                    link.click();
+                },
+
+                // handle a non-successful response
+                error : function(xhr,errmsg,err) {
+                    alert(xhr.status)
+                    alert(xhr.responseText)
+                    $('#results').html(""); // add the error to the dom
+                    console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+                }
+            });
+        }
     </script>
 
     <form action="" enctype="multipart/form-data"  method="post">
@@ -75,7 +125,8 @@
         </table>
         <p>
             <br/>
-            <input class="btn-primary" type="submit" name="submit" value="Download Result(s)">
+            <iframe name="tmpFrame" id="tmpFrame" width="1" height="1" style="visibility:hidden;position:absolute;display:none"></iframe>
+            <input class="btn-primary" name="submit" value="Download Result(s)" onclick="prepare_result()">
             <input class="btn-primary" type="submit" name="cancel" value="Done/Cancel">
         </p>
     </form>

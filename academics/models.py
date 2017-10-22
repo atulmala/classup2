@@ -79,8 +79,6 @@ class TestResults(models.Model):
                + self.class_test.subject.subject_name + ' ' + (self.class_test.date_conducted).strftime('%d/%m/%Y')
 
 
-    
-
 class Term(models.Model):
     term = models.CharField(max_length=10, default='Term 1')
     def __unicode__(self):
@@ -114,8 +112,6 @@ class CoScholastics(models.Model):
     teacher_remarks = models.CharField(max_length=100, default='All the Best')
     promoted_to_class = models.CharField(max_length=10, default=' ', blank='True')
     
-
-
 
 
 class Exam(models.Model):
