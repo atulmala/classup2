@@ -78,13 +78,12 @@
                 whole_class = "false"
                 selected_student = $("#id_students").val()
 
-
                 alert(selected_student)
             }
             else    {
                 whole_class = "true"
                 selected_student = 'No Student Selected'
-                alert(selected_student)
+                alert('Result will be prepared for whole class')
             }
 
             $.ajax({
@@ -98,7 +97,12 @@
                     var blob=new Blob([data]);
                     var link=document.createElement('a');
                     link.href=window.URL.createObjectURL(blob);
-                    file_name = the_class + "-" + section + "_Term1_Results";
+                    if (whole_class == "true")  {
+                        file_name = the_class + "-" + section + "_Term1_Results";
+                    }
+                    else    {
+                        file_name = selected_student + "_Term1_Results"
+                    }
                     link.download=file_name;
                     link.click();
                 },
