@@ -652,6 +652,7 @@ def get_grade(marks):
 # we need to exempt this view from csrf verification. Will be updated in next version when
 # we will implement authentication
 
+
 @csrf_exempt
 def prepare_results(request, school_id, the_class, section):
     school = School.objects.get(id=school_id)
@@ -964,11 +965,10 @@ def prepare_results(request, school_id, the_class, section):
                     print('Error while preparing results')
                     print ('Exception 21102017-G from academics views.py %s %s' % (e.message, type(e)))
 
-
                 try:
                     data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', ''],
-                             ['Sub Name', 'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
-                              'Half\nYearly\nExam\n(80)',
+                             ['Sub Name', 'Half\nYearly\nExam\n(80)', 'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
+
                               'Marks\nObtained\n(100)', 'Grade'],
                              [lang1, lang1_main, lang1_pa, lang1_notebook, lang1_sub_enrich, lang1_total, lang1_grade],
                              [lang2, lang2_main, lang2_pa, lang2_notebook, lang2_sub_enrich, lang2_total, lang2_grade],
