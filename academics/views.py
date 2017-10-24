@@ -698,7 +698,7 @@ def prepare_results(request, school_id, the_class, section):
                 font = 'Times-Bold'
                 top = 700
                 c.setFont(font, 14)
-                c.drawString(140, top, school_name)
+                c.drawString(141, top, school_name)
 
                 print('marks dictionary initialized')
 
@@ -1044,7 +1044,7 @@ def prepare_results(request, school_id, the_class, section):
             c.setFont(font, 14)
             top = 700
             c.setFont(font, 14)
-            c.drawString(130, top, school_name)
+            c.drawString(141, top, school_name)
 
             line_top = top - 10
 
