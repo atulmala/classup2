@@ -30,7 +30,7 @@ import Queue
 
 from attendance.models import Attendance, AttendanceTaken
 from teacher.models import Teacher
-from student.models import Student
+from student.models import Student, DOB
 from setup.models import Configurations, School
 from .models import Class, Section, Subject, ClassTest, TestResults, Exam, HW, TermTestResult, CoScholastics
 from .serializers import ClassSerializer, SectionSerializer, \
@@ -698,7 +698,7 @@ def prepare_results(request, school_id, the_class, section):
                 font = 'Times-Bold'
                 top = 700
                 c.setFont(font, 14)
-                c.drawString(130, top, school_name)
+                c.drawString(135, top, school_name)
 
                 print('marks dictionary initialized')
 
@@ -734,6 +734,13 @@ def prepare_results(request, school_id, the_class, section):
 
                 dob_lbl = 'Date of Birth:'
                 c.drawString(0, stu_detail_top - 45, dob_lbl)
+                try:
+                    d = DOB.objects.get(student=s)
+                    dob = d.dob
+                    c.drawString(tab, stu_detail_top - 45, dob)
+                except Exception as e:
+                    print ('date of birth not yet set for %s %s ' % (s.fist_name, s.last_name))
+                    print('Exception 23102017-A from academics views.py %s %s ' % (e.message, type(e)))
 
                 class_sec_lbl = 'Class/Section:'
                 c.drawString(0, stu_detail_top - 60, class_sec_lbl)

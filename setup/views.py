@@ -18,7 +18,7 @@ from authentication.views import JSONResponse
 from setup.models import School, UserSchoolMapping
 from academics.models import Class, Section, Subject, TestResults, ClassTest, ClassTeacher, Exam, TeacherSubjects
 from teacher.models import Teacher
-from student.models import Student, Parent
+from student.models import Student, Parent, DOB
 from .models import Configurations
 
 from .serializers import ConfigurationSerializer
@@ -1232,6 +1232,109 @@ def setup_class_teacher(request):
     return render(request, 'classup/setup_data.html', context_dict)
 
 
+def setup_dob(request):
+    context_dict = {
+    }
+    context_dict['user_type'] = 'school_admin'
+    context_dict['school_name'] = request.session['school_name']
+
+    # first see whether the cancel button was pressed
+    if "cancel" in request.POST:
+        return render(request, 'classup/setup_index.html', context_dict)
+
+    # now start processing the file upload
+
+    context_dict['header'] = 'Upload Date of Births of Students'
+    if request.method == 'POST':
+        school_id = request.session['school_id']
+        school = School.objects.get(id=school_id)
+        # get the file uploaded by the user
+        form = ExcelFileUploadForm(request.POST, request.FILES)
+        context_dict['form'] = form
+
+        if form.is_valid():
+            try:
+                print ('now starting to process the uploaded file for setting up DOB...')
+                fileToProcess_handle = request.FILES['excelFile']
+
+                # check that the file uploaded should be a valid excel
+                # file with .xls or .xlsx
+                if not validate_excel_extension(fileToProcess_handle, form, context_dict):
+                    return render(request, 'classup/setup_data.html', context_dict)
+
+                # if this is a valid excel file - start processing it
+                fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
+                sheet = fileToProcess.sheet_by_index(0)
+                if sheet:
+                    print ('Successfully got hold of sheet!')
+                for row in range(sheet.nrows):
+                    if row == 0:
+                        continue
+                    print ('Processing a new row')
+                    erp_id = sheet.cell(row, 0).value
+                    print(erp_id)
+                    try:
+                        student = Student.objects.get(school=school, student_erp_id=erp_id)
+                        print ('now dealing with %s %s' % (student.fist_name, student.last_name))
+                    except Exception as e:
+                        print ('student with erp id %s does not exist' % erp_id)
+                        print ('exception 231017-G from setup views.py %s %s ' % (e.message, type(e)))
+                        continue
+
+                    dob = sheet.cell(row, 2).value
+                    try:
+                        date_of_birth = datetime.datetime(*xlrd.xldate_as_tuple(dob, fileToProcess.datemode))
+                        print ('date of birth is in acceptable format')
+                        print (date_of_birth)
+                    except Exception as e:
+                        print ('problem with date of birth for %s %s' % (student.fist_name, student.last_name))
+                        print ('exception 231017-H from setup views.py %s %s ' % (e.message, type(e)))
+                        continue
+
+                    # get the student associated with this erp_id
+
+                    try:
+                        record = DOB.objects.get(student=student)
+                        print ('date of birth for ' + student.fist_name + ' ' +
+                               student.last_name + ' already exists. This will be updated')
+                        try:
+                            record.dob = date_of_birth
+                            record.save()
+                            print ('successfully updated the date of birth for ' +
+                                   student.fist_name, ' ' + student.last_name)
+                        except Exception as e:
+                            print ('failed to update the date of birth for '+
+                                   student.fist_name, ' ' + student.last_name)
+                            print ('(exception 231017-A from setup views.py %s %s) ' % (e.message, type(e)))
+                    except Exception as e:
+                        print ('(exception 231017-B from setup views.py %s %s) ' % (e.message, type(e)))
+                        print ('date of birth for ' + student.fist_name + ' ' +
+                               student.last_name + ' is not in record. This will be created')
+                        try:
+                            new_record = DOB(student=student, dob=date_of_birth)
+                            new_record.save()
+                            print (('created date of birth entry for %s %s)' %
+                                    (student.fist_name, student.last_name)))
+                        except Exception as e:
+                            print ('failed to create date of birth entry for %s %s)' %
+                                   (student.fist_name, student.last_name))
+                            print ('(exception 231017-C from setup views.py %s %s) ' % (e.message, type(e)))
+
+                            # file upload and saving to db was successful. Hence go back to the main menu
+                messages.success(request, 'Date of Births Uploaded')
+                return render(request, 'classup/setup_index.html', context_dict)
+            except Exception as e:
+                error = 'invalid excel file uploaded.'
+                print (error)
+                print ('exception 231017-E from setup views.py %s %s ' % (e.message, type(e)))
+                form.errors['__all__'] = form.error_class([error])
+                return render(request, 'classup/setup_data.html', context_dict)
+    else:
+        form = ExcelFileUploadForm()
+        context_dict['form'] = form
+    return render(request, 'classup/setup_data.html', context_dict)
+
+
 def setup_exam(request):
     context_dict = {
     }
@@ -1293,7 +1396,6 @@ def setup_exam(request):
                     try:
                         e = Exam.objects.get(school=school, title=exam_title, start_class=exam_start_class,
                                              end_class=exam_end_class)
-
                         if e:
                             print ('Exam ' + exam_title + ' for ' + exam_start_class + ' and ' + exam_end_class
                                    + ' already set. This will be updated...')

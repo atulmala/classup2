@@ -1,5 +1,4 @@
 from django.contrib import admin
-from setup.models import School
 from .models import *
 
 # Register your models here.
@@ -35,3 +34,5 @@ class SchoolGroupAdmin(admin.ModelAdmin):
     list_display = ['group_name',]
 
 admin.site.register(SchoolGroup, SchoolGroupAdmin)
+
+

@@ -19,4 +19,5 @@ urlpatterns = patterns('',
                     url(r'^add_student/$', views.add_student, name='add_student'),
                     url(r'^update_student/$', views.update_student, name='update_student'),
                     url(r'^delete_student/$', views.delete_stuednt, name='delete_student'),
+                    url (r'^upload_dob/$', views.setup_dob, name = 'setup dob'),
                 )
