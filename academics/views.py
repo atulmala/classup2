@@ -737,6 +737,7 @@ def prepare_results(request, school_id, the_class, section):
                 try:
                     d = DOB.objects.get(student=s)
                     dob = d.dob
+                    print(dob)
                     c.drawString(tab, stu_detail_top - 45, dob)
                 except Exception as e:
                     print ('date of birth not yet set for %s %s ' % (s.fist_name, s.last_name))
