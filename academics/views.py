@@ -919,17 +919,16 @@ def prepare_results(request, school_id, the_class, section):
 
                 try:
                     data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', ''],
-                             ['Sub Name', 'Half\nYearly\nExam\n(80)', 'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
-
-                              'Marks\nObtained\n(100)', 'Grade'],
-                             [lang1, lang1_main, lang1_pa, lang1_notebook, lang1_sub_enrich, lang1_total, lang1_grade],
-                             [lang2, lang2_main, lang2_pa, lang2_notebook, lang2_sub_enrich, lang2_total, lang2_grade],
-                             [lang3, lang3_main, lang3_pa, lang3_notebook, lang3_sub_enrich, lang3_total, lang3_grade],
-                             [maths, maths_main, maths_pa, maths_notebook, maths_sub_enrich, maths_total, maths_grade],
-                             [science, science_main, science_pa, science_notebook,
-                              science_sub_enrich, science_total, science_grade],
-                             [sst, sst_main, sst_pa, sst_notebook, sst_sub_enrich, sst_total, sst_grade],
-                             [comp, comp_total, comp_pa, comp_notebook, comp_sub_enrich, comp_total, comp_grade]]
+                             ['Sub Name', 'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
+                              'Half\nYearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade'],
+                             [lang1, lang1_pa, lang1_notebook, lang1_sub_enrich, lang1_main, lang1_total, lang1_grade],
+                             [lang2, lang2_pa, lang2_notebook, lang2_sub_enrich, lang2_main, lang2_total, lang2_grade],
+                             [lang3, lang3_pa, lang3_notebook, lang3_sub_enrich, lang3_main, lang3_total, lang3_grade],
+                             [maths, maths_pa, maths_notebook, maths_sub_enrich, maths_main, maths_total, maths_grade],
+                             [science, science_pa, science_notebook,
+                              science_sub_enrich, science_main, science_total, science_grade],
+                             [sst, sst_pa, sst_notebook, sst_sub_enrich, sst_main, sst_total, sst_grade],
+                             [comp, comp_pa, comp_notebook, comp_sub_enrich, comp_total, comp_total, comp_grade]]
 
                     table1 = Table(data1)
                     table1.setStyle(TableStyle([('GRID', (0, 0), (-1, -1), 0.5, colors.black),
