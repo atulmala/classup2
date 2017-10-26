@@ -45,6 +45,8 @@ class TestAdmin(admin.ModelAdmin):
     list_display = ('get_school_name', 'get_class', 'subject', 'teacher', 'date_conducted', 'max_marks',
                     'passing_marks', 'is_completed', )
 
+    list_filter = ('the_class__school',)
+
 
 admin.site.register(ClassTest, TestAdmin)
 
