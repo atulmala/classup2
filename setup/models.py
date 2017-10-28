@@ -22,6 +22,9 @@ class School(models.Model):
     def __unicode__(self):
         return str(self.school_name)
 
+    class Meta:
+        ordering = ['school_name']
+
 class GlobalConf(models.Model):
     server_url = models.CharField(max_length=100, default="https://www.classupclient.com/")
 
