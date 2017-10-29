@@ -105,7 +105,7 @@ def submit_parents_communication(request):
                     # the message
                     try:
                         admin1_mobile = configuration.admin1_mobile
-                        sms.send_sms(school, parent_name, admin1_mobile, message, message_type)
+                        sms.send_sms1(school, parent_name, admin1_mobile, message, message_type)
                     except Exception as e:
                         print('unable to send Parent communication to Admin 1')
                         print ('Exception 502-B from parents views.py %s %s' % (e.message, type(e)))
@@ -117,22 +117,16 @@ def submit_parents_communication(request):
                     except Exception as e:
                         print('unable to create logbook entry')
                         print ('Exception 502 from parents views.py %s %s' % (e.message, type(e)))
-
-
-
-
                 except Exception as e:
                     print ('failed to send message ' + communication_text + ' to Class Teacher of class ' +
                            the_class.standard + '-' + section.section)
                     print ('Exception 2 from parents views.py = %s (%s)' % (e.message, type(e)))
-
             return HttpResponse('Success')
         except Exception as e:
             print ('Error occured while trying to save comments from parents of '
                    + student.fist_name + ' ' + student.last_name)
             print ('Exception 3 from parents views.py = %s (%s)' % (e.message, type(e)))
             return HttpResponse('Failed')
-
     return HttpResponse('OK')
 
 
