@@ -1,5 +1,4 @@
 from django.contrib import admin
-from setup.models import School
 from .models import Student, Parent, DOB
 
 # Register your models here.

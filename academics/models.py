@@ -48,6 +48,14 @@ class Subject(models.Model):
         return self.subject_name
 
 
+class ThirdLang(models.Model):
+    student = models.ForeignKey(Student)
+    third_lang = models.ForeignKey(Subject)
+
+    def __unicode__(self):
+        return self.student.fist_name + ' ' + self.student.last_name + ' ' + self.third_lang.subject_name
+
+
 class ClassTest(models.Model):
     date_conducted = models.DateField()
     teacher = models.ForeignKey(Teacher)

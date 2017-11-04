@@ -1248,6 +1248,7 @@ def setup_dob(request):
     if request.method == 'POST':
         school_id = request.session['school_id']
         school = School.objects.get(id=school_id)
+
         # get the file uploaded by the user
         form = ExcelFileUploadForm(request.POST, request.FILES)
         context_dict['form'] = form

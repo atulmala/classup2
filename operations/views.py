@@ -9,6 +9,7 @@ import json
 
 import xlsxwriter
 
+from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import ugettext
 from django.shortcuts import render
@@ -17,21 +18,19 @@ from django.contrib import messages
 
 from rest_framework import generics
 
-from authentication.views import JSONResponse, log_entry
-
-from .forms import SchoolAttSummaryForm, AttendanceRegisterForm, TermResultForm
-from .forms import TestResultForm, ParentsCommunicationDetailsForm, BulkSMSForm, SMSSummaryForm
-import sms
-
+from authentication.views import JSONResponse, log_entry, LoginRecord
 from academics.models import Class, Section, Subject, ClassTest, TestResults, ClassTeacher
 from student.models import Student
 from teacher.models import Teacher
 from attendance.models import Attendance, AttendanceTaken
 from parents.models import  ParentCommunication
 from setup.models import Configurations, School
-from .models import SMSRecord, ClassUpAdmin
 
+from .models import SMSRecord, ClassUpAdmin
 from .serializers import SMSDetailSerializer
+from .forms import SchoolAttSummaryForm, AttendanceRegisterForm
+from .forms import TestResultForm, ParentsCommunicationDetailsForm, BulkSMSForm, SMSSummaryForm
+import sms
 
 
 # Create your views here.
@@ -484,56 +483,6 @@ def sms_summary(request):
         context_dict['form'] = form
 
     return render(request, 'classup/sms_summary.html', context_dict)
-
-
-def term_results(request):
-
-    context_dict = {
-
-    }
-    # first see whether the cancel button was pressed
-    context_dict['school_name'] = request.session['school_name']
-
-    if request.session['user_type'] == 'school_admin':
-        context_dict['user_type'] = 'school_admin'
-
-    # first see whether the cancel button was pressed
-    if "cancel" in request.POST:
-        return render(request, 'classup/setup_index.html', context_dict)
-
-    context_dict['header'] = 'Term Results'
-    if request.method == 'POST':
-        school_id = request.session['school_id']
-        print(school_id)
-        school = School.objects.get(id=school_id)
-        print(school)
-        print('yes, the request method is post!')
-
-        form = TermResultForm(request.POST, school_id=school_id)
-
-        if form.is_valid():
-            print('form is valid')
-            the_class = form.cleaned_data['the_class']
-            print(the_class)
-            section = form.cleaned_data['section']
-            print(section)
-            response = HttpResponse(content_type='application/pdf')
-            response['Content-Disposition'] = 'attachment; filename="somefilename.pdf"'
-            return response
-        else:
-            error = 'You have missed to select either Class, or Section'
-            form = TermResultForm(request)
-            context_dict['form'] = form
-            form.errors['__all__'] = form.error_class([error])
-            return render(request, 'classup/term_result.html', context_dict)
-
-    if request.method == 'GET':
-        print('form method is get')
-        school_id = request.session['school_id']
-        form = TermResultForm(school_id=school_id)
-        context_dict['form'] = form
-
-    return render(request, 'classup/term_result.html', context_dict)
 
 
 def att_register_class(request):
@@ -1273,6 +1222,62 @@ def test_result(request):
         context_dict['form'] = form
 
     return render(request, 'classup/test_results.html', context_dict)
+
+
+# 04/11/2017 send welcome sms to parents who have not yet downloaded the app or downloaded but never login
+def send_welcome_sms(request):
+    context_dict = {}
+    school_id = request.session['school_id']
+    school = School.objects.get(id=school_id)
+
+    students = Student.objects.filter(school=school)
+    for s in students:
+        parent = s.parent
+        mobile = parent.parent_mobile1
+
+        # check whether this parent has ever login?
+        try:
+            if LoginRecord.objects.filter(login_id=mobile).exists():
+                print ('parent %s with mobile %s has logged into the system before. No action required' %
+                       (parent.parent_name, mobile))
+            else:
+                print ('parent %s with mobile %s has NEVER logged into the system before. Welcome SMS need to be send' %
+                       (parent.parent_name, mobile))
+                try:
+                    if User.objects.filter(username=mobile).exists():
+                        print('user for parent %s exist. Welcome message can be sent' % parent.parent_name )
+                        try:
+                            conf = Configurations.objects.get(school=school)
+                            android_link = conf.google_play_link
+                            iOS_link = conf.app_store_link
+                            password = User.objects.make_random_password(length=5, allowed_chars='1234567890')
+                            print ('password = %s ' % password)
+                            message = 'Dear %s, Welcome to ClassUp' % parent.parent_name
+                            message += ". Now you can track your child's progress at %s." % school.school_name
+                            message += 'Your user id is: %s, and password is %s' % (str(mobile), str(password))
+                            message += '. Please install ClassUp from these links. '
+                            message += 'Android: %s. iOS: %s' % (android_link, iOS_link)
+                            message += '. For support, email to: support@classup.in'
+                            print(message)
+                            message_type = 'Resend Welcome Parent'
+                            sender = request.session['user']
+                            sms.send_sms1(school, sender, str(mobile), message, message_type)
+                        except Exception as e:
+                            print ('failed to re-send welcome message to %s' % parent.parent_name)
+                            print ('Exception 041117-B from operations views.py %s %s ' % (e.message, type(e)))
+                    else:
+                        print ('user for parent %s has not been created. Need to be looked into' % parent.parent_name)
+                except Exception as e:
+                    print ('re-send welcome SMS failed.')
+                    print ('Exception 041117-C from operations views.py %s %s' % (e.message, type(e)))
+
+        except Exception as e:
+            print ('Exception 041117-A from operations views.py. %s %s' % (e.message, type(e)))
+            print ('Failed to retrieve the login record for parent %s ' % parent.parent_name)
+            context_dict['status'] = 'error'
+            return render(request, 'classup/test_results.html', context_dict, status=201)
+    context_dict['status'] = 'success'
+    return render(request, 'classup/test_results.html', context_dict, status=200)
 
 
 def result_sms(request):

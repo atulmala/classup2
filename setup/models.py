@@ -25,6 +25,7 @@ class School(models.Model):
     class Meta:
         ordering = ['school_name']
 
+
 class GlobalConf(models.Model):
     server_url = models.CharField(max_length=100, default="https://www.classupclient.com/")
 

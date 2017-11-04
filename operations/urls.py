@@ -17,14 +17,6 @@ urlpatterns = patterns(
 
     url(r'^test_results/$', views.test_result, name='test_results'),
 
-    url(r'^term_results/$', views.term_results, name='term results'),
-
-    url(r'^term_results/student/get_students/(?P<school_id>\w+)/(?P<the_class>[\w.@+-]+)/(?P<section>[\w.@+-]+)/$',
-        student_view.StudentList.as_view()),
-
-    url(r'^term_results/academics/prepare_results/(?P<school_id>\w+)/(?P<the_class>[\w.@+-]+)/(?P<section>[\w.@+-]+)/$',
-        academic_views.prepare_results, name='prepare_results'),
-
     url(r'^result_sms/$', views.result_sms, name='test_sms'),
 
     url(r'^send_message/(?P<school_id>\w+)/$', views.send_message, name='send_message'),
@@ -38,4 +30,6 @@ urlpatterns = patterns(
     url(r'retrieve_sms_history/(?P<parent_mobile>\w+)/$', views.SMSHistoryList.as_view()),
 
     url(r'webhooks/$', views.webhooks, name='webhooks'),
+
+    url(r'send_welcome_sms/$', views.send_welcome_sms, name='send_welcome_sms'),
 )
