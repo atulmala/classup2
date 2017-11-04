@@ -1,16 +1,23 @@
 import datetime
 import calendar
 import json
+import xlrd
+
 
 from rest_framework import generics
+
+from django.contrib import messages
+from django.shortcuts import render
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from authentication.views import JSONResponse, log_entry
 from student.models import Student
-from setup.models import Configurations
+from setup.models import School, Configurations
 from academics.models import Subject, ClassTeacher, ClassTest, TestResults, Exam
 from attendance.models import AttendanceTaken, Attendance
+from setup.forms import ExcelFileUploadForm
+from setup.views import validate_excel_extension
 
 from operations import sms
 
@@ -434,3 +441,77 @@ def get_exam_result(request, student_id, exam_id):
             print ('unable to retrieve ' + exam.title + ' results for ' +
                    student.fist_name + ' ' + student.last_name)
     return JSONResponse(response_array, status=201)
+
+
+def send_health_record (request):
+    context_dict = {
+    }
+    context_dict['user_type'] = 'school_admin'
+    context_dict['school_name'] = request.session['school_name']
+
+    # first see whether the cancel button was pressed
+    if "cancel" in request.POST:
+        return render(request, 'classup/setup_index.html', context_dict)
+
+    # now start processing the file upload
+
+    context_dict['header'] = 'Upload Health Data'
+    if request.method == 'POST':
+        # get the file uploaded by the user
+        form = ExcelFileUploadForm(request.POST, request.FILES)
+        context_dict['form'] = form
+
+        if form.is_valid():
+            try:
+                # determine the school for which this processing is done
+                school_id = request.session['school_id']
+                school = School.objects.get(id=school_id)
+                sender = request.session['user']
+                print('school=' + school.school_name)
+                print ('now starting to process the uploaded file for sending Health data...')
+                fileToProcess_handle = request.FILES['excelFile']
+
+                # check that the file uploaded should be a valid excel
+                # file with .xls or .xlsx
+                if not validate_excel_extension(fileToProcess_handle, form, context_dict):
+                    return render(request, 'classup/setup_data.html', context_dict)
+
+                # if this is a valid excel file - start processing it
+                fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
+                sheet = fileToProcess.sheet_by_index(0)
+                if sheet:
+                    print('Successfully got hold of sheet!')
+
+                for row in range(sheet.nrows):
+                    # skip the header rows
+                    if row == 0:
+                        continue
+
+                    print('Processing a new row')
+                    erp_id = sheet.cell(row, 1).value
+                    try:
+                        student = Student.objects.get(school=school, student_erp_id=erp_id)
+                        print ('dealing with % s %s' % (student.fist_name, student.last_name))
+                        parent_name = student.parent.parent_name
+                        mobile = student.parent.parent_mobile1
+
+                        weight = sheet.cell(row, 3).value
+                        if weight == '':
+                            weight = 'N/A'
+                        message = 'Dear %s, weight of your ward %s during last health checkup is %s KG' % \
+                              (parent_name, student.fist_name, weight)
+                        message_type = 'Health Data Communication (Web)'
+                        print(message)
+                        sms.send_sms1(school, sender, mobile, message, message_type)
+                    except Exception as e:
+                        print ('failed to send health data for %s' % erp_id)
+                        print ('Exception 041117-A from parents views.py %s %s ' % (e.message, type(e)))
+                messages.success(request, 'health data sent to parents')
+            except Exception as e:
+                print ('invalid excel file uploaded. Please fix and upload again')
+                print ('Exception 041117-B from parents views.py %s %s ' % (e.message, type(e)))
+    else:
+        # we are arriving at this page for the first time, hence show an empty form
+        form = ExcelFileUploadForm()
+        context_dict['form'] = form
+    return render(request, 'classup/setup_data.html', context_dict)

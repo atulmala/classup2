@@ -9,4 +9,5 @@ urlpatterns = patterns('',
                        url(r'^retrieve_stu_sub_marks_history/(?P<subject>[\w\ ]+)/$',
                            views.retrieve_stu_sub_marks_history),
                        url(r'^get_exam_result/(?P<student_id>[\w\ ]+)/(?P<exam_id>[\w\ ]+)/$', views.get_exam_result),
+                       url(r'^send_health_record/$', views.send_health_record, name='send_health_record'),
                        )
