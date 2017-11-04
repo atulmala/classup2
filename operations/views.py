@@ -1230,7 +1230,9 @@ def send_welcome_sms(request):
     school_id = request.session['school_id']
     school = School.objects.get(id=school_id)
 
-    students = Student.objects.filter(school=school)
+    students = Student.objects.filter(school=school, active_status=True)
+    student_count = 0
+    message_count = 0
     for s in students:
         parent = s.parent
         mobile = parent.parent_mobile1
@@ -1262,6 +1264,9 @@ def send_welcome_sms(request):
                             message_type = 'Resend Welcome Parent'
                             sender = request.session['user']
                             sms.send_sms1(school, sender, str(mobile), message, message_type)
+                            print ('sent welcom SMS to % s' % parent.parent_name)
+                            message_count = message_count + 1
+                            print ('now the count is %i' % message_count)
                         except Exception as e:
                             print ('failed to re-send welcome message to %s' % parent.parent_name)
                             print ('Exception 041117-B from operations views.py %s %s ' % (e.message, type(e)))
@@ -1276,6 +1281,9 @@ def send_welcome_sms(request):
             print ('Failed to retrieve the login record for parent %s ' % parent.parent_name)
             context_dict['status'] = 'error'
             return render(request, 'classup/test_results.html', context_dict, status=201)
+        student_count = student_count + 1
+    print ('out of %i parents, total %i welcome messages sent for % s' %
+           (student_count, message_count, school.school_name))
     context_dict['status'] = 'success'
     return render(request, 'classup/test_results.html', context_dict, status=200)
 
