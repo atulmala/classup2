@@ -1255,6 +1255,7 @@ def send_welcome_sms(request):
                             u = User.objects.get(username=mobile)
                             password = User.objects.make_random_password(length=5, allowed_chars='1234567890')
                             u.set_password(password)
+                            u.save()
                             print ('password = %s ' % password)
                             message = 'Dear %s, Welcome to ClassUp' % parent.parent_name
                             message += ". Now you can track your child's progress at %s." % school.school_name
