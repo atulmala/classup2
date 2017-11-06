@@ -11,3 +11,4 @@ class Scheme(models.Model):
     the_class = models.ForeignKey(Class)
     sequence = models.IntegerField()
     subject = models.ForeignKey(Subject)
+    subject_type = models.CharField(max_length=50, default='Regular')

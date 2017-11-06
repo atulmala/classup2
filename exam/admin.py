@@ -14,7 +14,7 @@ admin.site.register(ThirdLang, ThirdLangAdmin)
 
 
 class SchemeAdmin(admin.ModelAdmin):
-    list_display = ('school', 'the_class', 'sequence', 'subject',)
+    list_display = ('school', 'the_class', 'sequence', 'subject', 'subject_type',)
 
 
 admin.site.register(Scheme, SchemeAdmin)

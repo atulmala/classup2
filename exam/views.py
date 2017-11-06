@@ -335,9 +335,7 @@ def prepare_results(request, school_id, the_class, section):
             sub_dict[s.sequence] = s.subject
         print (sub_dict)
 
-        data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', ''],
-                 ['Sub Name', 'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
-                  'Half\nYearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
+
 
         # 20/10/2017 - now the grand loop starts!
 
@@ -356,37 +354,55 @@ def prepare_results(request, school_id, the_class, section):
         response['Content-Disposition'] = content_disposition
         print(response)
         c = canvas.Canvas(response, pagesize=A4, bottomup=1)
-        c.translate(inch, inch)
+
         font = 'Times-Bold'
         c.setFont(font, 14)
         font = 'Times-Bold'
         top = 700
-        c.setFont(font, 14)
-        c.drawString(141, top, school_name)
         line_top = top - 10
-
-        c.line(0, line_top, 6 * inch, line_top)
-
         session_top = line_top - 15
-        session = 'Academic Session 2017-18'
-        c.setFont(font, 10)
-        c.drawString(152, session_top, session)
-        print('heading created')
-        tab = 80
-        style1 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-                                                ('BOX', (0, 0), (-1, -1), 2, colors.black),
-                                                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                                                ('ALIGN', (1, 0), (6, 0), 'CENTER'),
-                                                ('SPAN', (1, 0), (6, 0)),
-                                                ('FONTSIZE', (0, 0), (-1, -1), 8),
-                                                ('FONT', (0, 0), (6, 0), 'Times-Bold'),
-                                                ('FONT', (0, 1), (0, 1), 'Times-Bold')
-                                                ]
-
         report_card_top = session_top - 10
-        report_card = 'Report Card for Class ' + the_class + '-' + section
-        c.drawString(152, report_card_top, report_card)
         stu_detail_top = report_card_top - 20
+        table1_top = stu_detail_top - 275
+        tab = 80
+
+        c.setFont(font, 14)
+
+        style1 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+                  ('BOX', (0, 0), (-1, -1), 2, colors.black),
+                  ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                  ('ALIGN', (1, 0), (6, 0), 'CENTER'),
+                  ('SPAN', (1, 0), (6, 0)),
+                  ('FONTSIZE', (0, 0), (-1, -1), 8),
+                  ('FONT', (0, 0), (6, 0), 'Times-Bold'),
+                  ('FONT', (0, 1), (0, 1), 'Times-Bold')
+                  ]
+        style2 = style3 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+                                            ('BOX', (0, 0), (-1, -1), 2, colors.black),
+                                            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                                            ('ALIGN', (0, 0), (1, 0), 'CENTER'),
+                                            ('SPAN', (0, 0), (1, 0)),
+                                            ('FONTSIZE', (0, 0), (-1, -1), 8),
+                                            ('FONT', (0, 0), (1, 0), 'Times-Bold')
+                                            ]
+        style4 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+                                            ('FONT', (0, 0), (1, 0), 'Times-Bold'),
+                                            ('FONTSIZE', (0, 0), (-1, -1), 8)]
+        data4 = [['MARKS RANGE', 'GRADE'],
+                 ['91 - 100', 'A 1'],
+                 ['81 - 90', 'A 2'],
+                 ['71 - 80', 'B 1'],
+                 ['61 - 70', 'B 2'],
+                 ['51 - 60', 'C 1'],
+                 ['41 - 50', 'C 2'],
+                 ['33 - 40', 'D'],
+                 ['32 & Below', 'E (Needs improvement)']]
+        session = 'Academic Session 2017-18'
+        adm_no_lbl = 'Admission No:'
+        stu_name_lbl = 'Student Name:'
+        father_name_lbl = 'Father Name:'
+        dob_lbl = 'Date of Birth:'
+        class_sec_lbl = 'Class/Section:'
 
         exam = Exam.objects.get(school=school, title='Term1')
         print(exam)
@@ -398,20 +414,28 @@ def prepare_results(request, school_id, the_class, section):
             students = Student.objects.filter(school=school, current_class=standard, current_section=sec)
             for s in students:
                 print('Entering loop')
+                c.translate(inch, inch)
+                c.drawString(141, top, school_name)
+                c.line(0, line_top, 6 * inch, line_top)
+
                 c.setFont(font, 10)
-                adm_no_lbl = 'Admission No:'
+                c.drawString(152, session_top, session)
+                print('heading created')
+
+                report_card = 'Report Card for Class ' + the_class + '-' + section
+                c.drawString(152, report_card_top, report_card)
+
+                c.setFont(font, 10)
+
                 c.drawString(0, stu_detail_top, adm_no_lbl)
                 c.drawString(tab, stu_detail_top, s.student_erp_id)
 
-                stu_name_lbl = 'Student Name:'
                 c.drawString(0, stu_detail_top - 15, stu_name_lbl)
                 c.drawString(tab, stu_detail_top - 15, s.fist_name + ' ' + s.last_name)
 
-                father_name_lbl = 'Father Name:'
                 c.drawString(0, stu_detail_top - 30, father_name_lbl)
                 c.drawString(tab, stu_detail_top - 30, s.parent.parent_name)
 
-                dob_lbl = 'Date of Birth:'
                 c.drawString(0, stu_detail_top - 45, dob_lbl)
                 try:
                     d = DOB.objects.get(student=s)
@@ -422,13 +446,26 @@ def prepare_results(request, school_id, the_class, section):
                     print ('date of birth not yet set for %s %s ' % (s.fist_name, s.last_name))
                     print('Exception 23102017-A from exam views.py %s %s ' % (e.message, type(e)))
 
-                class_sec_lbl = 'Class/Section:'
+
                 c.drawString(0, stu_detail_top - 60, class_sec_lbl)
                 c.drawString(tab, stu_detail_top - 60, the_class + '-' + section)
                 print('report heading prepared')
+                data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', ''],
+                         ['Sub Name', 'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
+                          'Half\nYearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
 
                 for i in range(0, sub_count):
                     sub = sub_dict.values()[i]
+                    print ('sub = %s' % sub)
+                    if sub.subject_name == 'Third Language':
+                        print ('determining third language for %s' % s.fist_name)
+                        try:
+                            third_lang = ThirdLang.objects.get(student=s)
+                            sub = third_lang.third_lang
+                            print ('third language for %s is %s' % (s.fist_name, sub.subject_name))
+                        except Exception as e:
+                            print ('failed to determine third lang for %s. Exception 061117-A from exam views.py %s %s' %
+                                   (s.fist_name, e.message, type(e)))
                     try:
                         test = ClassTest.objects.get(subject=sub, the_class=standard, section=sec,
                                                            date_conducted__gte=start_date, date_conducted__lte=end_date)
@@ -450,6 +487,7 @@ def prepare_results(request, school_id, the_class, section):
 
                         sub_row = [sub.subject_name, pa, notebook, sub_enrich, main, total, grade]
                         data1.append(sub_row)
+                        print(data1)
                     except Exception as e:
                         print('Error while preparing results')
                         print ('Exception 21102017-A from exam views.py %s %s' % (e.message, type(e)))
@@ -458,7 +496,6 @@ def prepare_results(request, school_id, the_class, section):
                     table1 = Table(data1)
                     table1.setStyle(TableStyle(style1))
 
-                    table1_top = stu_detail_top - 275
                     table1.wrapOn(c, 0, 0)
                     table1.drawOn(c, 0, table1_top)
                 except Exception as e:
@@ -479,14 +516,7 @@ def prepare_results(request, school_id, the_class, section):
                          ['Health & Physical Education', health_ed]]
                 table2_top = table1_top - 100
                 table2 = Table(data2)
-                table2.setStyle(TableStyle([('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-                                            ('BOX', (0, 0), (-1, -1), 2, colors.black),
-                                            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                                            ('ALIGN', (0, 0), (1, 0), 'CENTER'),
-                                            ('SPAN', (0, 0), (1, 0)),
-                                            ('FONTSIZE', (0, 0), (-1, -1), 8),
-                                            ('FONT', (0, 0), (1, 0), 'Times-Bold')
-                                            ]))
+                table2.setStyle(TableStyle(style2))
                 table2.wrapOn(c, 0, 0)
                 table2.drawOn(c, 0, table2_top)
 
@@ -494,14 +524,7 @@ def prepare_results(request, school_id, the_class, section):
                          ['Discipline: Term-1[On a 3-point(A-C) grading scale', dscpln]]
                 table3_top = table2_top - 50
                 table3 = Table(data3)
-                table3.setStyle(TableStyle([('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-                                            ('BOX', (0, 0), (-1, -1), 2, colors.black),
-                                            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                                            ('ALIGN', (0, 0), (1, 0), 'RIGHT'),
-                                            ('SPAN', (0, 0), (1, 0)),
-                                            ('FONTSIZE', (0, 0), (-1, -1), 8),
-                                            ('FONT', (0, 0), (0, 0), 'Times-Bold')
-                                            ]))
+                table3.setStyle(TableStyle(style3))
                 table3.wrapOn(c, 0, 0)
                 table3.drawOn(c, 0, table3_top)
 
@@ -516,19 +539,8 @@ def prepare_results(request, school_id, the_class, section):
                 c.drawString(0, table3_top - 70, "Grading Scale for Scholastic Areas: "
                                                  "Grades are awarded on a 8-point grading scales as follows - ")
 
-                data4 = [['MARKS RANGE', 'GRADE'],
-                         ['91 - 100', 'A 1'],
-                         ['81 - 90', 'A 2'],
-                         ['71 - 80', 'B 1'],
-                         ['61 - 70', 'B 2'],
-                         ['51 - 60', 'C 1'],
-                         ['41 - 50', 'C 2'],
-                         ['33 - 40', 'D'],
-                         ['32 & Below', 'E (Needs improvement)']]
                 table4 = Table(data4)
-                table4.setStyle(TableStyle([('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-                                            ('FONT', (0, 0), (1, 0), 'Times-Bold'),
-                                            ('FONTSIZE', (0, 0), (-1, -1), 8)]))
+                table4.setStyle(TableStyle(style4))
                 table4.wrapOn(c, 0, 0)
                 table4.drawOn(c, 120, table3_top - 250)
 
@@ -542,19 +554,27 @@ def prepare_results(request, school_id, the_class, section):
             return response
 
         else:
-            adm_no_lbl = 'Admission No:'
+            c.translate(inch, inch)
+            c.drawString(141, top, school_name)
+            c.line(0, line_top, 6 * inch, line_top)
+
+            c.setFont(font, 10)
+            c.drawString(152, session_top, session)
+            print('heading created')
+
+            report_card = 'Report Card for Class ' + the_class + '-' + section
+            c.drawString(152, report_card_top, report_card)
+
+            c.setFont(font, 10)
             c.drawString(0, stu_detail_top, adm_no_lbl)
             c.drawString(tab, stu_detail_top, s.student_erp_id)
 
-            stu_name_lbl = 'Student Name:'
             c.drawString(0, stu_detail_top - 15, stu_name_lbl)
             c.drawString(tab, stu_detail_top - 15, s.fist_name + ' ' + s.last_name)
 
-            father_name_lbl = 'Father Name:'
             c.drawString(0, stu_detail_top - 30, father_name_lbl)
             c.drawString(tab, stu_detail_top - 30, s.parent.parent_name)
 
-            dob_lbl = 'Date of Birth:'
             c.drawString(0, stu_detail_top - 45, dob_lbl)
             try:
                 d = DOB.objects.get(student=s)
@@ -565,7 +585,6 @@ def prepare_results(request, school_id, the_class, section):
                 print ('date of birth not yet set for %s %s ' % (s.fist_name, s.last_name))
                 print('Exception 23102017-A from exam views.py %s %s ' % (e.message, type(e)))
 
-            class_sec_lbl = 'Class/Section:'
             c.drawString(0, stu_detail_top - 60, class_sec_lbl)
             c.drawString(tab, stu_detail_top - 60, the_class + '-' + section)
             print('report heading prepared')
@@ -575,6 +594,9 @@ def prepare_results(request, school_id, the_class, section):
             start_date = exam.start_date
             end_date = exam.end_date
 
+            data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', ''],
+                     ['Sub Name', 'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
+                      'Half\nYearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
             for i in range(0, sub_count):
                 sub = sub_dict.values()[i]
                 try:
