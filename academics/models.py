@@ -43,6 +43,7 @@ class Subject(models.Model):
     subject_name = models.CharField(max_length=40)
     subject_code = models.CharField(max_length=10)
     subject_sequence = models.SmallIntegerField(null=True)
+    subject_type = models.CharField(max_length=40, default='Regular')
 
     def __unicode__(self):
         return self.subject_name
@@ -120,7 +121,6 @@ class CoScholastics(models.Model):
     teacher_remarks = models.CharField(max_length=100, default='All the Best')
     promoted_to_class = models.CharField(max_length=10, default=' ', blank='True')
     
-
 
 class Exam(models.Model):
     school = models.ForeignKey(School)

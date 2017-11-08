@@ -1,7 +1,7 @@
+from datetime import datetime
+
 from django.db import models
 from setup.models import School
-
-# Create your models here.
 
 
 # Create your models here.
@@ -16,3 +16,26 @@ class Teacher(models.Model):
 
     def __unicode__(self):
         return self.first_name
+
+
+class TeacherAttendance(models.Model):
+    date = models.DateField()
+    teacher = models.ForeignKey(Teacher)
+
+
+class TeacherAttendnceTaken (models.Model):
+    date = models.DateField()
+    taken_time = models.DateTimeField(default=datetime.now, blank=True)
+
+
+DAYS_OF_WEEK = (
+    ('Mon', 'Mon'),
+    ('Tue', 'Tue'),
+    ('Wed', 'Wed'),
+    ('Thu', 'Thu'),
+    ('Fri', 'Fri'),
+    ('Sat', 'Sat'),
+    ('Sun', 'Sun'),
+)
+
+

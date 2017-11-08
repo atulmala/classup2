@@ -599,6 +599,17 @@ def prepare_results(request, school_id, the_class, section):
                       'Half\nYearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
             for i in range(0, sub_count):
                 sub = sub_dict.values()[i]
+                sub = sub_dict.values()[i]
+                print ('sub = %s' % sub)
+                if sub.subject_name == 'Third Language':
+                    print ('determining third language for %s' % s.fist_name)
+                    try:
+                        third_lang = ThirdLang.objects.get(student=s)
+                        sub = third_lang.third_lang
+                        print ('third language for %s is %s' % (s.fist_name, sub.subject_name))
+                    except Exception as e:
+                        print ('failed to determine third lang for %s. Exception 061117-B from exam views.py %s %s' %
+                               (s.fist_name, e.message, type(e)))
                 try:
                     test = ClassTest.objects.get(subject=sub, the_class=standard, section=sec,
                                                  date_conducted__gte=start_date, date_conducted__lte=end_date)

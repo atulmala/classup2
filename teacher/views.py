@@ -1,17 +1,22 @@
 import json
+from datetime import date
+
 
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from django.contrib.auth.models import User, Group
 from rest_framework import generics
+from rest_framework.response import Response
+from rest_framework import status
+
 from operations import sms
 from authentication.views import log_entry
 from academics.models import Subject, ClassTeacher, Class, Section, TeacherSubjects
 from setup.models import School, UserSchoolMapping, Configurations
-from .models import Teacher
+from .models import Teacher, TeacherAttendance
 
-from .serializers import TeacherSubjectSerializer, TeacherSerializer
+from .serializers import TeacherSubjectSerializer, TeacherSerializer, TeacherAttendanceSerializer
 
 from authentication.views import JSONResponse
 
@@ -38,6 +43,25 @@ class TeacherList(generics.ListAPIView):
 
         q = Teacher.objects.filter(school=school, active_status=True).order_by('first_name')
         return q
+
+
+class TeacherAttendanceList(generics.ListCreateAPIView):
+    def get_queryset(self):
+        school_id = self.kwargs['school_id']
+        school = School.objects.get(id=school_id)
+        d = self.kwargs['d']
+        m = self.kwargs['m']
+        y = self.kwargs['y']
+
+        q1 = TeacherAttendance.objects.filter(school=school, date=date(int(y), int(m), int(d)))
+        return q1
+
+    def post(self, request, *args, **kwargs):
+        serializer = TeacherAttendanceSerializer(data=request.DATA)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 def whether_class_teacher(request, teacher_id):
