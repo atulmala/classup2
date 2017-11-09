@@ -19,11 +19,21 @@ class Teacher(models.Model):
 
 
 class TeacherAttendance(models.Model):
+    school = models.ForeignKey(School, null=True)
     date = models.DateField()
     teacher = models.ForeignKey(Teacher)
 
+    def save(self, *args, **kwargs):
+        school = self.teacher.school
+        self.school = school
+        super(TeacherAttendance, self).save(*args, **kwargs)
+
+    def __unicode__(self):
+        return '%s %s %s' % (self.school.school_name, self.date.strftime('%Y-%m-%d'), self.teacher.first_name)
+
 
 class TeacherAttendnceTaken (models.Model):
+    school = models.ForeignKey(School, null=True)
     date = models.DateField()
     taken_time = models.DateTimeField(default=datetime.now, blank=True)
 

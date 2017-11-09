@@ -46,6 +46,7 @@ class TeacherList(generics.ListAPIView):
 
 
 class TeacherAttendanceList(generics.ListCreateAPIView):
+    serializer_class = TeacherAttendanceSerializer
     def get_queryset(self):
         school_id = self.kwargs['school_id']
         school = School.objects.get(id=school_id)
