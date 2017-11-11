@@ -27,7 +27,8 @@ urlpatterns = [
     url(r'^retrieve_attendance/(?P<school_id>\w+)/(?P<d>\w+)/(?P<m>\w+)/(?P<y>\w+)/$',
         views.TeacherAttendanceList.as_view(), name='retrieve_attendance'),
 
-    url(r'^update_attendance/$', views.TeacherAttendanceList.as_view(), name='update_attenance'),
+    url(r'^process_attendance/(?P<school_id>\w+)/(?P<d>\w+)/(?P<m>\w+)/(?P<y>\w+)/$',
+        views.TeacherAttendanceList.as_view(), name='process_attendance'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

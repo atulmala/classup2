@@ -6,6 +6,8 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
 from django.contrib.auth.models import User, Group
+
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
@@ -19,6 +21,11 @@ from .models import Teacher, TeacherAttendance
 from .serializers import TeacherSubjectSerializer, TeacherSerializer, TeacherAttendanceSerializer
 
 from authentication.views import JSONResponse
+
+
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    def enforce_csrf(self, request):
+        return  # To not perform the csrf check previously happening
 
 
 class TeacherSubjectList(generics.ListCreateAPIView):
@@ -46,7 +53,9 @@ class TeacherList(generics.ListAPIView):
 
 
 class TeacherAttendanceList(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     serializer_class = TeacherAttendanceSerializer
+
     def get_queryset(self):
         school_id = self.kwargs['school_id']
         school = School.objects.get(id=school_id)
@@ -58,11 +67,14 @@ class TeacherAttendanceList(generics.ListCreateAPIView):
         return q1
 
     def post(self, request, *args, **kwargs):
-        serializer = TeacherAttendanceSerializer(data=request.DATA)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        print('starting to process teacher Attendance')
+        print('request=')
+        print(request.body)
+        data = json.loads(request.body)
+        print ('json=')
+        print (data)
+
+        return Response(status=status.HTTP_200_OK)
 
 
 def whether_class_teacher(request, teacher_id):

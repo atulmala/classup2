@@ -22,6 +22,10 @@ class TeacherSerializer(serializers.ModelSerializer):
 
 
 class TeacherAttendanceSerializer(serializers.ModelSerializer):
+    def __init__(self, *args, **kwargs):
+        many = kwargs.pop('many', True)
+        super(TeacherAttendanceSerializer, self).__init__(many=many, *args, **kwargs)
+
     class Meta:
         model = TeacherAttendance
 
