@@ -28,4 +28,5 @@ class TeacherAttendanceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = TeacherAttendance
+        fields = ('id', 'school', 'date', 'teacher',)
 

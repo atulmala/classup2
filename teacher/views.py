@@ -16,7 +16,7 @@ from operations import sms
 from authentication.views import log_entry
 from academics.models import Subject, ClassTeacher, Class, Section, TeacherSubjects
 from setup.models import School, UserSchoolMapping, Configurations
-from .models import Teacher, TeacherAttendance
+from .models import Teacher, TeacherAttendance, TeacherAttendnceTaken
 
 from .serializers import TeacherSubjectSerializer, TeacherSerializer, TeacherAttendanceSerializer
 
@@ -52,7 +52,7 @@ class TeacherList(generics.ListAPIView):
         return q
 
 
-class TeacherAttendanceList(generics.ListCreateAPIView):
+class TheTeacherAttendance(generics.ListCreateAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     serializer_class = TeacherAttendanceSerializer
 
@@ -73,7 +73,64 @@ class TeacherAttendanceList(generics.ListCreateAPIView):
         data = json.loads(request.body)
         print ('json=')
         print (data)
-
+        for key in data:
+            print (key)
+            
+            
+        school_id = self.kwargs['school_id']
+        print(school_id)
+        school = School.objects.get(pk = school_id)
+        print (school)
+        
+        d = self.kwargs['d']
+        m = self.kwargs['m']
+        y = self.kwargs['y']
+        the_date = date(int(y), int(m), int(d))
+        print (the_date)
+        
+        # record the attendance taken
+        try:
+            q = TeacherAttendnceTaken.objects.filter(school=school, date=the_date)
+            if 0 == q.count():
+                a = TeacherAttendnceTaken(school=school, date=the_date)
+                a.save()
+        except Exception as e:
+            print ('failed to create Teacher Attendance Taken record')
+            print ('Exception 111117-A from teacher views.py %s %s' % (e.message, type(e)))
+            
+        # process the corrections
+        print (data['corrections'])
+        print ('correction list: ')
+        for correction_id in data['corrections']:
+            print (correction_id)
+            try:
+                teacher = Teacher.objects.get(id=correction_id)
+                record = TeacherAttendance.objects.get(teacher=teacher, date=the_date)
+                record.delete()
+                print ('deleted previously recorded attendance for %s %s' % (teacher.first_name, teacher.last_name))
+            except Exception as e:
+                print ('unable to delete a previously marked attenance for %s %s' %
+                       (teacher.first_name, teacher.last_name))
+                print ('Exception 111117-B from teacher views.py %s %s' % (e.message, type(e)))
+            
+        print (data['absentees'])
+        print ('absentees list: ')
+        for absentee_id in data['absentees']:
+            print (absentee_id)
+            try:
+                teacher = Teacher.objects.get(id=absentee_id)
+                record = TeacherAttendance.objects.filter(teacher=teacher, date=the_date)
+                if not record:
+                    record = TeacherAttendance(teacher=teacher, date=the_date)
+                    record.save()
+                    print ('marked absence for %s %s ' % (teacher.first_name, teacher.last_name))
+                else:
+                    print ('absence for %s %s was already marked in a previous attendance' % 
+                           (teacher.first_name, teacher.last_name))
+            except Exception as e:
+                print ('failed to mark for %s %s ' % (teacher.first_name, teacher.last_name))
+                print ('Exception 111117-C from teacher views.py %s %s' % (e.message, type(e)))
+            
         return Response(status=status.HTTP_200_OK)
 
 

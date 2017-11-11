@@ -258,8 +258,8 @@ class TheCoScholastics(generics.ListCreateAPIView):
             result.promoted_to_class = data[key]['promoted_to_class']
             try:
                 result.save()
-                print('successfully saved CoScholastic Grades for ' +
-                      result.student.fist_name + ' ' + result.student.last_name)
+                print('successfully saved CoScholastic Grades for %s %s' %
+                      (result.student.fist_name, result.student.last_name))
             except Exception as e:
                 print('failed to save CoScholastic Grades')
                 print ('Exception 750 from academics views.py %s %s' % (e.message, type(e)))

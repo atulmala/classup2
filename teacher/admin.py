@@ -10,4 +10,19 @@ class TeacherAdmin(admin.ModelAdmin):
     list_display = ['first_name', 'last_name', 'teacher_erp_id', 'email', 'school']
     list_filter = ('school', )
 
+
 admin.site.register(Teacher, TeacherAdmin)
+
+
+class TeacherAttendanceTakenAdmin(admin.ModelAdmin):
+    list_display = ('school', 'date', 'taken_time',)
+
+
+admin.site.register(TeacherAttendnceTaken, TeacherAttendanceTakenAdmin)
+
+
+class TeacherAttendanceAdmin (admin.ModelAdmin):
+    list_display = ('school', 'teacher', 'date',)
+
+
+admin.site.register(TeacherAttendance, TeacherAttendanceAdmin)

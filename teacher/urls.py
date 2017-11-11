@@ -25,10 +25,10 @@ urlpatterns = [
     url(r'^update_teacher/$', views.update_teacher, name='update_teacher'),
 
     url(r'^retrieve_attendance/(?P<school_id>\w+)/(?P<d>\w+)/(?P<m>\w+)/(?P<y>\w+)/$',
-        views.TeacherAttendanceList.as_view(), name='retrieve_attendance'),
+        views.TheTeacherAttendance.as_view(), name='retrieve_attendance'),
 
     url(r'^process_attendance/(?P<school_id>\w+)/(?P<d>\w+)/(?P<m>\w+)/(?P<y>\w+)/$',
-        views.TeacherAttendanceList.as_view(), name='process_attendance'),
+        views.TheTeacherAttendance.as_view(), name='process_attendance'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
