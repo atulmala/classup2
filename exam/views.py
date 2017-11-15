@@ -18,7 +18,7 @@ from student.models import Student, DOB
 from academics.models import Class, Section, Subject, ThirdLang, ClassTest, \
     Exam, TermTestResult, TestResults, CoScholastics
 
-from .models import Scheme
+from .models import Scheme, HigherClassMapping
 from .forms import TermResultForm
 
 
@@ -121,6 +121,93 @@ def setup_scheme(request):
                 error = 'invalid excel file uploaded.'
                 print (error)
                 print ('exception 021117-E from exam views.py %s %s ' % (e.message, type(e)))
+                form.errors['__all__'] = form.error_class([error])
+                return render(request, 'classup/setup_data.html', context_dict)
+    else:
+        form = ExcelFileUploadForm()
+        context_dict['form'] = form
+    return render(request, 'classup/setup_data.html', context_dict)
+
+
+def setup_higher_class_subject_mapping(request):
+    context_dict = {}
+    context_dict['user_type'] = 'school_admin'
+    context_dict['school_name'] = request.session['school_name']
+
+    # first see whether the cancel button was pressed
+    if "cancel" in request.POST:
+        return render(request, 'classup/setup_index.html', context_dict)
+
+    context_dict['header'] = 'Subject Mapping for Higher Classes'
+    if request.method == 'POST':
+        school_id = request.session['school_id']
+        school = School.objects.get(id=school_id)
+        print (school)
+
+        # get the file uploaded by the user
+        form = ExcelFileUploadForm(request.POST, request.FILES)
+        context_dict['form'] = form
+
+        if form.is_valid():
+            try:
+                print ('now starting to process the uploaded file for Higher classes subject mapping...')
+                fileToProcess_handle = request.FILES['excelFile']
+
+                # check that the file uploaded should be a valid excel
+                # file with .xls or .xlsx
+                if not validate_excel_extension(fileToProcess_handle, form, context_dict):
+                    return render(request, 'classup/setup_data.html', context_dict)
+
+                # if this is a valid excel file - start processing it
+                fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
+                sheet = fileToProcess.sheet_by_index(0)
+                if sheet:
+                    print ('Successfully got hold of sheet!')
+                for row in range(sheet.nrows):
+                    # get the subject name
+                    if row == 0:
+                        sub = sheet.cell(row, 1).value
+                        try:
+                            subject = Subject.objects.get (school=school, subject_name=sub)
+                            continue
+                        except Exception as e:
+                            print ('exception 141117-E from exam views.py %s %s' % (e.message, type(e)))
+                            error = 'failed to retrieve subject for %s ' % sub
+                            print (error)
+                            form.errors['__all__'] = form.error_class([error])
+                            return render(request, 'classup/setup_data.html', context_dict)
+                    else:
+                        partial_erp = str(sheet.cell(row, 0).value)
+                        student_name = sheet.cell(row, 1).value
+                        try:
+                            students = Student.objects.filter(school=school, student_erp_id__contains=partial_erp)
+                            for s in students:
+                                print ('full erp = %s' % s.student_erp_id)
+                                erp = s.student_erp_id[:-3]
+                                print ('erp = %s' % erp)
+                                if erp == partial_erp:
+                                    try:
+                                        mapping = HigherClassMapping.objects.get(student=s, subject=subject)
+                                        print ('subject %s mapping for %s already exist. Not doing again.' 
+                                               % (sub, student_name))
+                                    except Exception as e:
+                                        print ('exception 141117-C from exam views.py %s %s' % (e.message, type(e)))
+                                        print ('subject %s mapping for %s does not exist. Hence creating...' 
+                                               % (sub, student_name))
+                                        try:
+                                            mapping = HigherClassMapping(student=s, subject=subject)
+                                            mapping.save()
+                                            print ('created %s subject mapping for % s' % (sub, student_name))
+                                        except Exception as e:
+                                            print ('exception 141117-D from exam views.py %s %s' % (e.message, type(e)))
+                                            print ('failed to create %s subject mapping for % s' % (sub, student_name))
+                        except Exception as e:
+                            print ('failed to create %s subject mapping for %s ' % (sub, student_name))
+                            print ('exception 141117-A from exam views.py %s %s' % (e.message, type(e)))
+            except Exception as e:
+                error = 'invalid excel file uploaded.'
+                print (error)
+                print ('exception 141117-B from exam views.py %s %s' % (e.message, type(e)))
                 form.errors['__all__'] = form.error_class([error])
                 return render(request, 'classup/setup_data.html', context_dict)
     else:

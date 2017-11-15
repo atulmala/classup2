@@ -22,6 +22,7 @@ from attendance.models import Attendance, AttendanceTaken
 from teacher.models import Teacher
 from student.models import Student
 from setup.models import Configurations, School
+from exam.models import HigherClassMapping
 from .models import Class, Section, Subject, ClassTest, TestResults, Exam, HW, TermTestResult, CoScholastics, ThirdLang
 from .serializers import ClassSerializer, SectionSerializer, \
     SubjectSerializer, TestSerializer, ClassSectionForTestSerializer, \
@@ -64,7 +65,7 @@ class SubjectList(generics.ListCreateAPIView):
     def get_queryset(self):
         school_id = self.kwargs['school_id']
         school = School.objects.get(id=school_id)
-        q = Subject.objects.filter(school=school).order_by('subject_sequence')
+        q = Subject.objects.filter(school=school).order_by('subject_name')
         return q
 
 
@@ -421,6 +422,7 @@ def create_hw(request):
 def create_test1(request, school_id, the_class, section, subject,
                 teacher, d, m, y, max_marks, pass_marks, grade_based, comments, test_type):
     context_dict = {
+
     }
     context_dict['header'] = 'Create Test'
     if request.method == 'POST':
@@ -525,125 +527,45 @@ def create_test1(request, school_id, the_class, section, subject,
                             print ('%s has not chosen %s as third language' % (student.fist_name, sub.subject_name))
                     else:
                         print ('this is a regular subject. Hence test results will be created for all students')
-                        # -5000.00 marks indicate null value
-                        test_result = TestResults(class_test=test, roll_no=student.roll_number,
-                                                  student=student, marks_obtained=-5000.00, grade='')
-                        try:
-                            test_result.save()
-                            print (' test results successfully created for % s %s' % (
-                                student.fist_name, student.last_name))
-                        except Exception as e:
-                            print ('failed to create test resutls')
-                            print ('Exception 071117-A from academics views.py %s %s' % (e.message, type(e)))
-                            return HttpResponse('Failed to create term test results')
+
+                        # 15/11/2017 - for higher classes (XI & XII) we need to look into the student subject mapping
+                        if the_class == 'XI' or the_class == 'XII':
+                            print ('test is for higher class %s. Hence, mapping will be considered' % the_class)
+                            try:
+                                mapping = HigherClassMapping.objects.get(student=student, subject=sub)
+                                if mapping:
+                                    test_result = TestResults(class_test=test, roll_no=student.roll_number,
+                                                      student=student, marks_obtained=-5000.00, grade='')
+                                    test_result.save()
+                                    if test_type == 'term':
+                                        # will create practical marks result once get the scheme from school
+                                        pass
+                            except Exception as e:
+                                print ('mapping does not exist between subject %s and %s' % (sub, student.fist_name))
+                                print ('exception 151117-A from academics views.py %s %s' % (e.message, type(e)))
+                        else:
+                            # -5000.00 marks indicate null value
+                            test_result = TestResults(class_test=test, roll_no=student.roll_number,
+                                                      student=student, marks_obtained=-5000.00, grade='')
+                            try:
+                                test_result.save()
+                                if test_type == 'term':
+                                    term_test_result = TermTestResult(test_result=test_result,
+                                                                      periodic_test_marks=-5000.0,
+                                                                      note_book_marks=-5000.0,
+                                                                      sub_enrich_marks=-5000.0)
+                                    term_test_result.save()
+                                print (' test results successfully created for % s %s' % (
+                                    student.fist_name, student.last_name))
+                            except Exception as e:
+                                print ('failed to create test resutls')
+                                print ('Exception 071117-A from academics views.py %s %s' % (e.message, type(e)))
+                                return HttpResponse('Failed to create term test results')
             else:
                 print ('Test already exist')
                 return HttpResponse('Test already exist')
         except Exception as e:
             print ('Exception 601 fro academics views.py = %s (%s)' % (e.message, type(e)))
-            return HttpResponse('Failed')
-
-    # this view is being called from mobile. We use dummy template so that we dont' run into exception
-    # return render(request, 'classup/dummy.html')
-    return HttpResponse('OK')
-
-
-# we need to exempt this view from csrf verification. Will be updated in next version when
-# we will implement authentication
-@csrf_exempt
-def create_test(request, school_id, the_class, section, subject,
-                teacher, d, m, y, max_marks, pass_marks, grade_based, comments):
-    if request.method == 'POST':
-        # all of the above except date are foreign key in Attendance model. Hence we need to get the actual object
-        school = School.objects.get(id=school_id)
-        c = Class.objects.get(school=school, standard=the_class)
-        print (c)
-        s = Section.objects.get(school=school, section=section)
-        print (s)
-        sub = Subject.objects.get(school=school, subject_name=subject)
-        print (sub)
-        t = Teacher.objects.get(email=teacher)
-        print (t)
-        the_date = date(int(y), int(m), int(d))
-        print (the_date)
-
-        # check to see if this test has already been created.
-        try:
-            q = ClassTest.objects.filter(date_conducted=the_date, the_class=c, section=s, subject=sub, teacher=t)
-            print (q.count())
-
-            # make an entry to database only it is a fresh entry
-            if q.count() == 0:
-                test = ClassTest(date_conducted=the_date)
-                test.the_class = c
-                test.section = s
-                test.subject = sub
-                test.teacher = t
-                test.max_marks = float(max_marks)  # max_marks and pass_marks are passed as strings
-                test.passing_marks = float(pass_marks)
-
-                if grade_based == '0':
-                    print ('grade_based is 0')
-                    test.grade_based = True
-
-                if grade_based == '1':
-                    print ('grade_based is 1')
-                    test.grade_based = False
-
-                print (grade_based)
-
-                test.test_type = comments
-                test.is_completed = False
-
-                try:
-                    test.save()
-                    try:
-                        action = 'Created test for '  + the_class + '-' + section + ', Subject: ' + subject
-                        log_entry(t.email, action, 'Normal', True)
-                    except Exception as e:
-                        print('unable to create logbook entry')
-                        print ('Exception 510 from academics views.py %s %s' % (e.message, type(e)))
-                    print ('test successfully created')
-
-                except Exception as e:
-                    print ('Test creation failed')
-                    print ('Exception 509 from academics views.py Exception = %s (%s)' % (e.message, type(e)))
-                    return HttpResponse('Test Creation Failed')
-
-                # now, create entry for each student in table TestResults. We need to retrieve the list of student
-                # of the class associated with this test
-                student_list = Student.objects.filter(school=school, current_section__section=section,
-                                                      current_class__standard=the_class, active_status=True)
-                for student in student_list:
-                    # 06/11/2017 if the subject is third language or elective subject (class XI & XII),
-                    #  we need to filter students
-                    if sub.subject_type == 'Third Language':
-                        print ('this is a third language. Hence test results will be created for selected students')
-                        try:
-                            third_lang = ThirdLang.objects.get(third_lang=sub, student=student)
-                            print ('%s has chosen %s as third language' % (student.fist_name, sub.subject_name))
-                            test_result = TestResults(class_test=test, roll_no=student.roll_number,
-                                                      student=third_lang.student, marks_obtained=-5000.00, grade='')
-                        except Exception as e:
-                            print ('Exception 061117-X1 from acacemics views.py %s %s' % (e.message, type(e)))
-                            print ('%s has not chosen %s as third language' % (student.fist_name, sub.subject_name))
-                    else:
-                        print ('this is a regular subject. Hence test results will be created for all students')
-                        # -5000.00 marks indicate null value
-                        test_result = TestResults(class_test=test, roll_no=student.roll_number,
-                                                  student=student, marks_obtained=-5000.00, grade='')
-                    try:
-                        test_result.save()
-                        print (' test results successfully created')
-                    except Exception as e:
-                        print ('failed to create test results')
-                        print ('Exception 061117-Z from academics views.py = %s (%s)' % (e.message, type(e)))
-                        #return HttpResponse('Failed to create test results')
-            else:
-                print ('Test already exist')
-                return HttpResponse('Test already exist')
-        except Exception as e:
-            print ('Exception = %s (%s)' % (e.message, type(e)))
             return HttpResponse('Failed')
 
     # this view is being called from mobile. We use dummy template so that we dont' run into exception

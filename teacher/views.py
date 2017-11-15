@@ -75,8 +75,7 @@ class TheTeacherAttendance(generics.ListCreateAPIView):
         print (data)
         for key in data:
             print (key)
-            
-            
+
         school_id = self.kwargs['school_id']
         print(school_id)
         school = School.objects.get(pk = school_id)

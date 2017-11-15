@@ -17,4 +17,7 @@ urlpatterns = patterns(
 
     url(r'^term_results/academics/prepare_results/(?P<school_id>\w+)/(?P<the_class>[\w.@+-]+)/(?P<section>[\w.@+-]+)/$',
         views.prepare_results, name='prepare_results'),
+
+    url (r'^setup_higher_class_subject_mapping/$', views.setup_higher_class_subject_mapping,
+         name='setup_higher_class_subject_mapping'),
 )
