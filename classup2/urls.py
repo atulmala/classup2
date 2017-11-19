@@ -29,6 +29,7 @@ urlpatterns = patterns(' ',
     url(r'^bus_attendance/', include('bus_attendance.urls')),
     url(r'^parents/', include('parents.urls')),
     url(r'^exam/', include('exam.urls')),
+    url(r'^time_table/', include('time_table.urls')),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 )
 

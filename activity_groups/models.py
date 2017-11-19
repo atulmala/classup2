@@ -15,4 +15,6 @@ class ActivityGroup(models.Model):
 
 
 class ActivityMembers(models.Model):
+    group = models.ForeignKey(ActivityGroup, null=True)
     student = models.ForeignKey(Student)
+

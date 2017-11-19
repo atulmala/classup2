@@ -18,8 +18,6 @@ urlpatterns = [
 
     url(r'^pending_test_list_parents/(?P<student>\w+)/$', views.PendingTestListParents.as_view()),
 
-
-
     url(r'^create_test1/(?P<school_id>\w+)/(?P<the_class>[\w.@+-]+)/(?P<section>[\w.@+-]+)/'
         r'(?P<subject>[\w\ ]+)/(?P<teacher>[\w.@+-]+)'
         r'/(?P<d>\w+)/(?P<m>\w+)/(?P<y>\w+)/'

@@ -15,7 +15,7 @@ class Teacher(models.Model):
     active_status = models.BooleanField(default=True)
 
     def __unicode__(self):
-        return self.first_name
+        return self.first_name + ' ' + self.last_name
 
 
 class TeacherAttendance(models.Model):
