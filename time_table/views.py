@@ -629,7 +629,7 @@ class SetArrangements (generics.ListCreateAPIView):
                             if old_teacher_email != t.email:
                                 message = 'Dear ' + old_teacher_name
                                 message += ', Today (' + string_date1 + '), arrangement in class '
-                                message += the_class + '-' + section + ' in period # ' + period + ' is cancelled.'
+                                message += the_class + '-' + section + ' in period ' + period + ' is cancelled.'
                                 message += '. Regards, Academics Coordinator'
                                 print (message)
 
@@ -647,7 +647,7 @@ class SetArrangements (generics.ListCreateAPIView):
 
                                 message = 'Dear ' + t.first_name + ' ' + t.last_name
                                 message += ', Today (' + string_date1 + '), you have to take arrangement in class '
-                                message += the_class + '-' + section + ' in period # ' + period
+                                message += the_class + '-' + section + ' in period ' + period
                                 message += '. Regards, Academics Coordinator'
                                 print (message)
 
@@ -668,7 +668,7 @@ class SetArrangements (generics.ListCreateAPIView):
                                    (the_class, section, period, t.first_name, t.last_name))
                             message = 'Dear ' + t.first_name + ' ' + t.last_name
                             message += ', Today (' + string_date1 + '), you have to take arrangement in class '
-                            message += the_class + '-' + section + ' in period # ' + period
+                            message += the_class + '-' + section + ' in period ' + period
                             message += '. Regards, Academics Coordinator'
                             print (message)
 
