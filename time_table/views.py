@@ -596,13 +596,10 @@ class SetArrangements (generics.ListCreateAPIView):
                     print ('Processing a new row')
 
                     s_no_raw = input_sheet.cell(input_row, 0).value
-                    #s_no = int (s_no_raw)
-                    print ('point A')
                     output_sheet.write(output_row, 0, s_no_raw)
 
                     absent_teacher = input_sheet.cell (input_row, 1).value
                     output_sheet.write_string (output_row, 1, absent_teacher)
-                    print ('point B')
 
                     the_class = input_sheet.cell(input_row, 2).value
                     c = Class.objects.get (school=school, standard=the_class)
@@ -610,12 +607,10 @@ class SetArrangements (generics.ListCreateAPIView):
                     section = input_sheet.cell(input_row, 3).value
                     s = Section.objects.get (school=school, section=section)
                     output_sheet.write_string(output_row, 3, section)
-                    print ('point C')
 
                     period = input_sheet.cell(input_row, 4).value
                     p = Period.objects.get (school=school, period=period)
                     output_sheet.write(output_row, 4, ugettext(period))
-                    print ('point D')
 
                     substitute_teacher = input_sheet.cell(input_row, 5).value
                     try:
@@ -626,12 +621,13 @@ class SetArrangements (generics.ListCreateAPIView):
                         try:
                             arrangement = Arrangements.objects.get(date=today,
                                                                    the_class=c, section=s, period=p)
-                            old_teacher = arrangement.teacher.first_name + ' ' + arrangement.teacher.last_name
+                            old_teacher = arrangement.teacher
+                            old_teacher_name = old_teacher.first_name + ' ' + old_teacher.last_name
                             old_teacher_email = arrangement.teacher.email
 
-                            # send cancallation SMS to the old teacher (only if the new teacher != old teacher
+                            # send cancellation SMS to the old teacher (only if the new teacher != old teacher
                             if old_teacher_email != t.email:
-                                message = 'Dear ' + old_teacher
+                                message = 'Dear ' + old_teacher_name
                                 message += ', Today (' + string_date1 + '), arrangement in class '
                                 message += the_class + '-' + section + ' in period # is cancelled.' + period
                                 message += '. Regards, Academics Coordinator'
