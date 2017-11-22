@@ -629,13 +629,13 @@ class SetArrangements (generics.ListCreateAPIView):
                             if old_teacher_email != t.email:
                                 message = 'Dear ' + old_teacher_name
                                 message += ', Today (' + string_date1 + '), arrangement in class '
-                                message += the_class + '-' + section + ' in period # is cancelled.' + period
+                                message += the_class + '-' + section + ' in period # ' + period + ' is cancelled.'
                                 message += '. Regards, Academics Coordinator'
                                 print (message)
 
                                 mobile = old_teacher.mobile
                                 sender = request.session['user']
-                                sms.send_sms(school, sender, mobile, message, 'Arrangement Period Assignment')
+                                sms.send_sms1(school, sender, mobile, message, 'Arrangement Period Assignment')
                                 print ('arrangement cancellation SMS sent to %s' % (old_teacher))
 
                                 print ('arrangement for %s-%s for period # %s was assigned to %s. It will be updated' %
@@ -653,7 +653,7 @@ class SetArrangements (generics.ListCreateAPIView):
 
                                 mobile = t.mobile
                                 sender = request.session['user']
-                                sms.send_sms(school, sender, mobile, message, 'Arrangement Period Assignment')
+                                sms.send_sms1(school, sender, mobile, message, 'Arrangement Period Assignment')
                                 print ('arrangement period SMS sent to %s %s' % (t.first_name, t.last_name))
                             else:
                                 print ('no change in Arrangement. Hence doing nothing...')
@@ -674,7 +674,7 @@ class SetArrangements (generics.ListCreateAPIView):
 
                             mobile = t.mobile
                             sender = request.session['user']
-                            sms.send_sms(school, sender, mobile, message, 'Arrangement Period Assignment')
+                            sms.send_sms1(school, sender, mobile, message, 'Arrangement Period Assignment')
                             print ('arrangement period SMS sent to %s %s' % (t.first_name, t.last_name))
 
                     except Exception as e:
