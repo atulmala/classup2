@@ -3,7 +3,7 @@ __author__ = 'atulgupta'
 from rest_framework import serializers
 
 from academics.models import TeacherSubjects, Teacher
-from .models import TeacherAttendance, TeacherAttendnceTaken
+from .models import TeacherAttendance, Teacher
 
 
 class TeacherSubjectSerializer(serializers.ModelSerializer):
@@ -29,4 +29,3 @@ class TeacherAttendanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherAttendance
         fields = ('id', 'school', 'date', 'teacher',)
-

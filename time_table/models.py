@@ -17,6 +17,12 @@ class Wing(models.Model):
         return self.wing
 
 
+class TeacherWingMapping (models.Model):
+    school = models.ForeignKey(School)
+    teacher = models.ForeignKey(Teacher)
+    wing = models.ForeignKey(Wing)
+
+
 class ClassWingMapping (models.Model):
     school = models.ForeignKey(School)
     the_class = models.ForeignKey(Class)
@@ -61,6 +67,10 @@ class TeacherPeriods (models.Model):
     period = models.ForeignKey(Period)
     the_class = models.ForeignKey(Class)
     section = models.ForeignKey(Section)
+
+    def __unicode__(self):
+        return self.teacher.first_name + ' ' + self.teacher.last_name + ' ' + self.day.day + ' ' + \
+               self.period.period + ' ' + self.the_class.standard + '-' + self.section.section
 
 
 class Arrangements (models.Model):

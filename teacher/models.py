@@ -38,14 +38,5 @@ class TeacherAttendnceTaken (models.Model):
     taken_time = models.DateTimeField(default=datetime.now, blank=True)
 
 
-DAYS_OF_WEEK = (
-    ('Mon', 'Mon'),
-    ('Tue', 'Tue'),
-    ('Wed', 'Wed'),
-    ('Thu', 'Thu'),
-    ('Fri', 'Fri'),
-    ('Sat', 'Sat'),
-    ('Sun', 'Sun'),
-)
 
 

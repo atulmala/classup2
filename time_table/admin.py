@@ -37,6 +37,7 @@ class TeacherPeriodsAdmin (admin.ModelAdmin):
     list_display = ('school', 'day', 'the_class', 'section', 'period', 'teacher',)
     search_fields = ('teacher__first_name', 'teacher__last_name',)
 
+
 admin.site.register(TeacherPeriods, TeacherPeriodsAdmin)
 
 
@@ -45,3 +46,19 @@ class ExcludedFromArrangementsAdmin (admin.ModelAdmin):
 
 
 admin.site.register(ExcludedFromArrangements1, ExcludedFromArrangementsAdmin)
+
+
+class TeacherWingMappingAdmin (admin.ModelAdmin):
+    list_display = ('school', 'teacher', 'wing',)
+    search_fields = ('teacher__first_name', 'teacher__last_name',)
+    list_filter = ('school',)
+
+
+admin.site.register(TeacherWingMapping, TeacherWingMappingAdmin)
+
+
+class ArrangementAdmin (admin.ModelAdmin):
+    list_display = ('school', 'date', 'the_class', 'section', 'period', 'subject', 'teacher',)
+
+
+admin.site.register(Arrangements, ArrangementAdmin)
