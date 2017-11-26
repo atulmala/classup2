@@ -66,10 +66,12 @@ class ActivityMembersManager (generics.ListCreateAPIView):
                     print ('Successfully got hold of sheet!')
                 for row in range(sheet.nrows):
                     if row == 0:
+                        print ('checking for existence of group...')
                         group_name = sheet.cell (row, 0).value
                         print ('group_name = %s' % group_name)
                         try:
                             activity_group = ActivityGroup.objects.get (school=school, group_name=group_name)
+                            print ('activity group %s in school %s already exists' % (group_name, school.school_name))
                         except Exception as e:
                             print ('activity group %s does not exist at %s', (group_name, school.school_name))
                             print ('exception 241117-A from activity_group views.py %s %s', (e.message, type(e)))
@@ -80,7 +82,7 @@ class ActivityMembersManager (generics.ListCreateAPIView):
 
                     print ('Processing a new row')
                     erp_id = sheet.cell(row, 0).value
-                    print ('erp_id = %s' % erp_id)
+                    print ('erp_id = %s. Will now try to add to Activity Group %s' % (erp_id, group_name))
                     try:
                         student = Student.objects.get (school=school, student_erp_id=erp_id)
                         try:
