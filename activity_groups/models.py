@@ -13,6 +13,9 @@ class ActivityGroup(models.Model):
     group_description = models.CharField(max_length=100, default='Activity Group')
     group_incharge = models.ForeignKey(Teacher)
 
+    def __unicode__(self):
+        return self.group_name
+
 
 class ActivityMembers(models.Model):
     group = models.ForeignKey(ActivityGroup, null=True)

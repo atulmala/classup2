@@ -9,9 +9,6 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.utils.translation import ugettext
 
-from django.views.decorators.csrf import csrf_exempt
-
-from authentication.views import JSONResponse, log_entry
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework import generics
 
@@ -19,13 +16,11 @@ from setup.forms import ExcelFileUploadForm
 
 from setup.views import validate_excel_extension
 
-from teacher.models import Teacher, TeacherAttendance
+from teacher.models import TeacherAttendance
 
 from operations import sms
 
 from .serializers import *
-
-
 from .models import *
 
 # Create your views here.
