@@ -432,7 +432,8 @@ class GetArrangements (generics.ListAPIView):
 
                 # get the period list that this teacher was supposed to take today
                 try:
-                    teacher_periods = TeacherPeriods.objects.filter(teacher=absent_teacher, day=day)
+                    teacher_periods = TeacherPeriods.objects.\
+                        filter(teacher=absent_teacher, day=day).order_by ('period__period')
                     print ('periods = ')
                     print (teacher_periods)
                     for tp in teacher_periods:
@@ -456,7 +457,8 @@ class GetArrangements (generics.ListAPIView):
                                         print ('%s %s is not available on %s for period: %s' %
                                                (a_teacher.first_name, a_teacher.last_name, d, period.period))
                                     else:
-                                        print ('%s %s is available on %s for period: %s. will be added to available list' %
+                                        print ('%s %s is available on %s for period: %s. '
+                                               'will be added to available list' %
                                                (a_teacher.first_name, a_teacher.last_name, d, period.period))
                                 except Exception as e:
                                     print ('exception 211117-P from time_table views.py %s %s' %
@@ -595,17 +597,23 @@ class SetArrangements (generics.ListCreateAPIView):
 
                     absent_teacher = input_sheet.cell (input_row, 1).value
                     output_sheet.write_string (output_row, 1, absent_teacher)
+                    print ('now dealing with absent teacher: %s' % absent_teacher)
+                    try:
+                        the_class = input_sheet.cell(input_row, 2).value
+                        c = Class.objects.get (school=school, standard=the_class)
+                        output_sheet.write_string(output_row, 2, the_class)
+                        section = input_sheet.cell(input_row, 3).value
+                        s = Section.objects.get (school=school, section=section)
+                        output_sheet.write_string(output_row, 3, section)
 
-                    the_class = input_sheet.cell(input_row, 2).value
-                    c = Class.objects.get (school=school, standard=the_class)
-                    output_sheet.write_string(output_row, 2, the_class)
-                    section = input_sheet.cell(input_row, 3).value
-                    s = Section.objects.get (school=school, section=section)
-                    output_sheet.write_string(output_row, 3, section)
-
-                    period = input_sheet.cell(input_row, 4).value
-                    p = Period.objects.get (school=school, period=period)
-                    output_sheet.write(output_row, 4, ugettext(period))
+                        period = str(int(input_sheet.cell(input_row, 4).value))
+                        print ('now finding available teachers for %s-%s period %s' % (the_class, section, period))
+                        p = Period.objects.get (school=school, period=period)
+                        output_sheet.write(output_row, 4, ugettext(period))
+                    except Exception as e:
+                        print ('something went wrong when try to fetch class, section, or period')
+                        print ('exception 281117-A from time_table views.py %s %s' % (e.message, type (e)))
+                        continue
 
                     substitute_teacher = input_sheet.cell(input_row, 5).value
                     try:
@@ -671,9 +679,9 @@ class SetArrangements (generics.ListCreateAPIView):
                             sender = request.session['user']
                             sms.send_sms1(school, sender, mobile, message, 'Arrangement Period Assignment')
                             print ('arrangement period SMS sent to %s %s' % (t.first_name, t.last_name))
-
                     except Exception as e:
                         print ('exception 221117-Z from time_table view.py %s %s' % (e.message, type(e)))
+                        print ('could not retrieve teacher name for % s' % substitute_teacher)
                         substitute_teacher_name = 'Not Assigned'
                     output_sheet.write_string(output_row, 5, substitute_teacher_name)
                     print ('point E')
