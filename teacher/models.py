@@ -54,6 +54,7 @@ class MessageReceivers (models.Model):
     student = models.ForeignKey (Student)
     full_message = models.TextField()
     status = models.CharField (max_length=100, null=True)
+    status_extracted = models.BooleanField(default=False)
 
 
 

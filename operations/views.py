@@ -1033,6 +1033,7 @@ def send_message(request, school_id):
                 try:
                     group = ActivityGroup.objects.get(id=group_id)
                     teacher_record.sent_to = group.group_name
+                    teacher_record.activity_group = group.group_name
                     teacher_record.save()
                     members_list = ActivityMembers.objects.filter (group=group)
                     for member in members_list:
