@@ -2,6 +2,7 @@ from datetime import datetime
 
 from django.db import models
 from setup.models import School
+from student.models import Student
 
 
 # Create your models here.
@@ -36,6 +37,24 @@ class TeacherAttendnceTaken (models.Model):
     school = models.ForeignKey(School, null=True)
     date = models.DateField()
     taken_time = models.DateTimeField(default=datetime.now, blank=True)
+
+
+class TeacherMessageRecord (models.Model):
+    date = models.DateTimeField(default=datetime.now)
+    teacher = models.ForeignKey (Teacher)
+    message = models.TextField()
+    sent_to = models.CharField(max_length=20)
+    the_class = models.CharField(max_length=30, null=True)
+    section = models.CharField(max_length=30, null=True)
+    activity_group = models.CharField(max_length=50, null=True)
+
+
+class MessageReceivers (models.Model):
+    teacher_record = models.ForeignKey (TeacherMessageRecord)
+    student = models.ForeignKey (Student)
+    full_message = models.TextField()
+    status = models.CharField (max_length=100, null=True)
+
 
 
 

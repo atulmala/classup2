@@ -2,8 +2,8 @@ __author__ = 'atulgupta'
 
 from rest_framework import serializers
 
-from academics.models import TeacherSubjects, Teacher
-from .models import TeacherAttendance, Teacher
+from academics.models import TeacherSubjects
+from .models import TeacherAttendance, Teacher, TeacherMessageRecord, MessageReceivers
 
 
 class TeacherSubjectSerializer(serializers.ModelSerializer):
@@ -29,3 +29,13 @@ class TeacherAttendanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = TeacherAttendance
         fields = ('id', 'school', 'date', 'teacher',)
+
+
+class TeacherMessageRecordSerializer (serializers.ModelSerializer):
+    class Meta:
+        model = TeacherMessageRecord
+
+
+class MessageReceiversSerializer (serializers.ModelSerializer):
+    class Meta:
+        model = MessageReceivers

@@ -16,9 +16,10 @@ from operations import sms
 from authentication.views import log_entry
 from academics.models import Subject, ClassTeacher, Class, Section, TeacherSubjects
 from setup.models import School, UserSchoolMapping, Configurations
-from .models import Teacher, TeacherAttendance, TeacherAttendnceTaken
+from .models import Teacher, TeacherAttendance, TeacherAttendnceTaken, TeacherMessageRecord, MessageReceivers
 
-from .serializers import TeacherSubjectSerializer, TeacherSerializer, TeacherAttendanceSerializer
+from .serializers import TeacherSubjectSerializer, TeacherSerializer, \
+    TeacherAttendanceSerializer, TeacherMessageRecordSerializer, MessageReceiversSerializer
 
 from authentication.views import JSONResponse
 
@@ -26,6 +27,29 @@ from authentication.views import JSONResponse
 class CsrfExemptSessionAuthentication(SessionAuthentication):
     def enforce_csrf(self, request):
         return  # To not perform the csrf check previously happening
+
+
+class TeacherMessageList (generics.ListAPIView):
+    serializer_class = TeacherMessageRecordSerializer
+
+    def get_queryset(self):
+        t = self.kwargs['teacher']
+        the_teacher = Teacher.objects.get(email=t)
+
+        q = TeacherMessageRecord.objects.filter(teacher=the_teacher).order_by ('date')
+
+        return q
+
+
+class MessageReceiversList (generics.ListAPIView):
+    serializer_class = MessageReceiversSerializer
+
+    def get_queryset(self):
+        key = self.kwargs['key']
+        teacher_record = TeacherMessageRecord.objects.get (id=key)
+
+        q = MessageReceivers.objects.filter (teacher_record=teacher_record)
+        return q
 
 
 class TeacherSubjectList(generics.ListCreateAPIView):

@@ -29,6 +29,10 @@ urlpatterns = [
 
     url(r'^process_attendance/(?P<school_id>\w+)/(?P<d>\w+)/(?P<m>\w+)/(?P<y>\w+)/$',
         views.TheTeacherAttendance.as_view(), name='process_attendance'),
+
+    url(r'^message_list/(?P<teacher>[\w.@+-]+)/$', views.TeacherMessageList.as_view(), name='message_list'),
+
+    url(r'^receivers_list/(?P<key>\w+)/$', views.MessageReceiversList.as_view(), name='receivers_list'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

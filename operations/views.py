@@ -21,7 +21,7 @@ from rest_framework import generics
 from authentication.views import JSONResponse, log_entry, LoginRecord
 from academics.models import Class, Section, Subject, ClassTest, TestResults, ClassTeacher
 from student.models import Student
-from teacher.models import Teacher
+from teacher.models import Teacher, TeacherMessageRecord, MessageReceivers
 from attendance.models import Attendance, AttendanceTaken
 from parents.models import  ParentCommunication
 from setup.models import Configurations, School
@@ -895,6 +895,9 @@ def send_message(request, school_id):
             message_content = data['message']
             email = data['teacher']
             t = Teacher.objects.get(email=email)
+
+            # create record for Teacher messages history
+            teacher_record = TeacherMessageRecord(teacher=t, message=message_content)
             teacher_name = t.first_name + ' ' + t.last_name
             school_name = school.school_name
             message_trailer = '. Regards, ' + teacher_name + ', ' + school_name
@@ -910,10 +913,14 @@ def send_message(request, school_id):
             if coming_from == 'TeacherCommunication':
                 # check if the message is to be sent to all the parents
                 if data["whole_class"] == "true":
+                    teacher_record.sent_to = 'Whole Class'
                     the_class = data["class"]
                     c = Class.objects.get(school=school, standard=the_class)
                     the_section = data["section"]
                     sec = Section.objects.get(school=school, section=the_section)
+                    teacher_record.the_class = the_class
+                    teacher_record.section = the_section
+                    teacher_record.save()
 
                     try:
                         action = 'Sending message to whole class ' + the_class + '-' + the_section
@@ -940,8 +947,11 @@ def send_message(request, school_id):
                                              f_name + ': '
                             message = message_header + message_content + message_trailer
                             print ('message = ' + message)
+                            message_receiver = MessageReceivers(teacher_record=teacher_record,
+                                                                student=s, full_message=message)
+                            sms.send_sms1(school, email, m1, message, message_type, receiver=message_receiver)
+                            message_receiver.save()
 
-                            sms.send_sms1(school, email, m1, message, message_type)
                             if configuration.send_absence_sms_both_to_parent:
                                 if m2 != '':
                                     sms.send_sms1(school, email, m2, message, message_type)
@@ -952,6 +962,7 @@ def send_message(request, school_id):
 
                 # the message is to be sent to parents of selected students only
                 else:
+                    teacher_record.sent_to = 'Selected Students'
                     for key in data:
                         if (key != 'message') and (key != 'teacher') \
                                 and (key != 'whole_class') and (key != 'coming_from'):
@@ -965,6 +976,13 @@ def send_message(request, school_id):
                             student_id = data[key]
 
                             s = Student.objects.get(pk=student_id)
+                            try:
+                                teacher_record.the_class = s.current_class.standard
+                                teacher_record.section = s.current_section.section
+                                teacher_record.save()
+                            except Exception as e:
+                                print ('exception 291117-B from operations views.py %s %s'% e.message, type(e))
+                                print ('error occured while trying to save teacher_record')
                             p = s.parent
                             m1 = p.parent_mobile1
                             print (m1)
@@ -982,7 +1000,10 @@ def send_message(request, school_id):
                             print ('message = ' + message)
 
                             try:
-                                sms.send_sms1(school, email, m1, message, message_type)
+                                message_receiver = MessageReceivers(teacher_record=teacher_record,
+                                                                    student=s, full_message=message)
+                                sms.send_sms1(school, email, m1, message, message_type, receiver=message_receiver)
+                                message_receiver.save()
                                 try:
                                     action = 'SMS sent to ' + p.parent_name + ' (' + p.parent_mobile1 + ')'
                                     action += ', Message: ' + message_content
@@ -999,7 +1020,8 @@ def send_message(request, school_id):
                                             log_entry(email, action, 'Normal', True)
                                         except Exception as e:
                                             print('unable to create logbook entry')
-                                            print ('Exception 503 from operations views.py %s %s' % (e.message, type(e)))
+                                            print ('Exception 503 from operations views.py %s %s' %
+                                                   (e.message, type(e)))
                             except Exception as e:
                                 print ('Unable to send message to ' + p.parent_name + 'with mobile number: ' + m1)
                                 print ('Exception12 from operations views.py = %s (%s)' % (e.message, type(e)))
@@ -1010,6 +1032,8 @@ def send_message(request, school_id):
                 group_id = data['group_id']
                 try:
                     group = ActivityGroup.objects.get(id=group_id)
+                    teacher_record.sent_to = group.group_name
+                    teacher_record.save()
                     members_list = ActivityMembers.objects.filter (group=group)
                     for member in members_list:
                         p = member.student.parent
@@ -1025,8 +1049,9 @@ def send_message(request, school_id):
                                          f_name + ': '
                         message = message_header + message_content + message_trailer
                         print ('message = ' + message)
-
-                        sms.send_sms1(school, email, m1, message, message_type)
+                        message_receiver = MessageReceivers(teacher_record=teacher_record,
+                                                            student=member.student, full_message=message)
+                        sms.send_sms1(school, email, m1, message, message_type, receiver=message_receiver)
                         if configuration.send_absence_sms_both_to_parent:
                             if m2 != '':
                                 sms.send_sms1(school, email, m2, message, message_type)

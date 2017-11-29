@@ -15,7 +15,7 @@ from .models import SMSRecord
 from push_notifications.gcm import gcm_send_message
 
 
-def send_sms1(school, sender, mobile, message, message_type):
+def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
     # 25/12/2016 - added field to check whether sms sending is enabled for this school. Check that first
     try:
         # 25/12/2016 - there will be a unique sender id for each school
@@ -129,6 +129,17 @@ def send_sms1(school, sender, mobile, message, message_type):
                     try:
                         t = Teacher.objects.get(email=sender)
                         sender_name = t.first_name + ' ' + t.last_name + ' (' + sender + ')'    # include teacher's id also
+
+                        # 29/11/2017 - for teacher message history
+                        if message_type == 'Teacher Communication':
+                            try:
+                                print ('creating Recepient records for Teacher Message History')
+                                receiver = kwargs.get('receiver', None)
+                                receiver.status = message_id
+                                receiver.save()
+                            except Exception as e:
+                                print ('exception 291117 from sms.py %s %s' % (e.message, type(e)))
+                                print ('failed to store the status for Teacher Message History Recepient record')
                     except Exception as e:
                         print ('Exception60 from sms.py = %s (%s)' % (e.message, type(e)))
                         print('the message type is Teacher Communication/Attendance, '

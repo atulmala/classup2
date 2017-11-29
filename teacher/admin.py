@@ -26,3 +26,17 @@ class TeacherAttendanceAdmin (admin.ModelAdmin):
 
 
 admin.site.register(TeacherAttendance, TeacherAttendanceAdmin)
+
+
+class TeacherMessageRecordAdmin (admin.ModelAdmin):
+    list_display = ('date', 'teacher', 'message', 'sent_to', 'the_class', 'section', 'activity_group')
+
+
+admin.site.register (TeacherMessageRecord, TeacherMessageRecordAdmin)
+
+
+class MessageReceiversAdmin (admin.ModelAdmin):
+    list_display = ('student', 'full_message', 'status')
+
+
+admin.site.register (MessageReceivers, MessageReceiversAdmin)
