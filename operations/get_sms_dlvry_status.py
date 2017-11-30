@@ -14,7 +14,7 @@ try:
 
     # extract message_id of all the sms sent after 31/01/17 for which sms delivery status has not been extracted
     sql1 = "select outcome from operations_smsrecord where api_called = 1 and " \
-           "status_extracted = 0 and date > '2017-07-30' and date < DATE_SUB(NOW(), INTERVAL 3 HOUR)"
+           "status_extracted = 0 and date > '2017-11-28' and date < DATE_SUB(NOW(), INTERVAL 3 HOUR)"
     cursor1.execute(sql1)
 
     # now, try to extract delivery status of each sms by calling api of the bulk sms provider
@@ -56,6 +56,50 @@ try:
         row = cursor1.fetchone()
 
     cursor1.close()
+
+    # 30/11/2017 - Teachers are also able to see their message history. Fetch the delivery status of each message
+    # that appears in the teacher message history
+    cursor3 = db.cursor()
+    sql3 = "select status from teacher_messagereceivers where " \
+           "status_extracted = 0 and date > '2017-11-28' and date < DATE_SUB(NOW(), INTERVAL 3 HOUR)"
+    cursor3.execute(sql3)
+    row = cursor3.fetchone()
+    print(row)
+    while row is not None:
+        message_id = row[0]
+        print(message_id)
+        outcome = 'Status Awaited'
+        try:
+            url = 'http://softsms.in/app/miscapi/'
+            url += key
+            url += '/getDLR/'
+            url += message_id
+            print('url=%s' % url)
+
+            response = urllib.urlopen(url)
+            outcome = response.read()
+            print('status = ' + str(outcome))
+        except Exception as e:
+            print('unable to get the staus of sms delivery. The url was: ')
+            print(url)
+            print ('Exception 30112017-A from operations get_sms_dlvry_status.py = %s (%s)' % (e.message, type(e)))
+
+        # update the smsrecord table that the delivery status of this sms has been extracted, hence no need
+        # to extract its delivery status when this program runs the next time
+        try:
+            cursor4 = db.cursor()
+            sql4 = "UPDATE teacher_messagereceivers SET status_extracted=1, outcome='" + outcome
+            sql4 += "' WHERE status='" + message_id + "'"
+            print(sql4)
+            cursor2.execute(sql4)
+            db.commit()
+            cursor2.close()
+        except Exception as e:
+            print('Error while trying to update the delivery status of sms with message_id = ' + message_id)
+            print ('Exception3 from operations get_sms_dlvry_status.py = %s (%s)' % (e.message, type(e)))
+        row = cursor3.fetchone()
+
+
     db.close()
 except Exception as e:
     print('Error 1 from get_sms_delivery_status.py')

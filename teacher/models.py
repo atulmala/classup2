@@ -53,6 +53,7 @@ class MessageReceivers (models.Model):
     teacher_record = models.ForeignKey (TeacherMessageRecord)
     student = models.ForeignKey (Student)
     full_message = models.TextField()
+    outcome = models.TextField(max_length=20, default='Awaited')
     status = models.CharField (max_length=100, null=True)
     status_extracted = models.BooleanField(default=False)
 
