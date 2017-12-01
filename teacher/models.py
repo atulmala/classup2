@@ -50,6 +50,7 @@ class TeacherMessageRecord (models.Model):
 
 
 class MessageReceivers (models.Model):
+    date = models.DateTimeField(null=True)
     teacher_record = models.ForeignKey (TeacherMessageRecord)
     student = models.ForeignKey (Student)
     full_message = models.TextField()
@@ -57,6 +58,9 @@ class MessageReceivers (models.Model):
     status = models.CharField (max_length=100, null=True)
     status_extracted = models.BooleanField(default=False)
 
+    def save(self, *args, **kwargs):
+        self.date = self.teacher_record.date
+        super (MessageReceivers, self).save(*args, **kwargs)
 
 
 
