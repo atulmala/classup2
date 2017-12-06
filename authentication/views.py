@@ -418,7 +418,7 @@ def map_device_token(request):
                     gcm_send_message(device_token, {'body': 'welcome to classup'})
                 except Exception as e:
                     print('Exception 160 from authentication views.py %s (%s)' % (e.message , type(e)))
-                    print('failed to send welcome message to ' + user_name)
+                    print('failed to send welcome notification to ' + user_name)
             except urllib2.HTTPError, err:
                 print('Exception 150 from authentication views.py %s (%s)' % (err.message, type(err)))
                 print err.code
