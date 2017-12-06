@@ -36,7 +36,7 @@ admin.site.register (TeacherMessageRecord, TeacherMessageRecordAdmin)
 
 
 class MessageReceiversAdmin (admin.ModelAdmin):
-    list_display = ('date', 'student', 'full_message', 'status', 'status_extracted', 'outcome')
+    list_display = ('date', 'student', 'full_message', 'status', 'status_extracted', 'outcome',)
 
 
 admin.site.register (MessageReceivers, MessageReceiversAdmin)
