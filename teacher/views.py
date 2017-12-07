@@ -36,7 +36,7 @@ class TeacherMessageList (generics.ListAPIView):
         t = self.kwargs['teacher']
         the_teacher = Teacher.objects.get(email=t)
 
-        q = TeacherMessageRecord.objects.filter(teacher=the_teacher).order_by ('date')
+        q = TeacherMessageRecord.objects.filter(teacher=the_teacher).order_by ('-date')
 
         return q
 
