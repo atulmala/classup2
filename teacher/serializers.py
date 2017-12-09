@@ -37,5 +37,7 @@ class TeacherMessageRecordSerializer (serializers.ModelSerializer):
 
 
 class MessageReceiversSerializer (serializers.ModelSerializer):
+    student = serializers.StringRelatedField()
+
     class Meta:
         model = MessageReceivers
