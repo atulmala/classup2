@@ -23,12 +23,7 @@ from .forms import TermResultForm
 
 
 def setup_scheme(request):
-    context_dict = {
-
-    }
-
-    context_dict['user_type'] = 'school_admin'
-    context_dict['school_name'] = request.session['school_name']
+    context_dict = {'user_type': 'school_admin', 'school_name': request.session['school_name']}
 
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
@@ -366,7 +361,7 @@ def term_results(request):
 
 
 def get_grade(marks):
-    if marks <= 100 and marks > 90:
+    if 100 >= marks > 90:
         grade = 'A1'
         return grade
     if marks <= 90 and marks > 80:
@@ -685,7 +680,6 @@ def prepare_results(request, school_id, the_class, section):
                      ['Sub Name', 'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
                       'Half\nYearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
             for i in range(0, sub_count):
-                sub = sub_dict.values()[i]
                 sub = sub_dict.values()[i]
                 print ('sub = %s' % sub)
                 if sub.subject_name == 'Third Language':

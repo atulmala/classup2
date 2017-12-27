@@ -1,8 +1,8 @@
 import json
 from datetime import date
 
-
 from django.http import HttpResponse
+from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 
 from django.contrib.auth.models import User, Group
@@ -102,15 +102,15 @@ class TheTeacherAttendance(generics.ListCreateAPIView):
 
         school_id = self.kwargs['school_id']
         print(school_id)
-        school = School.objects.get(pk = school_id)
+        school = School.objects.get(pk=school_id)
         print (school)
-        
+
         d = self.kwargs['d']
         m = self.kwargs['m']
         y = self.kwargs['y']
         the_date = date(int(y), int(m), int(d))
         print (the_date)
-        
+
         # record the attendance taken
         try:
             q = TeacherAttendnceTaken.objects.filter(school=school, date=the_date)
@@ -120,7 +120,7 @@ class TheTeacherAttendance(generics.ListCreateAPIView):
         except Exception as e:
             print ('failed to create Teacher Attendance Taken record')
             print ('Exception 111117-A from teacher views.py %s %s' % (e.message, type(e)))
-            
+
         # process the corrections
         print (data['corrections'])
         print ('correction list: ')
@@ -135,7 +135,7 @@ class TheTeacherAttendance(generics.ListCreateAPIView):
                 print ('unable to delete a previously marked attenance for %s %s' %
                        (teacher.first_name, teacher.last_name))
                 print ('Exception 111117-B from teacher views.py %s %s' % (e.message, type(e)))
-            
+
         print (data['absentees'])
         print ('absentees list: ')
         for absentee_id in data['absentees']:
@@ -148,12 +148,101 @@ class TheTeacherAttendance(generics.ListCreateAPIView):
                     record.save()
                     print ('marked absence for %s %s ' % (teacher.first_name, teacher.last_name))
                 else:
-                    print ('absence for %s %s was already marked in a previous attendance' % 
+                    print ('absence for %s %s was already marked in a previous attendance' %
                            (teacher.first_name, teacher.last_name))
             except Exception as e:
                 print ('failed to mark for %s %s ' % (teacher.first_name, teacher.last_name))
                 print ('Exception 111117-C from teacher views.py %s %s' % (e.message, type(e)))
-            
+
+        return Response(status=status.HTTP_200_OK)
+
+
+class TheTeacherAttendance1(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+    serializer_class = TeacherAttendanceSerializer
+
+    def get(self, request, *args, **kwargs):
+        print ('from class based view')
+
+        context_dict = {
+
+        }
+        context_dict['user_type'] = 'school_admin'
+        context_dict['school_name'] = request.session['school_name']
+        context_dict['header'] = 'Arrangement'
+
+        school_id = request.session['school_id']
+        context_dict['school_id'] = school_id
+        print ('school_id = %i' % school_id)
+        try:
+            school = School.objects.get(id=school_id)
+            print ('school= %s' % school.school_name)
+            teacher_list = Teacher.objects.filter (school=school).order_by ('first_name')
+            context_dict['teacher_list'] = teacher_list
+            today = date.today()
+            absentees = TeacherAttendance.objects.filter (school=school, date__year=today.year,
+                                                            date__month=today.month, date__day=today.day)
+            absent_list = []
+            for a in absentees:
+                absent_list.append(a.teacher.id)
+            print('abent_list = ')
+            print(absent_list)
+
+            context_dict['absent_list'] = absent_list
+        except Exception as e:
+            print ('exception 21122017-A from teachers views.py %s %s' % (e.message, type(e)))
+        return render(request, 'classup/teacher_attendance.html', context_dict)
+
+    def post(self, request, *args, **kwargs):
+        print('starting to process teacher Attendance submitted from web portal')
+        print('request=')
+        print(request.body)
+        try:
+            data = json.loads(request.body)
+            print ('json=')
+            print (data)
+        except Exception as e:
+            print ('failed to load json from request')
+            print ('Exception 23122017-B from teacher views.py %s %s' % (e.message, type(e)))
+
+        school_id = self.kwargs['school_id']
+        print(school_id)
+        school = School.objects.get(pk=school_id)
+        print (school)
+
+        # record the attendance taken
+        try:
+            q = TeacherAttendnceTaken.objects.filter(school=school, date=date.today())
+            if 0 == q.count():
+                a = TeacherAttendnceTaken(school=school, date=date.today())
+                a.save()
+            else:
+                try:
+                    TeacherAttendance.objects.filter(school=school, date=date.today()).delete()
+                except Exception as e:
+                    print ('failed to delete Teacher attendance for today')
+                    print ('Exception 23122017-A from techer view.py %s %s' % (e.message, type(e)))
+        except Exception as e:
+            print ('failed to create Teacher Attendance Taken record')
+            print ('Exception 111117-A from teacher views.py %s %s' % (e.message, type(e)))
+
+        for key in data:
+            absentee_id = data[key]
+            print (absentee_id)
+            try:
+                teacher = Teacher.objects.get(id=absentee_id)
+                record = TeacherAttendance.objects.filter(teacher=teacher, date=date.today())
+                if not record:
+                    record = TeacherAttendance(teacher=teacher, date=date.today())
+                    record.save()
+                    print ('marked absence for %s %s ' % (teacher.first_name, teacher.last_name))
+                else:
+                    print ('absence for %s %s was already marked in a previous attendance' %
+                           (teacher.first_name, teacher.last_name))
+            except Exception as e:
+                print ('failed to mark for %s %s ' % (teacher.first_name, teacher.last_name))
+                print ('Exception 111117-C from teacher views.py %s %s' % (e.message, type(e)))
+
         return Response(status=status.HTTP_200_OK)
 
 

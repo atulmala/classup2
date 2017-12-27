@@ -8,34 +8,35 @@
 
 {% block body_block %}
 
+    <div class="main">
+        <h1>{{ header }}</h1>
 
-    <h1>{{ header }}</h1>
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                <p style="color: red;">
+                    Please correct the error{{ form.errors|pluralize }} below.
+                </p>
+            </div>
+        {% endif %}
 
-    {% if form.errors %}
-        <div class="alert alert-danger">
-            <p style="color: red;">
-                Please correct the error{{ form.errors|pluralize }} below.
+        <form action="" enctype="multipart/form-data"  method="get">
+
+            {{ form.non_field_errors }}
+
+            <table>
+                {{ form.as_table }}
+                <script>
+                    $(document).ready(function() {
+                        $('.datepicker').datepicker({
+                            minDate: -365, maxDate: "+0D", showButtonPanel: true, format: "yyyy-mm-dd" });
+                    });
+                </script>
+            </table>
+            <p>
+                <br/>
+                <input class="btn-primary" type="submit" name="submit" value="Download Excel">
+                <input class="btn-primary" type="submit" name="cancel" value="Done/Cancel">
             </p>
-        </div>
-    {% endif %}
-
-    <form action="" enctype="multipart/form-data"  method="get">
-
-        {{ form.non_field_errors }}
-
-        <table>
-            {{ form.as_table }}
-            <script>
-                $(document).ready(function() {
-                    $('.datepicker').datepicker({
-                        minDate: -365, maxDate: "+0D", showButtonPanel: true, format: "yyyy-mm-dd" });
-                });
-            </script>
-        </table>
-        <p>
-            <br/>
-            <input class="btn-primary" type="submit" name="submit" value="Download Excel">
-            <input class="btn-primary" type="submit" name="cancel" value="Done/Cancel">
-        </p>
-    </form>
+        </form>
+    </div>
 {% endblock %}

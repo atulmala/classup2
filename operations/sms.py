@@ -1,8 +1,6 @@
 l__author__ = 'atulgupta'
 
-import urllib
 import urllib2
-import json
 
 from django.db.models import Q
 from authentication.models import user_device_mapping
@@ -40,7 +38,7 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
         print(m3)
 
         url = 'http://softsms.in/app/smsapi/index.php?'
-        url+= 'key=%s' % key
+        url += 'key=%s' % key
         url += '&type=Text'
         url += '&contacts=%s' % mobile
         url += '&senderid=%s' % sender_id
@@ -158,7 +156,8 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                               'but the parent name Undetermined')
 
                 if message_type == 'Forgot Password':
-                    # in this case the sender can be either teacher or parent. We can figure that out from recepient_type
+                    # in this case the sender can be either teacher or parent.
+                    # We can figure that out from recepient_type
                     if recepient_type == 'Parent':
                         print ('sender type is Parent')
                         # the sender will also be a parent (actually sender and receiver would be the same)
@@ -166,7 +165,6 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                             p = Parent.objects.get(Q(parent_mobile1=mobile) | Q(parent_mobile2=mobile))
                             sender_name = p.parent_name
                             sender_type = 'Parent'
-
                         except Exception as e:
                             print ('Exception53 from sms.py = %s (%s)' % (e.message, type(e)))
                             print('the message type Password Reset for parent, '

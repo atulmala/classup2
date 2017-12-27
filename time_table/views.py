@@ -220,11 +220,11 @@ class TheTeacherPeriod (generics.ListAPIView):
         school_id = request.session['school_id']
         school = School.objects.get(id=school_id)
 
-        Teachers = Teacher.objects.filter (school=school).order_by('first_name')
+        teachers = Teacher.objects.filter (school=school).order_by('first_name')
         row = 3
         s_no = 1
         days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-        for t in Teachers:
+        for t in teachers:
             teacher_name = t.first_name + ' ' + t.last_name
             sheet.write_number(row, 0, s_no)
             sheet.write_string(row, 1, teacher_name)
@@ -421,13 +421,16 @@ class GetArrangements (generics.ListAPIView):
             print (excluded_list)
             print (ta)
             s_no = 1
+            arrrangements_required = []
             for t in ta:
                 sheet.write_number (row, 0, s_no)
                 d = calendar.day_name[today.weekday()]
                 print ('day = %s' % d)
                 day = DaysOfWeek.objects.get (day=d)
+                arrangement_unit = {}
                 absent_teacher = t.teacher
                 teacher_name = absent_teacher.first_name + ' ' + absent_teacher.last_name
+                arrangement_unit['teacher'] = teacher_name
                 sheet.write_string(row, 1, teacher_name)
 
                 # get the period list that this teacher was supposed to take today
@@ -438,11 +441,18 @@ class GetArrangements (generics.ListAPIView):
                     print (teacher_periods)
                     for tp in teacher_periods:
                         the_class = tp.the_class
+                        arrangement_unit['the_class'] = the_class.standard
                         sheet.write_string(row, 2, the_class.standard)
                         section = tp.section
+                        arrangement_unit['section'] = section.section
                         sheet.write_string(row, 3, section.section)
                         period = tp.period
+                        arrangement_unit['period'] = period.period
                         sheet.write_string(row, 4, period.period)
+
+                        arrrangements_required.append(arrangement_unit)
+                        print ('at this stage arrangements_required = ')
+                        print (arrrangements_required)
 
                         # now, find which teacher is free on this period
                         col = 6

@@ -166,6 +166,7 @@ def auth_login(request):
                     school = u.school
                     request.session['user'] = user_name
                     request.session['school_name'] = school.school_name
+                    request.session['school_id'] = school.id
                     context_dict['school_name'] = school.school_name
                     if school.subscription_active:
                         log_entry(user_name, "School subscription found to be Active", "Normal", True)

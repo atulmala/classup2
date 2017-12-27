@@ -100,6 +100,7 @@ class TermTestResult(models.Model):
     periodic_test_marks = models.DecimalField(max_digits=6, decimal_places=2, default=0.0)
     note_book_marks = models.DecimalField(max_digits=6, decimal_places=2, default=0.0)
     sub_enrich_marks = models.DecimalField(max_digits=6, decimal_places=2, default=0.0)
+    prac_marks = models.DecimalField(max_digits=6, decimal_places=2, null=True)
 
 
 class Grade(models.Model):

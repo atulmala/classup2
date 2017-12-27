@@ -100,7 +100,6 @@ def submit_parents_communication(request):
                     except Exception as e:
                         print('Class Teacher not set for ' + the_class.standard + '-' + section.section)
                         print ('Exception 1 from parents views.py = %s (%s)' % (e.message, type(e)))
-
                     try:
                         principal_mobile = configuration.principal_mobile
                         sms.send_sms1(school, parent_name, principal_mobile, message, message_type)
@@ -116,7 +115,6 @@ def submit_parents_communication(request):
                     except Exception as e:
                         print('unable to send Parent communication to Admin 1')
                         print ('Exception 502-B from parents views.py %s %s' % (e.message, type(e)))
-
                     try:
                         parent_mobile = student.parent.parent_mobile1
                         action = 'Parent Communication SMS sent to Principal'

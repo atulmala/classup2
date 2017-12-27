@@ -1,0 +1,171 @@
+{% extends 'classup/base.html' %}
+
+{% load staticfiles %}
+{% load bootstrap %}
+
+{{ form|bootstrap }}
+
+{% block title %}
+    Setup Module
+{% endblock %}
+
+{% block body_block %}
+    <style>
+        /* CSS REQUIRED */
+        .state-icon {
+            left: -5px;
+        }
+        .list-group-item-primary {
+            color: rgb(255, 255, 255);
+            background-color: rgb(66, 139, 202);
+        }
+
+        a {
+            text-decoration: none;
+            display: inline-block;
+            padding: 8px 16px;
+        }
+
+        a:hover {
+            background-color: #ddd;
+            color: black;
+        }
+
+        .next {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        /* DEMO ONLY - REMOVES UNWANTED MARGIN */
+        .well .list-group {
+            margin-top: 0px;
+            margin-bottom: 0px;
+        }
+    </style>
+
+    <script type="text/javascript">
+        $(function () {
+            var school_id = {{ school_id }}
+            alert (window.location.hostname)
+            alert (window.location.host)
+            $('.list-group.checked-list-box .list-group-item').each(function () {
+
+                // Settings
+                var $widget = $(this),
+                    $checkbox = $('<input type="checkbox" class="hidden" />'),
+                    color = ($widget.data('color') ? $widget.data('color') : "primary"),
+                    style = ($widget.data('style') == "button" ? "btn-" : "list-group-item-"),
+                    settings = {
+                        on: {
+                            icon: 'glyphicon glyphicon-check'
+                        },
+                        off: {
+                            icon: 'glyphicon glyphicon-unchecked'
+                        }
+                    };
+
+                $widget.css('cursor', 'pointer')
+                $widget.append($checkbox);
+
+                // Event Handlers
+                $widget.on('click', function () {
+                    $checkbox.prop('checked', !$checkbox.is(':checked'));
+                    $checkbox.triggerHandler('change');
+                    updateDisplay();
+                });
+                $checkbox.on('change', function () {
+                    updateDisplay();
+                });
+
+                // Actions
+                function updateDisplay() {
+                    var isChecked = $checkbox.is(':checked');
+
+                    // Set the button's state
+                    $widget.data('state', (isChecked) ? "on" : "off");
+
+                    // Set the button's icon
+                    $widget.find('.state-icon')
+                        .removeClass()
+                        .addClass('state-icon ' + settings[$widget.data('state')].icon);
+
+                    // Update the button's color
+                    if (isChecked) {
+                        $widget.addClass(style + color + ' active');
+                    } else {
+                        $widget.removeClass(style + color + ' active');
+                    }
+                }
+
+                // Initialization
+                function init() {
+
+                    if ($widget.data('checked') == true) {
+                        $checkbox.prop('checked', !$checkbox.is(':checked'));
+                    }
+
+                    updateDisplay();
+
+                    // Inject the icon if applicable
+                    if ($widget.find('.state-icon').length == 0) {
+                        $widget.prepend('<span class="state-icon ' + settings[$widget.data('state')].icon + '"></span>');
+                    }
+                }
+                init();
+            });
+
+            $('#next').on('click', function(event) {
+                event.preventDefault();
+                var absentees = {}, counter = 0;
+                $("#check-list-box :not(li.active)").each(function(idx, li) {
+                    absentees[counter] = $(li).attr("data-teacherid");
+                    counter++;
+                });
+                if (confirm("Are you sure to move to the next Step?") == true) {
+                    u1 = "/teachers/process_attendance/";
+                    u2 = u1.concat(school_id);
+                    url = u2.concat("/");
+                    alert(url);
+
+                    $.post(url,
+                    JSON.stringify(absentees),
+                    function(data,status){
+                        alert("Teacher's Attendance Marked \nStatus: " + status);
+                    });
+                } else {
+
+                }
+            });
+        });
+    </Script>
+
+
+    <div class="container" style="margin-left:160px">
+        <p id="time"><h4></h4></p>
+        <script>
+            document.getElementById("time").innerHTML = Date();
+        </script>
+        <div class="row">
+            <div class="col-xs-5">
+                <h5 class="text-center">Step 1: Mark Teachers Attendance (Uncheck Absent Teachers)</h5>
+                <div class="well" style="max-height: 300px;overflow: auto;margin-top: 0px;">
+                    <ul id="check-list-box" class="list-group checked-list-box">
+                        {% for teacher in teacher_list %}
+                            {% if teacher.id in absent_list %}
+                                <li class="list-group-item" data-checked="false" data-teacherid="{{ teacher.id }}">
+                            {% else %}
+                                <li class="list-group-item" data-checked="true"
+                                    data-color="success" data-teacherid="{{ teacher.id }}">
+                            {% endif %}
+                            {{ teacher.first_name }} {{ teacher.last_name }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xs-4">
+            <a href="#" class="next" id="next">Next &raquo;</a>
+        </div>
+    </div>
+{% endblock %}

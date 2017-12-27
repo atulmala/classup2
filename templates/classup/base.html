@@ -11,7 +11,6 @@
         <script type="text/javascript" src="https://code.jquery.com/ui/1.11.0/jquery-ui.js"></script>
         <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
 
-
         <!-- Latest compiled and minified CSS -->
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
               integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
@@ -24,9 +23,120 @@
     </head>
 
     <body>
-        <div class="page-header">
-            <h1>{{ school_name }}</h1>
+        <style>
+            body {
+                font-family: "Lato", sans-serif;
+            }
+
+            .sidenav {
+                height: 100%;
+                width: 160px;
+                position: fixed;
+                z-index: 1;
+                top: 20;
+                left: 0;
+                background-color: #111;
+                overflow-x: hidden;
+                padding-top: 5px;
+            }
+
+            .sidenav a {
+                padding: 6px 8px 6px 6px;
+                text-decoration: none;
+                font-size: 14px;
+                color: #818181;
+                display: block;
+            }
+
+            .sidenav a:hover {
+                color: #f1f1f1;
+            }
+
+            .main {
+                margin-left: 160px; /* Same as the width of the sidenav */
+                font-size: 14px; /* Increased text to enable scrolling */
+                padding: 0px 5px;
+            }
+
+            @media screen and (max-height: 450px) {
+                .sidenav {padding-top: 5px;}
+                .sidenav a {font-size: 14px;}
+            }
+
+            div.scrollmenu {
+                background-color: #999;
+                overflow: auto;
+                white-space: nowrap;
+            }
+
+            div.scrollmenu a {
+                display: inline-block;
+                color: white;
+                text-align: center;
+                padding: 14px;
+                text-decoration: none;
+            }
+
+            div.scrollmenu a:hover {
+                background-color: #111;
+            }
+        </style>
+
+        <div class="scrollmenu">
+          <a href="#home">Home</a>
+          <a href="#contact">Contact</a>
+          <a href="#about">About</a>
+          <a href="#support">Support</a>
+          <a href="/logout">Logout</a>
         </div>
+            <div class="sidenav">
+                <h2><small>ClassUp Operations Menu</small></h2>
+                <a href="/operations/att_register_class/">Download Monthly Attendance for a Class</a><br/>
+                {% if user_type == 'school_admin' %}
+                    <a href="/teachers/retrieve_attendance/">Set Arrangement</a><br/>
+                    <a href="/operations/send_bulk_sms/">Send Bulk SMS</a><br/>
+                    <a href="/operations/att_summary_school/">Download Daily Attendance Summary for School</a><br/>
+                    <a href="/operations/sms_summary_school">Download Monthly SMS Summary for School</a><br/>
+                    <a href="/operations/test_results/">Download Test Results For Class</a><br/>
+                    <a href="/operations/result_sms/">Send Test Results SMS to Parents</a><br/>
+                    <a href="/operations/parents_communication_details/">Download Parents Communications</a><br/>
+                    <a href="/exam/term_results/">Term 1 (Half Yearly) Results</a><br/>
+                    <a href="/parents/send_health_record/">Send Health Record to Parents</a><br/>
+                    <a href="/time_table/teacher_period/">Teacher Period</a><br/>
+                    <a href="/time_table/get_arrangements/">Get Arrangements</a><br/>
+                    <a href="/time_table/set_arrangements/">Set Arrangements</a><br/>
+
+                    <h2><small>ClassUp Setup Menu</small></h2>
+                    <a href="/setup/upload_students/">Setup student Details</a><br/>
+                    <a href="/setup/upload_dob/">Upload Student Date of Birth</a><br/>
+                    <a href="/setup/upload_teachers/">Setup Teachers Details</a><br/>
+                    <a href="/setup/upload_classes/">Setup Class List</a><br/>
+                    <a href="/setup/upload_sections/">Setup Section List</a><br/>
+                    <a href="/setup/upload_subjects/">Setup Subjects</a><br/>
+                    <a href="/time_table/setup_time_table">Setup Time Table</a><br/>
+                    <a href="/time_table/teacher_wing_mapping/">Teacher Wing Mapping</a><br/>
+                    <a href="/setup/upload_exam/">Upload Exam Details</a><br/>
+                    <a href="/exam/setup_third_lang/">Setup Third Language</a><br/>
+                    <a href="/exam/setup_higher_class_subject_mapping/">Subject Mapping Higher Classes</a><br/>
+                    <a href="/exam/setup_scheme/">Setup Exam Scheme</a><br/>
+                    <a href="/activity_groups/setup_activity_group/">Setup Activity Groups</a><br/>
+                    <a href="/setup/upload_classteacher_details">Setup Class Teachers</a><br/>
+                    <a href="/bus_attendance/setup_routs/">Upload Bus Routs</a><br/>
+                    <a href="/bus_attendance/setup_student_routs/">Setup Student Bus Routs</a><br/>
+                    <a href="/bus_attendance/setup_bus_stops/">Setup Bus Stops</a><br/>
+                    <a href="/operations/send_welcome_sms/">Re-send Welcome SMS</a><br/>
+
+                    <a>    </a>
+                    <a>    </a>
+                    <a>    </a>
+                {% endif %}
+            </div>
+        <div class="main">
+                <div class="page-header">
+                    <h1>{{ school_name }}</h1>
+                </div>
+        </div>
+
         <div class="container-fluid">
             {% if messages %}
                 <ul class="alert alert-success">
@@ -45,15 +155,5 @@
         </div>
 
         <hr/>
-
-        <div class="container-fluid">
-            <ul>
-                {% if user.is_authenticated %}
-                    <a href="/logout">Logout</a>
-                {% else %}
-                    <a href="/login/">Login</a><br/>
-                {% endif %}
-            </ul>
-        </div>
     </body>
 </html>

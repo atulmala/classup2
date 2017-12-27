@@ -453,6 +453,14 @@ def create_test1(request, school_id, the_class, section, subject,
                 test.teacher = t
                 test.max_marks = float(max_marks)  # max_marks and pass_marks are passed as strings
                 test.passing_marks = float(pass_marks)
+
+                # 24/12/2017 for class XI & XII max marks & passing marks are different for every subject.
+                # Hence let us keep max marks = 100 and passing marks = 0. School will analyze in the result sheets
+                if the_class == 'XI' or the_class == 'XII':
+                    if test_type == 'term':
+                        test.max_marks = 100.0
+                        test.passing_marks = 0.0
+
                 test.test_type = test_type
 
                 if grade_based == '0':
@@ -537,9 +545,15 @@ def create_test1(request, school_id, the_class, section, subject,
                                     test_result = TestResults(class_test=test, roll_no=student.roll_number,
                                                       student=student, marks_obtained=-5000.00, grade='')
                                     test_result.save()
+                                    print ('test results successfully created for % s %s' % (
+                                        student.fist_name, student.last_name))
+
+                                    # 24/12/2017 in case of higher practical marks need to be initialized
                                     if test_type == 'term':
-                                        # will create practical marks result once get the scheme from school
-                                        pass
+                                        term_test_result = TermTestResult(test_result=test_result, prac_marks=-5000.0)
+                                        term_test_result.save()
+                                        print ('term test results successfully created for % s %s' % (
+                                            student.fist_name, student.last_name))
                             except Exception as e:
                                 print ('mapping does not exist between subject %s and %s' % (sub, student.fist_name))
                                 print ('exception 151117-A from academics views.py %s %s' % (e.message, type(e)))
@@ -555,6 +569,7 @@ def create_test1(request, school_id, the_class, section, subject,
                                                                       note_book_marks=-5000.0,
                                                                       sub_enrich_marks=-5000.0)
                                     term_test_result.save()
+
                                 print (' test results successfully created for % s %s' % (
                                     student.fist_name, student.last_name))
                             except Exception as e:
@@ -575,6 +590,11 @@ def create_test1(request, school_id, the_class, section, subject,
 
 @csrf_exempt
 def save_marks(request):
+    prac_subjects = ["Biology", "Physics", "Chemistry",
+        "Accountancy", "Business Studies", "Economics",
+        "Information Practices", "Computer Science", "Painting",
+        "Physical Education"]
+
     if request.method == 'POST':
         response = {
 
@@ -612,8 +632,19 @@ def save_marks(request):
                     ttr.periodic_test_marks = float(data[key]['pa'])
                     ttr.note_book_marks = float(data[key]['notebook'])
                     ttr.sub_enrich_marks = float(data[key]['subject_enrich'])
+
+                    # 25/12/2017 practical marks to be saved
+                    if test.the_class.standard == 'XI' or test.the_class.standard == 'XII':
+                        print ('term test for higher classes. May need to save the practical marks')
+                        if test.subject.subject_name in prac_subjects:
+                            print ('need to save practical marks for %s' % test.subject.subject_name)
+                            ttr.prac_marks = float(data[key]['prac_marks'])
+                        else:
+                            print ('no need to save practical marks for %s' % test.subject.subject_name)
+
                     try:
                         ttr.save()
+                        print ('saved Term Test Results for %s %s' % (tr.student.fist_name, tr.student.last_name))
                         try:
                             action = 'Saved Term Test Results for ' + tr.student.fist_name + ' ' + tr.student.last_name
                             action += ' ' + test.the_class.standard + '-' + test.section.section
@@ -648,6 +679,11 @@ def save_marks(request):
 @csrf_exempt
 def submit_marks(request, school_id):
     t1 = datetime.datetime.now()
+    prac_subjects = ["Biology", "Physics", "Chemistry",
+                     "Accountancy", "Business Studies", "Economics",
+                     "Information Practices", "Computer Science", "Painting",
+                     "Physical Education"]
+
     message_list = {
 
     }
@@ -668,6 +704,7 @@ def submit_marks(request, school_id):
         grade_based = False
         for key in data:
             test = ClassTest.objects.get(testresults__id=key)
+            the_class = test.the_class.standard
             break  # because we can get the test object with the first key only
 
         # get the email of teacher. This is required for send_sms1
@@ -705,6 +742,16 @@ def submit_marks(request, school_id):
                     ttr.periodic_test_marks = float(data[key]['pa'])
                     ttr.note_book_marks = float(data[key]['notebook'])
                     ttr.sub_enrich_marks = float(data[key]['subject_enrich'])
+
+                    # 27/12/2017 practical marks to be saved
+                    if test.the_class.standard == 'XI' or test.the_class.standard == 'XII':
+                        print ('term test for higher classes. May need to save the practical marks')
+                        if test.subject.subject_name in prac_subjects:
+                            print ('need to save practical marks for %s' % test.subject.subject_name)
+                            ttr.prac_marks = float(data[key]['prac_marks'])
+                        else:
+                            print ('no need to save practical marks for %s' % test.subject.subject_name)
+
                     try:
                         ttr.save()
                         try:
@@ -807,9 +854,13 @@ def submit_marks(request, school_id):
                     # Notebook submission, and Subject Enrichment
                     if test.test_type == 'term':
                         ttr = TermTestResult.objects.get(test_result=tr)
-                        message += '. Periodic Test: ' + str(ttr.periodic_test_marks) + '/10, '
-                        message += 'Notebook Submission: ' + str(ttr.note_book_marks) + '/5, '
-                        message += 'Subject Enrichment: ' + str(ttr.sub_enrich_marks) + '/5'
+                        if the_class == 'XI' or the_class == 'XII':
+                            if sub.subject_name in prac_subjects:
+                                message += '. Practical Marks: ' + str(ttr.prac_marks)
+                        else:
+                            message += '. Periodic Test: ' + str(ttr.periodic_test_marks) + '/10, '
+                            message += 'Notebook Submission: ' + str(ttr.note_book_marks) + '/5, '
+                            message += 'Subject Enrichment: ' + str(ttr.sub_enrich_marks) + '/5'
 
                 if not grade_based:
                     # 04/12/2016 - some schools don't want to include max and average marks in the sms

@@ -65,11 +65,12 @@ class TestMarksSerializer(serializers.ModelSerializer):
     periodic_test_marks = serializers.SerializerMethodField()
     notebook_marks = serializers.SerializerMethodField()
     sub_enrich_marks = serializers.SerializerMethodField()
+    prac_marks = serializers.SerializerMethodField()
 
     class Meta:
         model = TestResults
         fields = ('id', 'roll_no', 'student', 'parent', 'marks_obtained', 'grade',
-                  'periodic_test_marks', 'notebook_marks', 'sub_enrich_marks')
+                  'periodic_test_marks', 'notebook_marks', 'sub_enrich_marks', 'prac_marks')
 
     def get_parent(self, obj):
         return obj.student.parent.parent_name
@@ -100,6 +101,14 @@ class TestMarksSerializer(serializers.ModelSerializer):
             print ('Failed to retrieve subject enrichment test marks. This is not a Term Test but a Unit Test')
             print ('Exception 30 from academics serializer Exception = %s (%s)' % (e.message, type(e)))
             return "N/A"
+
+    def get_prac_marks (self, obj):
+        try:
+            term_test_result = TermTestResult.objects.get(test_result=obj)
+            return term_test_result.prac_marks
+        except Exception as e:
+            print ('failed to retrieve practical marks. Either this is a unit test or a Term Test for lower class')
+            print ('exception 24122017-A from academics serializer Exception = %s %s' % (e.message, type(e)));
 
 
 # serializer to return the class and section of test
