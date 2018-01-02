@@ -14,8 +14,7 @@ urlpatterns = [
 
     url(r'^set_arrangements/$', views.SetArrangements.as_view(), name='set_arrangements'),
 
-    url(r'^get_arrangement_teacher/(?P<teacher>[\w.@+-]+)/$', views.ArrangementListForTeachers.as_view(),
-        name='get_arrangement_teacher'),
+    url(r'^process_arrangements/$', views.AbsentTeacherPeriods.as_view(), name='process_arrangements'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

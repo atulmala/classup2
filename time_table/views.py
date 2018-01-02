@@ -13,7 +13,7 @@ from rest_framework.authentication import SessionAuthentication, BasicAuthentica
 from rest_framework import generics
 
 from setup.forms import ExcelFileUploadForm
-
+from authentication.views import JSONResponse
 from setup.views import validate_excel_extension
 
 from teacher.models import TeacherAttendance
@@ -358,6 +358,117 @@ class TheTeacherWingMapping (generics.ListCreateAPIView):
                 print ('exception 201117-C from time_table views.py %s %s ' % (e.message, type(e)))
                 form.errors['__all__'] = form.error_class([error])
                 return render(request, 'classup/setup_data.html', context_dict)
+
+
+class AbsentTeacherPeriods (generics.ListAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+    def get(self, request, *args, **kwargs):
+        context_dict = {
+
+        }
+        context_dict['user_type'] = 'school_admin'
+        context_dict['school_name'] = request.session['school_name']
+        context_dict['header'] = 'Arrangement Processing'
+        context_dict['csrf_token'] = 'csrf_token'
+        school_id = request.session['school_id']
+        school = School.objects.get(id=school_id)
+        today = datetime.datetime.today()
+        d = calendar.day_name[today.weekday()]
+        print ('day = %s' % d)
+        day = DaysOfWeek.objects.get(day=d)
+
+        try:
+            # get the default excluded list
+            excluded_list = []
+            excluded = ExcludedFromArrangements1.objects.filter(school=school)
+            for e in excluded:
+                excluded_list.append(e.teacher.email)
+                print (excluded_list)
+            ta = TeacherAttendance.objects.filter(school=school, date=today)
+            print ('ta = ')
+            print (ta)
+
+            # all the teachers who are absent today, should also be part of excluded list
+            for t in ta:
+                excluded_list.append(t.teacher.email)
+            print ('excluded list including today absent teachers: ')
+            print (excluded_list)
+            context_dict['excluded_list'] = excluded_list
+
+            # for all the absent teachers today, we need to identify the periods which they take
+            arrangements_required = []
+            for t in ta:
+                absent_teacher = t.teacher
+                teacher_name = absent_teacher.first_name + ' ' + absent_teacher.last_name
+
+                # get the period list that this teacher was supposed to take today
+                try:
+                    teacher_periods = TeacherPeriods.objects.\
+                        filter(teacher=absent_teacher, day=day).order_by ('period__period')
+                    print ('periods = ')
+                    print (teacher_periods)
+                    for tp in teacher_periods:
+                        arrangement_unit = {}
+                        arrangement_unit['teacher'] = teacher_name
+                        the_class = tp.the_class
+                        arrangement_unit['the_class'] = the_class.standard
+                        section = tp.section
+                        arrangement_unit['section'] = section.section
+                        period = tp.period
+                        arrangement_unit['period'] = period.period
+
+                        arrangements_required.append(arrangement_unit)
+                        print ('at this stage arrangements_required = ')
+                        print (arrangements_required)
+                except Exception as e:
+                    print ('exception 211117-A from time_table views.py %s %s' % (e.message, type(e)))
+                    print ('looks like %s %s had no periods today' % (absent_teacher.first_name,
+                                                                          absent_teacher.last_name))
+            context_dict['arrangements_required'] = arrangements_required
+
+            # get the list of available teachers from first to last period
+            available_list = {}
+            periods = Period.objects.all()
+            for period in periods:
+                # now, find which teacher is free on this period
+                available = []
+                all_teachers = Teacher.objects.filter(school=school).order_by('first_name')
+                for a_teacher in all_teachers:
+                    if a_teacher.email not in excluded_list:
+                        print ('now checking %s %s availability for period # %s on %s' %
+                               (a_teacher.first_name, a_teacher.last_name, period.period, d))
+                        try:
+                            TeacherPeriods.objects.get(teacher=a_teacher, day=day, period=period)
+                            print ('%s %s is not available on %s for period: %s' %
+                                   (a_teacher.first_name, a_teacher.last_name, d, period.period))
+                        except Exception as e:
+                            available_teacher = {}
+                            print ('exception 30122017-A from time_table views.py %s %s' % (e.message, type(e)))
+                            print ('%s %s is available on %s for period: %s. will be added to available list'
+                                   % (a_teacher.first_name, a_teacher.last_name, d, str(period.period)))
+                            available_teacher["login_id"] = str(a_teacher.email)
+                            available_teacher["name"] = str (a_teacher.first_name + ' ' + a_teacher.last_name)
+                            print ('available_teacher = ')
+                            print (available_teacher)
+                            available.append(available_teacher)
+                            print ('available for period # %s till now = ' % period.period)
+                            print (available)
+                    else:
+                        print ('%s %s is in excluded list. Hence not being considered for Arrangements'
+                               % (a_teacher.first_name, a_teacher.last_name))
+                    available_list[str(period.period)] = available
+                print ('full availaibility list for period # %s ' % period.period)
+                print (available_list[period.period])
+            print ('full availability list for all periods = ')
+            print (available_list)
+            context_dict['available_teachers'] = available_list
+
+            return render(request, 'classup/arrangements.html', context_dict)
+            
+        except Exception as e:
+            print ('exception 31122017-A from time_table views.py %s %s' % (e.message, type(e)))
+            response = HttpResponse(status=201)
+            return response
 
 
 class GetArrangements (generics.ListAPIView):

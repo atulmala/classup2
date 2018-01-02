@@ -2,7 +2,6 @@ __author__ = 'atulmala'
 
 from authentication import views
 from django.conf.urls import url, patterns
-from django.views.decorators.csrf import csrf_exempt
 
 from .views import LogEntry
 

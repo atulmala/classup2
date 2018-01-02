@@ -46,8 +46,6 @@
     <script type="text/javascript">
         $(function () {
             var school_id = {{ school_id }}
-            alert (window.location.hostname)
-            alert (window.location.host)
             $('.list-group.checked-list-box .list-group-item').each(function () {
 
                 // Settings
@@ -125,13 +123,18 @@
                     u1 = "/teachers/process_attendance/";
                     u2 = u1.concat(school_id);
                     url = u2.concat("/");
-                    alert(url);
-
-                    $.post(url,
-                    JSON.stringify(absentees),
-                    function(data,status){
-                        alert("Teacher's Attendance Marked \nStatus: " + status);
+                    $.ajax({
+                        async: false,
+                        type: "POST",
+                        url: url,
+                        data: JSON.stringify(absentees),
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        success: function (response) {
+                            alert("Attendance marked. You can now move on for Arrangements Processing");
+                        }
                     });
+
                 } else {
 
                 }

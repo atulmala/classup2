@@ -10,36 +10,58 @@
 {% endblock %}
 
 {% block body_block %}
-    <div class="container">
+    <script type="text/javascript">
+        $(function () {
+            available_teachers = $('#main_table').attr("avail_teachers5")
+
+            $(".teacher_options").click(function () {
+                alert(available_teachers)
+                json = available_teachers.replace(/'/g, '"');
+                alert(json);
+                json = JSON.parse(json);
+                alert (json)
+
+                $.each(json, function() {
+                    //alert(this['name'])
+                });
+
+            });
+        });
+    </script>
+
+
+    <div class="table-responsive-sm" style="margin-left:160px">
+
       <h2>Arrangements</h2>
       <p>Please select sustitute teachers for every period of Absent Teacher:</p>
-      <table class="table table-bordered">
+      <table id="main_table" class="table table-bordered" avail_teachers1="{{ available_teachers.1 }}"
+        avail_teachers2="{{ available_teachers.2 }}" avail_teachers3="{{ available_teachers.3 }}"
+             avail_teachers4="{{ available_teachers.4 }}" avail_teachers5="{{ available_teachers.5 }}"
+            avail_teachers6="{{ available_teachers.6 }}" avail_teachers7="{{ available_teachers.7 }}"
+            avail_teachers8="{{ available_teachers.8 }}">
         <thead>
           <tr>
-              <th>S No</th>
-              <th>Teacher</th>
-              <th>Class</th>
-              <th>Section</th>
-              <th>Period</th>
-              <th>Substitute</th>
+              <th class="col-sm-1">S No</th>
+              <th class="col-sm-1">Teacher</th>
+              <th class="col-sm-1">Class</th>
+              <th class="col-sm-1">Section</th>
+              <th class="col-sm-1">Period</th>
+              <th class="col-sm-1">Substitute</th>
+              <th class="col-sm-1">Options</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td>John</td>
-            <td>Doe</td>
-            <td>john@example.com</td>
-          </tr>
-          <tr>
-            <td>Mary</td>
-            <td>Moe</td>
-            <td>mary@example.com</td>
-          </tr>
-          <tr>
-            <td>July</td>
-            <td>Dooley</td>
-            <td>july@example.com</td>
-          </tr>
+        {% for a in arrangements_required %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ a.teacher }}</td>
+                <td>{{ a.the_class }}</td>
+                <td>{{ a.section }}</td>
+                <td>{{ a.period }}</td>
+                <td></td>
+                <td ><a class="teacher_options" data-period="{{ a.period }}" style="cursor: pointer;">Show Options</a></td>
+            </tr>
+        {% endfor %}
         </tbody>
       </table>
     </div>

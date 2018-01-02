@@ -497,6 +497,8 @@ def create_test1(request, school_id, the_class, section, subject,
 
                 student_list = Student.objects.filter(school=school, current_section__section=section,
                                                       current_class__standard=the_class, active_status=True)
+                higher_classes = ['XI', 'XII']
+                ninth_tenth  =['IX', 'X']
                 for student in student_list:
                     # 06/11/2017 if the subject is third language or elective subject (class XI & XII),
                     #  we need to filter students
@@ -537,13 +539,13 @@ def create_test1(request, school_id, the_class, section, subject,
                         print ('this is a regular subject. Hence test results will be created for all students')
 
                         # 15/11/2017 - for higher classes (XI & XII) we need to look into the student subject mapping
-                        if the_class == 'XI' or the_class == 'XII':
+                        if the_class in higher_classes:
                             print ('test is for higher class %s. Hence, mapping will be considered' % the_class)
                             try:
                                 mapping = HigherClassMapping.objects.get(student=student, subject=sub)
                                 if mapping:
                                     test_result = TestResults(class_test=test, roll_no=student.roll_number,
-                                                      student=student, marks_obtained=-5000.00, grade='')
+                                                              student=student, marks_obtained=-5000.00, grade='')
                                     test_result.save()
                                     print ('test results successfully created for % s %s' % (
                                         student.fist_name, student.last_name))
@@ -557,25 +559,68 @@ def create_test1(request, school_id, the_class, section, subject,
                             except Exception as e:
                                 print ('mapping does not exist between subject %s and %s' % (sub, student.fist_name))
                                 print ('exception 151117-A from academics views.py %s %s' % (e.message, type(e)))
-                        else:
-                            # -5000.00 marks indicate null value
-                            test_result = TestResults(class_test=test, roll_no=student.roll_number,
-                                                      student=student, marks_obtained=-5000.00, grade='')
-                            try:
-                                test_result.save()
-                                if test_type == 'term':
-                                    term_test_result = TermTestResult(test_result=test_result,
-                                                                      periodic_test_marks=-5000.0,
-                                                                      note_book_marks=-5000.0,
-                                                                      sub_enrich_marks=-5000.0)
-                                    term_test_result.save()
 
-                                print (' test results successfully created for % s %s' % (
-                                    student.fist_name, student.last_name))
-                            except Exception as e:
-                                print ('failed to create test resutls')
-                                print ('Exception 071117-A from academics views.py %s %s' % (e.message, type(e)))
-                                return HttpResponse('Failed to create term test results')
+                        # 02/01/2018 for IX & X Hindi is also an elective subject. If subject is Hindi and class is
+                        # IX or X, then test result will be created for selected students only
+                        if the_class in ninth_tenth:
+                            if sub.subject_name == 'Hindi':
+                                print ('mapping will have to be checked as the class is %s and subject is Hindi' %
+                                       the_class)
+                                try:
+                                    third_lang = ThirdLang.objects.get(third_lang=sub, student=student)
+                                    print ('%s has chosen %s as third language' % (student.fist_name, sub.subject_name))
+                                    test_result = TestResults(class_test=test, roll_no=student.roll_number,
+                                                              student=third_lang.student,
+                                                              marks_obtained=-5000.00, grade='')
+                                    try:
+                                        test_result.save()
+                                        print (' test results successfully created for % s %s' % (
+                                            student.fist_name, student.last_name))
+
+                                        # 21/09/2017 some more data need to be created for a Term test
+                                        try:
+                                            if test_type == 'term':
+                                                term_test_result = TermTestResult(test_result=test_result,
+                                                                                  periodic_test_marks=-5000.0,
+                                                                                  note_book_marks=-5000.0,
+                                                                                  sub_enrich_marks=-5000.0)
+                                                term_test_result.save()
+                                                print (' term test results successfully created for % s %s' %
+                                                       (student.fist_name, student.last_name))
+                                        except Exception as e:
+                                            print ('failed to create term test results')
+                                            print ('Exception 02012018-A from acacemics views.py = %s (%s)' % (
+                                            e.message, type(e)))
+                                            return HttpResponse('Failed to create term test results')
+                                    except Exception as e:
+                                        print ('failed to create test results')
+                                        print ('Exception 02012018-B from acacemics views.py = %s (%s)' %
+                                               (e.message, type(e)))
+                                        return HttpResponse('Failed to create test results')
+                                except Exception as e:
+                                    print ('Exception 02012018-C from acacemics views.py %s %s' % (e.message, type(e)))
+                                    print ('%s has not chosen %s as third language' %
+                                           (student.fist_name, sub.subject_name))
+                            else:
+                                # 02/01/2018 class IX/X but subject is not third language,
+                                # hence results to be created for all subjects
+                                test_result = TestResults(class_test=test, roll_no=student.roll_number,
+                                                          student=student, marks_obtained=-5000.00, grade='')
+                                try:
+                                    test_result.save()
+                                    if test_type == 'term':
+                                        term_test_result = TermTestResult(test_result=test_result,
+                                                                          periodic_test_marks=-5000.0,
+                                                                          note_book_marks=-5000.0,
+                                                                          sub_enrich_marks=-5000.0)
+                                        term_test_result.save()
+
+                                    print (' test results successfully created for % s %s' % (
+                                        student.fist_name, student.last_name))
+                                except Exception as e:
+                                    print ('failed to create test resutls')
+                                    print ('Exception 071117-A from academics views.py %s %s' % (e.message, type(e)))
+                                    return HttpResponse('Failed to create term test results')
             else:
                 print ('Test already exist')
                 return HttpResponse('Test already exist')
