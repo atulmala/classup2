@@ -12,7 +12,7 @@ urlpatterns = [
 
     url(r'^get_arrangements/$', views.GetArrangements.as_view(), name='get_arrangements'),
 
-    url(r'^set_arrangements/$', views.SetArrangements.as_view(), name='set_arrangements'),
+    url(r'^set_arrangements/(?P<school_id>\w+)/$', views.SetArrangements.as_view(), name='set_arrangements'),
 
     url(r'^process_arrangements/$', views.AbsentTeacherPeriods.as_view(), name='process_arrangements'),
 ]

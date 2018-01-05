@@ -12,57 +12,115 @@
 {% block body_block %}
     <script type="text/javascript">
         $(function () {
-            available_teachers = $('#main_table').attr("avail_teachers5")
+            var school_id = {{ school_id }}
+            var row_index;
+            var period_no;
 
-            $(".teacher_options").click(function () {
-                alert(available_teachers)
-                json = available_teachers.replace(/'/g, '"');
-                alert(json);
-                json = JSON.parse(json);
-                alert (json)
-
-                $.each(json, function() {
-                    //alert(this['name'])
-                });
-
+            $('.teacher_options').click(function (event) {
+                var $widget = $(this);
+                period_no = $widget.attr ('period')
+                $("#" + period_no).modal('show')
             });
+
+            $(".btn-round-sm").click (function () {
+                $("#" + period_no).modal('hide')
+                var $widget = $(this);
+                var teacher = $widget.attr('teacherName')
+                var teacher_id = $widget.attr('teacherId')
+                alert (teacher_id)
+                $('#main_table tr').eq(row_index + 1).find('td').eq(5).text(teacher).css("color", "color:#328332");
+                var period = $('#main_table tr').eq(row_index + 1).find('td').eq(2).text();
+                var the_class = $('#main_table tr').eq(row_index + 1).find('td').eq(3).text();
+                var section = $('#main_table tr').eq(row_index + 1).find('td').eq(4).text();
+
+                var myObject = new Object();
+                myObject.period = period;
+                myObject.the_class = the_class;
+                myObject.section = section;
+                myObject.teacher = teacher_id;
+
+                u1 = "/time_table/set_arrangements/";
+                u2 = u1.concat(school_id);
+                url = u2.concat("/");
+                $.post(url,
+                    JSON.stringify(myObject),
+                    function(data, status){
+                        alert("Data: " + data + "\nStatus: " + status);
+                });
+            });
+
+            $('td').click(function(){
+                row_index = $(this).parent().index();
+                col_index = $(this).index();
+            });
+
+            $( "td:contains('Not Assigned')" ).css( "color", "red" );
+
         });
     </script>
 
-
-    <div class="table-responsive-sm" style="margin-left:160px">
-
-      <h2>Arrangements</h2>
-      <p>Please select sustitute teachers for every period of Absent Teacher:</p>
-      <table id="main_table" class="table table-bordered" avail_teachers1="{{ available_teachers.1 }}"
-        avail_teachers2="{{ available_teachers.2 }}" avail_teachers3="{{ available_teachers.3 }}"
-             avail_teachers4="{{ available_teachers.4 }}" avail_teachers5="{{ available_teachers.5 }}"
-            avail_teachers6="{{ available_teachers.6 }}" avail_teachers7="{{ available_teachers.7 }}"
-            avail_teachers8="{{ available_teachers.8 }}">
-        <thead>
-          <tr>
-              <th class="col-sm-1">S No</th>
-              <th class="col-sm-1">Teacher</th>
-              <th class="col-sm-1">Class</th>
-              <th class="col-sm-1">Section</th>
-              <th class="col-sm-1">Period</th>
-              <th class="col-sm-1">Substitute</th>
-              <th class="col-sm-1">Options</th>
-          </tr>
-        </thead>
-        <tbody>
-        {% for a in arrangements_required %}
-            <tr>
-                <td>{{ forloop.counter }}</td>
-                <td>{{ a.teacher }}</td>
-                <td>{{ a.the_class }}</td>
-                <td>{{ a.section }}</td>
-                <td>{{ a.period }}</td>
-                <td></td>
-                <td ><a class="teacher_options" data-period="{{ a.period }}" style="cursor: pointer;">Show Options</a></td>
-            </tr>
-        {% endfor %}
-        </tbody>
-      </table>
+    <div class="table-responsive-xs" style="margin-left:160px">
+        <h2>Arrangements</h2>
+        <p>Please select sustitute teachers for every period of Absent Teacher:</p>
+        <table id="main_table" class="table table-bordered">
+            <thead>
+                <tr>
+                    <th class="col-sm-1">S No</th>
+                    <th class="col-sm-1">Absent Teacher</th>
+                    <th class="col-sm-1">Period</th>
+                    <th class="col-sm-1">Class</th>
+                    <th class="col-sm-1">Section</th>
+                    <th class="col-sm-1">Substitute</th>
+                    <th class="col-sm-1">Options</th>
+                    <th class="col-sm-1">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for a in arrangements_required %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ a.teacher }}</td>
+                    <td>{{ a.period }}</td>
+                    <td>{{ a.the_class }}</td>
+                    <td>{{ a.section }}</td>
+                    <td>{{ a.substitute_teacher }}</td>
+                    <td><a class="teacher_options" the_class="{{ a.the_class }}" section="{{ a.section }}"
+                            period="{{ a.period }}" style="cursor: pointer;">Show Options</a></td>
+                    <td><a class="send_sms" style="cursor: pointer;">Communicate</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
+
+    {% for key, value in available_teachers.items %}
+        <div class="modal fade" id="{{ key }}" tabindex="-1" role="dialog"
+             aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <p><h2 class="modal-title">Available Teachers</h2>
+                        <h4>(for period # {{ key }})</h4><br/></p>
+                        <h4 data-color="#888">Click on a Teacher's name to Select him/her for substitution</h4>
+
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="big">
+                            {% for v in value %}
+                                <button type="button" teacherName="{{ v.name }}" teacherId="{{ v.login_id}}"
+                                        class="btn btn-primary btn-round-sm btn-sm">{{ v.name }}
+                                </button>
+                            {% endfor %}
+                        </p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
 {% endblock %}

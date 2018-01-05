@@ -1,3 +1,4 @@
+import json
 import xlrd
 import StringIO
 import xlsxwriter
@@ -371,6 +372,7 @@ class AbsentTeacherPeriods (generics.ListAPIView):
         context_dict['header'] = 'Arrangement Processing'
         context_dict['csrf_token'] = 'csrf_token'
         school_id = request.session['school_id']
+        context_dict['school_id'] = school_id
         school = School.objects.get(id=school_id)
         today = datetime.datetime.today()
         d = calendar.day_name[today.weekday()]
@@ -416,6 +418,20 @@ class AbsentTeacherPeriods (generics.ListAPIView):
                         arrangement_unit['section'] = section.section
                         period = tp.period
                         arrangement_unit['period'] = period.period
+
+                        # 05/01/2018 - check if any arrangement has already been made for this period
+                        try:
+                            record = Arrangements.objects.get (school=school, date=datetime.date.today(),
+                                                               the_class=the_class, section=section, period=period)
+                            substitute_teacher = record.teacher.first_name + ' ' + record.teacher.last_name
+                            print ('substitute teacher %s has already been assigned for period %s of class %s-%s' %
+                                  (substitute_teacher, str(period.period), the_class.standard, section.section))
+                            arrangement_unit['substitute_teacher'] = substitute_teacher
+                        except Exception as e:
+                            print ('exception 05012018-A from time_table views.py %s %s' % (e.message, type(e)))
+                            print ('substitute teacher has not been assigned for period %s of class %s-%s' %
+                                   (str(period.period), the_class.standard, section.section))
+                            arrangement_unit['substitute_teacher'] = 'Not Assigned'
 
                         arrangements_required.append(arrangement_unit)
                         print ('at this stage arrangements_required = ')
@@ -639,186 +655,48 @@ class SetArrangements (generics.ListCreateAPIView):
 
         }
         context_dict['user_type'] = 'school_admin'
-        context_dict['school_name'] = request.session['school_name']
         context_dict['header'] = 'Set Arrangement Periods'
 
-        # first see whether the cancel button was pressed
-        if "cancel" in request.POST:
-            return render(request, 'classup/setup_index.html', context_dict)
-
-        school_id = request.session['school_id']
+        school_id = self.kwargs['school_id']
         school = School.objects.get(id=school_id)
+        print ('setting arragnements for %s' % school.school_name)
 
-        # get the file uploaded by the user
-        form = ExcelFileUploadForm(request.POST, request.FILES)
-        context_dict['form'] = form
-
-        if form.is_valid():
+        print('request=')
+        print(request.body)
+        try:
+            data = json.loads(request.body)
+            print ('json=')
+            print (data)
+            p = data['period']
+            period = Period.objects.get(school=school, period=p)
+            tc = data['the_class']
+            the_class = Class.objects.get(school=school, standard=tc)
+            s = data['section']
+            section = Section.objects.get(school=school, section=s)
+            t = data['teacher']
+            teacher = Teacher.objects.get(email=t)
+            new_teacher = teacher.first_name + ' ' + teacher.last_name
             try:
-                today = datetime.datetime.today()
-                stirng_date = today.strftime('%d_%m_%Y')
-                string_date1 = today.strftime('%d-%m-%Y')
-                d = calendar.day_name[today.weekday()]
-                print ('now starting to set arrangements for %s %s...' % (d, stirng_date))
-                excel_file_name = 'Arrangements_' + stirng_date + '.xlsx'
-                print (excel_file_name)
-                output = StringIO.StringIO(excel_file_name)
-                workbook = xlsxwriter.Workbook(output)
-                output_sheet = workbook.add_worksheet("Arrangements")
-                width = 20
-                output_sheet.set_column('B:B', width)
-                output_sheet.set_column('F:F', width)
-
-                title = workbook.add_format({
-                    'bold': True,
-                    'font_size': 14,
-                    'align': 'center',
-                    'valign': 'vcenter'
-                })
-                header = workbook.add_format({
-                    'bold': True,
-                    'bg_color': '#F7F7F7',
-                    'color': 'black',
-                    'align': 'center',
-                    'valign': 'top',
-                    'border': 1
-                })
-
-                title_text = 'Arrangements for ' + d + ', ' + stirng_date
-                output_sheet.merge_range('A0:L0', title_text, title)
-                output_row = 2
-
-                output_sheet.write(output_row, 0, ugettext("S No."), header)
-                output_sheet.write(output_row, 1, ugettext("Absent Teacher"), header)
-                output_sheet.write(output_row, 2, ugettext("Class"), header)
-                output_sheet.write(output_row, 3, ugettext("Section"), header)
-                output_sheet.write(output_row, 4, ugettext("Period"), header)
-                output_sheet.write(output_row, 5, ugettext("Substitute Teacher"), header)
-                output_row = output_row + 1
-
-                fileToProcess_handle = request.FILES['excelFile']
-
-                # check that the file uploaded should be a valid excel
-                # file with .xls or .xlsx
-                if not validate_excel_extension(fileToProcess_handle, form, context_dict):
-                    return render(request, 'classup/setup_data.html', context_dict)
-
-                # if this is a valid excel file - start processing it
-                fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
-                input_sheet = fileToProcess.sheet_by_index(0)
-                if input_sheet:
-                    print ('Successfully got hold of sheet!')
-                for input_row in range(input_sheet.nrows):
-                    if input_row == 0:
-                        continue
-                    print ('Processing a new row')
-
-                    s_no_raw = input_sheet.cell(input_row, 0).value
-                    output_sheet.write(output_row, 0, s_no_raw)
-
-                    absent_teacher = input_sheet.cell (input_row, 1).value
-                    output_sheet.write_string (output_row, 1, absent_teacher)
-                    print ('now dealing with absent teacher: %s' % absent_teacher)
-                    try:
-                        the_class = input_sheet.cell(input_row, 2).value
-                        c = Class.objects.get (school=school, standard=the_class)
-                        output_sheet.write_string(output_row, 2, the_class)
-                        section = input_sheet.cell(input_row, 3).value
-                        s = Section.objects.get (school=school, section=section)
-                        output_sheet.write_string(output_row, 3, section)
-
-                        period = str(int(input_sheet.cell(input_row, 4).value))
-                        print ('now finding available teachers for %s-%s period %s' % (the_class, section, period))
-                        p = Period.objects.get (school=school, period=period)
-                        output_sheet.write(output_row, 4, ugettext(period))
-                    except Exception as e:
-                        print ('something went wrong when try to fetch class, section, or period')
-                        print ('exception 281117-A from time_table views.py %s %s' % (e.message, type (e)))
-                        continue
-
-                    substitute_teacher = input_sheet.cell(input_row, 5).value
-                    try:
-                        t = Teacher.objects.get(email=substitute_teacher)
-                        substitute_teacher_name = t.first_name + ' ' + t.last_name
-
-                        # store the arrangement in db and send sms to the teacher
-                        try:
-                            arrangement = Arrangements.objects.get(date=today,
-                                                                   the_class=c, section=s, period=p)
-                            old_teacher = arrangement.teacher
-                            old_teacher_name = old_teacher.first_name + ' ' + old_teacher.last_name
-                            old_teacher_email = arrangement.teacher.email
-
-                            # send cancellation SMS to the old teacher (only if the new teacher != old teacher
-                            if old_teacher_email != t.email:
-                                message = 'Dear ' + old_teacher_name
-                                message += ', Today (' + string_date1 + '), arrangement in class '
-                                message += the_class + '-' + section + ' in period ' + period + ' is cancelled.'
-                                message += '. Regards, Academics Coordinator'
-                                print (message)
-
-                                mobile = old_teacher.mobile
-                                sender = request.session['user']
-                                sms.send_sms1(school, sender, mobile, message, 'Arrangement Period Assignment')
-                                print ('arrangement cancellation SMS sent to %s' % (old_teacher))
-
-                                print ('arrangement for %s-%s for period # %s was assigned to %s. It will be updated' %
-                                       (the_class, section, period, old_teacher))
-                                arrangement.teacher = t
-                                arrangement.save()
-                                print ('arrangement for %s-%s for period # %s re-assigned to %s %s. ' %
-                                       (the_class, section, period, t.first_name, t.last_name))
-
-                                message = 'Dear ' + t.first_name + ' ' + t.last_name
-                                message += ', Today (' + string_date1 + '), you have to take arrangement in class '
-                                message += the_class + '-' + section + ' in period ' + period
-                                message += '. Regards, Academics Coordinator'
-                                print (message)
-
-                                mobile = t.mobile
-                                sender = request.session['user']
-                                sms.send_sms1(school, sender, mobile, message, 'Arrangement Period Assignment')
-                                print ('arrangement period SMS sent to %s %s' % (t.first_name, t.last_name))
-                            else:
-                                print ('no change in Arrangement. Hence doing nothing...')
-                        except Exception as e:
-                            print ('exception 221117-Y from time_table views.py %s %s' % (e.message, type(e)))
-                            print ('arrangement for %s-%s for period # %s not yet set. It will be set now' %
-                                   (the_class, section, period))
-                            arrangement = Arrangements(school=school, teacher=t, date=today,
-                                                       the_class=c, section=s, period=p)
-                            arrangement.save()
-                            print ('arrangement for %s-%s for period # %s assigned to %s %s. ' %
-                                   (the_class, section, period, t.first_name, t.last_name))
-                            message = 'Dear ' + t.first_name + ' ' + t.last_name
-                            message += ', Today (' + string_date1 + '), you have to take arrangement in class '
-                            message += the_class + '-' + section + ' in period ' + period
-                            message += '. Regards, Academics Coordinator'
-                            print (message)
-
-                            mobile = t.mobile
-                            sender = request.session['user']
-                            sms.send_sms1(school, sender, mobile, message, 'Arrangement Period Assignment')
-                            print ('arrangement period SMS sent to %s %s' % (t.first_name, t.last_name))
-                    except Exception as e:
-                        print ('exception 221117-Z from time_table view.py %s %s' % (e.message, type(e)))
-                        print ('could not retrieve teacher name for % s' % substitute_teacher)
-                        substitute_teacher_name = 'Not Assigned'
-                    output_sheet.write_string(output_row, 5, substitute_teacher_name)
-                    print ('point E')
-
-                    output_row = output_row + 1
-
-                workbook.close()
-                # file upload and saving to db was successful. Hence go back to the main menu
-                messages.success(request._request, 'Arrangements Processed')
-                response = HttpResponse(content_type='application/vnd.ms-excel')
-                response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
-                response.write(output.getvalue())
-                return response
+                record = Arrangements.objects.get(school=school, date=datetime.date.today(),
+                                                  the_class=the_class, section=section, period=period)
+                current_teacher = record.teacher.first_name + ' ' + record.teacher.last_name
+                print ('arrangement for period # %s of class %s-%s was already assinged to %s. This will be updated...'
+                       % (p, tc, s, current_teacher))
+                record.teacher = teacher
+                record.save()
+                print ('arrangement for period # %s of class %s-%s is now assinged to: %s.' % (p, tc, s, new_teacher))
+                return HttpResponse(status=200)
             except Exception as e:
-                error = 'invalid excel file uploaded.'
-                print (error)
-                print ('exception 221117-B from time_table views.py %s %s ' % (e.message, type(e)))
-                form.errors['__all__'] = form.error_class([error])
-                return render(request, 'classup/setup_data.html', context_dict)
+                print ('exception 05012018-C from time_table views.py %s %s' % (e.message, type(e)))
+                print ('arrangement for period # %s of class %s-%s was not assigned. Will be done now...' % (p, tc, s))
+                arrangement = Arrangements(school=school, date=datetime.date.today(),
+                                           the_class=the_class, section=section, period=period, teacher=teacher)
+                arrangement.save()
+                print ('arrangement for period # %s of class %s-%s is now assinged to: %s.' % (p, tc, s, new_teacher))
+                return HttpResponse(status=200)
+
+        except Exception as e:
+            print ('failed to load json from request')
+            print ('Exception 05012018-B from time_table views.py %s %s' % (e.message, type(e)))
+            return HttpResponse(status=201)
+
