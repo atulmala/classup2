@@ -12,9 +12,16 @@ urlpatterns = [
 
     url(r'^get_arrangements/$', views.GetArrangements.as_view(), name='get_arrangements'),
 
+    url(r'^get_arrangement_teacher/(?P<teacher>[\w.@+-]+)/$',
+        views.ArrangementListForTeachers.as_view(), name='get_arrangement_teacher'),
+
     url(r'^set_arrangements/(?P<school_id>\w+)/$', views.SetArrangements.as_view(), name='set_arrangements'),
 
     url(r'^process_arrangements/$', views.AbsentTeacherPeriods.as_view(), name='process_arrangements'),
+
+    url(r'^notify_arrangements/(?P<school_id>\w+)/$', views.NotifyArrangements.as_view(), name='notify_arrangements'),
+
+    url(r'^download_arrangements/$', views.GetArrangements.as_view(), name='download_arrangements'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

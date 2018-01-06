@@ -16,18 +16,28 @@
             var row_index;
             var period_no;
 
+            $('td').click(function(){
+                row_index = $(this).parent().index();
+                col_index = $(this).index();
+            });
+
+            $("td:contains('Not Assigned')").css("color", "red");
+            $(".assigned").css("color", "color:#328332")
+
+            // show available teachers for a period
             $('.teacher_options').click(function (event) {
                 var $widget = $(this);
                 period_no = $widget.attr ('period')
                 $("#" + period_no).modal('show')
             });
 
+            // assigne an arrangement period to a teacher
             $(".btn-round-sm").click (function () {
                 $("#" + period_no).modal('hide')
                 var $widget = $(this);
                 var teacher = $widget.attr('teacherName')
                 var teacher_id = $widget.attr('teacherId')
-                alert (teacher_id)
+
                 $('#main_table tr').eq(row_index + 1).find('td').eq(5).text(teacher).css("color", "color:#328332");
                 var period = $('#main_table tr').eq(row_index + 1).find('td').eq(2).text();
                 var the_class = $('#main_table tr').eq(row_index + 1).find('td').eq(3).text();
@@ -45,23 +55,96 @@
                 $.post(url,
                     JSON.stringify(myObject),
                     function(data, status){
-                        alert("Data: " + data + "\nStatus: " + status);
+
                 });
             });
 
-            $('td').click(function(){
-                row_index = $(this).parent().index();
-                col_index = $(this).index();
+            // notify a teacher about arrangement
+            $('.send_sms').click (function ()   {
+                var recepient = 'single';
+                var period = $('#main_table tr').eq(row_index + 1).find('td').eq(2).text();
+                var the_class = $('#main_table tr').eq(row_index + 1).find('td').eq(3).text();
+                var section = $('#main_table tr').eq(row_index + 1).find('td').eq(4).text();
+                var teacher = $('#main_table tr').eq(row_index + 1).find('td').eq(5).text();
+
+                if (teacher == 'Not Assigned')  {
+                    alert ('No teacher has been assigned')
+                    exit (0)
+                }
+                var myObject = new Object();
+                myObject.recepient = recepient;
+                myObject.period = period;
+                myObject.the_class = the_class;
+                myObject.section = section;
+                u1 = "/time_table/notify_arrangements/";
+                u2 = u1.concat(school_id);
+                url = u2.concat("/");
+                $.post(url,
+                    JSON.stringify(myObject),
+                    function(data, status){
+                        if (status == 'success')    {
+                            alert('Arrangement Notification sent to ' + teacher);
+                        }
+                });
             });
 
-            $( "td:contains('Not Assigned')" ).css( "color", "red" );
+            // notify all teachers about their arrangements
+            $('#communicate_all').click (function ()    {
+                var recepient = 'all';
+                var myObject = new Object();
+                myObject.recepient = recepient;
 
+                u1 = "/time_table/notify_arrangements/";
+                u2 = u1.concat(school_id);
+                url = u2.concat("/");
+                $.post(url,
+                    JSON.stringify(myObject),
+                    function(data, status){
+                        if (status == 'success')    {
+                            alert('Arrangement Notification sent to all teachers');
+                        }
+                });
+            });
+
+            // download arrangements report
+            $('#download_report').click (function ()    {
+                u1 = "/time_table/download_arrangements/";
+                u2 = u1.concat(school_id);
+                url = u2.concat("/");
+                $.ajax({
+                    url :url,
+                    type : "GET", // http method
+                    data : {
+                    },
+                    success: function(data) {
+                        var blob=new Blob([data]);
+                        var link=document.createElement('a');
+                        link.href=window.URL.createObjectURL(blob);
+                        file_name = 'arrangements.xls';
+
+                        link.download=file_name;
+                        link.click();
+                    },
+
+                    // handle a non-successful response
+                    error : function(xhr,errmsg,err) {
+                        alert(xhr.status)
+                        alert(xhr.responseText)
+                        $('#results').html(""); // add the error to the dom
+                        console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+                    }
+                });
+            });
         });
     </script>
 
     <div class="table-responsive-xs" style="margin-left:160px">
         <h2>Arrangements</h2>
-        <p>Please select sustitute teachers for every period of Absent Teacher:</p>
+        <p>Please select sustitute teachers:
+            <span style="display:inline-block; width: 350px;"></span>
+            <button type="button" id="communicate_all" class="btn btn-primary  btn-sm">Communicate to all Teachers</button>
+            <!--<button type="button" id="download_report" class="btn btn-primary  btn-sm">Download Reports</button>-->
+        </p>
         <table id="main_table" class="table table-bordered">
             <thead>
                 <tr>
@@ -83,7 +166,13 @@
                     <td>{{ a.period }}</td>
                     <td>{{ a.the_class }}</td>
                     <td>{{ a.section }}</td>
-                    <td>{{ a.substitute_teacher }}</td>
+
+                    {% if a.substitute_teacher == 'Not Assigned' %}
+                        <td class="not_assigned">{{ a.substitute_teacher }}</td>
+                    {% else %}
+                        <td class="assigned">{{ a.substitute_teacher }}</td>
+                    {% endif %}
+
                     <td><a class="teacher_options" the_class="{{ a.the_class }}" section="{{ a.section }}"
                             period="{{ a.period }}" style="cursor: pointer;">Show Options</a></td>
                     <td><a class="send_sms" style="cursor: pointer;">Communicate</a></td>

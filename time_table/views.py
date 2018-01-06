@@ -499,12 +499,24 @@ class GetArrangements (generics.ListAPIView):
         school = School.objects.get(id=school_id)
         today = datetime.datetime.today()
 
-        stirng_date = today.strftime('%d_%m_%Y')
+        stirng_date = today.strftime('%d-%m-%Y')
         excel_file_name = 'Arrangements_' + stirng_date + '.xlsx'
         print (excel_file_name)
         output = StringIO.StringIO(excel_file_name)
         workbook = xlsxwriter.Workbook(output)
-        sheet = workbook.add_worksheet("Arrangements")
+        sheet = workbook.add_worksheet("Absent Teacher Wise")
+        sheet2 = workbook.add_worksheet("Substitute Teacher Wise")
+
+        title = workbook.add_format({
+            'bold': True,
+            'font_size': 14,
+            'align': 'center',
+            'valign': 'vcenter'
+        })
+
+        sheet.write(0, 3, 'Arrangements for %s' % stirng_date, title)
+        sheet2.write(0, 3, ('Teacher Wise Arrangements for %s' % stirng_date), title)
+
         width = 20
         sheet.set_column('B:B', width)
         sheet.set_column('F:F', width)
@@ -512,6 +524,13 @@ class GetArrangements (generics.ListAPIView):
         sheet.set_column('H:H', width)
         sheet.set_column('I:I', width)
         sheet.set_column('J:J', width)
+
+        sheet2.set_column('B:B', width)
+        sheet2.set_column('F:F', width)
+        sheet2.set_column('G:G', width)
+        sheet2.set_column('H:H', width)
+        sheet2.set_column('I:I', width)
+        sheet2.set_column('J:J', width)
 
         header = workbook.add_format({
             'bold': True,
@@ -522,42 +541,28 @@ class GetArrangements (generics.ListAPIView):
             'border': 1
         })
 
-        row = 0
+        row = 2
         sheet.write(row, 0, ugettext("S No."), header)
         sheet.write(row, 1, ugettext("Absent Teacher"), header)
-        sheet.write(row, 2, ugettext("Class"), header)
-        sheet.write(row, 3, ugettext("Section"), header)
-        sheet.write(row, 4, ugettext("Period"), header)
+        sheet.write(row, 2, ugettext("Period"), header)
+        sheet.write(row, 3, ugettext("Class"), header)
+        sheet.write(row, 4, ugettext("Section"), header)
         sheet.write(row, 5, ugettext("Substitute Teacher"), header)
-        sheet.merge_range('G1:I1', ugettext("Suggested Teachers For Substitution"), header)
 
         # get the list of absent teachers
         try:
             row = row + 1
-            excluded_list = []
-            excluded = ExcludedFromArrangements1.objects.filter(school=school)
-            for e in excluded:
-                excluded_list.append(e.teacher.email)
-                print (excluded_list)
-            ta = TeacherAttendance.objects.filter(school=school, date=today)
 
-            # all the teachers who are absent today, should also be part of excluded list
-            for t in ta:
-                excluded_list.append(t.teacher.email)
-            print ('excluded list including today absent teachers: ')
-            print (excluded_list)
+            ta = TeacherAttendance.objects.filter(school=school, date=today).order_by ('teacher__first_name')
             print (ta)
             s_no = 1
-            arrrangements_required = []
             for t in ta:
                 sheet.write_number (row, 0, s_no)
                 d = calendar.day_name[today.weekday()]
                 print ('day = %s' % d)
                 day = DaysOfWeek.objects.get (day=d)
-                arrangement_unit = {}
                 absent_teacher = t.teacher
                 teacher_name = absent_teacher.first_name + ' ' + absent_teacher.last_name
-                arrangement_unit['teacher'] = teacher_name
                 sheet.write_string(row, 1, teacher_name)
 
                 # get the period list that this teacher was supposed to take today
@@ -567,54 +572,54 @@ class GetArrangements (generics.ListAPIView):
                     print ('periods = ')
                     print (teacher_periods)
                     for tp in teacher_periods:
-                        the_class = tp.the_class
-                        arrangement_unit['the_class'] = the_class.standard
-                        sheet.write_string(row, 2, the_class.standard)
-                        section = tp.section
-                        arrangement_unit['section'] = section.section
-                        sheet.write_string(row, 3, section.section)
                         period = tp.period
-                        arrangement_unit['period'] = period.period
-                        sheet.write_string(row, 4, period.period)
+                        sheet.write_string(row, 2, period.period)
+                        the_class = tp.the_class
+                        sheet.write_string(row, 3, the_class.standard)
+                        section = tp.section
+                        sheet.write_string(row, 4, section.section)
 
-                        arrrangements_required.append(arrangement_unit)
-                        print ('at this stage arrangements_required = ')
-                        print (arrrangements_required)
-
-                        # now, find which teacher is free on this period
-                        col = 6
-                        all_teachers = Teacher.objects.filter (school=school).order_by ('first_name')
-                        for a_teacher in all_teachers:
-                            if a_teacher.email not in excluded_list:
-                                print ('now checking %s %s availability for period # %s on %s' %
-                                       (a_teacher.first_name, a_teacher.last_name, period.period, d))
-                                try:
-                                    engaged = TeacherPeriods.objects.get (teacher=a_teacher, day=day, period=period)
-                                    if engaged:
-                                        print ('%s %s is not available on %s for period: %s' %
-                                               (a_teacher.first_name, a_teacher.last_name, d, period.period))
-                                    else:
-                                        print ('%s %s is available on %s for period: %s. '
-                                               'will be added to available list' %
-                                               (a_teacher.first_name, a_teacher.last_name, d, period.period))
-                                except Exception as e:
-                                    print ('exception 211117-P from time_table views.py %s %s' %
-                                           (e.message, type(e)))
-                                    print ('%s %s is available on %s for period: %s. will be added to available list'
-                                           % (a_teacher.first_name, a_teacher.last_name, d, str (period.period)))
-                                    teacher_login_id = a_teacher.email
-                                    sheet.write_string (row, col, teacher_login_id)
-                                    col = col + 1
-                            else:
-                                print ('%s %s is in excluded list. Hence not being considered for Arrangements'
-                                       % (a_teacher.first_name, a_teacher.last_name))
+                        # see if an arrangement has been made for this period
+                        try:
+                            arrangement = Arrangements.objects.get(school=school, date=today, period=period,
+                                                                   the_class=the_class, section=section)
+                            substitute_teacher = arrangement.teacher.first_name + ' ' + arrangement.teacher.last_name
+                            sheet.write_string(row, 5, substitute_teacher)
+                        except Exception as e:
+                            print ('exception 06012018-D from time_table views.py %s %s' % (e.message, type(e)))
+                            print ('arrangement not carried out for period %s, class %s-%s of %s' %
+                                   (period.period, the_class.standard, section.section, teacher_name))
+                            sheet.write_string(row, 5, 'Not Assigned')
                         row = row + 1
                 except Exception as e:
                     print ('exception 211117-A from time_table views.py %s %s' % (e.message, type(e)))
                     print ('looks like %s %s had no periods today' % (absent_teacher.first_name,
                                                                       absent_teacher.last_name))
                 s_no = s_no + 1
-            row = row + 1
+
+        except Exception as e:
+            print ('exception 211117-B from time_table views.py %s %s' % (e.message, type(e)))
+
+        # now, get the report substitute teacher wise
+        row = 2
+        sheet2.write(row, 0, ugettext("S No."), header)
+        sheet2.write(row, 1, ugettext("Substitute Teacher"), header)
+        sheet2.write(row, 2, ugettext("Period"), header)
+        sheet2.write(row, 3, ugettext("Class"), header)
+        row = row + 1
+
+        try:
+            s_no = 1
+            arrangements = Arrangements.objects.filter(school=school, date=today).order_by ('teacher__first_name')
+            for arrangement in arrangements:
+                substitute_teacher = arrangement.teacher.first_name + ' ' + arrangement.teacher.last_name
+                sheet2.write_string(row, 0, str(s_no))
+                sheet2.write_string(row, 1, substitute_teacher)
+                sheet2.write_string(row, 2, arrangement.period.period)
+                class_sec = arrangement.the_class.standard + '-' + arrangement.section.section
+                sheet2.write_string(row, 3, class_sec)
+                row = row + 1
+                s_no = s_no + 1
             workbook.close()
 
             response = HttpResponse(content_type='application/vnd.ms-excel')
@@ -622,7 +627,8 @@ class GetArrangements (generics.ListAPIView):
             response.write(output.getvalue())
             return response
         except Exception as e:
-            print ('exception 211117-B from time_table views.py %s %s' % (e.message, type(e)))
+            print ('exception 06012018-E from time_table views.py %s %s' % (e.message, type(e)))
+            print ('No arrangements today')
             workbook.close()
             response = HttpResponse(content_type='application/vnd.ms-excel')
             response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
@@ -700,3 +706,75 @@ class SetArrangements (generics.ListCreateAPIView):
             print ('Exception 05012018-B from time_table views.py %s %s' % (e.message, type(e)))
             return HttpResponse(status=201)
 
+
+class NotifyArrangements(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def post(self, request, *args, **kwargs):
+        print ('from class based view')
+        context_dict = {
+
+        }
+        context_dict['user_type'] = 'school_admin'
+        context_dict['header'] = 'Set Arrangement Periods'
+
+        school_id = self.kwargs['school_id']
+        school = School.objects.get(id=school_id)
+        print ('setting arragnements for %s' % school.school_name)
+
+        print('request=')
+        print(request.body)
+        try:
+            data = json.loads(request.body)
+            print ('json=')
+            print (data)
+
+            recepient = data['recepient']
+            if recepient == 'single':
+                p = data['period']
+                period = Period.objects.get(school=school, period=p)
+                tc = data['the_class']
+                the_class = Class.objects.get(school=school, standard=tc)
+                s = data['section']
+                section = Section.objects.get(school=school, section=s)
+
+                # get the teacher assigned for arrangement for this period/class/section
+                try:
+                    arrangement = Arrangements.objects.get (school=school, date = datetime.date.today(),
+                                                        period=period, the_class=the_class, section=section)
+                    teacher = arrangement.teacher
+                    name = teacher.first_name + ' ' + teacher.last_name
+                    message = 'Dear %s, today you have to take arrangement for period # %s in class %s-%s' % \
+                              (name, p, tc, s)
+                    print (message)
+                    sms.send_sms1(school, "admin (web interface)", teacher.mobile, message, "Arrangment Notification")
+                    return HttpResponse (status=200)
+                except Exception as e:
+                    print ('exception 06012018-B from time_table views.py %s %s' % (e.message, type(e)))
+                    print ('failed to retrieve arrangement details for period # %s in class %s-%s' % (p, tc, s))
+                    return HttpResponse (status=201)
+            else:
+                try:
+                    arrangements = Arrangements.objects.filter (school=school, date = datetime.date.today())
+                    for arrangement in arrangements:
+                        teacher = arrangement.teacher
+                        p = arrangement.period.period
+                        tc = arrangement.the_class.standard
+                        s = arrangement.section.section
+
+                        name = teacher.first_name + ' ' + teacher.last_name
+                        message = 'Dear %s, today you have to take arrangement for period # %s in class %s-%s' % \
+                                  (name, p, tc, s)
+                        print (message)
+                        sms.send_sms1(school, "admin (web interface)", teacher.mobile,
+                                      message, "Arrangment Notification")
+                    return HttpResponse (status=200)
+                except Exception as e:
+                    print ('exception 06012018-C from time_table views.py %s %s' % (e.message, type(e)))
+                    print ('failed to retrieve arrangement details for school: %s in class %s-%s' %
+                           (school.school_name))
+                    return HttpResponse (status=201)
+        except Exception as e:
+            print ('failed to load json from request')
+            print ('Exception 06012018-A from time_table views.py %s %s' % (e.message, type(e)))
+            return HttpResponse(status=201)

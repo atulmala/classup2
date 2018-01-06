@@ -35,6 +35,7 @@ admin.site.register (TimeTable, TimeTableAdmin)
 
 class TeacherPeriodsAdmin (admin.ModelAdmin):
     list_display = ('school', 'day', 'the_class', 'section', 'period', 'teacher',)
+    list_filter = ('day',)
     search_fields = ('teacher__first_name', 'teacher__last_name',)
 
 
