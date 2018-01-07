@@ -108,32 +108,41 @@
 
             // download arrangements report
             $('#download_report').click (function ()    {
-                u1 = "/time_table/download_arrangements/";
-                u2 = u1.concat(school_id);
-                url = u2.concat("/");
-                $.ajax({
-                    url :url,
-                    type : "GET", // http method
-                    data : {
-                    },
-                    success: function(data) {
-                        var blob=new Blob([data]);
-                        var link=document.createElement('a');
-                        link.href=window.URL.createObjectURL(blob);
-                        file_name = 'arrangements.xls';
+                url = "/time_table/download_arrangements/";
 
-                        link.download=file_name;
-                        link.click();
-                    },
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', url, true);
+                xhr.responseType = 'blob';
 
-                    // handle a non-successful response
-                    error : function(xhr,errmsg,err) {
-                        alert(xhr.status)
-                        alert(xhr.responseText)
-                        $('#results').html(""); // add the error to the dom
-                        console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+                xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8');
+                xhr.onload = function(e) {
+                    if (this.status == 200) {
+                        var blob = new Blob([this.response], {type: 'application/vnd.ms-excel'});
+                        var downloadUrl = URL.createObjectURL(blob);
+                        var a = document.createElement("a");
+                        a.href = downloadUrl;
+                        var today = new Date();
+                        var dd = today.getDate();
+                        var mm = today.getMonth()+1; //January is 0!
+                        var yyyy = today.getFullYear();
+
+                        if(dd<10) {
+                            dd = '0'+dd
+                        }
+
+                        if(mm<10) {
+                            mm = '0'+mm
+                        }
+
+                        today = mm + '-' + dd + '-' + yyyy;
+                        a.download = 'Arrangements_' + today + '.xlsx';
+                        document.body.appendChild(a);
+                        a.click();
+                    } else {
+                        alert('Unable to download excel.')
                     }
-                });
+                };
+                xhr.send();
             });
         });
     </script>
@@ -143,7 +152,7 @@
         <p>Please select sustitute teachers:
             <span style="display:inline-block; width: 350px;"></span>
             <button type="button" id="communicate_all" class="btn btn-primary  btn-sm">Communicate to all Teachers</button>
-            <!--<button type="button" id="download_report" class="btn btn-primary  btn-sm">Download Reports</button>-->
+            <button type="button" id="download_report" class="btn btn-primary  btn-sm">Download Reports</button>
         </p>
         <table id="main_table" class="table table-bordered">
             <thead>

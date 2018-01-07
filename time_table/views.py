@@ -487,6 +487,78 @@ class AbsentTeacherPeriods (generics.ListAPIView):
             return response
 
 
+class GenerateEntrySheet (generics.ListAPIView):
+    def get(self, request, *args, **kwargs):
+        school_id = self.kwargs['school_id']
+        school = School.objects.get(id=school_id)
+        excel_file_name = 'TimeTable.xlsx'
+        print (excel_file_name)
+        output = StringIO.StringIO(excel_file_name)
+        workbook = xlsxwriter.Workbook(output)
+        sheet = workbook.add_worksheet("Teacher Wise Time Table")
+        sheet.freeze_panes(2, 4)
+
+        header = workbook.add_format({
+            'bold': True,
+            'bg_color': '#F7F7F7',
+            'color': 'black',
+            'align': 'center',
+            'valign': 'top',
+            'border': 1
+        })
+        sheet.merge_range('A1:A2', 'S No', header)
+        sheet.merge_range('B1:C1', 'Teacher Details', header)
+        sheet.merge_range('D1:D2', 'Day', header)
+        sheet.merge_range('E1:G1', 'I', header)
+        sheet.merge_range('H1:J1', 'II', header)
+        sheet.merge_range('K1:M1', 'III', header)
+        sheet.merge_range('N1:P1', 'IV', header)
+        sheet.merge_range('Q1:S1', 'V', header)
+        sheet.merge_range('T1:V1', 'VI', header)
+        sheet.merge_range('W1:Y1', 'VII', header)
+        sheet.merge_range('Z1:AB1', 'VIII', header)
+
+        sheet.write_string(1, 1, 'ID', header)
+        sheet.write_string(1, 2, 'Name', header)
+        row = 1
+        col = 4
+        for period in range(1, 9):
+            sheet.write_string(row, col, 'Class', header)
+            col = col + 1
+            sheet.write_string(row, col, 'Sec', header)
+            col = col + 1
+            sheet.write_string(row, col, 'Subject', header)
+            col = col + 1
+        row = row + 1
+        col = 0
+        sr_no = 1
+        teacher_list = Teacher.objects.filter(school=school).order_by ('first_name')
+        for teacher in teacher_list:
+            sheet.write_string(row, col, str(sr_no))
+            col = col + 1
+            sheet.write_string(row, col, teacher.email)
+            col = col + 1
+            teacher_name = teacher.first_name + ' ' + teacher.last_name
+            sheet.write_string(row, col, teacher_name)
+            col = col + 1
+            days = DaysOfWeek.objects.all()
+            for day in days:
+                if day.day != 'Sunday':
+                    sheet.write_string(row, col, day.day)
+                    row = row + 1
+            col = 0
+            sr_no = sr_no + 1
+
+
+
+        workbook.close()
+
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
+        response.write(output.getvalue())
+        return response
+
+
 class GetArrangements (generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         context_dict = {

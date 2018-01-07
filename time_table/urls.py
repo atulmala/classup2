@@ -22,6 +22,8 @@ urlpatterns = [
     url(r'^notify_arrangements/(?P<school_id>\w+)/$', views.NotifyArrangements.as_view(), name='notify_arrangements'),
 
     url(r'^download_arrangements/$', views.GetArrangements.as_view(), name='download_arrangements'),
+
+    url(r'^generate_entry_sheet/$', views.GenerateEntrySheet.as_view(), name='generate_entry_sheet'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
