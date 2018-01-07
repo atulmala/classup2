@@ -85,36 +85,33 @@
                 selected_student = 'No Student Selected'
                 alert('Result will be prepared for whole class')
             }
+            url = url + '?whole_class=' + whole_class + '&selected_student=' + selected_student
 
-            $.ajax({
-                url :url,
-                type : "GET", // http method
-                data : {
-                        whole_class : whole_class,
-                        selected_student: selected_student
-                },
-                success: function(data) {
-                    var blob=new Blob([data]);
-                    var link=document.createElement('a');
-                    link.href=window.URL.createObjectURL(blob);
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', url, true);
+            xhr.responseType = 'blob';
+
+            xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8');
+            xhr.onload = function(e) {
+                if (this.status == 200) {
+                    var blob = new Blob([this.response], {type: 'application/pdf'});
+                    var downloadUrl = URL.createObjectURL(blob);
+                    var a = document.createElement("a");
+                    a.href = downloadUrl;
                     if (whole_class == "true")  {
-                        file_name = the_class + "-" + section + "_Term1_Results";
+                        file_name = the_class + "-" + section + "_Term1_Results.pdf";
                     }
                     else    {
                         file_name = selected_student + "_Term1_Results"
                     }
-                    link.download=file_name;
-                    link.click();
-                },
-
-                // handle a non-successful response
-                error : function(xhr,errmsg,err) {
-                    alert(xhr.status)
-                    alert(xhr.responseText)
-                    $('#results').html(""); // add the error to the dom
-                    console.log(xhr.status + ": " + xhr.responseText); // provide a bit more info about the error to the console
+                    a.download = file_name;
+                    document.body.appendChild(a);
+                    a.click();
+                } else {
+                        alert('Unable to download results.')
                 }
-            });
+            };
+            xhr.send()
         }
     </script>
     <div class="main">
