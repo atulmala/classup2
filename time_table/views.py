@@ -489,7 +489,7 @@ class AbsentTeacherPeriods (generics.ListAPIView):
 
 class GenerateEntrySheet (generics.ListAPIView):
     def get(self, request, *args, **kwargs):
-        school_id = self.kwargs['school_id']
+        school_id = request.session['school_id']
         school = School.objects.get(id=school_id)
         excel_file_name = 'TimeTable.xlsx'
         print (excel_file_name)
@@ -548,8 +548,6 @@ class GenerateEntrySheet (generics.ListAPIView):
                     row = row + 1
             col = 0
             sr_no = sr_no + 1
-
-
 
         workbook.close()
 
@@ -758,8 +756,13 @@ class SetArrangements (generics.ListCreateAPIView):
                 record = Arrangements.objects.get(school=school, date=datetime.date.today(),
                                                   the_class=the_class, section=section, period=period)
                 current_teacher = record.teacher.first_name + ' ' + record.teacher.last_name
-                print ('arrangement for period # %s of class %s-%s was already assinged to %s. This will be updated...'
-                       % (p, tc, s, current_teacher))
+                print ('arrangement for period # %s of class %s-%s was already assinged to %s. '
+                       'Need to send cancellation message...' % (p, tc, s, current_teacher))
+                message = 'Dear %s, arrangement assignment for period %s class %s-%s is cancelled' % \
+                          (current_teacher, p, tc, s)
+                print (message)
+                mobile = record.teacher.mobile
+                # sms.send_sms1(school, 'admin (web interface', mobile, message, 'Arrangement Cancellation')
                 record.teacher = teacher
                 record.save()
                 print ('arrangement for period # %s of class %s-%s is now assinged to: %s.' % (p, tc, s, new_teacher))
@@ -816,7 +819,7 @@ class NotifyArrangements(generics.ListCreateAPIView):
                                                         period=period, the_class=the_class, section=section)
                     teacher = arrangement.teacher
                     name = teacher.first_name + ' ' + teacher.last_name
-                    message = 'Dear %s, today you have to take arrangement for period # %s in class %s-%s' % \
+                    message = 'Dear %s, today you have to take arrangement for period no %s in class %s-%s' % \
                               (name, p, tc, s)
                     print (message)
                     sms.send_sms1(school, "admin (web interface)", teacher.mobile, message, "Arrangment Notification")
