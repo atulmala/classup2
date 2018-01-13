@@ -47,7 +47,6 @@
         $(function () {
             var school_id = {{ school_id }}
             $('.list-group.checked-list-box .list-group-item').each(function () {
-
                 // Settings
                 var $widget = $(this),
                     $checkbox = $('<input type="checkbox" class="hidden" />'),
@@ -119,7 +118,7 @@
                     absentees[counter] = $(li).attr("data-teacherid");
                     counter++;
                 });
-                if (confirm("Are you sure to move to the next Step?") == true) {
+                if (confirm("Are you sure?") == true) {
                     u1 = "/teachers/process_attendance/";
                     u2 = u1.concat(school_id);
                     url = u2.concat("/");
@@ -134,9 +133,7 @@
                             alert("Attendance marked. You can now move on for Arrangements Processing");
                         }
                     });
-
                 } else {
-
                 }
             });
         });
@@ -168,7 +165,7 @@
         </div>
 
         <div class="col-xs-4">
-            <a href="#" class="next" id="next">Next &raquo;</a>
+            <a href="#" class="next" id="next">Done &raquo;</a>
         </div>
     </div>
 {% endblock %}

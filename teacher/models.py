@@ -15,6 +15,9 @@ class Teacher(models.Model):
     mobile = models.CharField(max_length=20, blank=False, null=True)
     active_status = models.BooleanField(default=True)
 
+    class Meta:
+        ordering = ('first_name', )
+
     def __unicode__(self):
         return self.first_name + ' ' + self.last_name
 
