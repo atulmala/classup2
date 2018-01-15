@@ -838,7 +838,7 @@ class NotifyArrangements(generics.ListCreateAPIView):
                         s = arrangement.section.section
 
                         name = teacher.first_name + ' ' + teacher.last_name
-                        message = 'Dear %s, today you have to take arrangement for period # %s in class %s-%s' % \
+                        message = 'Dear %s, today you have to take arrangement for period %s in class %s-%s' % \
                                   (name, p, tc, s)
                         print (message)
                         sms.send_sms1(school, "admin (web interface)", teacher.mobile,

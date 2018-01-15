@@ -183,6 +183,7 @@ def setup_higher_class_subject_mapping(request):
                                 if erp == partial_erp:
                                     try:
                                         mapping = HigherClassMapping.objects.get(student=s, subject=subject)
+                                        print (mapping)
                                         print ('subject %s mapping for %s already exist. Not doing again.' 
                                                % (sub, student_name))
                                     except Exception as e:
@@ -416,8 +417,6 @@ def prepare_results(request, school_id, the_class, section):
         for s in scheme:
             sub_dict[s.sequence] = s.subject
         print (sub_dict)
-
-
 
         # 20/10/2017 - now the grand loop starts!
 
