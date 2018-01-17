@@ -14,7 +14,6 @@ from rest_framework.authentication import SessionAuthentication, BasicAuthentica
 from rest_framework import generics
 
 from setup.forms import ExcelFileUploadForm
-from authentication.views import JSONResponse
 from setup.views import validate_excel_extension
 
 from teacher.models import TeacherAttendance

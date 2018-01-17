@@ -3,6 +3,9 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from rest_framework import generics
+
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import inch
@@ -19,7 +22,12 @@ from academics.models import Class, Section, Subject, ThirdLang, ClassTest, \
     Exam, TermTestResult, TestResults, CoScholastics
 
 from .models import Scheme, HigherClassMapping
-from .forms import TermResultForm
+from .forms import TermResultForm, ResultSheetForm
+
+
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    def enforce_csrf(self, request):
+        return  # To not perform the csrf check previously happening
 
 
 def setup_scheme(request):
@@ -797,3 +805,16 @@ def prepare_results(request, school_id, the_class, section):
             c.save()
             return response
     return HttpResponse()
+
+
+class ResultSheet(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def get(self, request, *args, **kwargs):
+        context_dict = {
+
+        }
+        school_id = request.session['school_id']
+        form = ResultSheetForm(school_id=school_id)
+        context_dict['form'] = form
+        return render(request, 'classup/result_sheet.html', context_dict)

@@ -20,4 +20,6 @@ urlpatterns = patterns(
 
     url (r'^setup_higher_class_subject_mapping/$', views.setup_higher_class_subject_mapping,
          name='setup_higher_class_subject_mapping'),
+
+    url (r'result_sheet/$', views.ResultSheet.as_view(), name='result_sheet'),
 )

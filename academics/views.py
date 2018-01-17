@@ -499,6 +499,7 @@ def create_test1(request, school_id, the_class, section, subject,
                                                       current_class__standard=the_class, active_status=True)
                 higher_classes = ['XI', 'XII']
                 ninth_tenth  =['IX', 'X']
+                middle_classes = ['V', 'VI', 'VII', 'VIII']
                 for student in student_list:
                     # 06/11/2017 if the subject is third language or elective subject (class XI & XII),
                     #  we need to filter students
@@ -621,6 +622,24 @@ def create_test1(request, school_id, the_class, section, subject,
                                     print ('failed to create test resutls')
                                     print ('Exception 071117-A from academics views.py %s %s' % (e.message, type(e)))
                                     return HttpResponse('Failed to create term test results')
+                        if the_class in middle_classes:
+                            test_result = TestResults(class_test=test, roll_no=student.roll_number,
+                                                      student=student, marks_obtained=-5000.00, grade='')
+                            try:
+                                test_result.save()
+                                if test_type == 'term':
+                                    term_test_result = TermTestResult(test_result=test_result,
+                                                                      periodic_test_marks=-5000.0,
+                                                                      note_book_marks=-5000.0,
+                                                                      sub_enrich_marks=-5000.0)
+                                    term_test_result.save()
+
+                                print (' test results successfully created for % s %s' % (
+                                    student.fist_name, student.last_name))
+                            except Exception as e:
+                                print ('failed to create test resutls')
+                                print ('Exception 17012018-A from academics views.py %s %s' % (e.message, type(e)))
+                                return HttpResponse('Failed to create term test results')
             else:
                 print ('Test already exist')
                 return HttpResponse('Test already exist')

@@ -30,3 +30,14 @@ class TermResultForm(forms.Form):
         self.fields['school_id'] = forms.CharField(initial=school_id)
 
         self.fields['school_id'].widget = HiddenInput()
+
+
+class ResultSheetForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        school_id = kwargs.pop('school_id')
+        super(ResultSheetForm, self).__init__(*args, **kwargs)
+        school = School.objects.get(id=school_id)
+        self.fields['the_class'] = forms.ModelChoiceField(queryset=Class.objects.filter(school=school).
+                                                          order_by('sequence'), label='Class')
+        self.fields['section'] = forms.ModelChoiceField(queryset=Section.objects.filter(school=school).
+                                                        order_by('section'), label='Section')
