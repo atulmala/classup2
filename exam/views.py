@@ -12,6 +12,8 @@ from reportlab.lib.units import inch
 from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
 import xlrd
+import xlsxwriter
+import StringIO
 
 from setup.forms import ExcelFileUploadForm
 from setup.models import School
@@ -810,11 +812,54 @@ def prepare_results(request, school_id, the_class, section):
 class ResultSheet(generics.ListCreateAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
+    higher_classes = ['XI', 'XII']
+    ninth_tenth = ['IX', 'X']
+    middle_classes = ['V', 'VI', 'VII', 'VIII']
+
     def get(self, request, *args, **kwargs):
         context_dict = {
 
         }
+        context_dict['school_name'] = request.session['school_name']
+        context_dict['header'] = 'Download Result Sheets'
+
+        if request.session['user_type'] == 'school_admin':
+            context_dict['user_type'] = 'school_admin'
+
         school_id = request.session['school_id']
         form = ResultSheetForm(school_id=school_id)
         context_dict['form'] = form
         return render(request, 'classup/result_sheet.html', context_dict)
+
+    def post(self, request, *args, **kwargs):
+        context_dict = {
+
+        }
+        context_dict['school_name'] = request.session['school_name']
+        context_dict['header'] = 'Download Result Sheets'
+
+        if request.session['user_type'] == 'school_admin':
+            context_dict['user_type'] = 'school_admin'
+        if "cancel" in request.POST:
+            return render(request, 'classup/result_sheet.html', context_dict)
+        else:
+            school_id = request.session['school_id']
+            school = School.objects.get(id=school_id)
+            form = ResultSheetForm(request.POST, school_id=school_id)
+
+            if form.is_valid():
+                the_class = form.cleaned_data['the_class']
+                section = form.cleaned_data['section']
+
+                excel_file_name = 'Result_Sheet' + str(the_class.standard) + '_' + str(section.section)
+
+                output = StringIO.StringIO(excel_file_name)
+                workbook = xlsxwriter.Workbook(output)
+                result_sheet = workbook.add_worksheet("Result Sheet")
+
+            else:
+                error = 'You have missed to select either Class, or Section'
+                form = ResultSheetForm(request)
+                context_dict['form'] = form
+                form.errors['__all__'] = form.error_class([error])
+                return render(request, 'classup/result_sheet.html', context_dict)

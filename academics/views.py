@@ -500,6 +500,7 @@ def create_test1(request, school_id, the_class, section, subject,
                 higher_classes = ['XI', 'XII']
                 ninth_tenth  =['IX', 'X']
                 middle_classes = ['V', 'VI', 'VII', 'VIII']
+                junior_classes = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV']
                 for student in student_list:
                     # 06/11/2017 if the subject is third language or elective subject (class XI & XII),
                     #  we need to filter students
@@ -622,7 +623,7 @@ def create_test1(request, school_id, the_class, section, subject,
                                     print ('failed to create test resutls')
                                     print ('Exception 071117-A from academics views.py %s %s' % (e.message, type(e)))
                                     return HttpResponse('Failed to create term test results')
-                        if the_class in middle_classes:
+                        if the_class in middle_classes or the_class in junior_classes:
                             test_result = TestResults(class_test=test, roll_no=student.roll_number,
                                                       student=student, marks_obtained=-5000.00, grade='')
                             try:
