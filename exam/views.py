@@ -21,7 +21,7 @@ from setup.views import validate_excel_extension
 
 from student.models import Student, DOB
 from academics.models import Class, Section, Subject, ThirdLang, ClassTest, \
-    Exam, TermTestResult, TestResults, CoScholastics
+    Exam, TermTestResult, TestResults, CoScholastics, ClassTeacher
 
 from .models import Scheme, HigherClassMapping
 from .forms import TermResultForm, ResultSheetForm
@@ -850,12 +850,120 @@ class ResultSheet(generics.ListCreateAPIView):
             if form.is_valid():
                 the_class = form.cleaned_data['the_class']
                 section = form.cleaned_data['section']
+                print ('result sheet will be generated for %s-%s' % (the_class.standard, section.section))
 
-                excel_file_name = 'Result_Sheet' + str(the_class.standard) + '_' + str(section.section)
+                excel_file_name = 'Result_Sheet' + str(the_class.standard) + '_' + str(section.section) + '.xlsx'
 
                 output = StringIO.StringIO(excel_file_name)
                 workbook = xlsxwriter.Workbook(output)
                 result_sheet = workbook.add_worksheet("Result Sheet")
+
+                title = workbook.add_format({
+                    'bold': True,
+                    'font_size': 14,
+                    'align': 'center',
+                    'valign': 'vcenter'
+                })
+                header = workbook.add_format({
+                    'bold': True,
+                    'bg_color': '#F7F7F7',
+                    'color': 'black',
+                    'align': 'center',
+                    'valign': 'top',
+                    'border': 1
+                })
+                cell_center = workbook.add_format({
+                    'align': 'center',
+                    'valign': 'vcenter',
+                    'text_wrap': True,
+                    'bold': True
+                })
+                cell_center.set_border()
+                vertical_text = workbook.add_format({
+                    'align': 'center',
+                    'valign': 'vcenter',
+                    'bold': True,
+                    'rotation': 90
+                })
+                vertical_text.set_border()
+                cell_left = workbook.add_format({
+                    'align': 'left',
+                    'valign': 'top'
+                })
+
+                result_sheet.merge_range ('A1:AI1', 'JAGRAN PUBLIC SCHOOL NOIDA',  title)
+                title_text = 'CONSILIDATED RESULT SHEET (2017-2018) FOR CLASS %s-%s' % \
+                             (the_class.standard, section.section)
+                print (title_text)
+                result_sheet.merge_range ('A2:AI2', title_text, title)
+
+                # get the name of the class teacher
+                try:
+                    ct = ClassTeacher.objects.get (school=school, standard=the_class, section=section)
+                    class_teacher = ct.class_teacher.first_name + ' ' + ct.class_teacher.last_name
+                    result_sheet.merge_range ('A3:D3', ('CLASS TEACHER: %s' % class_teacher), cell_left)
+                except Exception as e:
+                    print ('exception 19012018-A from exam views.py %s %s' % (e.message, type(e)))
+                    print ('class teacher for class %s-%s is not set!' % (the_class.standard, section.section))
+
+                result_sheet.merge_range ('A4:A7', 'S No', cell_center)
+                result_sheet.merge_range ('B4:B7', 'Admn. No\nReg. No', cell_center)
+                result_sheet.set_column ('A:A', 3)
+                result_sheet.set_column ('C:C', 4)
+                result_sheet.merge_range ('C4:C7', 'House', vertical_text)
+                result_sheet.set_column ('D:D', 12)
+                result_sheet.merge_range('D4:D7', 'Student Name', cell_center)
+                result_sheet.merge_range ('E4:O4', 'Term I (800)', cell_center)
+                result_sheet.merge_range ('P4:Z4', 'Term II (800)', cell_center)
+                result_sheet.set_column ('E:AC', 6)
+                result_sheet.set_column ('AD:AI', 3)
+                result_sheet.set_column ('G:G', 6.5)
+                result_sheet.set_column ('R:R', 6.5)
+
+                result_sheet.merge_range (3, 26, 3, 28, 'Overall', cell_center)
+                result_sheet.merge_range (4, 26, 4, 28, '(A+B)', cell_center)
+                result_sheet.merge_range (5, 26, 5, 28, 'Grand Total(1600))', cell_center)
+                result_sheet.merge_range (3, 29, 6, 29, 'Rank', vertical_text)
+                result_sheet.merge_range (3, 30, 6, 30, 'Work Ed.', vertical_text)
+                result_sheet.merge_range (3, 31, 6, 31, 'Art/Music', vertical_text)
+                result_sheet.merge_range (3, 32, 6, 32, 'Health/Phy Ed.', vertical_text)
+                result_sheet.merge_range (3, 33, 6, 33, 'Discipline', vertical_text)
+                result_sheet.merge_range(3, 34, 6, 34, 'Result/Remark', cell_center)
+                result_sheet.set_column ('AI:AI', 12)
+
+                sub_short = ['Eng\n(100)', 'Hindi\n(100)', 'Sanskrit\n(100)', 'French\n(100)', 'Maths\n(100)',
+                             'Science\n(100)', 'SST\n(100)', 'Comp.\n(100)']
+                sub_full = ['English', 'Hindi', 'Sanskrit', 'French', 'Mathematics', 'Science', 'Social Studies',
+                            'Computer']
+                col_range = 12
+                for col in range (4, col_range):
+                    result_sheet.merge_range (4, col, 6, col, sub_short[col-4], cell_center)
+                result_sheet.merge_range ('M5:O5', '(A)', cell_center)
+                result_sheet.merge_range ('M6:O6', 'Total(800)', cell_center)
+                result_sheet.write_string ('M7', 'Marks', cell_center)
+                result_sheet.write_string ('N7', '%', cell_center)
+                result_sheet.write_string ('O7', 'Grade', cell_center)
+
+                col_range = 23
+                for col in range(15, col_range):
+                    result_sheet.merge_range(4, col, 6, col, sub_short[col - 15], cell_center)
+                result_sheet.merge_range('X5:Z5', '(B)', cell_center)
+                result_sheet.merge_range('X6:Z6', 'Total(800)', cell_center)
+                result_sheet.write_string('X7', 'Marks', cell_center)
+                result_sheet.write_string('Y7', '%', cell_center)
+                result_sheet.write_string('Z7', 'Grade', cell_center)
+                result_sheet.write_string(6, 26, 'Marks', cell_center)
+                result_sheet.write_string(6, 27, '%', cell_center)
+                result_sheet.write_string(6, 28, 'Grade', cell_center)
+
+
+                workbook.close()
+                response = HttpResponse(content_type='application/vnd.ms-excel')
+                response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
+                response.write(output.getvalue())
+                return response
+
+
 
             else:
                 error = 'You have missed to select either Class, or Section'

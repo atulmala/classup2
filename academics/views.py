@@ -628,12 +628,21 @@ def create_test1(request, school_id, the_class, section, subject,
                                                       student=student, marks_obtained=-5000.00, grade='')
                             try:
                                 test_result.save()
+
+                                # 18/01/2018 - PA, Notebook submission & Sub Enrichment to be created only for middle
                                 if test_type == 'term':
-                                    term_test_result = TermTestResult(test_result=test_result,
-                                                                      periodic_test_marks=-5000.0,
-                                                                      note_book_marks=-5000.0,
-                                                                      sub_enrich_marks=-5000.0)
-                                    term_test_result.save()
+                                    print ('determining whether %s is a junior or middle class' % the_class)
+                                    if the_class in middle_classes:
+                                        print ('%s is a middle class. Hence creating PA, Notebook Sub & Sub Enrich'
+                                               % the_class)
+                                        term_test_result = TermTestResult(test_result=test_result,
+                                                                          periodic_test_marks=-5000.0,
+                                                                          note_book_marks=-5000.0,
+                                                                          sub_enrich_marks=-5000.0)
+                                        term_test_result.save()
+                                    else:
+                                        print ('%s is a junior class. Hence not creating PA, Notbook Sub & Sub enrich'
+                                               % the_class)
 
                                 print (' test results successfully created for % s %s' % (
                                     student.fist_name, student.last_name))
