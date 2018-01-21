@@ -13,6 +13,7 @@ from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
 import xlrd
 import xlsxwriter
+from xlsxwriter.utility import xl_range
 import StringIO
 
 from setup.forms import ExcelFileUploadForm
@@ -812,10 +813,6 @@ def prepare_results(request, school_id, the_class, section):
 class ResultSheet(generics.ListCreateAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
-    higher_classes = ['XI', 'XII']
-    ninth_tenth = ['IX', 'X']
-    middle_classes = ['V', 'VI', 'VII', 'VIII']
-
     def get(self, request, *args, **kwargs):
         context_dict = {
 
@@ -847,16 +844,23 @@ class ResultSheet(generics.ListCreateAPIView):
             school = School.objects.get(id=school_id)
             form = ResultSheetForm(request.POST, school_id=school_id)
 
+            higher_classes = ['XI', 'XII']
+            ninth_tenth = ['IX', 'X']
+            middle_classes = ['V', 'VI', 'VII', 'VIII']
+
             if form.is_valid():
                 the_class = form.cleaned_data['the_class']
                 section = form.cleaned_data['section']
                 print ('result sheet will be generated for %s-%s' % (the_class.standard, section.section))
 
-                excel_file_name = 'Result_Sheet' + str(the_class.standard) + '_' + str(section.section) + '.xlsx'
+                excel_file_name = 'Result_Sheet_' + str(the_class.standard) + '-' + str(section.section) + '.xlsx'
 
                 output = StringIO.StringIO(excel_file_name)
                 workbook = xlsxwriter.Workbook(output)
                 result_sheet = workbook.add_worksheet("Result Sheet")
+
+                border = workbook.add_format()
+                border.set_border()
 
                 title = workbook.add_format({
                     'bold': True,
@@ -872,6 +876,12 @@ class ResultSheet(generics.ListCreateAPIView):
                     'valign': 'top',
                     'border': 1
                 })
+                cell_normal = workbook.add_format({
+                    'align': 'left',
+                    'valign': 'top',
+                    'text_wrap': True
+                })
+                cell_normal.set_border()
                 cell_center = workbook.add_format({
                     'align': 'center',
                     'valign': 'vcenter',
@@ -886,9 +896,17 @@ class ResultSheet(generics.ListCreateAPIView):
                     'rotation': 90
                 })
                 vertical_text.set_border()
-                cell_left = workbook.add_format({
-                    'align': 'left',
-                    'valign': 'top'
+                perc_format = workbook.add_format({
+                    'num_format': '0.00%',
+                    'align': 'center',
+                    'valign': 'top',
+                    'border': 1
+                })
+                cell_grade = workbook.add_format({
+                    'align': 'center',
+                    'valign': 'top',
+                    'bold': True,
+                    'border': 1
                 })
 
                 result_sheet.merge_range ('A1:AI1', 'JAGRAN PUBLIC SCHOOL NOIDA',  title)
@@ -901,70 +919,212 @@ class ResultSheet(generics.ListCreateAPIView):
                 try:
                     ct = ClassTeacher.objects.get (school=school, standard=the_class, section=section)
                     class_teacher = ct.class_teacher.first_name + ' ' + ct.class_teacher.last_name
-                    result_sheet.merge_range ('A3:D3', ('CLASS TEACHER: %s' % class_teacher), cell_left)
+                    result_sheet.merge_range ('A3:AI3', ('CLASS TEACHER: %s' % class_teacher), header)
                 except Exception as e:
                     print ('exception 19012018-A from exam views.py %s %s' % (e.message, type(e)))
                     print ('class teacher for class %s-%s is not set!' % (the_class.standard, section.section))
 
-                result_sheet.merge_range ('A4:A7', 'S No', cell_center)
-                result_sheet.merge_range ('B4:B7', 'Admn. No\nReg. No', cell_center)
-                result_sheet.set_column ('A:A', 3)
-                result_sheet.set_column ('C:C', 4)
-                result_sheet.merge_range ('C4:C7', 'House', vertical_text)
-                result_sheet.set_column ('D:D', 12)
-                result_sheet.merge_range('D4:D7', 'Student Name', cell_center)
-                result_sheet.merge_range ('E4:O4', 'Term I (800)', cell_center)
-                result_sheet.merge_range ('P4:Z4', 'Term II (800)', cell_center)
-                result_sheet.set_column ('E:AC', 6)
-                result_sheet.set_column ('AD:AI', 3)
-                result_sheet.set_column ('G:G', 6.5)
-                result_sheet.set_column ('R:R', 6.5)
+                if the_class.standard in middle_classes:
+                    result_sheet.merge_range ('A4:A7', 'S No', cell_center)
+                    result_sheet.merge_range ('B4:B7', 'Admn. No\nReg. No', cell_center)
+                    result_sheet.set_column ('A:A', 3)
+                    result_sheet.set_column ('C:C', 4)
+                    result_sheet.merge_range ('C4:C7', 'House', vertical_text)
+                    result_sheet.set_column ('D:D', 18)
+                    result_sheet.merge_range('D4:D7', 'Student Name', cell_center)
+                    result_sheet.merge_range ('E4:O4', 'Term I (700)', cell_center)
+                    result_sheet.merge_range ('P4:Z4', 'Term II (700)', cell_center)
+                    result_sheet.set_column ('E:AC', 6)
+                    result_sheet.set_column ('AD:AI', 3)
+                    result_sheet.set_column ('G:G', 6.5)
+                    result_sheet.set_column ('R:R', 6.5)
 
-                result_sheet.merge_range (3, 26, 3, 28, 'Overall', cell_center)
-                result_sheet.merge_range (4, 26, 4, 28, '(A+B)', cell_center)
-                result_sheet.merge_range (5, 26, 5, 28, 'Grand Total(1600))', cell_center)
-                result_sheet.merge_range (3, 29, 6, 29, 'Rank', vertical_text)
-                result_sheet.merge_range (3, 30, 6, 30, 'Work Ed.', vertical_text)
-                result_sheet.merge_range (3, 31, 6, 31, 'Art/Music', vertical_text)
-                result_sheet.merge_range (3, 32, 6, 32, 'Health/Phy Ed.', vertical_text)
-                result_sheet.merge_range (3, 33, 6, 33, 'Discipline', vertical_text)
-                result_sheet.merge_range(3, 34, 6, 34, 'Result/Remark', cell_center)
-                result_sheet.set_column ('AI:AI', 12)
+                    result_sheet.merge_range (3, 26, 3, 28, 'Overall', cell_center)
+                    result_sheet.merge_range (4, 26, 4, 28, '(A+B)', cell_center)
+                    result_sheet.merge_range (5, 26, 5, 28, 'Grand Total(1400))', cell_center)
+                    result_sheet.merge_range (3, 29, 6, 29, 'Rank', vertical_text)
+                    result_sheet.merge_range (3, 30, 6, 30, 'Work Ed.', vertical_text)
+                    result_sheet.merge_range (3, 31, 6, 31, 'Art/Music', vertical_text)
+                    result_sheet.merge_range (3, 32, 6, 32, 'Health/Phy Ed.', vertical_text)
+                    result_sheet.merge_range (3, 33, 6, 33, 'Discipline', vertical_text)
+                    result_sheet.merge_range(3, 34, 6, 34, 'Result/Remark', cell_center)
+                    result_sheet.set_column ('AI:AI', 12)
 
-                sub_short = ['Eng\n(100)', 'Hindi\n(100)', 'Sanskrit\n(100)', 'French\n(100)', 'Maths\n(100)',
-                             'Science\n(100)', 'SST\n(100)', 'Comp.\n(100)']
-                sub_full = ['English', 'Hindi', 'Sanskrit', 'French', 'Mathematics', 'Science', 'Social Studies',
-                            'Computer']
-                col_range = 12
-                for col in range (4, col_range):
-                    result_sheet.merge_range (4, col, 6, col, sub_short[col-4], cell_center)
-                result_sheet.merge_range ('M5:O5', '(A)', cell_center)
-                result_sheet.merge_range ('M6:O6', 'Total(800)', cell_center)
-                result_sheet.write_string ('M7', 'Marks', cell_center)
-                result_sheet.write_string ('N7', '%', cell_center)
-                result_sheet.write_string ('O7', 'Grade', cell_center)
+                    sub_short = ['Eng\n(100)', 'Hindi\n(100)', 'Sanskrit\n(100)', 'French\n(100)', 'Maths\n(100)',
+                                 'Science\n(100)', 'SST\n(100)', 'Comp.\n(100)']
+                    sub_full = ['English', 'Hindi', 'Sanskrit', 'French', 'Mathematics', 'Science', 'Social Studies',
+                                'Computer']
+                    col_range = 12
+                    for col in range (4, col_range):
+                        result_sheet.merge_range (4, col, 6, col, sub_short[col-4], cell_center)
+                    result_sheet.merge_range ('M5:O5', '(A)', cell_center)
+                    result_sheet.merge_range ('M6:O6', 'Total(800)', cell_center)
+                    result_sheet.write_string ('M7', 'Marks', cell_center)
+                    result_sheet.write_string ('N7', '%', cell_center)
+                    result_sheet.write_string ('O7', 'Grade', cell_center)
 
-                col_range = 23
-                for col in range(15, col_range):
-                    result_sheet.merge_range(4, col, 6, col, sub_short[col - 15], cell_center)
-                result_sheet.merge_range('X5:Z5', '(B)', cell_center)
-                result_sheet.merge_range('X6:Z6', 'Total(800)', cell_center)
-                result_sheet.write_string('X7', 'Marks', cell_center)
-                result_sheet.write_string('Y7', '%', cell_center)
-                result_sheet.write_string('Z7', 'Grade', cell_center)
-                result_sheet.write_string(6, 26, 'Marks', cell_center)
-                result_sheet.write_string(6, 27, '%', cell_center)
-                result_sheet.write_string(6, 28, 'Grade', cell_center)
+                    col_range = 23
+                    for col in range(15, col_range):
+                        result_sheet.merge_range(4, col, 6, col, sub_short[col - 15], cell_center)
+                    result_sheet.merge_range('X5:Z5', '(B)', cell_center)
+                    result_sheet.merge_range('X6:Z6', 'Total(800)', cell_center)
+                    result_sheet.write_string('X7', 'Marks', cell_center)
+                    result_sheet.write_string('Y7', '%', cell_center)
+                    result_sheet.write_string('Z7', 'Grade', cell_center)
+                    result_sheet.write_string(6, 26, 'Marks', cell_center)
+                    result_sheet.write_string(6, 27, '%', cell_center)
+                    result_sheet.write_string(6, 28, 'Grade', cell_center)
 
+                    # header rows are ready, now is the time to get the result of each student
+                    try:
+                        students = Student.objects.filter (school=school, current_class=the_class,
+                                                           current_section=section).order_by ('fist_name')
+                        print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
+                        print (students)
+                        # prepare the borders
+                        for row in range(7, students.count() + 7):
+                            for col in range(0, 35):
+                                result_sheet.write(row, col, '', border)
+                    except Exception as e:
+                        print ('exception 20012018-A from exam views.py %s %s' % (e.message, type(e)))
+                        print ('failed to retrieve the list of students for %s-%s' % (the_class.standard, section.section))
 
-                workbook.close()
-                response = HttpResponse(content_type='application/vnd.ms-excel')
-                response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
-                response.write(output.getvalue())
-                return response
+                    s_no = 1
+                    row = 7
+                    col = 0
+                    for student in students:
+                        result_sheet.write_number(row, col, s_no, cell_normal)
+                        col = col + 1
+                        admission_no = student.student_erp_id
+                        result_sheet.write_string(row, col, admission_no, cell_normal)
+                        col = col + 1
+                        result_sheet.write_string (row, col, '', cell_normal)
+                        col = col + 1
+                        student_name = student.fist_name + ' ' + student.last_name
+                        result_sheet.write_string(row, col, student_name, cell_normal)
+                        marks_col = col + 1
+                        for s in sub_full:
+                            try:
+                                subject = Subject.objects.get (school=school, subject_name=s)
+                                print ('retrieved the subject object for %s' % s)
+                                print (subject)
+                            except Exception as e:
+                                print ('exception 20012018-B from exam views.py %s %s' % (e.message, type(e)))
+                                print ('failed to retrieve subject for %s' % s)
+                                continue
+                            try:
+                                term_tests = ClassTest.objects.filter(the_class=the_class, section=section, subject=subject,
+                                                                       test_type='term').order_by('date_conducted')
+                                print ('retrieved the term tests for class: %s-%s, subject: %s' %
+                                       (the_class.standard, section.section, s))
+                                print (term_tests)
+                                for test in term_tests:
+                                    try:
+                                        print ('retrieving % s marks for %s' % (s, student_name))
+                                        test_result = TestResults.objects.get(class_test=test, student=student)
+                                        term_test_result = TermTestResult.objects.get (test_result=test_result)
+                                        sub_marks = test_result.marks_obtained + term_test_result.periodic_test_marks
+                                        sub_marks = sub_marks + term_test_result.note_book_marks
+                                        sub_marks = sub_marks + term_test_result.sub_enrich_marks
 
+                                        # if the subject if third language (Sanskrit/French) and if student has not opted
+                                        # for this subject then marks will be -20000.00
+                                        if sub_marks < 0:
+                                            print ('subject %s is not opted by %s' % (s, student_name))
+                                            result_sheet.write_string (row, marks_col, 'NA', cell_grade)
+                                            marks_col = marks_col + 1
+                                            continue
+                                        result_sheet.write_number (row, marks_col, sub_marks, cell_normal)
+                                        print ('successfully retrieved %s marks for %s and sheet updated' %
+                                               (s, student_name))
+                                        # same subject in Term II is 11 columns away ex English in term I is on col E and in
+                                        # term II it is on col P
+                                        marks_col = marks_col + 11
+                                    except Exception as e:
+                                        print ('exception 20012018-D from exam views.py %s %s' % (e.message, type(e)))
+                                        print ('failed to retrieve %s marks for %s' % (s, student_name))
+                            except Exception as e:
+                                print ('exception 20012018-C from exam views.py %s %s' % (e.message, type(e)))
+                                print ('failed to retrieved the term tests for class: %s-%s, subject: %s' %
+                                       (the_class.standard, section.section, s))
+                                continue
+                            col = col + 1
+                            marks_col = col + 1
+                        # now is the time to insert formulas in the designated cells
+                        # formulaes for term I
+                        cell_range = xl_range(row, 4, row, 11)
+                        formula = '=SUM(%s)' % cell_range
+                        result_sheet.write_formula(row, 12, formula, cell_normal)
+                        cell_range = xl_range(row, 12, row, 12)
+                        formula = '=%s/700.00' % cell_range
+                        result_sheet.write_formula (row, 13, formula, perc_format)
+                        index = 'N%s*100' % str(row+1)
+                        print ('index = %s' % index)
+                        formula = '=IF(%s > 90, "A1", IF(%s > 80, "A2", IF(%s > 70, "B1", IF(%s > 60, "B2", ' \
+                                  'IF(%s > 50, "C1", IF(%s > 40, "C2", IF(%s > 32, "D", "E")))))))' % \
+                                  (index, index, index, index, index, index, index)
+                        print ('formula for grade = %s' % formula)
+                        result_sheet.write_formula (row, 14, formula, cell_grade)
 
+                        # formula for term II
+                        cell_range = xl_range(row, 15, row, 22)
+                        formula = '=SUM(%s)' % cell_range
+                        # result_sheet.write_formula(row, 23, formula, cell_normal)
+                        formula = '=%s/700.00' % cell_range
+                        # result_sheet.write_formula(row, 24, formula, perc_format)
+                        index = 'Y%s*100' % str(row + 1)
+                        print ('index = %s' % index)
+                        formula = '=IF(%s > 90, "A1", IF(%s > 80, "A2", IF(%s > 70, "B1", IF(%s > 60, "B2", ' \
+                                  'IF(%s > 50, "C1", IF(%s > 40, "C2", IF(%s > 32, "D", "E")))))))' % \
+                                  (index, index, index, index, index, index, index)
+                        print ('formula for grade = %s' % formula)
+                        # result_sheet.write_formula(row, 25, formula, cell_grade)
 
+                        # formula for overall
+                        formula = '=sum(M%s, X%s)' % (str(row+1), str(row+1))
+                        # result_sheet.write_formula (row, 26, formula, cell_normal)
+                        formula = '=AA%s/1400.00' % str(row+1)
+                        # result_sheet.write_formula (row, 27, formula, perc_format)
+                        index = 'AB%s*100' % str(row + 1)
+                        print ('index = %s' % index)
+                        formula = '=IF(%s > 90, "A1", IF(%s > 80, "A2", IF(%s > 70, "B1", IF(%s > 60, "B2", ' \
+                                  'IF(%s > 50, "C1", IF(%s > 40, "C2", IF(%s > 32, "D", "E")))))))' % \
+                                  (index, index, index, index, index, index, index)
+                        print ('formula for grade = %s' % formula)
+                        # result_sheet.write_formula(row, 28, formula, cell_grade)
+
+                        # co-scholastic grades. We will show grades for both terms separated by /, eg B/A
+                        try:
+                            cs_term1 = CoScholastics.objects.get (term='term1', student=student)
+                            work_ed1 = cs_term1.work_education
+                            result_sheet.write_string (row, 30, work_ed1, cell_grade)
+                            art_ed1 = cs_term1.art_education
+                            result_sheet.write_string (row, 31, art_ed1, cell_grade)
+                            health_ed1 = cs_term1.health_education
+                            result_sheet.write_string (row, 32, health_ed1, cell_grade)
+                            discipline1 = cs_term1.discipline
+                            result_sheet.write_string (row, 33, discipline1, cell_grade)
+
+                            cs_term2 = CoScholastics.objects.get (term='term2', student=student)
+                            work_ed2 = cs_term2.work_education
+                            result_sheet.write_string(row, 30, work_ed1 + '/' + work_ed2, cell_grade)
+                            art_ed2 = cs_term2.art_education
+                            result_sheet.write_string(row, 31, art_ed1 + '/' + art_ed2, cell_grade)
+                            health_ed2 = cs_term2.health_education
+                            result_sheet.write_string(row, 32, health_ed1 + '/' + health_ed2, cell_grade)
+                            discipline2 = cs_term2.discipline
+                            result_sheet.write_string(row, 33, discipline1 + '/' + discipline2, cell_grade)
+                        except Exception as e:
+                            print ('exception 21012018-A from exam views.py %s %s' % (e.message, type(e)))
+                            print ('failed to retrieve Co-scholastics grade for %s' % student_name)
+                        row = row + 1
+                        s_no = s_no + 1
+                        col = 0
+                    workbook.close()
+                    response = HttpResponse(content_type='application/vnd.ms-excel')
+                    response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
+                    response.write(output.getvalue())
+                    return response
             else:
                 error = 'You have missed to select either Class, or Section'
                 form = ResultSheetForm(request)
