@@ -132,7 +132,7 @@ class TermTestResultsAdmin(admin.ModelAdmin):
 
     list_display = ('get_school_name', 'get_class', 'get_subject', 'get_date', 'get_student', 'get_max_marks',
                     'get_marks_obtained',)
-    search_fields = ('test_result__student__fist_name',)
+    search_fields = ('test_result__student__fist_name', 'test_result__student__last_name',)
 
 
 admin.site.register(TermTestResult, TermTestResultsAdmin)
