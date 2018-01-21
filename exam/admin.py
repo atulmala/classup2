@@ -8,6 +8,7 @@ from .models import Scheme, HigherClassMapping
 
 class ThirdLangAdmin(admin.ModelAdmin):
     list_display = ('student', 'third_lang',)
+    search_fields = ('student__fist_name',)
 
 
 admin.site.register(ThirdLang, ThirdLangAdmin)

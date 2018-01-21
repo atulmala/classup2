@@ -151,6 +151,7 @@ admin.site.register(TeacherSubjects, TeacherSubjectAdmin)
 class WorkingDaysAdmin(admin.ModelAdmin):
     pass
 
+
 admin.site.register(WorkingDays, WorkingDaysAdmin)
 
 
@@ -198,6 +199,10 @@ class HWAdmin(admin.ModelAdmin):
 
 
 admin.site.register(HW, HWAdmin)
+
+
+
+
 
 
 
