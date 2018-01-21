@@ -28,6 +28,9 @@ class Student(models.Model):
     parent = models.ForeignKey(Parent, default=None)
     active_status = models.BooleanField(default=True)
 
+    class Meta:
+        ordering = ('fist_name', )
+
     def __unicode__(self):
         return self.fist_name + ' ' + self.last_name
 
