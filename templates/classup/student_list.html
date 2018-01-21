@@ -1,0 +1,40 @@
+{% extends 'classup/base.html' %}
+
+{% load staticfiles %}
+{% load bootstrap %}
+
+{{ form|bootstrap }}
+
+{% block title %}
+    Setup Module
+{% endblock %}
+
+{% block body_block %}
+    <div class="main">
+        <h1>{{ header }}</h1>
+
+        {% if form.errors %}
+            <div class="alert alert-danger">
+                <p style="color: red;">
+                    Please correct the error{{ form.errors|pluralize }} below.
+                </p>
+            </div>
+        {% endif %}
+
+        <form action="" enctype="multipart/form-data"  method="post">
+            {% csrf_token %}
+            <header>{{ header }}</header>
+
+            {{ form.non_field_errors }}
+
+            <table>
+                {{ form.as_table }}
+            </table>
+            <p>
+                <br/>
+                <input class="btn-primary" type="submit" name="submit" value="Download Excel">
+                <input class="btn-primary" type="submit" name="cancel" value="Done/Cancel">
+            </p>
+        </form>
+    </div>
+{% endblock %}

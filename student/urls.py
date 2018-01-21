@@ -13,4 +13,7 @@ urlpatterns = patterns('',
                         url(r'get_parent/(?P<student_id>\w+)/$', views.get_parent, name='get_parent'),
                         url(r'get_student_detail/(?P<student_id>\w+)/$',
                             views.get_student_detail, name='get_student_detail'),
+
+                        url (r'download_student_list/$', views.StudentListDownload.as_view(),
+                             name='download_student_list'),
                        )

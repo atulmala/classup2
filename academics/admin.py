@@ -47,6 +47,8 @@ class TestAdmin(admin.ModelAdmin):
 
     list_filter = ('the_class__school',)
 
+    search_fields = ('subject__subject_name', 'the_class__standard', )
+
 
 admin.site.register(ClassTest, TestAdmin)
 

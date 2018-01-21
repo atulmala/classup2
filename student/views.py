@@ -1,15 +1,26 @@
 
 # Create your views here.
 
+import StringIO
+import xlsxwriter
+
 from rest_framework import generics
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
+from django.http import HttpResponse
+from django.shortcuts import render
 
 from setup.models import School
 from academics.models import ClassTest
+from exam.forms import ResultSheetForm
 from .models import Student, Parent
 
 from .serializers import StudentSerializer, ParentSerializer
 
 from authentication.views import JSONResponse
+
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    def enforce_csrf(self, request):
+        return  # To not perform the csrf check previously happening
 
 
 class StudentList(generics.ListAPIView):
@@ -120,3 +131,152 @@ class ParentList(generics.ListAPIView):
         q = Parent.objects.filter(student__id=student_id)
         return q
 
+
+class StudentListDownload (generics.ListAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def get(self, request, *args, **kwargs):
+        context_dict = {
+
+        }
+        context_dict['school_name'] = request.session['school_name']
+        context_dict['header'] = 'Download Result Sheets'
+
+        if request.session['user_type'] == 'school_admin':
+            context_dict['user_type'] = 'school_admin'
+
+        school_id = request.session['school_id']
+        form = ResultSheetForm(school_id=school_id)
+        context_dict['form'] = form
+        return render(request, 'classup/student_list.html', context_dict)
+
+    def post(self, request, *args, **kwargs):
+        context_dict = {
+
+        }
+        context_dict['school_name'] = request.session['school_name']
+        context_dict['header'] = 'Download Result Sheets'
+
+        if request.session['user_type'] == 'school_admin':
+            context_dict['user_type'] = 'school_admin'
+        if "cancel" in request.POST:
+            return render(request, 'classup/student_list.html', context_dict)
+        else:
+            school_id = request.session['school_id']
+            school = School.objects.get(id=school_id)
+            form = ResultSheetForm(request.POST, school_id=school_id)
+
+            if form.is_valid():
+                the_class = form.cleaned_data['the_class']
+                section = form.cleaned_data['section']
+                print ('result sheet will be generated for %s-%s' % (the_class.standard, section.section))
+
+                excel_file_name = 'Student_List' + str(the_class.standard) + '-' + str(section.section) + '.xlsx'
+
+                output = StringIO.StringIO(excel_file_name)
+                workbook = xlsxwriter.Workbook(output)
+                sheet = workbook.add_worksheet('Student List %s-%s' % (str(the_class.standard), section.section))
+
+                border = workbook.add_format()
+                border.set_border()
+
+                title = workbook.add_format({
+                    'bold': True,
+                    'font_size': 14,
+                    'align': 'center',
+                    'valign': 'vcenter'
+                })
+                header = workbook.add_format({
+                    'bold': True,
+                    'bg_color': '#F7F7F7',
+                    'color': 'black',
+                    'align': 'center',
+                    'valign': 'top',
+                    'border': 1
+                })
+                cell_normal = workbook.add_format({
+                    'align': 'left',
+                    'valign': 'top',
+                    'text_wrap': True
+                })
+                cell_normal.set_border()
+                cell_center = workbook.add_format({
+                    'align': 'center',
+                    'valign': 'vcenter',
+                    'text_wrap': True,
+                    'bold': True
+                })
+                cell_center.set_border()
+                vertical_text = workbook.add_format({
+                    'align': 'center',
+                    'valign': 'vcenter',
+                    'bold': True,
+                    'rotation': 90
+                })
+                vertical_text.set_border()
+                perc_format = workbook.add_format({
+                    'num_format': '0.00%',
+                    'align': 'center',
+                    'valign': 'top',
+                    'border': 1
+                })
+                cell_grade = workbook.add_format({
+                    'align': 'center',
+                    'valign': 'top',
+                    'bold': True,
+                    'border': 1
+                })
+
+                row = 0
+                col = 0
+                sheet.write_string (row, col, 'S No', title)
+                col = col + 1
+                sheet.set_column ('B:B', 16)
+                sheet.write_string (row, col, 'Admission No', title)
+                col = col + 1
+                sheet.set_column ('C:C', 20)
+                sheet.write_string (row, col, 'Student Name', title)
+
+                try:
+                    students = Student.objects.filter(school=school, current_class=the_class,
+                                                      current_section=section).order_by('fist_name')
+                    print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
+                    print (students)
+                    row = row + 1
+                    col = 0
+                    s_no = 1
+                    for student in students:
+                        sheet.write_number (row, col, s_no, cell_normal)
+                        col = col + 1
+                        sheet.write_string (row, col, student.student_erp_id, cell_normal)
+                        col = col + 1
+                        student_name = student.fist_name + ' ' + student.last_name
+                        sheet.write_string (row, col, student_name, cell_normal)
+
+                        # set border for the next col. No value goes inside the cell.
+                        col = col + 1
+                        sheet.write_string (row, col, '', cell_normal)
+
+                        row = row + 1
+                        s_no = s_no + 1
+                        col = 0
+                    workbook.close()
+                    response = HttpResponse(content_type='application/vnd.ms-excel')
+                    response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
+                    response.write(output.getvalue())
+                    return response
+
+                except Exception as e:
+                    print ('exception 21010218-A from student views.py %s %s' % (e.message, type(e)))
+                    print ('failed to retrieve the list of students for %s-%s' % (the_class.standard, section.section))
+                    workbook.close()
+                    response = HttpResponse(content_type='application/vnd.ms-excel')
+                    response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
+                    response.write(output.getvalue())
+                    return response
+            else:
+                error = 'You have missed to select either Class, or Section'
+                form = ResultSheetForm(request)
+                context_dict['form'] = form
+                form.errors['__all__'] = form.error_class([error])
+                return render(request, 'classup/result_sheet.html', context_dict)

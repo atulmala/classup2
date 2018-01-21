@@ -1027,8 +1027,8 @@ class ResultSheet(generics.ListCreateAPIView):
                                         sub_marks = sub_marks + term_test_result.note_book_marks
                                         sub_marks = sub_marks + term_test_result.sub_enrich_marks
 
-                                        # if the subject if third language (Sanskrit/French) and if student has not opted
-                                        # for this subject then marks will be -20000.00
+                                        # if the subject if third language (Sanskrit/French) and if student has
+                                        # not opted for this subject then marks will be -20000.00
                                         if sub_marks < 0:
                                             print ('subject %s is not opted by %s' % (s, student_name))
                                             result_sheet.write_string (row, marks_col, 'NA', cell_grade)
