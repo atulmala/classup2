@@ -239,7 +239,7 @@ class StudentListDownload (generics.ListAPIView):
 
                 try:
                     students = Student.objects.filter(school=school, current_class=the_class,
-                                                      current_section=section).order_by('fist_name')
+                                                      current_section=section, active_status=True).order_by('fist_name')
                     print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
                     print (students)
                     row = row + 1
