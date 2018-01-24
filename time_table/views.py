@@ -469,11 +469,11 @@ class AbsentTeacherPeriods (generics.ListAPIView):
                             available_teacher["login_id"] = str(a_teacher.email)
                             available_teacher["name"] = a_teacher.first_name + ' ' + a_teacher.last_name + \
                                                         ' (' + str(periods_count) + ')'
-                            print ('available_teacher = ')
-                            print (available_teacher)
+                            print('available_teacher = ')
+                            print(available_teacher)
                             available.append(available_teacher)
-                            print ('available for period # %s till now = ' % period.period)
-                            print (available)
+                            print('available for period # %s till now = ' % period.period)
+                            print(available)
                     else:
                         print ('%s %s is in excluded list. Hence not being considered for Arrangements'
                                % (a_teacher.first_name, a_teacher.last_name))
