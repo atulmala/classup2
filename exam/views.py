@@ -136,9 +136,7 @@ def setup_scheme(request):
 
 
 def setup_higher_class_subject_mapping(request):
-    context_dict = {}
-    context_dict['user_type'] = 'school_admin'
-    context_dict['school_name'] = request.session['school_name']
+    context_dict = {'user_type': 'school_admin', 'school_name': request.session['school_name']}
 
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
@@ -376,22 +374,22 @@ def get_grade(marks):
     if 100 >= marks > 90:
         grade = 'A1'
         return grade
-    if marks <= 90 and marks > 80:
+    if 90 >= marks > 80:
         grade = 'A2'
         return grade
-    if marks <= 80 and marks > 70:
+    if 80 >= marks > 70:
         grade = 'B1'
         return grade
-    if marks <= 70 and marks > 60:
+    if 70 >= marks > 60:
         grade = 'B2'
         return grade
-    if marks <= 60 and marks > 50:
+    if 60 >= marks > 50:
         grade = 'C1'
         return grade
-    if marks <= 50 and marks > 40:
+    if 50 >= marks > 40:
         grade = 'C2'
         return grade
-    if marks <= 40 and marks > 32:
+    if 40 >= marks > 32:
         grade = 'D'
         return grade
     if marks <= 32:

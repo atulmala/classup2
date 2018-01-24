@@ -461,8 +461,14 @@ class AbsentTeacherPeriods (generics.ListAPIView):
                             print ('exception 30122017-A from time_table views.py %s %s' % (e.message, type(e)))
                             print ('%s %s is available on %s for period: %s. will be added to available list'
                                    % (a_teacher.first_name, a_teacher.last_name, d, str(period.period)))
+                            # 24/01/2018 - a requirement from JPS that they should also be able to see the load
+                            # of the teacher for today. A less loaded teacher should be given arrangements on priority
+                            periods_count = TeacherPeriods.objects.filter(teacher=a_teacher, day=day).count()
+                            print('%s %s has %i periods today' %
+                                  (a_teacher.first_name, a_teacher.last_name, periods_count))
                             available_teacher["login_id"] = str(a_teacher.email)
-                            available_teacher["name"] = str (a_teacher.first_name + ' ' + a_teacher.last_name)
+                            available_teacher["name"] = a_teacher.first_name + ' ' + a_teacher.last_name + \
+                                                        ' (' + str(periods_count) + ')'
                             print ('available_teacher = ')
                             print (available_teacher)
                             available.append(available_teacher)

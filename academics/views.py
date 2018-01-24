@@ -513,7 +513,7 @@ def create_test1(request, school_id, the_class, section, subject,
                                                       student=third_lang.student, marks_obtained=-5000.00, grade='')
                             try:
                                 test_result.save()
-                                print (' test results successfully created for % s %s' % (
+                                print (' test results successfully created for %s %s' % (
                                 student.fist_name, student.last_name))
 
                                 # 21/09/2017 some more data need to be created for a Term test
@@ -524,7 +524,7 @@ def create_test1(request, school_id, the_class, section, subject,
                                                                           note_book_marks=-5000.0,
                                                                           sub_enrich_marks=-5000.0)
                                         term_test_result.save()
-                                        print (' term test results successfully created for % s %s' %
+                                        print (' term test results successfully created for %s %s' %
                                                (student.fist_name, student.last_name))
                                 except Exception as e:
                                     print ('failed to create term test results')
@@ -549,14 +549,14 @@ def create_test1(request, school_id, the_class, section, subject,
                                     test_result = TestResults(class_test=test, roll_no=student.roll_number,
                                                               student=student, marks_obtained=-5000.00, grade='')
                                     test_result.save()
-                                    print ('test results successfully created for % s %s' % (
+                                    print ('test results successfully created for %s %s' % (
                                         student.fist_name, student.last_name))
 
                                     # 24/12/2017 in case of higher practical marks need to be initialized
                                     if test_type == 'term':
                                         term_test_result = TermTestResult(test_result=test_result, prac_marks=-5000.0)
                                         term_test_result.save()
-                                        print ('term test results successfully created for % s %s' % (
+                                        print ('term test results successfully created for %s %s' % (
                                             student.fist_name, student.last_name))
                             except Exception as e:
                                 print ('mapping does not exist between subject %s and %s' % (sub, student.fist_name))
@@ -576,7 +576,7 @@ def create_test1(request, school_id, the_class, section, subject,
                                                               marks_obtained=-5000.00, grade='')
                                     try:
                                         test_result.save()
-                                        print (' test results successfully created for % s %s' % (
+                                        print (' test results successfully created for %s %s' % (
                                             student.fist_name, student.last_name))
 
                                         # 21/09/2017 some more data need to be created for a Term test
@@ -587,7 +587,7 @@ def create_test1(request, school_id, the_class, section, subject,
                                                                                   note_book_marks=-5000.0,
                                                                                   sub_enrich_marks=-5000.0)
                                                 term_test_result.save()
-                                                print (' term test results successfully created for % s %s' %
+                                                print (' term test results successfully created for %s %s' %
                                                        (student.fist_name, student.last_name))
                                         except Exception as e:
                                             print ('failed to create term test results')
@@ -617,7 +617,7 @@ def create_test1(request, school_id, the_class, section, subject,
                                                                           sub_enrich_marks=-5000.0)
                                         term_test_result.save()
 
-                                    print (' test results successfully created for % s %s' % (
+                                    print (' test results successfully created for %s %s' % (
                                         student.fist_name, student.last_name))
                                 except Exception as e:
                                     print ('failed to create test resutls')
@@ -644,7 +644,7 @@ def create_test1(request, school_id, the_class, section, subject,
                                         print ('%s is a junior class. Hence not creating PA, Notbook Sub & Sub enrich'
                                                % the_class)
 
-                                print (' test results successfully created for % s %s' % (
+                                print (' test results successfully created for %s %s' % (
                                     student.fist_name, student.last_name))
                             except Exception as e:
                                 print ('failed to create test resutls')

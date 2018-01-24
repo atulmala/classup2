@@ -377,21 +377,21 @@ def add_student(request):
                 print ('saving successful!')
 
                 # this student should appear in all the pending test for this class & section
-                print ('creating an entry for this student in all pending test for this class/section')
-                try:
-                    tests = ClassTest.objects.filter(the_class=the_class, section=the_section, is_completed=False)
-                    for t in tests:
-                        test_result = TestResults(class_test=t, roll_no=current_roll_no,
-                                                          student=s, marks_obtained=-5000.00, grade='')
-                        try:
-                            test_result.save()
-                            print (' test results successfully created')
-                        except Exception as e:
-                            print ('failed to create test results')
-                            print ('Exception 270 from setup views.py = %s (%s)' % (e.message, type(e)))
-                except Exception as e:
-                    print ('Currently no pending tests for this class/section')
-                    print ('Exception 280 from setup views.py = %s (%s)' % (e.message, type(e)))
+                # print ('creating an entry for this student in all pending test for this class/section')
+                # try:
+                #     tests = ClassTest.objects.filter(the_class=the_class, section=the_section, is_completed=False)
+                #     for t in tests:
+                #         test_result = TestResults(class_test=t, roll_no=current_roll_no,
+                #                                           student=s, marks_obtained=-5000.00, grade='')
+                #         try:
+                #             test_result.save()
+                #             print (' test results successfully created')
+                #         except Exception as e:
+                #             print ('failed to create test results')
+                #             print ('Exception 270 from setup views.py = %s (%s)' % (e.message, type(e)))
+                # except Exception as e:
+                #     print ('Currently no pending tests for this class/section')
+                #     print ('Exception 280 from setup views.py = %s (%s)' % (e.message, type(e)))
             except Exception as e:
                 error = 'Unable to create the new student in the database'
                 print (error)
@@ -400,7 +400,6 @@ def add_student(request):
             print ('Exception 300 in setup view.py = %s (%s)' % (e.message, type(e)))
             print ('Failed to add student ' + student_first_name + ' ' + student_last_name +
                    ' to ' + current_class + ' ' + current_section)
-
     return JSONResponse(context_dict, status=200)
 
 
@@ -636,22 +635,22 @@ def setup_students(request):
                             s.save()
                             print ('saving successful!')
                             # this student should appear in all the pending test for this class & section
-                            print ('creating an entry for this student in all pending test for this class/section')
-                            try:
-                                tests = ClassTest.objects.filter(the_class=the_class,
-                                                                 section=the_section, is_completed=False)
-                                for t in tests:
-                                    test_result = TestResults(class_test=t, roll_no=current_roll_no,
-                                                              student=s, marks_obtained=-5000.00, grade='')
-                                    try:
-                                        test_result.save()
-                                        print (' test results successfully created')
-                                    except Exception as e:
-                                        print ('failed to create test results')
-                                        print ('Exception8 from setup views.py = %s (%s)' % (e.message, type(e)))
-                            except Exception as e:
-                                print ('Currently no pending tests for this class/section')
-                                print ('Exception9 from setup views.py = %s (%s)' % (e.message, type(e)))
+                            # print ('creating an entry for this student in all pending test for this class/section')
+                            # try:
+                            #     tests = ClassTest.objects.filter(the_class=the_class,
+                            #                                      section=the_section, is_completed=False)
+                            #     for t in tests:
+                            #         test_result = TestResults(class_test=t, roll_no=current_roll_no,
+                            #                                   student=s, marks_obtained=-5000.00, grade='')
+                            #         try:
+                            #             test_result.save()
+                            #             print (' test results successfully created')
+                            #         except Exception as e:
+                            #             print ('failed to create test results')
+                            #             print ('Exception8 from setup views.py = %s (%s)' % (e.message, type(e)))
+                            # except Exception as e:
+                            #     print ('Currently no pending tests for this class/section')
+                            #     print ('Exception9 from setup views.py = %s (%s)' % (e.message, type(e)))
                         except Exception as e:
                             error = 'Unable to create the new student in the database'
                             print (error)

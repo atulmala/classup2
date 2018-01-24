@@ -67,7 +67,6 @@ class BulkSMSForm(forms.Form):
                                                       label='Select Class', widget=forms.CheckboxSelectMultiple
                                                       (renderer=HorizontalRenderer))
         self.fields['Class'].empty_label = None
-
     message_text = forms.CharField(widget=forms.Textarea, label='Enter Message (Max 200 characters)')
     Staff = forms.MultipleChoiceField(choices=STAFF_CHOICES,
                                       widget=forms.CheckboxSelectMultiple(renderer=HorizontalRenderer))

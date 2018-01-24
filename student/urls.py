@@ -16,4 +16,6 @@ urlpatterns = patterns('',
 
                         url (r'download_student_list/$', views.StudentListDownload.as_view(),
                              name='download_student_list'),
+
+                        url(r'mid_term_admission/$', views.MidTermAdmission.as_view(), name='mid_term_admission'),
                        )
