@@ -1,3 +1,11 @@
+import os
+import re
+import boto
+from boto.s3.connection import OrdinaryCallingFormat
+import requests
+
+from PIL import Image
+
 from django.shortcuts import render
 from django.contrib import messages
 from django.http import HttpResponse
@@ -8,7 +16,7 @@ from rest_framework import generics
 
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import inch
+from reportlab.lib.units import inch, cm
 from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
 import xlrd
@@ -16,6 +24,7 @@ import xlsxwriter
 from xlsxwriter.utility import xl_range
 import StringIO
 
+from setup.models import GlobalConf, Configurations
 from setup.forms import ExcelFileUploadForm
 from setup.models import School
 from setup.views import validate_excel_extension
@@ -393,7 +402,7 @@ def get_grade(marks):
         grade = 'D'
         return grade
     if marks <= 32:
-        grade = 'E (Needs Improvement)'
+        grade = 'E'
         return grade
 
 
@@ -411,23 +420,24 @@ def prepare_results(request, school_id, the_class, section):
     sec = Section.objects.get(school=school, section=section)
     print(sec)
 
+    # 04/01/2018 get the logos
+    try:
+        conf = Configurations.objects.get(school=school)
+        short_name = conf.school_short_name
+    except Exception as e:
+        print('failed to retrieve the shore name for %s' % school_name)
+        print('exception 04022018-A from exam views.py %s %s' % (e.message, type(e)))
+
+    higher_classes = ['XI', 'XII']
+    ninth_tenth = ['IX', 'X']
+    middle_classes = ['V', 'VI', 'VII', 'VIII']
+
     if request.method == 'GET':
         print(request.body)
         whole_class = request.GET.get('whole_class')
         print(whole_class)
         selected_student = request.GET.get('selected_student')
         print (selected_student)
-
-        # 02/11/2017 - get the scheme for this class. The scheme will provide the subjects of this class and
-        # the sequence. Subjects in the Marksheet would appear in the order of sequence
-        sub_dict = {}
-        scheme = Scheme.objects.filter(school=school, the_class=standard)
-        sub_count = scheme.count()
-        for s in scheme:
-            sub_dict[s.sequence] = s.subject
-        print (sub_dict)
-
-        # 20/10/2017 - now the grand loop starts!
 
         if whole_class == 'true':
             pdf_name = the_class + '-' + section + '_Term1_Results.pdf'
@@ -443,6 +453,7 @@ def prepare_results(request, school_id, the_class, section):
         print (content_disposition)
         response['Content-Disposition'] = content_disposition
         print(response)
+
         c = canvas.Canvas(response, pagesize=A4, bottomup=1)
 
         font = 'Times-Bold'
@@ -453,31 +464,84 @@ def prepare_results(request, school_id, the_class, section):
         session_top = line_top - 15
         report_card_top = session_top - 10
         stu_detail_top = report_card_top - 20
-        table1_top = stu_detail_top - 275
+        table1_top = stu_detail_top - 245
         tab = 80
 
-        c.setFont(font, 14)
+        # get logos
+        try:
+            logo_url = 'https://s3-us-west-2.amazonaws.com/classup2/media/dev/school_logos/%s/%s.png' % \
+                       (short_name, short_name)
+            print('logo_url = %s' % logo_url)
+            resp = requests.get(logo_url)
+            school_logo = Image.open(StringIO.StringIO(resp.content))
 
-        style1 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-                  ('BOX', (0, 0), (-1, -1), 2, colors.black),
-                  ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                  ('ALIGN', (1, 0), (6, 0), 'CENTER'),
-                  ('SPAN', (1, 0), (6, 0)),
-                  ('FONTSIZE', (0, 0), (-1, -1), 8),
-                  ('FONT', (0, 0), (6, 0), 'Times-Bold'),
-                  ('FONT', (0, 1), (0, 1), 'Times-Bold')
-                  ]
-        style2 = style3 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-                                            ('BOX', (0, 0), (-1, -1), 2, colors.black),
+            cbse_logo_url = 'https://s3-us-west-2.amazonaws.com/classup2/media/dev/cbse_logo/Logo/cbse-logo.png'
+            resp = requests.get(cbse_logo_url)
+            cbse_logo = Image.open(StringIO.StringIO(resp.content))
+        except Exception as e:
+            print('failed to insert logo in the marksheet')
+            print('exception 04022018-B from exam views.py %s %s' % (e.message, type(e)))
+
+        c.setFont(font, 14)
+        if the_class in middle_classes:
+            print('result being prepared for %s, a middle class. Hence both Term1 & Term2 results to be shown.' %
+                  the_class)
+            style1 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+                      ('BOX', (0, 0), (-1, -1), 1, colors.black),
+                      ('TOPPADDING', (0, 0), (-1, -1), 1),
+                      ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+                      ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                      ('ALIGN', (1, 0), (6, 0), 'CENTER'),
+                      ('ALIGN', (7, 0), (12, 0), 'CENTER'),
+                      ('SPAN', (1, 0), (6, 0)),
+                      ('SPAN', (7, 0), (12, 0)),
+                      ('FONTSIZE', (0, 0), (-1, -1), 7),
+                      ('FONT', (0, 0), (12, 0), 'Times-Bold'),
+                      ('FONT', (0, 1), (0, 1), 'Times-Bold')
+                      ]
+
+            style2 = style3 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+                                            ('BOX', (0, 0), (-1, -1), 1, colors.black),
+                                            ('TOPPADDING', (0, 0), (-1, -1), 1),
+                                            ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
                                             ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                                            ('ALIGN', (0, 0), (1, 0), 'CENTER'),
+                                            ('ALIGN', (0, 0), (1, 0), 'RIGHT'),
+                                            ('ALIGN', (2, 0), (3, 0), 'RIGHT'),
                                             ('SPAN', (0, 0), (1, 0)),
+                                            ('SPAN', (2, 0), (3, 0)),
                                             ('FONTSIZE', (0, 0), (-1, -1), 8),
-                                            ('FONT', (0, 0), (1, 0), 'Times-Bold')
-                                            ]
-        style4 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
                                             ('FONT', (0, 0), (1, 0), 'Times-Bold'),
-                                            ('FONTSIZE', (0, 0), (-1, -1), 8)]
+                                            ('FONT', (2, 0), (3, 0), 'Times-Bold')
+                                            ]
+            if the_class in ninth_tenth:
+                print('result being prepared for class %s, hence only final Term Results will be prepared' % the_class)
+                style1 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+                          ('BOX', (0, 0), (-1, -1), 1, colors.black),
+                          ('TOPPADDING', (0, 0), (-1, -1), 1),
+                          ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+                          ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                          ('ALIGN', (1, 0), (6, 0), 'CENTER'),
+                          ('SPAN', (1, 0), (6, 0)),
+                          ('FONTSIZE', (0, 0), (-1, -1), 7),
+                          ('FONT', (0, 0), (12, 0), 'Times-Bold'),
+                          ('FONT', (0, 1), (0, 1), 'Times-Bold')
+                          ]
+
+                style2 = style3 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+                                   ('BOX', (0, 0), (-1, -1), 1, colors.black),
+                                   ('TOPPADDING', (0, 0), (-1, -1), 1),
+                                   ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+                                   ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                                   ('ALIGN', (0, 0), (1, 0), 'CENTER'),
+                                   ('SPAN', (0, 0), (1, 0)),
+                                   ('FONTSIZE', (0, 0), (-1, -1), 8),
+                                   ('FONT', (0, 0), (1, 0), 'Times-Bold')
+                                   ]
+
+        style4 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black), ('TOPPADDING', (0, 0), (-1, -1), 1),
+                      ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+                                            ('FONT', (0, 0), (1, 0), 'Times-Bold'),
+                                            ('FONTSIZE', (0, 0), (-1, -1), 6)]
         data4 = [['MARKS RANGE', 'GRADE'],
                  ['91 - 100', 'A 1'],
                  ['81 - 90', 'A 2'],
@@ -490,163 +554,30 @@ def prepare_results(request, school_id, the_class, section):
         session = 'Academic Session 2017-18'
         adm_no_lbl = 'Admission No:'
         stu_name_lbl = 'Student Name:'
-        father_name_lbl = 'Father Name:'
+        father_name_lbl = 'Mother/Father Name:'
         dob_lbl = 'Date of Birth:'
         class_sec_lbl = 'Class/Section:'
 
         exam = Exam.objects.get(school=school, title='Term1')
         print(exam)
-        start_date = exam.start_date
-        end_date = exam.end_date
 
-        if whole_class == 'true':
-            # get the list of all the students, then get the marks of each test conducted for this exam
-            students = Student.objects.filter(school=school, current_class=standard, current_section=sec)
-            for s in students:
-                print('Entering loop')
-                c.translate(inch, inch)
-                c.drawString(141, top, school_name)
-                c.line(0, line_top, 6 * inch, line_top)
+        # 02/11/2017 - get the scheme for this class. The scheme will provide the subjects of this class and
+        # the sequence. Subjects in the Marksheet would appear in the order of sequence
+        sub_dict = {}
+        scheme = Scheme.objects.filter(school=school, the_class=standard)
+        sub_count = scheme.count()
+        for s in scheme:
+            sub_dict[s.sequence] = s.subject
+        print (sub_dict)
 
-                c.setFont(font, 10)
-                c.drawString(152, session_top, session)
-                print('heading created')
+        left_margin = -30
 
-                report_card = 'Report Card for Class ' + the_class + '-' + section
-                c.drawString(152, report_card_top, report_card)
-
-                c.setFont(font, 10)
-
-                c.drawString(0, stu_detail_top, adm_no_lbl)
-                c.drawString(tab, stu_detail_top, s.student_erp_id)
-
-                c.drawString(0, stu_detail_top - 15, stu_name_lbl)
-                c.drawString(tab, stu_detail_top - 15, s.fist_name + ' ' + s.last_name)
-
-                c.drawString(0, stu_detail_top - 30, father_name_lbl)
-                c.drawString(tab, stu_detail_top - 30, s.parent.parent_name)
-
-                c.drawString(0, stu_detail_top - 45, dob_lbl)
-                try:
-                    d = DOB.objects.get(student=s)
-                    dob = d.dob
-                    print(dob)
-                    c.drawString(tab, stu_detail_top - 45, dob.strftime('%d-%m-%Y'))
-                except Exception as e:
-                    print ('date of birth not yet set for %s %s ' % (s.fist_name, s.last_name))
-                    print('Exception 23102017-A from exam views.py %s %s ' % (e.message, type(e)))
-
-
-                c.drawString(0, stu_detail_top - 60, class_sec_lbl)
-                c.drawString(tab, stu_detail_top - 60, the_class + '-' + section)
-                print('report heading prepared')
-                data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', ''],
-                         ['Sub Name', 'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
-                          'Half\nYearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
-
-                for i in range(0, sub_count):
-                    sub = sub_dict.values()[i]
-                    print ('sub = %s' % sub)
-                    if sub.subject_name == 'Third Language':
-                        print ('determining third language for %s' % s.fist_name)
-                        try:
-                            third_lang = ThirdLang.objects.get(student=s)
-                            sub = third_lang.third_lang
-                            print ('third language for %s is %s' % (s.fist_name, sub.subject_name))
-                        except Exception as e:
-                            print ('failed to determine third lang for %s. Exception 061117-A from exam views.py %s %s' %
-                                   (s.fist_name, e.message, type(e)))
-                    try:
-                        test = ClassTest.objects.get(subject=sub, the_class=standard, section=sec,
-                                                           date_conducted__gte=start_date, date_conducted__lte=end_date)
-                        tr = TestResults.objects.get(class_test=test, student=s)
-
-                        main = tr.marks_obtained
-                        tr = TermTestResult.objects.get(test_result=tr)
-
-                        pa = tr.periodic_test_marks
-
-                        notebook = tr.note_book_marks
-
-                        sub_enrich = tr.sub_enrich_marks
-
-                        total = float(main) + float(pa) + float(notebook) + float(sub_enrich)
-
-                        grade = get_grade(total)
-                        print(grade)
-
-                        sub_row = [sub.subject_name, pa, notebook, sub_enrich, main, total, grade]
-                        data1.append(sub_row)
-                        print(data1)
-                    except Exception as e:
-                        print('Error while preparing results')
-                        print ('Exception 21102017-A from exam views.py %s %s' % (e.message, type(e)))
-
-                try:
-                    table1 = Table(data1)
-                    table1.setStyle(TableStyle(style1))
-
-                    table1.wrapOn(c, 0, 0)
-                    table1.drawOn(c, 0, table1_top)
-                except Exception as e:
-                    print('Error while preparing results')
-                    print ('Exception 21102017-H from exam views.py %s %s' % (e.message, type(e)))
-
-                # get the CoScholastic Grades for this student
-                co_scl = CoScholastics.objects.get(term='Term1', student=s)
-                work_ed = co_scl.work_education
-                art_ed = co_scl.art_education
-                health_ed = co_scl.health_education
-                dscpln = co_scl.discipline
-                remark = co_scl.teacher_remarks
-
-                data2 = [['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale', ''],
-                         ['Work Education (or Pre-vocational Education', work_ed],
-                         ['Art Education', art_ed],
-                         ['Health & Physical Education', health_ed]]
-                table2_top = table1_top - 100
-                table2 = Table(data2)
-                table2.setStyle(TableStyle(style2))
-                table2.wrapOn(c, 0, 0)
-                table2.drawOn(c, 0, table2_top)
-
-                data3 = [['Grade', 'Grade'],
-                         ['Discipline: Term-1[On a 3-point(A-C) grading scale', dscpln]]
-                table3_top = table2_top - 50
-                table3 = Table(data3)
-                table3.setStyle(TableStyle(style3))
-                table3.wrapOn(c, 0, 0)
-                table3.drawOn(c, 0, table3_top)
-
-                c.drawString(0, table3_top - 20, 'Class Teacher Remarks: ')
-                c.drawString(tab+30, table3_top - 20, remark)
-                c.drawString(0, table3_top - 45, 'Place & Date:')
-                c.drawString(150, table3_top - 45, 'Signature of Class Teacher')
-                c.drawString(300, table3_top - 45, 'Signature of Principal')
-
-                c.line(0, table3_top - 50, 6 * inch, table3_top - 50)
-                c.drawString(170, table3_top - 60, "Instructions")
-                c.drawString(0, table3_top - 70, "Grading Scale for Scholastic Areas: "
-                                                 "Grades are awarded on a 8-point grading scales as follows - ")
-
-                table4 = Table(data4)
-                table4.setStyle(TableStyle(style4))
-                table4.wrapOn(c, 0, 0)
-                table4.drawOn(c, 120, table3_top - 250)
-
-                c.showPage()
-            try:
-                c.save()
-            except Exception as e:
-                print('error in saving the pdf')
-                print ('Exception 21102017-P from exam views.py %s %s' % (e.message, type(e)))
-            print('about to send the response')
-            return response
-
-        else:
+        def marksheet(c, s):
             c.translate(inch, inch)
+            c.drawInlineImage(school_logo, 410, 690, width=50, height=50)
+            c.drawInlineImage(cbse_logo, left_margin, 690, width=60, height=50)
             c.drawString(141, top, school_name)
-            c.line(0, line_top, 6 * inch, line_top)
+            c.line(-30, line_top, 6.75 * inch, line_top)
 
             c.setFont(font, 10)
             c.drawString(152, session_top, session)
@@ -656,16 +587,16 @@ def prepare_results(request, school_id, the_class, section):
             c.drawString(152, report_card_top, report_card)
 
             c.setFont(font, 10)
-            c.drawString(0, stu_detail_top, adm_no_lbl)
+            c.drawString(left_margin, stu_detail_top, adm_no_lbl)
             c.drawString(tab, stu_detail_top, s.student_erp_id)
 
-            c.drawString(0, stu_detail_top - 15, stu_name_lbl)
+            c.drawString(left_margin, stu_detail_top - 15, stu_name_lbl)
             c.drawString(tab, stu_detail_top - 15, s.fist_name + ' ' + s.last_name)
 
-            c.drawString(0, stu_detail_top - 30, father_name_lbl)
+            c.drawString(left_margin, stu_detail_top - 30, father_name_lbl)
             c.drawString(tab, stu_detail_top - 30, s.parent.parent_name)
 
-            c.drawString(0, stu_detail_top - 45, dob_lbl)
+            c.drawString(left_margin, stu_detail_top - 45, dob_lbl)
             try:
                 d = DOB.objects.get(student=s)
                 dob = d.dob
@@ -675,18 +606,23 @@ def prepare_results(request, school_id, the_class, section):
                 print ('date of birth not yet set for %s %s ' % (s.fist_name, s.last_name))
                 print('Exception 23102017-A from exam views.py %s %s ' % (e.message, type(e)))
 
-            c.drawString(0, stu_detail_top - 60, class_sec_lbl)
+            c.drawString(left_margin, stu_detail_top - 60, class_sec_lbl)
             c.drawString(tab, stu_detail_top - 60, the_class + '-' + section)
             print('report heading prepared')
 
-            exam = Exam.objects.get(school=school, title='Term1')
-            print(exam)
-            start_date = exam.start_date
-            end_date = exam.end_date
+            c.setFont(font, 8)
 
-            data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', ''],
-                     ['Sub Name', 'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
-                      'Half\nYearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
+            if the_class in middle_classes:
+                data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', '',
+                          'Term-2 (100 Marks)', '', '', '', '', ''],
+                         ['Sub Name', 'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
+                          'Half\nYearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade',
+                          'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
+                          'Yearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
+            if the_class in ninth_tenth:
+                data1 = [['Scholastic\nAreas', 'Academic Year (100 Marks)', '', '', '', '', ''],
+                         ['Sub Name', 'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
+                          'Annual\nExamination\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
             for i in range(0, sub_count):
                 sub = sub_dict.values()[i]
                 print ('sub = %s' % sub)
@@ -699,27 +635,43 @@ def prepare_results(request, school_id, the_class, section):
                     except Exception as e:
                         print ('failed to determine third lang for %s. Exception 061117-B from exam views.py %s %s' %
                                (s.fist_name, e.message, type(e)))
+                sub_row = [sub.subject_name]
+                terms = ['Term1', 'Term2']
                 try:
-                    test = ClassTest.objects.get(subject=sub, the_class=standard, section=sec,
-                                                 date_conducted__gte=start_date, date_conducted__lte=end_date)
-                    tr = TestResults.objects.get(class_test=test, student=s)
+                    for term in terms:
+                        exam = Exam.objects.get(school=school, title=term)
+                        print(exam)
+                        start_date = exam.start_date
+                        end_date = exam.end_date
+                        test = ClassTest.objects.get(subject=sub, the_class=standard, section=sec,
+                                                     date_conducted__gte=start_date, date_conducted__lte=end_date)
+                        tr = TestResults.objects.get(class_test=test, student=s)
 
-                    main = tr.marks_obtained
-                    tr = TermTestResult.objects.get(test_result=tr)
 
-                    pa = tr.periodic_test_marks
+                        ttr = TermTestResult.objects.get(test_result=tr)
 
-                    notebook = tr.note_book_marks
+                        pa = ttr.periodic_test_marks
+                        sub_row.append(pa)
 
-                    sub_enrich = tr.sub_enrich_marks
+                        notebook = ttr.note_book_marks
+                        sub_row.append(notebook)
 
-                    total = float(main) + float(pa) + float(notebook) + float(sub_enrich)
+                        sub_enrich = ttr.sub_enrich_marks
+                        sub_row.append(sub_enrich)
 
-                    grade = get_grade(total)
-                    print(grade)
+                        main = tr.marks_obtained
+                        sub_row.append(main)
 
-                    sub_row = [sub.subject_name, pa, notebook, sub_enrich, main, total, grade]
-                    data1.append(sub_row)
+                        total = float(main) + float(pa) + float(notebook) + float(sub_enrich)
+                        sub_row.append(total)
+
+                        grade = get_grade(total)
+                        print('grade obtained by %s in %s exam of %s: %s' %
+                              (s.fist_name, term, sub.subject_name, grade))
+                        sub_row.append(grade)
+
+                        sub_row = [sub.subject_name, pa, notebook, sub_enrich, main, total, grade]
+                        data1.append(sub_row)
                 except Exception as e:
                     print('Error while preparing results')
                     print ('Exception 21102017-A from exam views.py %s %s' % (e.message, type(e)))
@@ -727,84 +679,123 @@ def prepare_results(request, school_id, the_class, section):
             try:
                 table1 = Table(data1)
                 table1.setStyle(TableStyle(style1))
-
-                table1_top = stu_detail_top - 275
-                table1.wrapOn(c, 0, 0)
-                table1.drawOn(c, 0, table1_top)
+                table1.wrapOn(c, left_margin, 0)
+                table1.drawOn(c, left_margin, table1_top)
+                print('table1 drawn for %s %s' % (s.fist_name, s.last_name))
             except Exception as e:
                 print('Error while preparing results')
                 print ('Exception 21102017-H from exam views.py %s %s' % (e.message, type(e)))
 
             # get the CoScholastic Grades for this student
-            co_scl = CoScholastics.objects.get(term='Term1', student=s)
-            work_ed = co_scl.work_education
-            art_ed = co_scl.art_education
-            health_ed = co_scl.health_education
-            dscpln = co_scl.discipline
-            remark = co_scl.teacher_remarks
+            print('getting the Coscholastic grades for %s %s' % (s.fist_name, s.last_name))
+            table2_top = table1_top - 70
+            try:
+                if the_class in middle_classes:
+                    data2 = [['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale]', '',
+                            'Co-Scholastic Areas: Term-2[On a 3-point(A-C) grading scale]', '']]
+                if the_class in ninth_tenth:
+                    data2 = ['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale]', '']
+                work_array = []
+                art_array = []
+                health_array = []
+                dscpln_array = []
+                for term in terms:
+                    try:
+                        co_scl = CoScholastics.objects.get(term=term, student=s)
+                        work_array.append('Work Education (or Pre-vocational Education)')
+                        work_ed = co_scl.work_education
+                        work_array.append(work_ed)
 
-            data2 = [['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale', ''],
-                     ['Work Education (or Pre-vocational Education', work_ed],
-                     ['Art Education', art_ed],
-                     ['Health & Physical Education', health_ed]]
-            table2_top = table1_top - 100
-            table2 = Table(data2)
-            table2.setStyle(TableStyle([('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-                                        ('BOX', (0, 0), (-1, -1), 2, colors.black),
-                                        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                                        ('ALIGN', (0, 0), (1, 0), 'CENTER'),
-                                        ('SPAN', (0, 0), (1, 0)),
-                                        ('FONTSIZE', (0, 0), (-1, -1), 8),
-                                        ('FONT', (0, 0), (1, 0), 'Times-Bold')
-                                        ]))
-            table2.wrapOn(c, 0, 0)
-            table2.drawOn(c, 0, table2_top)
+                        art_array.append('Art Education')
+                        art_ed = co_scl.art_education
+                        art_array.append(art_ed)
 
-            data3 = [['Grade', 'Grade'],
-                     ['Discipline: Term-1[On a 3-point(A-C) grading scale', dscpln]]
-            table3_top = table2_top - 50
-            table3 = Table(data3)
-            table3.setStyle(TableStyle([('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-                                        ('BOX', (0, 0), (-1, -1), 2, colors.black),
-                                        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                                        ('ALIGN', (0, 0), (1, 0), 'RIGHT'),
-                                        ('SPAN', (0, 0), (1, 0)),
-                                        ('FONTSIZE', (0, 0), (-1, -1), 8),
-                                        ('FONT', (0, 0), (0, 0), 'Times-Bold')
-                                        ]))
-            table3.wrapOn(c, 0, 0)
-            table3.drawOn(c, 0, table3_top)
+                        health_array.append('Health & Physical Education')
+                        health_ed = co_scl.health_education
+                        health_array.append(health_ed)
 
-            c.drawString(0, table3_top - 20, 'Class Teacher Remarks: ')
-            c.drawString(tab + 30, table3_top - 20, remark)
-            c.drawString(0, table3_top - 45, 'Place & Date:')
-            c.drawString(150, table3_top - 45, 'Signature of Class Teacher')
-            c.drawString(300, table3_top - 45, 'Signature of Principal')
+                        dscpln_array.append('Discipline: Term-1[On a 3-point(A-C) grading scale]')
+                        dscpln = co_scl.discipline
+                        dscpln_array.append(dscpln)
+                        remark = co_scl.teacher_remarks
+                    except Exception as e:
+                        print('failed to retrieve %s Co-scholastic grades for %s %s for ' %
+                              (term, s.fist_name, s.last_name))
+                        print('exception 07022018-C from exam views.py %s %s' % (e.message, type(e)))
+            except Exception as e:
+                print('failed to retrieve Co-scholastic grades for %s %s for ' % (s.fist_name, s.last_name))
+                print('exception 07022018-B from exam views.py %s %s' % (e.message, type(e)))
 
-            c.line(0, table3_top - 50, 6 * inch, table3_top - 50)
-            c.drawString(170, table3_top - 60, "Instructions")
-            c.drawString(0, table3_top - 70, "Grading Scale for Scholastic Areas: "
-                                             "Grades are awarded on a 8-point grading scales as follows - ")
+            try:
+                data2.append(work_array)
+                data2.append(art_array)
+                data2.append(health_array)
+                table2 = Table(data2)
+                table2.setStyle(TableStyle(style2))
+                table2.wrapOn(c, left_margin, 0)
+                table2.drawOn(c, left_margin, table2_top)
+                print('table2 drawn for %s %s' % (s.fist_name, s.last_name))
+            except Exception as e:
+                print('failed to draw table2 for %s %s' % (s.fist_name, s.last_name))
+                print('exception 09022018-B from exam views.py %s %s' % (e.message, type(e)))
 
-            data4 = [['MARKS RANGE', 'GRADE'],
-                     ['91 - 100', 'A 1'],
-                     ['81 - 90', 'A 2'],
-                     ['71 - 80', 'B 1'],
-                     ['61 - 70', 'B 2'],
-                     ['51 - 60', 'C 1'],
-                     ['41 - 50', 'C 2'],
-                     ['33 - 40', 'D'],
-                     ['32 & Below', 'E (Needs improvement)']]
+            print('preparing table3 for %s %s' % (s.fist_name, s.last_name))
+            table3_top = table2_top - 40
+            try:
+                if the_class in middle_classes:
+                    data3 = [['Grade', '', 'Grade', '']]
+                if the_class in ninth_tenth:
+                    data3 = ['Grade', '']
+
+                data3.append(dscpln_array)
+                table3 = Table(data3)
+                table3.setStyle(TableStyle(style3))
+                table3.wrapOn(c, 0, 0)
+                table3.drawOn(c, left_margin, table3_top)
+                print('drawn table3 for %s %s' % (s.fist_name, s.last_name))
+            except Exception as e:
+                print('failed to draw table3 for %s %s' % (s.fist_name, s.last_name))
+                print('exception 07022018-C from exam views.py %s %s' % (e.message, type(e)))
+
+            try:
+                c.drawString(left_margin, table3_top - 15, 'Class Teacher Remarks: ')
+                c.drawString(tab - 20, table3_top - 15, remark)
+                c.drawString(left_margin, table3_top - 25, 'Promoted to Class: ')
+                c.drawString(tab - 20, table3_top - 25, '')
+                c.drawString(left_margin, table3_top - 55, 'Place & Date:')
+                c.drawString(175, table3_top - 55, 'Signature of Class Teacher')
+                c.drawString(400, table3_top - 55, 'Signature of Principal')
+            except Exception as e:
+                print('exception 08022018-A from exam views.py %s %s' % (e.message, type(e)))
+
+            c.line(left_margin, table3_top - 60, 6.75 * inch, table3_top - 60)
+            c.drawString(170, table3_top - 90, "Instructions")
+            c.drawString(0, table3_top - 100, "Grading Scale for Scholastic Areas: "
+                                              "Grades are awarded on a 8-point grading scales as follows - ")
+
             table4 = Table(data4)
-            table4.setStyle(TableStyle([('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-                                        ('FONT', (0, 0), (1, 0), 'Times-Bold'),
-                                        ('FONTSIZE', (0, 0), (-1, -1), 8)]))
+            table4.setStyle(TableStyle(style4))
             table4.wrapOn(c, 0, 0)
-            table4.drawOn(c, 120, table3_top - 250)
+            table4.drawOn(c, 140, table3_top - 250)
+            return
 
+        if whole_class == 'true':
+            # get the list of all the students, then get the marks of each test conducted for this exam
+            students = Student.objects.filter(school=school, current_class=standard, current_section=sec)
+            for s in students:
+                print('Entering loop')
+                marksheet(c, s)
+                c.showPage()
+        else:
+            marksheet(c, s)
             c.showPage()
+        try:
             c.save()
-            return response
+        except Exception as e:
+            print('error in saving the pdf')
+            print ('Exception 21102017-P from exam views.py %s %s' % (e.message, type(e)))
+        print('about to send the response')
+        return response
     return HttpResponse()
 
 
@@ -907,29 +898,37 @@ class ResultSheet(generics.ListCreateAPIView):
                     'border': 1
                 })
 
-                result_sheet.merge_range ('A1:AI1', 'JAGRAN PUBLIC SCHOOL NOIDA',  title)
+                school_name = school.school_name + ' ' + school.school_address
                 title_text = 'CONSILIDATED RESULT SHEET (2017-2018) FOR CLASS %s-%s' % \
                              (the_class.standard, section.section)
                 print (title_text)
-                result_sheet.merge_range ('A2:AI2', title_text, title)
-
                 # get the name of the class teacher
+                class_teacher = 'N/A'
                 try:
-                    ct = ClassTeacher.objects.get (school=school, standard=the_class, section=section)
+                    ct = ClassTeacher.objects.get(school=school, standard=the_class, section=section)
                     class_teacher = ct.class_teacher.first_name + ' ' + ct.class_teacher.last_name
-                    result_sheet.merge_range ('A3:AI3', ('CLASS TEACHER: %s' % class_teacher), header)
                 except Exception as e:
                     print ('exception 19012018-A from exam views.py %s %s' % (e.message, type(e)))
                     print ('class teacher for class %s-%s is not set!' % (the_class.standard, section.section))
+                if the_class.standard in middle_classes:
+                    result_sheet.merge_range ('A1:AI1', school_name,  title)
+                    result_sheet.merge_range('A2:AI2', title_text, title)
+                    result_sheet.merge_range('A3:AI3', ('CLASS TEACHER: %s' % class_teacher), header)
+                if the_class.standard in ninth_tenth:
+                    result_sheet.merge_range('A1:AE1', 'JAGRAN PUBLIC SCHOOL NOIDA', title)
+                    result_sheet.merge_range('A2:AE2', title_text, title)
+                    result_sheet.merge_range('A3:AE3', ('CLASS TEACHER: %s' % class_teacher), header)
+
+                # headings that are common for all the classes
+                result_sheet.merge_range('A4:A7', 'S No', cell_center)
+                result_sheet.merge_range('B4:B7', 'Admn. No\nReg. No', cell_center)
+                result_sheet.set_column('A:A', 3)
+                result_sheet.set_column('C:C', 4)
+                result_sheet.merge_range('C4:C7', 'House', vertical_text)
+                result_sheet.set_column('D:D', 18)
+                result_sheet.merge_range('D4:D7', 'Student Name', cell_center)
 
                 if the_class.standard in middle_classes:
-                    result_sheet.merge_range ('A4:A7', 'S No', cell_center)
-                    result_sheet.merge_range ('B4:B7', 'Admn. No\nReg. No', cell_center)
-                    result_sheet.set_column ('A:A', 3)
-                    result_sheet.set_column ('C:C', 4)
-                    result_sheet.merge_range ('C4:C7', 'House', vertical_text)
-                    result_sheet.set_column ('D:D', 18)
-                    result_sheet.merge_range('D4:D7', 'Student Name', cell_center)
                     result_sheet.merge_range ('E4:O4', 'Term I (700)', cell_center)
                     result_sheet.merge_range ('P4:Z4', 'Term II (700)', cell_center)
                     result_sheet.set_column ('E:AC', 6)
@@ -981,8 +980,9 @@ class ResultSheet(generics.ListCreateAPIView):
                         print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
                         print (students)
                         # prepare the borders
+                        last_col = 35
                         for row in range(7, students.count() + 7):
-                            for col in range(0, 35):
+                            for col in range(0, last_col):
                                 result_sheet.write(row, col, '', border)
                     except Exception as e:
                         print ('exception 20012018-A from exam views.py %s %s' % (e.message, type(e)))
@@ -1012,8 +1012,9 @@ class ResultSheet(generics.ListCreateAPIView):
                                 print ('failed to retrieve subject for %s' % s)
                                 continue
                             try:
-                                term_tests = ClassTest.objects.filter(the_class=the_class, section=section, subject=subject,
-                                                                       test_type='term').order_by('date_conducted')
+                                term_tests = ClassTest.objects.filter(the_class=the_class, section=section,
+                                                                      subject=subject, test_type='term').\
+                                    order_by('date_conducted')
                                 print ('retrieved the term tests for class: %s-%s, subject: %s' %
                                        (the_class.standard, section.section, s))
                                 print (term_tests)
@@ -1118,12 +1119,180 @@ class ResultSheet(generics.ListCreateAPIView):
                             print ('failed to retrieve Co-scholastics grade for %s' % student_name)
                         row = row + 1
                         s_no = s_no + 1
+                if the_class.standard in ninth_tenth:
+                    row = 3
+                    col = 4
+                    result_sheet.merge_range(row, col, row+3, col, 'Sec Lang. opted', vertical_text)
+                    col = col + 1
+                    result_sheet.set_column('E:E', 6.25)
+                    result_sheet.set_column('F:Z', 5.5)
+                    result_sheet.merge_range(row, col, row+2, col+2, 'English\n(100)', cell_center)
+                    col = col + 3
+                    result_sheet.merge_range(row, col, row+2, col+2, 'Hindi/French/Sanskrit\n(100)', cell_center)
+                    col = col + 3
+                    result_sheet.merge_range(row, col, row+2, col+2, 'Mathematics\n(100', cell_center)
+                    col = col + 3
+                    result_sheet.merge_range(row, col, row+2, col+2, 'Science\n(100)', cell_center)
+                    col = col + 3
+                    result_sheet.merge_range(row, col, row+2, col+2, 'Social Studies\n(100)', cell_center)
+                    col = col + 3
+                    result_sheet.merge_range(row, col, row+2, col+2, 'FIT\n(100)', cell_center)
+                    col = col + 3
+                    result_sheet.merge_range(row, col, row+2, col+2, 'Grand Total\n(600)', cell_center)
+
+                    row = 6
+                    col_range = 23
+                    for col in range(5, col_range):
+                        if col%3 == 2:
+                            result_sheet.write_string(row, col, 'P.N.A\n(20)', cell_center)
+                        if col%3 == 0:
+                            result_sheet.write_string(row, col, 'Annual\n(80)', cell_center)
+                        if col%3 == 1:
+                            result_sheet.write_string(row, col, 'Total\n(100)', cell_center)
+                    result_sheet.set_column('AA:AD', 3)
+                    col = col_range
+                    result_sheet.write_string(row, col, 'Marks', cell_center)
+                    col = col + 1
+                    result_sheet.write_string(row, col, '%', cell_center)
+                    col = col + 1
+                    result_sheet.write_string(row, col, 'Grade', cell_center)
+                    row = row - 3
+                    col = col + 1
+                    result_sheet.merge_range(row, col, row+3, col, 'Rank', vertical_text)
+                    col = col + 1
+                    result_sheet.merge_range(row, col, row+3, col, 'Work Ed.', vertical_text)
+                    col = col + 1
+                    result_sheet.merge_range(row, col, row+3, col, 'Art/Music', vertical_text)
+                    col = col + 1
+                    result_sheet.merge_range(row, col, row+3, col, 'Health/Phy Ed.', vertical_text)
+                    col = col + 1
+                    result_sheet.set_column('AE:AE', 12)
+                    result_sheet.merge_range(row, col, row+3, col, 'Result/Remark', cell_center)
+                    row = row + 1
+
+                    sub_list = ['English', 'Third Language', 'Mathematics', 'Science', 'Social Studies']
+                    # header rows are ready, now is the time to get the result of each student
+                    try:
+                        students = Student.objects.filter(school=school, current_class=the_class,
+                                                          current_section=section,
+                                                          active_status=True).order_by('fist_name')
+                        print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
+                        print (students)
+                        # prepare the borders
+                        last_col = 31
+                        for row in range(7, students.count() + 7):
+                            for col in range(0, last_col):
+                                result_sheet.write(row, col, '', border)
+                    except Exception as e:
+                        print ('exception 26012018-A from exam views.py %s %s' % (e.message, type(e)))
+                        print ('failed to retrieve the list of students for %s-%s' % (
+                        the_class.standard, section.section))
+
+                    row = 7
+                    col = 0
+                    s_no = 1
+                    for student in students:
+                        result_sheet.write_number(row, col, s_no, cell_normal)
+                        col = col + 1
+                        admission_no = student.student_erp_id
+                        result_sheet.write_string(row, col, admission_no, cell_normal)
+                        col = col + 1
+                        result_sheet.write_string(row, col, '', cell_normal)
+                        col = col + 1
+                        student_name = student.fist_name + ' ' + student.last_name
+                        result_sheet.write_string(row, col, student_name, cell_normal)
+
+                        # next column is for mentioning the second language, and marks will start after that. Hence,
+                        # incrementing by 2
+                        marks_col = col + 2
+
+                        # get the marks of each subject
+                        grand_totl = 0
+                        for s in sub_list:
+                            # if the subject is language, we need to determine which language this student has opted for
+                            if s == 'Third Language':
+                                try:
+                                    mapping = ThirdLang.objects.get(student=student)
+                                    subject = mapping.third_lang
+                                    # mention this subject name in column 'Second Lang opted'
+                                    second_lang = subject.subject_name
+                                    print('second language opted by %s: %s' % (student_name, second_lang))
+                                    result_sheet.write_string(row, 4, second_lang, cell_normal)
+                                except Exception as e:
+                                    print('exception 26012018-B from exam views.py %s %s' % (e.message, type(e)))
+                                    print('failed to determine the second language opted by %s' % student_name)
+                                    marks_col = marks_col + 2
+                                    continue
+                            else:
+                                subject = Subject.objects.get(school=school, subject_name=s)
+
+                            # retrieve the term test for this subject. As this is IX/X class there will
+                            # be only one term test
+                            print('now retriving marks secured by %s in %s' % (student_name, subject.subject_name))
+                            try:
+                                term_test = ClassTest.objects.get(the_class=the_class, section=section,
+                                                                  subject=subject, test_type='term')
+                                print('retrieved term test for %s' % subject.subject_name)
+                                print(term_test)
+                                # get the test results for this term test
+                                test_result = TestResults.objects.get(class_test=term_test, student=student)
+                                annual_marks = test_result.marks_obtained
+                                term_test_result = TermTestResult.objects.get(test_result=test_result)
+                                pna_marks = term_test_result.periodic_test_marks
+                                pna_marks = pna_marks + term_test_result.note_book_marks
+                                pna_marks = pna_marks + term_test_result.sub_enrich_marks
+                                result_sheet.write_number(row, marks_col, pna_marks, cell_normal)
+                                marks_col = marks_col + 1
+                                result_sheet.write_number(row, marks_col, annual_marks, cell_normal)
+                                marks_col = marks_col + 1
+                                total_marks = pna_marks + annual_marks
+                                result_sheet.write_number(row, marks_col, total_marks, cell_normal)
+                                grand_totl = grand_totl + annual_marks
+                                marks_col = marks_col + 1
+                            except Exception as e:
+                                print('exception 27012018-C from exam views.py %s %s' % (e.message, type(e)))
+                                print('failed to retrieve term test marks for %s in subject %s' %
+                                      (student_name, subject.subject_name))
+                                marks_col = marks_col + 2
+                        result_sheet.write_number(row, marks_col, grand_totl, cell_normal)
+                        formula = '=X%s/600.00' % str(row + 1)
+                        result_sheet.write_formula (row, marks_col, formula, perc_format)
+                        marks_col = marks_col + 1
+                        index = 'Y%s*100' % str(row + 1)
+                        print ('index = %s' % index)
+                        formula = '=IF(%s > 90, "A1", IF(%s > 80, "A2", IF(%s > 70, "B1", IF(%s > 60, "B2", ' \
+                                  'IF(%s > 50, "C1", IF(%s > 40, "C2", IF(%s > 32, "D", "E")))))))' % \
+                                  (index, index, index, index, index, index, index)
+                        print ('formula for grade = %s' % formula)
+                        result_sheet.write_formula(row, marks_col, formula, cell_grade)
+                        marks_col = marks_col + 1
+
+                        # co-scholastic grades. We will show grades for both terms separated by /, eg B/A.
+                        # As this is IX class there will be term2
+                        try:
+                            cs_term2 = CoScholastics.objects.get(term='term2', student=student)
+                            work_ed = cs_term2.work_education
+                            result_sheet.write_string(row, marks_col, work_ed, cell_grade)
+                            marks_col = marks_col + 1
+                            art_ed = cs_term2.art_education
+                            result_sheet.write_string(row, marks_col, art_ed, cell_grade)
+                            marks_col = marks_col + 1
+                            health_ed = cs_term2.health_education
+                            result_sheet.write_string(row, marks_col, health_ed, cell_grade)
+                            marks_col = marks_col + 1
+                            discipline = cs_term2.discipline
+                            result_sheet.write_string(row, marks_col, discipline, cell_grade)
+                        except Exception as e:
+                            print('exception 27012018-D from exam views.py %s %s' % (e.message, type(e)))
+                            print('failed to retrieve Co-scholastic grades for %s' % student_name)
                         col = 0
-                    workbook.close()
-                    response = HttpResponse(content_type='application/vnd.ms-excel')
-                    response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
-                    response.write(output.getvalue())
-                    return response
+                        s_no = s_no + 1
+                        row = row + 1
+                workbook.close()
+                response = HttpResponse(content_type='application/vnd.ms-excel')
+                response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
+                response.write(output.getvalue())
+                return response
             else:
                 error = 'You have missed to select either Class, or Section'
                 form = ResultSheetForm(request)

@@ -6,6 +6,7 @@ import json
 import base64
 import datetime
 from datetime import date
+from decimal import Decimal
 
 from django.core.files.base import ContentFile
 from django.core.servers.basehttp import FileWrapper
@@ -425,6 +426,10 @@ def create_test1(request, school_id, the_class, section, subject,
 
     }
     context_dict['header'] = 'Create Test'
+    higher_classes = ['XI', 'XII']
+    ninth_tenth = ['IX', 'X']
+    middle_classes = ['V', 'VI', 'VII', 'VIII']
+    junior_classes = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV']
     if request.method == 'POST':
         # all of the above except date are foreign key in Attendance model. Hence we need to get the actual object
         school = School.objects.get(id=school_id)
@@ -456,7 +461,7 @@ def create_test1(request, school_id, the_class, section, subject,
 
                 # 24/12/2017 for class XI & XII max marks & passing marks are different for every subject.
                 # Hence let us keep max marks = 100 and passing marks = 0. School will analyze in the result sheets
-                if the_class == 'XI' or the_class == 'XII':
+                if the_class in higher_classes:
                     if test_type == 'term':
                         test.max_marks = 100.0
                         test.passing_marks = 0.0
@@ -497,10 +502,6 @@ def create_test1(request, school_id, the_class, section, subject,
 
                 student_list = Student.objects.filter(school=school, current_section__section=section,
                                                       current_class__standard=the_class, active_status=True)
-                higher_classes = ['XI', 'XII']
-                ninth_tenth  =['IX', 'X']
-                middle_classes = ['V', 'VI', 'VII', 'VIII']
-                junior_classes = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV']
                 for student in student_list:
                     # 06/11/2017 if the subject is third language or elective subject (class XI & XII),
                     #  we need to filter students
@@ -519,11 +520,59 @@ def create_test1(request, school_id, the_class, section, subject,
                                 # 21/09/2017 some more data need to be created for a Term test
                                 try:
                                     if test_type == 'term':
-                                        term_test_result = TermTestResult(test_result=test_result,
-                                                                          periodic_test_marks=-5000.0,
-                                                                          note_book_marks=-5000.0,
-                                                                          sub_enrich_marks=-5000.0)
-                                        term_test_result.save()
+                                        # 01/02/2018 - If this is a second term test, ie the final exam for class
+                                        # V-VIII, then we need to auto fill the PA marks. The marks will be the
+                                        # average of all the unit test conducted between the first term test till now
+
+                                        term_tests = ClassTest.objects.filter(the_class=c, section=s, subject=sub,
+                                                                              test_type='term'). \
+                                            order_by('date_conducted')
+                                        print('term tests conducted so far for class %s-%s for subject %s' %
+                                              (the_class, s, sub))
+                                        print(term_tests)
+                                        if term_tests.count() > 1:  # this is the second term test
+                                            print('this is the second term (final) test for %s-%s subject %s' %
+                                                  (the_class, s, sub))
+                                            print('periodic assessments marks will be the average of unit tests')
+                                            term1_test = term_tests[0]
+                                            term1_date = term1_test.date_conducted
+                                            print('previous first term test was conducted on ')
+                                            print(term1_date)
+
+                                            # get all the unit tests conducted between term1 & term2
+                                            unit_tests = ClassTest.objects.filter(the_class=c, section=s, subject=sub,
+                                                                                  date_conducted__gt=term1_date,
+                                                                                  date_conducted__lt=the_date)
+                                            print('%i unit tests have been conducted for in class %s-%s for %s' %
+                                                  (unit_tests.count(), the_class, s, sub))
+                                            print(unit_tests)
+                                            pa_marks_total = 0.0
+                                            out_of_marks_total = 0.0
+                                            for ut in unit_tests:
+                                                ut_result = TestResults.objects.get(class_test=ut, student=student)
+                                                out_of_marks_total = Decimal(out_of_marks_total) + ut.max_marks
+                                                pa_marks_total = Decimal(pa_marks_total) + ut_result.marks_obtained
+                                            pa_marks = (pa_marks_total / out_of_marks_total) * Decimal(10.0)
+                                            if pa_marks < Decimal(0.0):
+                                                print('all unit test marks for subject %s are not entered for %s' %
+                                                      (sub, student.fist_name))
+                                                pa_marks = -5000.0
+
+                                            term_test_result = TermTestResult(test_result=test_result,
+                                                                              periodic_test_marks=pa_marks,
+                                                                              note_book_marks=-5000.0,
+                                                                              sub_enrich_marks=-5000.0)
+                                            term_test_result.save()
+                                        else:
+                                            # 01/02/2018 - this is the first term test.
+                                            # The periodic_test_marks should be the average of all unit tests
+                                            # conducted from the start of the session till this term test.
+                                            # We will do the thorough coding later. For the time being it is -5000.0
+                                            term_test_result = TermTestResult(test_result=test_result,
+                                                                              periodic_test_marks=-5000.0,
+                                                                              note_book_marks=-5000.0,
+                                                                              sub_enrich_marks=-5000.0)
+                                            term_test_result.save()
                                         print (' term test results successfully created for %s %s' %
                                                (student.fist_name, student.last_name))
                                 except Exception as e:
@@ -552,7 +601,7 @@ def create_test1(request, school_id, the_class, section, subject,
                                     print ('test results successfully created for %s %s' % (
                                         student.fist_name, student.last_name))
 
-                                    # 24/12/2017 in case of higher practical marks need to be initialized
+                                    # 24/12/2017 in case of higher classes, practical marks need to be initialized
                                     if test_type == 'term':
                                         term_test_result = TermTestResult(test_result=test_result, prac_marks=-5000.0)
                                         term_test_result.save()
@@ -582,13 +631,67 @@ def create_test1(request, school_id, the_class, section, subject,
                                         # 21/09/2017 some more data need to be created for a Term test
                                         try:
                                             if test_type == 'term':
-                                                term_test_result = TermTestResult(test_result=test_result,
-                                                                                  periodic_test_marks=-5000.0,
-                                                                                  note_book_marks=-5000.0,
-                                                                                  sub_enrich_marks=-5000.0)
-                                                term_test_result.save()
-                                                print (' term test results successfully created for %s %s' %
-                                                       (student.fist_name, student.last_name))
+                                                # 01/02/2018 - If this is a second term test,
+                                                # ie the final exam for class
+                                                # V-VIII, then we need to auto fill the PA marks. The marks will be the
+                                                # average of all the unit test conducted between the
+                                                # first term test till now
+
+                                                term_tests = ClassTest.objects.filter(the_class=c, section=s,
+                                                                                      subject=sub,
+                                                                                      test_type='term'). \
+                                                    order_by('date_conducted')
+                                                print('term tests conducted so far for class %s-%s for subject %s' %
+                                                      (the_class, s, sub))
+                                                print(term_tests)
+                                                if term_tests.count() > 1:  # this is the second term test
+                                                    print('this is the second term (final) test for %s-%s subject %s' %
+                                                          (the_class, s, sub))
+                                                    print(
+                                                        'periodic assessments marks will be the average of unit tests')
+                                                    term1_test = term_tests[0]
+                                                    term1_date = term1_test.date_conducted
+                                                    print('previous first term test was conducted on ')
+                                                    print(term1_date)
+
+                                                    # get all the unit tests conducted between term1 & term2
+                                                    unit_tests = ClassTest.objects.filter(the_class=c, section=s,
+                                                                                          subject=sub,
+                                                                                          date_conducted__gt=term1_date,
+                                                                                          date_conducted__lt=the_date)
+                                                    print('%i unit tests have been conducted for in class %s-%s for %s' %
+                                                                (unit_tests.count(), the_class, s, sub))
+                                                    print(unit_tests)
+                                                    pa_marks_total = 0.0
+                                                    out_of_marks_total = 0.0
+                                                    for ut in unit_tests:
+                                                        ut_result = TestResults.objects.get(class_test=ut,
+                                                                                            student=student)
+                                                        out_of_marks_total = Decimal(out_of_marks_total) + ut.max_marks
+                                                        pa_marks_total = Decimal(
+                                                            pa_marks_total) + ut_result.marks_obtained
+                                                    pa_marks = (pa_marks_total / out_of_marks_total) * Decimal(10.0)
+                                                    if pa_marks < Decimal(0.0):
+                                                        print('all unit test marks for subject %s are not entered for %s' %
+                                                                    (sub, student.fist_name))
+                                                        pa_marks = -5000.0
+
+                                                    term_test_result = TermTestResult(test_result=test_result,
+                                                                                      periodic_test_marks=pa_marks,
+                                                                                      note_book_marks=-5000.0,
+                                                                                      sub_enrich_marks=-5000.0)
+                                                    term_test_result.save()
+                                                else:
+                                                    # 01/02/2018 - this is the first term test.
+                                                    # The periodic_test_marks should be the average of all unit tests
+                                                    # conducted from the start of the session till this term test.
+                                                    # We will do the thorough coding later.
+                                                    # For the time being it is -5000.0
+                                                    term_test_result = TermTestResult(test_result=test_result,
+                                                                                      periodic_test_marks=-5000.0,
+                                                                                      note_book_marks=-5000.0,
+                                                                                      sub_enrich_marks=-5000.0)
+                                                    term_test_result.save()
                                         except Exception as e:
                                             print ('failed to create term test results')
                                             print ('Exception 02012018-A from acacemics views.py = %s (%s)' % (
@@ -611,11 +714,55 @@ def create_test1(request, school_id, the_class, section, subject,
                                 try:
                                     test_result.save()
                                     if test_type == 'term':
-                                        term_test_result = TermTestResult(test_result=test_result,
-                                                                          periodic_test_marks=-5000.0,
-                                                                          note_book_marks=-5000.0,
-                                                                          sub_enrich_marks=-5000.0)
-                                        term_test_result.save()
+                                        # 01/02/2018 - If this is a second term test, ie the final exam for class
+                                        # V-VIII, then we need to auto fill the PA marks. The marks will be the
+                                        # average of all the unit test conducted between the first term test till now
+
+                                        term_tests = ClassTest.objects.filter(the_class=c, section=s, subject=sub,
+                                                                              test_type='term'). \
+                                            order_by('date_conducted')
+                                        if term_tests.count() > 1:  # this is the second term test
+                                            print('this is the second term (final) test for %s-%s subject %s' %
+                                                  (the_class, s, sub))
+                                            print('periodic assessments marks will be the average of unit tests')
+                                            term1_test = term_tests[0]
+                                            term1_date = term1_test.date_conducted
+
+                                            # get all the unit tests conducted between term1 & term2
+                                            unit_tests = ClassTest.objects.filter(the_class=c, section=s, subject=sub,
+                                                                                  date_conducted__gt=term1_date,
+                                                                                  date_conducted__lt=the_date)
+                                            print('%i unit tests have been conducted for in class %s-%s for %s' %
+                                                  (unit_tests.count(), the_class, s, sub))
+                                            pa_marks_total = 0.0
+                                            out_of_marks_total = 0.0
+                                            for ut in unit_tests:
+                                                ut_result = TestResults.objects.get(class_test=ut, student=student)
+                                                out_of_marks_total = out_of_marks_total + ut.max_marks
+                                                pa_marks_total = pa_marks_total + ut_result.marks_obtained
+                                            pa_marks = (pa_marks_total / out_of_marks_total) * 10.0
+                                            if pa_marks < Decimal(0.0):
+                                                print('all unit test marks for subject %s are not entered for %s' %
+                                                      (sub, student.fist_name))
+                                                pa_marks = -5000.0
+
+                                            term_test_result = TermTestResult(test_result=test_result,
+                                                                              periodic_test_marks=pa_marks,
+                                                                              note_book_marks=-5000.0,
+                                                                              sub_enrich_marks=-5000.0)
+                                            term_test_result.save()
+                                        else:
+                                            # 01/02/2018 - this is the first term test.
+                                            # The periodic_test_marks should be the average of all unit tests
+                                            # conducted from the start of the session till this term test.
+                                            # We will do the thorough coding later. For the time being it is -5000.0
+                                            term_test_result = TermTestResult(test_result=test_result,
+                                                                              periodic_test_marks=-5000.0,
+                                                                              note_book_marks=-5000.0,
+                                                                              sub_enrich_marks=-5000.0)
+                                            term_test_result.save()
+                                        print (' term test results successfully created for %s %s' %
+                                               (student.fist_name, student.last_name))
 
                                     print (' test results successfully created for %s %s' % (
                                         student.fist_name, student.last_name))
@@ -633,17 +780,62 @@ def create_test1(request, school_id, the_class, section, subject,
                                 if test_type == 'term':
                                     print ('determining whether %s is a junior or middle class' % the_class)
                                     if the_class in middle_classes:
-                                        print ('%s is a middle class. Hence creating PA, Notebook Sub & Sub Enrich'
-                                               % the_class)
-                                        term_test_result = TermTestResult(test_result=test_result,
-                                                                          periodic_test_marks=-5000.0,
-                                                                          note_book_marks=-5000.0,
-                                                                          sub_enrich_marks=-5000.0)
-                                        term_test_result.save()
+                                        # 01/02/2018 - If this is a second term test, ie the final exam for class
+                                        # V-VIII, then we need to auto fill the PA marks. The marks will be the
+                                        # average of all the unit test conducted between the first term test till now
+
+                                        term_tests = ClassTest.objects.filter(the_class=c, section=s, subject=sub,
+                                                                              test_type='term'). \
+                                            order_by('date_conducted')
+                                        print('term tests conducted so far for class %s-%s for subject %s' %
+                                              (the_class, s, sub))
+                                        print(term_tests)
+                                        if term_tests.count() > 1:  # this is the second term test
+                                            print('this is the second term (final) test for %s-%s subject %s' %
+                                                  (the_class, s, sub))
+                                            print('periodic assessments marks will be the average of unit tests')
+                                            term1_test = term_tests[0]
+                                            term1_date = term1_test.date_conducted
+                                            print('previous first term test was conducted on ')
+                                            print(term1_date)
+
+                                            # get all the unit tests conducted between term1 & term2
+                                            unit_tests = ClassTest.objects.filter(the_class=c, section=s, subject=sub,
+                                                                                  date_conducted__gt=term1_date,
+                                                                                  date_conducted__lt=the_date)
+                                            print('%i unit tests have been conducted for in class %s-%s for %s' %
+                                                  (unit_tests.count(), the_class, s, sub))
+                                            print(unit_tests)
+                                            pa_marks_total = 0.0
+                                            out_of_marks_total = 0.0
+                                            for ut in unit_tests:
+                                                ut_result = TestResults.objects.get(class_test=ut, student=student)
+                                                out_of_marks_total = Decimal(out_of_marks_total) + ut.max_marks
+                                                pa_marks_total = Decimal(pa_marks_total) + ut_result.marks_obtained
+                                            pa_marks = (pa_marks_total / out_of_marks_total) * Decimal(10.0)
+                                            if pa_marks < Decimal(0.0):
+                                                print('all unit test marks for subject %s are not entered for %s' %
+                                                      (sub, student.fist_name))
+                                                pa_marks = -5000.0
+
+                                            term_test_result = TermTestResult(test_result=test_result,
+                                                                              periodic_test_marks=pa_marks,
+                                                                              note_book_marks=-5000.0,
+                                                                              sub_enrich_marks=-5000.0)
+                                            term_test_result.save()
+                                        else:
+                                            # 01/02/2018 - this is the first term test.
+                                            # The periodic_test_marks should be the average of all unit tests
+                                            # conducted from the start of the session till this term test.
+                                            # We will do the thorough coding later. For the time being it is -5000.0
+                                            term_test_result = TermTestResult(test_result=test_result,
+                                                                              periodic_test_marks=-5000.0,
+                                                                              note_book_marks=-5000.0,
+                                                                              sub_enrich_marks=-5000.0)
+                                            term_test_result.save()
                                     else:
                                         print ('%s is a junior class. Hence not creating PA, Notbook Sub & Sub enrich'
                                                % the_class)
-
                                 print (' test results successfully created for %s %s' % (
                                     student.fist_name, student.last_name))
                             except Exception as e:

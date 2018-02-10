@@ -28,10 +28,15 @@ class School(models.Model):
 
 class GlobalConf(models.Model):
     server_url = models.CharField(max_length=100, default="https://www.classupclient.com/")
+    aws_s3_bucket = models.CharField(max_length=20, default='classup2')
+    aws_access_key = models.CharField(max_length=40, default='AKIAJ6X32EHNR26CXSWA')
+    aws_secret_key = models.CharField(max_length=50, default='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')
+    aws_region = models.CharField(max_length=20, default='us-east-1')
 
 
 class Configurations(models.Model):
     school = models.ForeignKey(School)
+    school_short_name = models.CharField(max_length=20, default='model')
     type = models.CharField(max_length=20, default='school')
     login_prefix = models.CharField(max_length=20, default='@classup.com')
     router_server_ip = models.CharField(max_length=50, default='0.0.0.0')
@@ -72,6 +77,9 @@ class Configurations(models.Model):
 
     def __unicode__(self):
         return self.school.school_name
+
+    class Meta:
+        ordering = ('school__school_name', )
 
 
 class UserSchoolMapping(models.Model):
