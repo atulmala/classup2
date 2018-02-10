@@ -567,12 +567,13 @@ def prepare_results(request, school_id, the_class, section):
         try:
             scheme = Scheme.objects.filter(school=school, the_class=standard)
             sub_count = scheme.count()
-            for s in scheme:
-                sub_dict[s.sequence] = s.subject
+            for sc in scheme:
+                sub_dict[sc.sequence] = sc.subject
+            print('sub_dict = ')
             print (sub_dict)
         except Exception as e:
             print('Looks like the scheme for class %s is not yet set' % the_class)
-            print('exception 10022018-A from exam views.py')
+            print('exception 10022018-A from exam views.py %s %s' % (e.message, type(e)))
 
         left_margin = -30
 
