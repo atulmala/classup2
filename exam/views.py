@@ -564,11 +564,15 @@ def prepare_results(request, school_id, the_class, section):
         # 02/11/2017 - get the scheme for this class. The scheme will provide the subjects of this class and
         # the sequence. Subjects in the Marksheet would appear in the order of sequence
         sub_dict = {}
-        scheme = Scheme.objects.filter(school=school, the_class=standard)
-        sub_count = scheme.count()
-        for s in scheme:
-            sub_dict[s.sequence] = s.subject
-        print (sub_dict)
+        try:
+            scheme = Scheme.objects.filter(school=school, the_class=standard)
+            sub_count = scheme.count()
+            for s in scheme:
+                sub_dict[s.sequence] = s.subject
+            print (sub_dict)
+        except Exception as e:
+            print('Looks like the scheme for class %s is not yet set' % the_class)
+            print('exception 10022018-A from exam views.py')
 
         left_margin = -30
 
@@ -639,6 +643,10 @@ def prepare_results(request, school_id, the_class, section):
                 terms = ['Term1', 'Term2']
                 try:
                     for term in terms:
+                        # for class IX, only the result of Term2, ie the final exam is to be shown
+                        if term == 'Term1' and the_class in ninth_tenth:
+                            continue
+
                         exam = Exam.objects.get(school=school, title=term)
                         print(exam)
                         start_date = exam.start_date
@@ -646,7 +654,6 @@ def prepare_results(request, school_id, the_class, section):
                         test = ClassTest.objects.get(subject=sub, the_class=standard, section=sec,
                                                      date_conducted__gte=start_date, date_conducted__lte=end_date)
                         tr = TestResults.objects.get(class_test=test, student=s)
-
 
                         ttr = TermTestResult.objects.get(test_result=tr)
 
@@ -675,7 +682,6 @@ def prepare_results(request, school_id, the_class, section):
                 except Exception as e:
                     print('Error while preparing results')
                     print ('Exception 21102017-A from exam views.py %s %s' % (e.message, type(e)))
-
             try:
                 table1 = Table(data1)
                 table1.setStyle(TableStyle(style1))
@@ -700,6 +706,9 @@ def prepare_results(request, school_id, the_class, section):
                 health_array = []
                 dscpln_array = []
                 for term in terms:
+                    # for class IX, only the result of Term2, ie the final exam is to be shown
+                    if term == 'Term1' and the_class in ninth_tenth:
+                        continue
                     try:
                         co_scl = CoScholastics.objects.get(term=term, student=s)
                         work_array.append('Work Education (or Pre-vocational Education)')

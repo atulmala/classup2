@@ -129,6 +129,11 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
         sub = Subject.objects.get(school=school, subject_name=subject)
         the_date = date(int(y), int(m), int(d))
         t = Teacher.objects.get(email=teacher)
+        teacher_name = '%s %s' % (t.first_name, t.last_name)
+        today = date.today()
+        time_delta = today - the_date
+        print('this attendance taken by %s for class %s-%s for subject %s is %i days old' %
+              (teacher_name, the_class, section, subject, time_delta.days))
 
         data = json.loads(request.body)
         print (data)
@@ -177,15 +182,15 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                     configuration = Configurations.objects.get(school=school)
                     school_name = school.school_name
 
-
                     try:
                         parent_name = student.parent.parent_name
                         # prepare the message
                         action = 'Absence SMS Drafting for ' + parent_name + ' started'
                         log_entry(teacher, action, "Normal", True)
 
-                        # 17/02/17 we are looking to use student first name in messages. However, some schools store entire
-                        # name as first name. This need to be checke and split first name if entire name is stored as first name
+                        # 17/02/17 we are looking to use student first name in messages.
+                        # However, some schools store entire name as first name. T
+                        # his need to be checke and split first name if entire name is stored as first name
                         the_name = student.fist_name
                         if ' ' in student.fist_name:
                             (f_name, l_name) = the_name.split(' ')
@@ -211,55 +216,61 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
 
                     print (message)
 
-                    # for coaching classes and colleges we need to send sms for any kind of absence
-                    if configuration.send_period_bunk_sms:
-                        sms.send_sms1(school, teacher, m1, message, message_type)
-                        action = 'Absence SMS sent to ' + parent_name
-                        log_entry(teacher, action, "Normal", True)
-                        if m2 != '':
-                            if configuration.send_absence_sms_both_to_parent:
-                                sms.send_sms1(school, teacher, m2, message, message_type)
-                                log_entry(teacher, action, "Normal", True)
-                    else:
-                        # for schools
-                        # if this subject is NOT the main subject, then we will send sms only if the student was present
-                        # in main attendance (means the student has BUNKED this class :)
-                        if subject != 'Main' and subject != 'main' and subject != 'MAIN':
-                            try:
-                                main = Subject.objects.get(school=school, subject_name='Main')
-                                q = Attendance.objects.filter(date=the_date, the_class=c,
-                                                              section=s, subject=main, student=student)
-                                if q.count() == 0:
-                                    print (student.fist_name + ' ' + student.last_name +
-                                           '  was not absent in Main attendance. '
-                                           'Looks he has bunked this class...')
-                                    action = student.fist_name + ' ' + student.last_name
-                                    action += ' found to be bunking the Class!!!'
+                    # 10/02/2018 - absence SMS will not be sent if attendance is for a date older than 7 days
+                    if time_delta.days < 7:
+                        print('this attendance is recent. Hence SMS will be sent')
+                        # for coaching classes and colleges we need to send sms for any kind of absence
+                        if configuration.send_period_bunk_sms:
+
+                            sms.send_sms1(school, teacher, m1, message, message_type)
+                            action = 'Absence SMS sent to ' + parent_name
+                            log_entry(teacher, action, "Normal", True)
+                            if m2 != '':
+                                if configuration.send_absence_sms_both_to_parent:
+                                    sms.send_sms1(school, teacher, m2, message, message_type)
                                     log_entry(teacher, action, "Normal", True)
-                                    if configuration.send_period_bunk_sms:
-                                        sms.send_sms1(school, teacher, m1, message, message_type)
-                                        action = 'Absence SMS sent to ' + student.parent.parent_name
-                                        log_entry(teacher, action, "Normal", True)
-                                        if m2 != '':
-                                            if configuration.send_absence_sms_both_to_parent:
-                                                sms.send_sms1(school, teacher, m2, message, message_type)
-                                                action = 'Absence SMS sent to Mrs. ' + student.parent.parent_name
-                                                log_entry(teacher, action, "Normal", True)
-                            except Exception as e:
-                                action = 'Unable to send SMS to ' + student.parent.parent_name
-                                log_entry(teacher, action, "Normal", True)
-                                print ('unable to send sms for ' + f_name)
-                                print ('Exception5 from attendance views.py = %s (%s)' % (e.message, type(e)))
                         else:
-                            if configuration.send_absence_sms:
-                                sms.send_sms1(school, teacher, m1, message, message_type)
-                                action = 'Absence SMS sent to ' + student.parent.parent_name
-                                log_entry(teacher, action, "Normal", True)
-                                if m2 != '':
-                                    if configuration.send_absence_sms_both_to_parent:
-                                        sms.send_sms1(school, teacher, m2, message, message_type)
-                                        action = 'Absence SMS sent to Mrs. ' + student.parent.parent_name
+                            # for schools
+                            # if this subject is NOT the main subject, then we will send sms only if the student was present
+                            # in main attendance (means the student has BUNKED this class :)
+                            if subject != 'Main' and subject != 'main' and subject != 'MAIN':
+                                try:
+                                    main = Subject.objects.get(school=school, subject_name='Main')
+                                    q = Attendance.objects.filter(date=the_date, the_class=c,
+                                                                  section=s, subject=main, student=student)
+                                    if q.count() == 0:
+                                        print (student.fist_name + ' ' + student.last_name +
+                                               '  was not absent in Main attendance. '
+                                               'Looks he has bunked this class...')
+                                        action = student.fist_name + ' ' + student.last_name
+                                        action += ' found to be bunking the Class!!!'
                                         log_entry(teacher, action, "Normal", True)
+                                        if configuration.send_period_bunk_sms:
+                                            sms.send_sms1(school, teacher, m1, message, message_type)
+                                            action = 'Absence SMS sent to ' + student.parent.parent_name
+                                            log_entry(teacher, action, "Normal", True)
+                                            if m2 != '':
+                                                if configuration.send_absence_sms_both_to_parent:
+                                                    sms.send_sms1(school, teacher, m2, message, message_type)
+                                                    action = 'Absence SMS sent to Mrs. ' + student.parent.parent_name
+                                                    log_entry(teacher, action, "Normal", True)
+                                except Exception as e:
+                                    action = 'Unable to send SMS to ' + student.parent.parent_name
+                                    log_entry(teacher, action, "Normal", True)
+                                    print ('unable to send sms for ' + f_name)
+                                    print ('Exception5 from attendance views.py = %s (%s)' % (e.message, type(e)))
+                            else:
+                                if configuration.send_absence_sms:
+                                    sms.send_sms1(school, teacher, m1, message, message_type)
+                                    action = 'Absence SMS sent to ' + student.parent.parent_name
+                                    log_entry(teacher, action, "Normal", True)
+                                    if m2 != '':
+                                        if configuration.send_absence_sms_both_to_parent:
+                                            sms.send_sms1(school, teacher, m2, message, message_type)
+                                            action = 'Absence SMS sent to Mrs. ' + student.parent.parent_name
+                                            log_entry(teacher, action, "Normal", True)
+                    else:
+                        print('this attendance is more than 7 days old. Hence not sending SMS')
             except Exception as e:
                 print ('Exception6 from attendance views.py = %s (%s)' % (e.message, type(e)))
                 log_entry(teacher, "Absence was already marked. Exception 6 from attendance views.py", "Normal", True)
