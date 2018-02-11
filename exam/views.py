@@ -996,7 +996,8 @@ class ResultSheet(generics.ListCreateAPIView):
                                 result_sheet.write(row, col, '', border)
                     except Exception as e:
                         print ('exception 20012018-A from exam views.py %s %s' % (e.message, type(e)))
-                        print ('failed to retrieve the list of students for %s-%s' % (the_class.standard, section.section))
+                        print ('failed to retrieve the list of students for %s-%s' %
+                               (the_class.standard, section.section))
 
                     s_no = 1
                     row = 7
@@ -1127,6 +1128,7 @@ class ResultSheet(generics.ListCreateAPIView):
                         except Exception as e:
                             print ('exception 21012018-A from exam views.py %s %s' % (e.message, type(e)))
                             print ('failed to retrieve Co-scholastics grade for %s' % student_name)
+                        col = 0
                         row = row + 1
                         s_no = s_no + 1
                 if the_class.standard in ninth_tenth:
