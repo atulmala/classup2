@@ -528,7 +528,7 @@ def create_test1(request, school_id, the_class, section, subject,
                                                                               test_type='term'). \
                                             order_by('date_conducted')
                                         print('term tests conducted so far for class %s-%s for subject %s' %
-                                              (the_class, s, sub))
+                                              (the_class, s, sub.subject_name))
                                         print(term_tests)
                                         if term_tests.count() > 1:  # this is the second term test
                                             print('this is the second term (final) test for %s-%s subject %s' %
@@ -544,15 +544,28 @@ def create_test1(request, school_id, the_class, section, subject,
                                                                                   date_conducted__gt=term1_date,
                                                                                   date_conducted__lt=the_date)
                                             print('%i unit tests have been conducted for in class %s-%s for %s' %
-                                                  (unit_tests.count(), the_class, s, sub))
+                                                  (unit_tests.count(), the_class, s, sub.subject_name))
                                             print(unit_tests)
-                                            pa_marks_total = 0.0
-                                            out_of_marks_total = 0.0
+                                            marks_array = []
                                             for ut in unit_tests:
                                                 ut_result = TestResults.objects.get(class_test=ut, student=student)
-                                                out_of_marks_total = Decimal(out_of_marks_total) + ut.max_marks
-                                                pa_marks_total = Decimal(pa_marks_total) + ut_result.marks_obtained
-                                            pa_marks = (pa_marks_total / out_of_marks_total) * Decimal(10.0)
+                                                marks_array.append\
+                                                    ((ut_result.marks_obtained/ut.max_marks)*Decimal(10.0))
+                                                print('marks_array = ')
+                                                print(marks_array)
+                                            marks_array.sort(reverse=True)
+                                            try:
+                                                # average of best of two tests
+                                                pa_marks = (marks_array[0] + marks_array[1])/Decimal(2.0)
+                                            except Exception as e:
+                                                print('looks only one cycle test has been conducted for %s in '
+                                                      'class %s-%s between Term1 & Terms 2'
+                                                      % sub.subject_name, the_class, s)
+                                                print('exception 11022018-A from academics views.py %s %s' %
+                                                      (e.message, type(e)))
+                                                print('hence, taking the single unit/cycle test marks as PA marks')
+                                                pa_marks = marks_array[0]
+
                                             if pa_marks < Decimal(0.0):
                                                 print('all unit test marks for subject %s are not entered for %s' %
                                                       (sub, student.fist_name))
@@ -662,15 +675,27 @@ def create_test1(request, school_id, the_class, section, subject,
                                                     print('%i unit tests have been conducted for in class %s-%s for %s' %
                                                                 (unit_tests.count(), the_class, s, sub))
                                                     print(unit_tests)
-                                                    pa_marks_total = 0.0
-                                                    out_of_marks_total = 0.0
+                                                    marks_array = []
                                                     for ut in unit_tests:
                                                         ut_result = TestResults.objects.get(class_test=ut,
                                                                                             student=student)
-                                                        out_of_marks_total = Decimal(out_of_marks_total) + ut.max_marks
-                                                        pa_marks_total = Decimal(
-                                                            pa_marks_total) + ut_result.marks_obtained
-                                                    pa_marks = (pa_marks_total / out_of_marks_total) * Decimal(10.0)
+                                                        marks_array.append \
+                                                            ((ut_result.marks_obtained / ut.max_marks) * Decimal(10.0))
+                                                        print('marks_array = ')
+                                                        print(marks_array)
+                                                    marks_array.sort(reverse=True)
+                                                    try:
+                                                        # average of best of two tests
+                                                        pa_marks = (marks_array[0] + marks_array[1]) / Decimal(2.0)
+                                                    except Exception as e:
+                                                        print('looks only one cycle test has been conducted for %s in '
+                                                              'class %s-%s between Term1 & Terms 2'
+                                                              % sub.subject_name, the_class, s)
+                                                        print('exception 11022018-X from academics views.py %s %s' %
+                                                              (e.message, type(e)))
+                                                        print(
+                                                            'hence, taking the single unit/cycle test marks as PA marks')
+                                                        pa_marks = marks_array[0]
                                                     if pa_marks < Decimal(0.0):
                                                         print('all unit test marks for subject %s are not entered for %s' %
                                                                     (sub, student.fist_name))
@@ -694,7 +719,7 @@ def create_test1(request, school_id, the_class, section, subject,
                                                     term_test_result.save()
                                         except Exception as e:
                                             print ('failed to create term test results')
-                                            print ('Exception 02012018-A from acacemics views.py = %s (%s)' % (
+                                            print ('Exception 02012018-B from acacemics views.py = %s (%s)' % (
                                             e.message, type(e)))
                                             return HttpResponse('Failed to create term test results')
                                     except Exception as e:
@@ -734,18 +759,29 @@ def create_test1(request, school_id, the_class, section, subject,
                                                                                   date_conducted__lt=the_date)
                                             print('%i unit tests have been conducted for in class %s-%s for %s' %
                                                   (unit_tests.count(), the_class, s, sub))
-                                            pa_marks_total = 0.0
-                                            out_of_marks_total = 0.0
+                                            marks_array = []
                                             for ut in unit_tests:
                                                 ut_result = TestResults.objects.get(class_test=ut, student=student)
-                                                out_of_marks_total = out_of_marks_total + ut.max_marks
-                                                pa_marks_total = pa_marks_total + ut_result.marks_obtained
-                                            pa_marks = (pa_marks_total / out_of_marks_total) * 10.0
+                                                marks_array.append \
+                                                    ((ut_result.marks_obtained / ut.max_marks) * Decimal(10.0))
+                                                print('marks_array = ')
+                                                print(marks_array)
+                                            marks_array.sort(reverse=True)
+                                            try:
+                                                # average of best of two tests
+                                                pa_marks = (marks_array[0] + marks_array[1]) / Decimal(2.0)
+                                            except Exception as e:
+                                                print('looks only one cycle test has been conducted for %s in '
+                                                      'class %s-%s between Term1 & Terms 2'
+                                                      % sub.subject_name, the_class, s)
+                                                print('exception 11022018-Y from academics views.py %s %s' %
+                                                      (e.message, type(e)))
+                                                print('hence, taking the single unit/cycle test marks as PA marks')
+                                                pa_marks = marks_array[0]
                                             if pa_marks < Decimal(0.0):
                                                 print('all unit test marks for subject %s are not entered for %s' %
                                                       (sub, student.fist_name))
                                                 pa_marks = -5000.0
-
                                             term_test_result = TermTestResult(test_result=test_result,
                                                                               periodic_test_marks=pa_marks,
                                                                               note_book_marks=-5000.0,
@@ -806,13 +842,25 @@ def create_test1(request, school_id, the_class, section, subject,
                                             print('%i unit tests have been conducted for in class %s-%s for %s' %
                                                   (unit_tests.count(), the_class, s, sub))
                                             print(unit_tests)
-                                            pa_marks_total = 0.0
-                                            out_of_marks_total = 0.0
+                                            marks_array = []
                                             for ut in unit_tests:
                                                 ut_result = TestResults.objects.get(class_test=ut, student=student)
-                                                out_of_marks_total = Decimal(out_of_marks_total) + ut.max_marks
-                                                pa_marks_total = Decimal(pa_marks_total) + ut_result.marks_obtained
-                                            pa_marks = (pa_marks_total / out_of_marks_total) * Decimal(10.0)
+                                                marks_array.append \
+                                                    ((ut_result.marks_obtained / ut.max_marks) * Decimal(10.0))
+                                                print('marks_array = ')
+                                                print(marks_array)
+                                            marks_array.sort(reverse=True)
+                                            try:
+                                                # average of best of two tests
+                                                pa_marks = (marks_array[0] + marks_array[1]) / Decimal(2.0)
+                                            except Exception as e:
+                                                print('looks only one cycle test has been conducted for %s in '
+                                                      'class %s-%s between Term1 & Terms 2'
+                                                      % sub.subject_name, the_class, s)
+                                                print('exception 11022018-Z from academics views.py %s %s' %
+                                                      (e.message, type(e)))
+                                                print('hence, taking the single unit/cycle test marks as PA marks')
+                                                pa_marks = marks_array[0]
                                             if pa_marks < Decimal(0.0):
                                                 print('all unit test marks for subject %s are not entered for %s' %
                                                       (sub, student.fist_name))

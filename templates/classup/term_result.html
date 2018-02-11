@@ -63,8 +63,6 @@
         }
 
         function prepare_result()   {
-
-
             u1 = "academics/prepare_results/"
             u2 = u1.concat(school_id)
 
@@ -95,7 +93,6 @@
 
             xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8');
             xhr.onload = function(e) {
-
                 if (this.status == 200) {
                     $(".modal").hide();
                     var blob = new Blob([this.response], {type: 'application/pdf'});
