@@ -42,7 +42,7 @@ class TestAdmin(admin.ModelAdmin):
         return obj.subject
     get_subject.short_description = 'Subject'
 
-    list_display = ('get_school_name', 'get_class', 'subject', 'teacher', 'date_conducted', 'max_marks',
+    list_display = ('get_school_name', 'get_class', 'subject', 'teacher', 'date_conducted', 'test_type', 'max_marks',
                     'passing_marks', 'is_completed', )
 
     list_filter = ('the_class__school',)
