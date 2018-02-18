@@ -10,6 +10,39 @@
 {% endblock %}
 
 {% block body_block %}
+    <script type="text/javascript">
+        $(function () {
+            $('#btn_submit1').click (function ()    {
+                c = $('#id_the_class option:selected').text()
+                s = $('id_section option:selected').text()
+                var data = new FormData();
+                //data.append('the_class', the_class);
+                //data.append('section', section);
+                alert(data)
+
+                url = "";
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', url, true);
+                xhr.responseType = 'blob';
+
+                xhr.setRequestHeader('Content-type', 'application/json; charset=utf-8');
+                xhr.onload = function(e) {
+                    if (this.status == 200) {
+                        var blob = new Blob([this.response], {type: 'application/vnd.ms-excel'});
+                        var downloadUrl = URL.createObjectURL(blob);
+                        var a = document.createElement("a");
+                        a.href = downloadUrl;
+                        a.download = 'ResultSheet_' + the_class + '-' + section + '.xlsx';
+                            document.body.appendChild(a);
+                            a.click();
+                        } else {
+                            alert('Unable to download excel.')
+                        }
+                    };
+                xhr.send('the_class=c&section=s');
+            });
+        });
+    </script>
     <div class="main">
         <h1>{{ header }}</h1>
 
@@ -32,8 +65,9 @@
             </table>
             <p>
                 <br/>
-                <input class="btn-primary" type="submit" name="submit" value="Download Excel">
-                <input class="btn-primary" type="submit" name="cancel" value="Done/Cancel">
+                <input class="btn-primary" id="btn_submit" type="submit" name="submit" value="Download Excel">
+                <!--<input type="button" id="btn_submit" value="Download Excel">-->
+                <!--<input class="btn-primary" type="submit" name="cancel" value="Done/Cancel">-->
             </p>
         </form>
     </div>

@@ -196,25 +196,22 @@ def setup_higher_class_subject_mapping(request):
                             students = Student.objects.filter(school=school, student_erp_id__contains=partial_erp)
                             for s in students:
                                 print ('full erp = %s' % s.student_erp_id)
-                                erp = s.student_erp_id[:-3]
-                                print ('erp = %s' % erp)
-                                if erp == partial_erp:
+                                try:
+                                    mapping = HigherClassMapping.objects.get(student=s, subject=subject)
+                                    print (mapping)
+                                    print ('subject %s mapping for %s already exist. Not doing again.'
+                                           % (sub, student_name))
+                                except Exception as e:
+                                    print ('exception 141117-C from exam views.py %s %s' % (e.message, type(e)))
+                                    print ('subject %s mapping for %s does not exist. Hence creating...'
+                                           % (sub, student_name))
                                     try:
-                                        mapping = HigherClassMapping.objects.get(student=s, subject=subject)
-                                        print (mapping)
-                                        print ('subject %s mapping for %s already exist. Not doing again.' 
-                                               % (sub, student_name))
+                                        mapping = HigherClassMapping(student=s, subject=subject)
+                                        mapping.save()
+                                        print ('created %s subject mapping for % s' % (sub, student_name))
                                     except Exception as e:
-                                        print ('exception 141117-C from exam views.py %s %s' % (e.message, type(e)))
-                                        print ('subject %s mapping for %s does not exist. Hence creating...' 
-                                               % (sub, student_name))
-                                        try:
-                                            mapping = HigherClassMapping(student=s, subject=subject)
-                                            mapping.save()
-                                            print ('created %s subject mapping for % s' % (sub, student_name))
-                                        except Exception as e:
-                                            print ('exception 141117-D from exam views.py %s %s' % (e.message, type(e)))
-                                            print ('failed to create %s subject mapping for % s' % (sub, student_name))
+                                        print ('exception 141117-D from exam views.py %s %s' % (e.message, type(e)))
+                                        print ('failed to create %s subject mapping for % s' % (sub, student_name))
                         except Exception as e:
                             print ('failed to create %s subject mapping for %s ' % (sub, student_name))
                             print ('exception 141117-A from exam views.py %s %s' % (e.message, type(e)))
@@ -483,6 +480,25 @@ def prepare_results(request, school_id, the_class, section):
             print('exception 04022018-B from exam views.py %s %s' % (e.message, type(e)))
 
         c.setFont(font, 14)
+
+        if the_class in higher_classes:
+            print('result being prepared for class %s. This will be in school own format' % the_class)
+            style1 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+                      ('BOX', (0, 0), (-1, -1), 1, colors.black),
+                      ('TOPPADDING', (0, 0), (-1, -1), 1),
+                      ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+                      ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                      ('ALIGN', (1, 0), (10, 0), 'CENTER'),
+                      ('ALIGN', (11, 0), (14, 0), 'CENTER'),
+                      ('SPAN', (0,0), (2, 0)),
+                      ('SPAN', (1, 0), (10, 0)),
+                      ('SPAN', (11, 0), (14, 0)),
+                      ('SPAN', (3, 1), (5, 1)),
+                      ('SPAN', (8, 1), (10, 1)),
+                      ('FONTSIZE', (0, 0), (-1, -1), 7),
+                      ('FONT', (0, 0), (12, 0), 'Times-Bold'),
+                      ('FONT', (0, 1), (0, 1), 'Times-Bold')
+                      ]
         if the_class in middle_classes:
             print('result being prepared for %s, a middle class. Hence both Term1 & Term2 results to be shown.' %
                   the_class)
@@ -565,12 +581,15 @@ def prepare_results(request, school_id, the_class, section):
         # the sequence. Subjects in the Marksheet would appear in the order of sequence
         sub_dict = {}
         try:
-            scheme = Scheme.objects.filter(school=school, the_class=standard)
-            sub_count = scheme.count()
-            for sc in scheme:
-                sub_dict[sc.sequence] = sc.subject
-            print('sub_dict = ')
-            print (sub_dict)
+            if the_class not in higher_classes:
+                print('class %s is not a higher class. Hence subject list will be as per scheme' % the_class)
+                scheme = Scheme.objects.filter(school=school, the_class=standard)
+                sub_count = scheme.count()
+                for sc in scheme:
+                    sub_dict[sc.sequence] = sc.subject
+                print('sub_dict = ')
+                print (sub_dict)
+
         except Exception as e:
             print('Looks like the scheme for class %s is not yet set' % the_class)
             print('exception 10022018-A from exam views.py %s %s' % (e.message, type(e)))
@@ -616,6 +635,21 @@ def prepare_results(request, school_id, the_class, section):
             print('report heading prepared')
 
             c.setFont(font, 8)
+            if the_class in higher_classes:
+                data1 = [['SUBJECT', 'TERM RESULT', '', '', '', '', '', '', '', '', 'CUMULATIVE RESULT', '', '', ''],
+                         ['', 'UT-I', 'UT-II', 'Half Yearly\nExam', '', '',
+                          'UT-III', 'UT-IV', 'Final Exam', '', '', '', 'Unit\nTest', 'Half Yearly\nExam',
+                          'Final\nExam', 'Total'],
+                         ['25', '25', 'Th', 'Pr', 'Tot', '25', '25', 'Th', 'Pr', 'Tot', '25', '25', '50', 'Total']]
+                print('class %s is a higher class. Subject list will come from the student/subject mapping' % the_class)
+                sequence = 0
+                mapping = HigherClassMapping.objects.filter(student=s)
+                for m in mapping:
+                    sub_dict[sequence] = m.subject
+                    sequence = sequence + 1
+                print('subjects chosen by %s %s are = ' % (s.fist_name, s.last_name))
+                print(sub_dict)
+
 
             if the_class in middle_classes:
                 data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', '',
