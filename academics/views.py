@@ -906,7 +906,7 @@ def create_test1(request, school_id, the_class, section, subject,
 def save_marks(request):
     prac_subjects = ["Biology", "Physics", "Chemistry",
         "Accountancy", "Business Studies", "Economics",
-        "Information Practices", "Computer Science", "Painting",
+        "Information Practices", "Informatics Practices", "Computer Science", "Painting",
         "Physical Education"]
 
     if request.method == 'POST':

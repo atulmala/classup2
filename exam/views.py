@@ -1,7 +1,4 @@
-import os
-import re
-import boto
-from boto.s3.connection import OrdinaryCallingFormat
+
 import requests
 
 from PIL import Image
