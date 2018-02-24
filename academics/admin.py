@@ -22,7 +22,7 @@ admin.site.register(Class, ClassAdmin)
 
 class SubjectAdmin(admin.ModelAdmin):
     search_fields = ['subject_name']
-    list_display = ['school', 'subject_name', 'subject_code', 'subject_type',]
+    list_display = ['school', 'subject_name', 'subject_sequence', 'subject_code', 'subject_type',]
     list_filter = ['school',]
 
 

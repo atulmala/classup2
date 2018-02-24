@@ -955,7 +955,6 @@ def save_marks(request):
                             ttr.prac_marks = float(data[key]['prac_marks'])
                         else:
                             print ('no need to save practical marks for %s' % test.subject.subject_name)
-
                     try:
                         ttr.save()
                         print ('saved Term Test Results for %s %s' % (tr.student.fist_name, tr.student.last_name))
