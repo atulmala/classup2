@@ -492,9 +492,11 @@ def prepare_results(request, school_id, the_class, section):
                       ('SPAN', (3, 1), (5, 1)),
                       ('SPAN', (8, 1), (10, 1)),
                       ('LINEABOVE', (0, 1), (0, 1), 1, colors.white),
+                      ('LINEABOVE', (0, 2), (0, 2), 1, colors.white),
                       ('FONTSIZE', (0, 0), (-1, -1), 7),
-                      ('FONT', (0, 0), (12, 0), 'Times-Bold'),
-                      ('FONT', (0, 1), (0, 1), 'Times-Bold')
+                      ('FONT', (0, 0), (14, 0), 'Times-Bold'),
+                      ('FONT', (0, 1), (14, 1), 'Times-Bold'),
+                      ('FONT', (0, 2), (14, 1), 'Times-Bold')
                       ]
         if the_class in middle_classes:
             print('result being prepared for %s, a middle class. Hence both Term1 & Term2 results to be shown.' %
@@ -674,33 +676,39 @@ def prepare_results(request, school_id, the_class, section):
                         for an_exam in exam_list:
                             try:
                                 exam = Exam.objects.get(school=school, title=an_exam)
-                                test = ClassTest.objects.get(subject=subject, the_class=standard, section=sec,
-                                                             date_conducted__range=(exam.start_date, exam.end_date))
-                                print('test was conducted for %s under exam: %s for class %s' %
-                                      (sub, an_exam, the_class))
-                                print(test)
-                                result = TestResults.objects.get(class_test=test, student=s)
-                                marks = float(result.marks_obtained)
-                                if exam.title not in term_exams:
-                                    if float(test.max_marks) != 25.0:
-                                        marks = (25*marks)/float(test.max_marks)
-                                    ut_total = ut_total + marks
-                                sub_row.append(marks)
-                                if exam.title in term_exams:
-                                    # this is a half yearly or annual exam. The possibility of practical marks...
-                                    try:
-                                        term_test_results = TermTestResult.objects.get(test_result=result)
-                                        prac_marks = float(term_test_results.prac_marks)
-                                        sub_row.append(prac_marks)
-                                        tot_marks = marks + prac_marks
-                                        if exam.title == term_exams[0]:
-                                            half_yearly_marks = tot_marks
-                                        if exam.title == term_exams[1]:
-                                            final_marks = tot_marks
-                                        sub_row.append(tot_marks)
-                                    except Exception as e:
-                                        print('subject %s has no practical component' % (sub))
-                                        print('exception 27022018-A from exam views.py %s %s' % (e.message, type(e)))
+                                try:
+                                    test = ClassTest.objects.get(subject=subject, the_class=standard, section=sec,
+                                                                 date_conducted__range=(exam.start_date, exam.end_date))
+                                    print('test was conducted for %s under exam: %s for class %s' %
+                                          (sub, an_exam, the_class))
+                                    print(test)
+                                    result = TestResults.objects.get(class_test=test, student=s)
+                                    marks = float(result.marks_obtained)
+                                    if exam.title not in term_exams:
+                                        if float(test.max_marks) != 25.0:
+                                            marks = (25*marks)/float(test.max_marks)
+                                        ut_total = ut_total + marks
+                                    sub_row.append(marks)
+                                    if exam.title in term_exams:
+                                        # this is a half yearly or annual exam. The possibility of practical marks...
+                                        try:
+                                            term_test_results = TermTestResult.objects.get(test_result=result)
+                                            prac_marks = float(term_test_results.prac_marks)
+                                            sub_row.append(prac_marks)
+                                            tot_marks = marks + prac_marks
+                                            if exam.title == term_exams[0]:
+                                                half_yearly_marks = tot_marks
+                                            if exam.title == term_exams[1]:
+                                                final_marks = tot_marks
+                                            sub_row.append(tot_marks)
+                                        except Exception as e:
+                                            print('subject %s has no practical component' % (sub))
+                                            print('exception 27022018-A from exam views.py %s %s'
+                                                  % (e.message, type(e)))
+                                except Exception as e:
+                                    print('no test has been created for %s for exam %s for class %s' %
+                                          (sub, exam.title, the_class))
+                                    print('exception 28022018-A from exam views.py %s %s' % (e.message, type(e)))
                             except Exception as e:
                                 print('failed to retrieve any test for subject %s associated with exam %s for class %s' %
                                             (sub, an_exam, the_class))
