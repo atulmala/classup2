@@ -406,6 +406,10 @@ def get_grade(marks):
 
 @csrf_exempt
 def prepare_results(request, school_id, the_class, section):
+    prac_subjects = ["Biology", "Physics", "Chemistry",
+                     "Accountancy", "Business Studies", "Economics",
+                     "Information Practices", "Informatics Practices", "Computer Science", "Painting",
+                     "Physical Education"]
     school = School.objects.get(id=school_id)
     school_name = school.school_name
     print(school)
@@ -684,18 +688,31 @@ def prepare_results(request, school_id, the_class, section):
                                     print(test)
                                     result = TestResults.objects.get(class_test=test, student=s)
                                     marks = float(result.marks_obtained)
+                                    if marks < 0.0:
+                                        marks = 'TBE'
                                     if exam.title not in term_exams:
                                         if float(test.max_marks) != 25.0:
                                             marks = (25*marks)/float(test.max_marks)
+                                            if marks < 0.0:
+                                                marks = 'TBE'
                                         ut_total = ut_total + marks
                                     sub_row.append(marks)
                                     if exam.title in term_exams:
                                         # this is a half yearly or annual exam. The possibility of practical marks...
                                         try:
                                             term_test_results = TermTestResult.objects.get(test_result=result)
-                                            prac_marks = float(term_test_results.prac_marks)
+                                            if sub in prac_subjects:
+                                                prac_marks = float(term_test_results.prac_marks)
+                                                if prac_marks < 0.0:
+                                                    prac_marks = 'TBE'
+                                                    tot_marks = marks
+                                                else:
+                                                    tot_marks = marks + prac_marks
+                                            else:
+                                                prac_marks = 'NA'
+                                                tot_marks = marks
                                             sub_row.append(prac_marks)
-                                            tot_marks = marks + prac_marks
+
                                             if exam.title == term_exams[0]:
                                                 half_yearly_marks = tot_marks
                                             if exam.title == term_exams[1]:
