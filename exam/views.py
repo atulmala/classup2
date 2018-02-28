@@ -666,6 +666,8 @@ def prepare_results(request, school_id, the_class, section):
                 try:
                     for sub in chosen_stream:
                         sub_row = [sub]
+                        print('sub_row at this stage = ')
+                        print(sub_row)
                         print('now retrieving all test marks for %s %s in %s' % (s.fist_name, s.last_name, sub))
                         subject = Subject.objects.get(school=school, subject_name=sub)
                         ut_total = 0.0
@@ -678,17 +680,17 @@ def prepare_results(request, school_id, the_class, section):
                                       (sub, an_exam, the_class))
                                 print(test)
                                 result = TestResults.objects.get(class_test=test, student=s)
-                                marks = result.marks_obtained
+                                marks = float(result.marks_obtained)
                                 if exam.title not in term_exams:
-                                    if test.max_marks != float(25.0):
-                                        marks = (25*marks)/test.max_marks
+                                    if float(test.max_marks) != 25.0:
+                                        marks = (25*marks)/float(test.max_marks)
                                     ut_total = ut_total + marks
                                 sub_row.append(marks)
                                 if exam.title in term_exams:
                                     # this is a half yearly or annual exam. The possibility of practical marks...
                                     try:
                                         term_test_results = TermTestResult.objects.get(test_result=result)
-                                        prac_marks = term_test_results.prac_marks
+                                        prac_marks = float(term_test_results.prac_marks)
                                         sub_row.append(prac_marks)
                                         tot_marks = marks + prac_marks
                                         if exam.title == term_exams[0]:
@@ -703,6 +705,7 @@ def prepare_results(request, school_id, the_class, section):
                                 print('failed to retrieve any test for subject %s associated with exam %s for class %s' %
                                             (sub, an_exam, the_class))
                                 print('exception 25022018-B from exam views.py %s %s' % (e.message, type(e)))
+                        data1.append(sub_row)
                     table1 = Table(data1)
                     table1.setStyle(TableStyle(style1))
                     table1.wrapOn(c, left_margin, 0)
