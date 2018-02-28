@@ -696,7 +696,7 @@ def prepare_results(request, school_id, the_class, section):
                                             if marks < 0.0:
                                                 marks = 'TBE'
                                         ut_total = ut_total + marks
-                                    sub_row.append(marks)
+                                        sub_row.append(marks)
                                     if exam.title in term_exams:
                                         # this is a half yearly or annual exam. The possibility of practical marks...
                                         try:
