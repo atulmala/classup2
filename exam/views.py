@@ -711,6 +711,9 @@ def prepare_results(request, school_id, the_class, section):
                                     print('exception 28022018-A from exam views.py %s %s' % (e.message, type(e)))
                                     marks = 'TBE'
                                     sub_row.append(marks)
+                                    if exam.title in term_exams:
+                                        prac_marks = 'TBE'
+                                        sub_row.append(prac_marks)
                             except Exception as e:
                                 print('failed to retrieve any test for subject %s associated with exam %s for class %s' %
                                             (sub, an_exam, the_class))
