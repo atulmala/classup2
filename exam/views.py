@@ -406,7 +406,7 @@ def get_grade(marks):
 
 @csrf_exempt
 def prepare_results(request, school_id, the_class, section):
-    prac_subjects = ["Biology", "Physics", "Chemistry",
+    prac_subjects = ["Biology", "Physics", "Chemistry", "Fine Arts",
                      "Accountancy", "Business Studies", "Economics",
                      "Information Practices", "Informatics Practices", "Computer Science", "Painting",
                      "Physical Education"]
@@ -490,7 +490,6 @@ def prepare_results(request, school_id, the_class, section):
                       ('VALIGN', (0, 0), (-1, -1), 'TOP'),
                       ('ALIGN', (1, 0), (10, 0), 'CENTER'),
                       ('ALIGN', (11, 0), (14, 0), 'CENTER'),
-
                       ('SPAN', (1, 0), (10, 0)),
                       ('SPAN', (11, 0), (14, 0)),
                       ('SPAN', (3, 1), (5, 1)),
@@ -500,6 +499,7 @@ def prepare_results(request, school_id, the_class, section):
                       ('FONTSIZE', (0, 0), (-1, -1), 7),
                       ('FONT', (0, 0), (14, 0), 'Times-Bold'),
                       ('FONT', (0, 1), (14, 1), 'Times-Bold'),
+                      ('FONT', (0, 2), (14, 2), 'Times-Bold'),
                       ('FONT', (0, 2), (14, 1), 'Times-Bold')
                       ]
         if the_class in middle_classes:
@@ -692,16 +692,19 @@ def prepare_results(request, school_id, the_class, section):
                                         marks = 'TBE'
                                     if exam.title not in term_exams:
                                         if float(test.max_marks) != 25.0:
-                                            marks = (25*marks)/float(test.max_marks)
+                                            print('max marks for %s in %s were %f. Conversion is required' %
+                                                  (sub, exam.title, float(test.max_marks)))
+                                            marks = round((25*marks)/float(test.max_marks), 2)
                                             if marks < 0.0:
                                                 marks = 'TBE'
                                         ut_total = ut_total + marks
-                                        sub_row.append(marks)
+                                    sub_row.append(marks)
                                     if exam.title in term_exams:
                                         # this is a half yearly or annual exam. The possibility of practical marks...
                                         try:
                                             term_test_results = TermTestResult.objects.get(test_result=result)
                                             if sub in prac_subjects:
+                                                print('%s has practical component' % (sub))
                                                 prac_marks = float(term_test_results.prac_marks)
                                                 if prac_marks < 0.0:
                                                     prac_marks = 'TBE'
@@ -709,15 +712,16 @@ def prepare_results(request, school_id, the_class, section):
                                                 else:
                                                     tot_marks = marks + prac_marks
                                             else:
+                                                print('%s does not have practical component' % (sub))
                                                 prac_marks = 'NA'
                                                 tot_marks = marks
                                             sub_row.append(prac_marks)
+                                            sub_row.append(tot_marks)
 
                                             if exam.title == term_exams[0]:
                                                 half_yearly_marks = tot_marks
                                             if exam.title == term_exams[1]:
                                                 final_marks = tot_marks
-                                            sub_row.append(tot_marks)
                                         except Exception as e:
                                             print('subject %s has no practical component' % (sub))
                                             print('exception 27022018-A from exam views.py %s %s'
@@ -730,13 +734,31 @@ def prepare_results(request, school_id, the_class, section):
                                     sub_row.append(marks)
                                     # if it was a Half Yearly or Final exam we need to take care of prac & total marks
                                     if exam.title in term_exams:
-                                        prac_marks = 'TBE'
+                                        if sub in prac_subjects:
+                                            prac_marks = 'TBE'
+                                        else:
+                                            prac_marks = 'NA'
                                         sub_row.append(prac_marks)
                                         sub_row.append(' ')
                             except Exception as e:
                                 print('failed to retrieve any test for subject %s associated with exam %s for class %s' %
                                             (sub, an_exam, the_class))
                                 print('exception 25022018-B from exam views.py %s %s' % (e.message, type(e)))
+                        # calculate the cumulative result for this subject. UTs & Half yearly weightage is 25% each
+                        #  & final exam weightage is 50%
+                        try:
+                            ut_cumul = round(ut_total/float(4), 2)
+                            sub_row.append(ut_cumul)
+                            half_year_cumul = round(half_yearly_marks/float(2), 2)
+                            sub_row.append(half_year_cumul)
+                            final_cumul = round(final_marks/float(2), 2)
+                            sub_row.append(final_cumul)
+                            grand_total = ut_cumul + half_year_cumul + final_cumul
+                            sub_row.append(grand_total)
+                        except Exception as e:
+                            print('failed to enter Cumulative Result. This may be because certain marks not entered')
+                            print('exception 01032018-A from exam views.py %s %s' % (e.message, type(e)))
+
                         data1.append(sub_row)
                     table1 = Table(data1)
                     table1.setStyle(TableStyle(style1))
@@ -1122,7 +1144,7 @@ class ResultSheet(generics.ListCreateAPIView):
                     for col in range (4, col_range):
                         result_sheet.merge_range (4, col, 6, col, sub_short[col-4], cell_center)
                     result_sheet.merge_range ('M5:O5', '(A)', cell_center)
-                    result_sheet.merge_range ('M6:O6', 'Total(800)', cell_center)
+                    result_sheet.merge_range ('M6:O6', 'Total(700)', cell_center)
                     result_sheet.write_string ('M7', 'Marks', cell_center)
                     result_sheet.write_string ('N7', '%', cell_center)
                     result_sheet.write_string ('O7', 'Grade', cell_center)
@@ -1131,7 +1153,7 @@ class ResultSheet(generics.ListCreateAPIView):
                     for col in range(15, col_range):
                         result_sheet.merge_range(4, col, 6, col, sub_short[col - 15], cell_center)
                     result_sheet.merge_range('X5:Z5', '(B)', cell_center)
-                    result_sheet.merge_range('X6:Z6', 'Total(800)', cell_center)
+                    result_sheet.merge_range('X6:Z6', 'Total(700)', cell_center)
                     result_sheet.write_string('X7', 'Marks', cell_center)
                     result_sheet.write_string('Y7', '%', cell_center)
                     result_sheet.write_string('Z7', 'Grade', cell_center)
