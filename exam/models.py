@@ -18,3 +18,7 @@ class Scheme(models.Model):
 class HigherClassMapping(models.Model):
     student = models.ForeignKey(Student)
     subject = models.ForeignKey(Subject)
+
+
+class NotPromoted(models.Model):
+    student = models.ForeignKey(Student)

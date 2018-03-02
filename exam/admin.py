@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from academics.models import ThirdLang
-from .models import Scheme, HigherClassMapping
+from .models import Scheme, HigherClassMapping, NotPromoted
 
 # Register your models here.
 
@@ -34,8 +34,29 @@ class HigherClassMappingAdmin (admin.ModelAdmin):
     get_section.short_description = 'Section'
 
     get_school_name.short_description = 'School'
+    search_fields = ('student__fist_name',)
     list_display = ('get_school_name', 'get_class', 'get_section', 'student', 'subject',)
 
 
 admin.site.register(HigherClassMapping, HigherClassMappingAdmin)
+
+
+class NotPromotedAdmin(admin.ModelAdmin):
+    def get_school_name(self, obj):
+        return obj.student.school
+
+    def get_class (self, obj):
+        return obj.student.current_class
+    get_class.short_description = 'Class'
+
+    def get_section (self, obj):
+        return obj.student.current_section
+    get_section.short_description = 'Section'
+
+    get_school_name.short_description = 'School'
+    search_fields = ('student__fist_name',)
+    list_display = ('get_school_name', 'get_class', 'get_section', 'student',)
+    list_filter = ('student__school',)
+
+admin.site.register(NotPromoted, NotPromotedAdmin)
 

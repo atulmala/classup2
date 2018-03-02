@@ -30,7 +30,7 @@ from student.models import Student, DOB
 from academics.models import Class, Section, Subject, ThirdLang, ClassTest, \
     Exam, TermTestResult, TestResults, CoScholastics, ClassTeacher
 
-from .models import Scheme, HigherClassMapping
+from .models import Scheme, HigherClassMapping, NotPromoted
 from .forms import TermResultForm, ResultSheetForm
 
 
@@ -462,7 +462,10 @@ def prepare_results(request, school_id, the_class, section):
         session_top = line_top - 15
         report_card_top = session_top - 10
         stu_detail_top = report_card_top - 20
-        table1_top = stu_detail_top - 245
+        if the_class not in higher_classes:
+            table1_top = stu_detail_top - 245
+        else:
+            table1_top = stu_detail_top - 210
         tab = 80
 
         # get logos
@@ -765,6 +768,12 @@ def prepare_results(request, school_id, the_class, section):
                     table1.wrapOn(c, left_margin, 0)
                     table1.drawOn(c, left_margin, table1_top)
                     print('table1 drawn for %s %s' % (s.fist_name, s.last_name))
+                    theory_prac_split = 'Physics, Chemistry, Comp. Sc., Info. Prac., Biology, Phy. Edu. - '
+                    theory_prac_split += '  Max Marks: Theory-70, Practical-30'
+                    c.drawString(left_margin, table1_top - 20, theory_prac_split)
+                    theory_prac_split = 'English, Mathematics - Max Marks: Theory-100, Prac: Not Applicable (NA)'
+                    c.drawString(left_margin, table1_top-30, theory_prac_split)
+
                 except Exception as e:
                     print('Error while preparing results for class: %s' % (the_class))
                     print ('Exception 25022018-A from exam views.py %s %s' % (e.message, type(e)))
@@ -937,8 +946,29 @@ def prepare_results(request, school_id, the_class, section):
                 try:
                     c.drawString(left_margin, table3_top - 15, 'Class Teacher Remarks: ')
                     c.drawString(tab - 20, table3_top - 15, remark)
+
                     c.drawString(left_margin, table3_top - 25, 'Promoted to Class: ')
-                    c.drawString(tab - 20, table3_top - 25, '')
+                    # get the class to which this student is promoted. Only if he has passed the exam
+                    try:
+                        not_promoted = NotPromoted.objects.get(student=s)
+                        print('student %s %s has failed in class %s.' % (s.fist_name, s.last_name, the_class))
+                        print(not_promoted)
+                        promoted_status = 'Not Promoted'
+                    except Exception as e:
+                        print('student %s %s has passed in class %s.' % (s.fist_name, s.last_name, the_class))
+                        print('exception 02032018-A from exam views.py %s %s' % (e.message, type(e)))
+                        try:
+                            current_class = Class.objects.get(school=school, standard=the_class)
+                            next_class_sequence = current_class.sequence + 1
+                            next_class = Class.objects.get(school=school, sequence=next_class_sequence)
+                            next_class_standard = next_class.standard
+                            promoted_status = next_class_standard
+                        except Exception as e:
+                            print('%s %s of class %s has passed. But failed to determine his next class' %
+                                  (s.fist_name, s.last_name, the_class))
+                            print('exception 02032018-B from exam views.py %s %s' % (e.message, type(e)))
+                    c.drawString(tab - 20, table3_top - 25, promoted_status)
+
                     c.drawString(left_margin, table3_top - 55, 'Place & Date:')
                     c.drawString(175, table3_top - 55, 'Signature of Class Teacher')
                     c.drawString(400, table3_top - 55, 'Signature of Principal')
@@ -960,6 +990,27 @@ def prepare_results(request, school_id, the_class, section):
             c.line(left_margin, table3_top - 60, 6.75 * inch, table3_top - 60)
             try:
                 c.drawString(left_margin, table3_top - 25, 'Promoted to Class: ')
+                # get the class to which this student is promoted. Only if he has passed the exam
+                try:
+                    not_promoted = NotPromoted.objects.get(student=s)
+                    print('student %s %s has failed in class %s.' % (s.fist_name, s.last_name, the_class))
+                    print(not_promoted)
+                    promoted_status = 'Not Promoted'
+                except Exception as e:
+                    print('student %s %s has passed in class %s.' % (s.fist_name, s.last_name, the_class))
+                    print('exception 02032018-C from exam views.py %s %s' % (e.message, type(e)))
+                    try:
+                        current_class = Class.objects.get(school=school, standard=the_class)
+                        next_class_sequence = current_class.sequence + 1
+                        next_class = Class.objects.get(school=school, sequence=next_class_sequence)
+                        next_class_standard = next_class.standard
+                        promoted_status = next_class_standard
+                    except Exception as e:
+                        print('%s %s of class %s has passed. But failed to determine his next class' %
+                              (s.fist_name, s.last_name, the_class))
+                        print('exception 02032018-D from exam views.py %s %s' % (e.message, type(e)))
+                c.drawString(tab - 20, table3_top - 25, promoted_status)
+
                 c.drawString(tab - 20, table3_top - 25, '')
                 c.drawString(left_margin, table3_top - 55, 'Place & Date:')
                 c.drawString(175, table3_top - 55, 'Signature of Class Teacher')

@@ -905,7 +905,7 @@ def create_test1(request, school_id, the_class, section, subject,
 @csrf_exempt
 def save_marks(request):
     prac_subjects = ["Biology", "Physics", "Chemistry",
-        "Accountancy", "Business Studies", "Economics",
+        "Accountancy", "Business Studies", "Economics", "Fine Arts"
         "Information Practices", "Informatics Practices", "Computer Science", "Painting",
         "Physical Education"]
 
@@ -993,7 +993,7 @@ def save_marks(request):
 def submit_marks(request, school_id):
     t1 = datetime.datetime.now()
     prac_subjects = ["Biology", "Physics", "Chemistry",
-                     "Accountancy", "Business Studies", "Economics",
+                     "Accountancy", "Business Studies", "Economics", "Fine Arts"
                      "Information Practices", "Computer Science", "Painting",
                      "Physical Education"]
 
