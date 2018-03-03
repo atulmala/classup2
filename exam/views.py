@@ -752,7 +752,7 @@ def prepare_results(request, school_id, the_class, section):
                         try:
                             ut_cumul = round(ut_total/float(4), 2)
                             sub_row.append(ut_cumul)
-                            half_year_cumul = round(half_yearly_marks/float(2), 2)
+                            half_year_cumul = round(half_yearly_marks/float(4), 2)
                             sub_row.append(half_year_cumul)
                             final_cumul = round(final_marks/float(2), 2)
                             sub_row.append(final_cumul)
