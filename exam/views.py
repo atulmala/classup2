@@ -722,6 +722,7 @@ def prepare_results(request, school_id, the_class, section):
                                             sub_row.append(tot_marks)
 
                                             if exam.title == term_exams[0]:
+
                                                 half_yearly_marks = tot_marks
                                             if exam.title == term_exams[1]:
                                                 final_marks = tot_marks
@@ -1137,6 +1138,13 @@ class ResultSheet(generics.ListCreateAPIView):
                     'bold': True,
                     'border': 1
                 })
+                cell_small = workbook.add_format({
+                    'align': 'left',
+                    'valign': 'top',
+                    'font_size': 8,
+                    'bold': True,
+                    'border': 1
+                })
 
                 school_name = school.school_name + ' ' + school.school_address
                 title_text = 'CONSILIDATED RESULT SHEET (2017-2018) FOR CLASS %s-%s' % \
@@ -1154,19 +1162,31 @@ class ResultSheet(generics.ListCreateAPIView):
                     result_sheet.merge_range ('A1:AI1', school_name,  title)
                     result_sheet.merge_range('A2:AI2', title_text, title)
                     result_sheet.merge_range('A3:AI3', ('CLASS TEACHER: %s' % class_teacher), header)
-                if the_class.standard in ninth_tenth:
+                else:
                     result_sheet.merge_range('A1:AE1', 'JAGRAN PUBLIC SCHOOL NOIDA', title)
                     result_sheet.merge_range('A2:AE2', title_text, title)
                     result_sheet.merge_range('A3:AE3', ('CLASS TEACHER: %s' % class_teacher), header)
 
                 # headings that are common for all the classes
-                result_sheet.merge_range('A4:A7', 'S No', cell_center)
-                result_sheet.merge_range('B4:B7', 'Admn. No\nReg. No', cell_center)
-                result_sheet.set_column('A:A', 3)
-                result_sheet.set_column('C:C', 4)
-                result_sheet.merge_range('C4:C7', 'House', vertical_text)
-                result_sheet.set_column('D:D', 18)
-                result_sheet.merge_range('D4:D7', 'Student Name', cell_center)
+                if the_class.standard in higher_classes:
+                    print('headings been prepared for higher class %s' % the_class)
+                    # for higher classes we need an extra row to show practical & theory marks
+                    result_sheet.merge_range('A4:A6', 'S No', cell_center)
+                    result_sheet.merge_range('B4:B6', 'Admn. No\nReg. No', cell_center)
+                    result_sheet.set_column('A:A', 3)
+                    result_sheet.set_column('C:C', 4)
+                    result_sheet.merge_range('C4:C6', 'House', vertical_text)
+                    result_sheet.set_column('D:D', 18)
+                    result_sheet.merge_range('D4:D6', 'Student Name', cell_center)
+                else:
+                    print('heading been prepared for middle or ninth/tenth class %s' % the_class)
+                    result_sheet.merge_range('A4:A7', 'S No', cell_center)
+                    result_sheet.merge_range('B4:B7', 'Admn. No\nReg. No', cell_center)
+                    result_sheet.set_column('A:A', 3)
+                    result_sheet.set_column('C:C', 4)
+                    result_sheet.merge_range('C4:C7', 'House', vertical_text)
+                    result_sheet.set_column('D:D', 18)
+                    result_sheet.merge_range('D4:D7', 'Student Name', cell_center)
 
                 if the_class.standard in middle_classes:
                     result_sheet.merge_range ('E4:O4', 'Term I (700)', cell_center)
@@ -1530,6 +1550,138 @@ class ResultSheet(generics.ListCreateAPIView):
                         col = 0
                         s_no = s_no + 1
                         row = row + 1
+                if the_class.standard in higher_classes:
+                    maths_stream = ['English', 'Mathematics', 'Physics', 'Chemistry', 'Elective']
+                    bio_stream = ['English', 'Biology', 'Physics', 'Chemistry', 'Elective']
+                    commerce_stream = ['English', 'Economics', 'Accountancy', 'Business Studies', 'Elective']
+                    components = ['UT', 'Half Yearly', 'Final Exam', 'Cumulative']
+                    try:
+                        students = Student.objects.filter(school=school, current_class=the_class,
+                                                          current_section=section,
+                                                          active_status=True).order_by('fist_name')
+                        print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
+                        print (students)
+                        last_col = 60
+                        for row in range(6, students.count() + 7):
+                            for col in range(0, last_col):
+                                result_sheet.write(row, col, '', border)
+                        for student in students:
+                            sub_dict = []
+                            # for higher classes we need to determine the stream selected by student as well as the elective
+                            mapping = HigherClassMapping.objects.filter(student=student)
+                            for m in mapping:
+                                sub_dict.append(m.subject.subject_name)
+                            print('subjects chosen by %s %s are = ' % (student.fist_name, student.last_name))
+                            print(sub_dict)
+                            try:
+                                print('now determining the stream for this class %s-%s...' %
+                                      (the_class.standard, section.section))
+                                if 'Mathematics' in sub_dict:
+                                    chosen_stream = maths_stream
+                                    print('%s-%s has chosen %s stream' %
+                                          (the_class.standard, section.section, 'maths'))
+                                if 'Biology' in sub_dict:
+                                    chosen_stream = bio_stream
+                                    print('%s %s has chosen %s stream' %
+                                          (the_class.standard, section.section, 'biology'))
+                                if 'Economics' in sub_dict:
+                                    chosen_stream = commerce_stream
+                                    print('%s %s has chosen %s stream' %
+                                          (the_class.standard, section.section, 'commerce'))
+                            except Exception as e:
+                                print('failed to determine the stream chosen by %s %s' %
+                                      (student.fist_name, student.last_name))
+                                print('exception 03032018-A from exam views.py %s %s' % (e.message, type(e)))
+                            row = 3
+                            col = 4
+                            result_sheet.merge_range(row, col, row + 2, col, 'Elective Sub', vertical_text)
+                            col = col + 1
+                            result_sheet.set_column('E:E', 10)
+                            result_sheet.set_column('F:BH', 4.5)
+                            for sub in chosen_stream:
+                                print('now creating heading for subject: %s' % sub)
+                                result_sheet.merge_range(row, col, row, col + 10, sub, cell_center)
+                                col1 = col
+
+                                # UT
+                                result_sheet.merge_range(row+1, col1, row+2, col1, components[0], cell_center)
+                                col1 = col1 + 1
+
+                                # Half Yearly Exam
+                                result_sheet.merge_range(row+1, col1, row+1, col1+2, components[1], cell_center)
+                                result_sheet.write_string(row+2, col1, 'Th', cell_center)
+                                col1 += 1
+                                result_sheet.write_string(row + 2, col1, 'Pr', cell_center)
+                                col1 += 1
+                                result_sheet.write_string(row + 2, col1, 'Total', cell_center)
+                                col1 += 1
+
+                                # Final Exam
+                                result_sheet.merge_range(row + 1, col1, row + 1, col1 + 2, components[2], cell_center)
+                                result_sheet.write_string(row + 2, col1, 'Th', cell_center)
+                                col1 += 1
+                                result_sheet.write_string(row + 2, col1, 'Pr', cell_center)
+                                col1 += 1
+                                result_sheet.write_string(row + 2, col1, 'Total', cell_center)
+                                col1 += 1
+
+                                # Cumulative
+                                result_sheet.merge_range(row + 1, col1, row + 1, col1 + 3, components[3], cell_center)
+                                result_sheet.write_string(row + 2, col1, 'UT\n(25%)', cell_center)
+                                col1 += 1
+                                result_sheet.write_string(row + 2, col1, 'HY\n(25%)', cell_center)
+                                col1 += 1
+                                result_sheet.write_string(row + 2, col1, 'Final\n(50%)', cell_center)
+                                col1 += 1
+                                result_sheet.write_string(row + 2, col1, 'Total', cell_center)
+
+                                col = col + 11
+                            break
+                        row += 3
+
+                        # delete the "Elective" entry from the sub_dict. We will now substitute it with the real
+                        # elective chosen by each student.
+                        chosen_stream.pop()
+                        s_no = 1
+                        for student in students:
+                            col = 0
+                            result_sheet.write_number(row, col, s_no, cell_normal)
+                            col += 1
+                            admission_no = student.student_erp_id
+                            result_sheet.write_string(row, col, admission_no, cell_normal)
+                            col += 1
+                            result_sheet.write_string(row, col, '', cell_normal)
+                            col += 1
+                            student_name = student.fist_name + ' ' + student.last_name
+                            result_sheet.write_string(row, col, student_name, cell_normal)
+                            col += 1
+
+                            sub_dict = []
+                            mapping = HigherClassMapping.objects.filter(student=student)
+                            for m in mapping:
+                                sub_dict.append(m.subject.subject_name)
+                            print('subjects chosen by %s %s are = ' % (student.fist_name, student.last_name))
+                            print(sub_dict)
+                            # now find the elective subject
+                            elective_sub = (set(sub_dict) ^ set(chosen_stream)).pop()
+                            result_sheet.write_string(row, col, elective_sub, cell_small)
+                            print('elective chosen by %s %s: %s' %
+                                  (student.fist_name, student.last_name, elective_sub))
+
+                            # complete the list of all subjects chosen by this student
+                            chosen_stream.append(elective_sub)
+                            print('complete list of subjects chosen by %s %s: ' %
+                                  (student.fist_name, student.last_name))
+                            print(chosen_stream)
+                            # reset the chosen_stream to standard subjects
+                            chosen_stream.pop()
+                            row += 1
+                            s_no += 1
+
+                    except Exception as e:
+                        print('failed to retrieve the list of students for class %s-%s' %
+                              (the_class.standard, section.section))
+                        print('exception 03032018-B from exam views.py %s %s' % (e.message, type(e)))
                 workbook.close()
                 response = HttpResponse(content_type='application/vnd.ms-excel')
                 response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
