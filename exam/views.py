@@ -39,6 +39,93 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
         return  # To not perform the csrf check previously happening
 
 
+class NotPromoted(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def get(self, request, *args, **kwargs):
+        print ('from class based view')
+        context_dict = {
+
+        }
+        context_dict['user_type'] = 'school_admin'
+        context_dict['school_name'] = request.session['school_name']
+        context_dict['header'] = 'Upload Not Promoted Student List'
+        form = ExcelFileUploadForm()
+        context_dict['form'] = form
+        return render(request, 'classup/setup_data.html', context_dict)
+
+    def post(self, request, *args, **kwargs):
+        print ('from class based view')
+        context_dict = {
+
+        }
+        context_dict['user_type'] = 'school_admin'
+        context_dict['school_name'] = request.session['school_name']
+        context_dict['header'] = 'Setup Time Table'
+
+        # first see whether the cancel button was pressed
+        if "cancel" in request.POST:
+            return render(request, 'classup/setup_index.html', context_dict)
+
+        school_id = request.session['school_id']
+        school = School.objects.get(id=school_id)
+
+        # get the file uploaded by the user
+        form = ExcelFileUploadForm(request.POST, request.FILES)
+        context_dict['form'] = form
+
+        if form.is_valid():
+            try:
+                print ('now starting to process the uploaded file for time table...')
+                fileToProcess_handle = request.FILES['excelFile']
+
+                # check that the file uploaded should be a valid excel
+                # file with .xls or .xlsx
+                if not validate_excel_extension(fileToProcess_handle, form, context_dict):
+                    return render(request, 'classup/setup_data.html', context_dict)
+
+                # if this is a valid excel file - start processing it
+                fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
+                sheet = fileToProcess.sheet_by_index(0)
+                if sheet:
+                    print ('Successfully got hold of sheet!')
+                for row in range(sheet.nrows):
+                    if row == 0:
+                        continue
+                    print ('Processing a new row')
+                    erp_id = sheet.cell(row, 1).value
+                    try:
+                        student = Student.objects.get(school=school, student_erp_id=erp_id)
+                        student_name = '%s %s' % (student.fist_name, student.last_name)
+                        print('retrieved student associated with erp_id %s: %s of class %s-%s' %
+                              (erp_id, student_name, student.current_class.standard, student.current_section.section))
+                        try:
+                            entry = NotPromoted.objects.get(student=student)
+                            print('%s is already in the not_cleared. Not adding...' % (student_name))
+                            print(entry)
+                        except Exception as e:
+                            print('%s was not in not_cleared. Adding now...' % (student_name))
+                            print('exception 04032018-E from exam views.py %s %s' % (e.message, type(e)))
+                            try:
+                                entry = NotPromoted(student=student)
+                                entry.save()
+                                print('added %s to not_promoted. With sorrow :(' % (student_name))
+                            except Exception as e:
+                                print('failed to add %s (%s) to not_promoted' % (student_name, erp_id))
+                                print('exception 04032018-F from exam views.py %s %s' % (e.message, type(e)))
+                    except Exception as e:
+                        print('failed to retrieve student with erp_id %s' % erp_id)
+                        print('exception 04032018-G from exam views.py %s %s' % (e.message, type(e)))
+                messages.success(request._request, 'uploaded list of not_cleared students')
+                context_dict['status'] = 'success'
+                return render(request, 'classup/setup_index.html', context_dict)
+            except Exception as e:
+                error = 'invalid excel file uploaded.'
+                print (error)
+                print ('exception 04032018-G from exam views.py %s %s ' % (e.message, type(e)))
+                form.errors['__all__'] = form.error_class([error])
+                return render(request, 'classup/setup_data.html', context_dict)
+
 def setup_scheme(request):
     context_dict = {'user_type': 'school_admin', 'school_name': request.session['school_name']}
 
