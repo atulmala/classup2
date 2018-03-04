@@ -18,7 +18,7 @@ from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
 import xlrd
 import xlsxwriter
-from xlsxwriter.utility import xl_range
+from xlsxwriter.utility import xl_range, xl_rowcol_to_cell
 import StringIO
 
 from setup.models import GlobalConf, Configurations
@@ -722,7 +722,6 @@ def prepare_results(request, school_id, the_class, section):
                                             sub_row.append(tot_marks)
 
                                             if exam.title == term_exams[0]:
-
                                                 half_yearly_marks = tot_marks
                                             if exam.title == term_exams[1]:
                                                 final_marks = tot_marks
@@ -1642,6 +1641,14 @@ class ResultSheet(generics.ListCreateAPIView):
                         # delete the "Elective" entry from the sub_dict. We will now substitute it with the real
                         # elective chosen by each student.
                         chosen_stream.pop()
+
+                        ut_list = ['UT I', 'UT II', 'UT III', 'UT IV']
+                        term_exams = ['Half Yearly', 'Final Exam']
+                        prac_subjects = ["Biology", "Physics", "Chemistry", "Fine Arts",
+                                         "Accountancy", "Business Studies", "Economics",
+                                         "Information Practices", "Informatics Practices", "Computer Science",
+                                         "Painting",
+                                         "Physical Education"]
                         s_no = 1
                         for student in students:
                             col = 0
@@ -1667,12 +1674,127 @@ class ResultSheet(generics.ListCreateAPIView):
                             result_sheet.write_string(row, col, elective_sub, cell_small)
                             print('elective chosen by %s %s: %s' %
                                   (student.fist_name, student.last_name, elective_sub))
+                            col += 1
 
                             # complete the list of all subjects chosen by this student
                             chosen_stream.append(elective_sub)
                             print('complete list of subjects chosen by %s %s: ' %
                                   (student.fist_name, student.last_name))
                             print(chosen_stream)
+
+                            # start retrieving the marks secured by this student in all tests & exams
+                            student_name = student.fist_name + ' ' + student.last_name
+                            print('starting to retrieve the marks for %s of class %s-%s' %
+                                  (student_name, the_class.standard, section.section))
+                            for sub in chosen_stream:
+                                print('retrieving UT marks for %s for %s' % (student_name, sub))
+                                try:
+                                    subject = Subject.objects.get(school=school, subject_name=sub)
+                                    print('successfully retrieved the subject object for subject: %s' % sub)
+                                    print(subject)
+                                except Exception as e:
+                                    print('failed to retrieve the subject object for subject: %s' % sub)
+                                    print('exception 04032018-A from exams views.py %s %s' % (e.message, type(e)))
+
+                                ut_total = 0.0
+                                for ut in ut_list:
+                                    try:
+                                        print('now trying to retrieve test in %s for subject %s class %s' %
+                                              (ut, sub, the_class.standard))
+                                        a_ut = Exam.objects.get(school=school, title=ut)
+                                        print('retrieved %s for class %s' % (ut, the_class.standard))
+                                        print(a_ut)
+                                        try:
+                                            test = ClassTest.objects.get(subject=subject, the_class=the_class,
+                                                                         section=section, date_conducted__range=
+                                                                         (a_ut.start_date, a_ut.end_date))
+                                            print('test was conducted for %s under exam: %s for class %s' %
+                                                  (sub, ut, the_class.standard))
+                                            print(test)
+                                            result = TestResults.objects.get(class_test=test, student=student)
+                                            print(result)
+                                            # convert the marks to be out of 25
+                                            if float(result.marks_obtained > -1000.0):
+                                                marks = (25.0*float(result.marks_obtained))/(float(test.max_marks))
+                                                ut_total += marks
+                                        except Exception as e:
+                                            print('no test could be found corresponding to %s class %s subject %s' %
+                                                  (ut, the_class.standard, sub))
+                                            print('exception 04032018-B from exam views.py %s %s'
+                                                  % (e.message, type(e)))
+                                    except Exception as e:
+                                        print('%s could not be retrieved for class %s' % (ut, the_class.standard))
+                                        print('exception 04032018-C from exam views.py %s %s' % (e.message, type(e)))
+                                        col += 1
+                                result_sheet.write_number(row, col, ut_total/4.0, cell_normal)
+                                col += 1
+
+                                # get the half yearly marks & final exam marks
+                                for term in term_exams:
+                                    try:
+                                        term_exam = Exam.objects.get(school=school, title=term)
+                                        test = ClassTest.objects.get(subject=subject, the_class=the_class,
+                                                                     section=section, date_conducted__range=
+                                                                     (term_exam.start_date, term_exam.end_date))
+                                        print('test was conducted for %s under exam: %s for class %s' %
+                                              (sub, term, the_class.standard))
+                                        print(test)
+                                        result = TestResults.objects.get(class_test=test, student=student)
+                                        print(result)
+                                        result_sheet.write_number(row, col, float(result.marks_obtained), cell_normal)
+                                        col += 1
+
+                                        if sub in prac_subjects:
+                                            try:
+                                                term_test_results = TermTestResult.objects.get(test_result=result)
+                                                print('%s has practical component' % (sub))
+                                                prac_marks = float(term_test_results.prac_marks)
+                                                result_sheet.write_number(row, col, prac_marks, cell_normal)
+                                                col += 1
+                                            except Exception as e:
+                                                print('%s practical marks for %s could not be retrieved' %
+                                                      (sub, student_name))
+                                                print('exception 04032018-D from exam views.py %s %s' %
+                                                      (e.message, type(e)))
+                                                col += 1
+                                        else:
+                                            result_sheet.write_string(row, col, 'NA', cell_normal)
+                                            col += 1
+                                        cell_range = xl_range(row, col-2, row, col-1)
+                                        formula = '=SUM(%s)' % cell_range
+                                        result_sheet.write_formula(row, col, formula, cell_normal)
+                                        col += 1
+
+                                    except Exception as e:
+                                        print('no test could be found corresponding to %s class %s subject %s' %
+                                              (ut, the_class.standard, sub))
+                                        print('exception 04032018-B from exam views.py %s %s'
+                                              % (e.message, type(e)))
+                                        col +=3
+                                # fill in cumulative results
+                                # get the UT cell
+                                cell = xl_rowcol_to_cell(row, col-7)
+                                formula = '=%s/4.0' % cell
+                                result_sheet.write_formula(row, col, formula, cell_normal)
+                                col += 1
+
+                                # get the half yearly total cell
+                                cell = xl_rowcol_to_cell(row, col-5)
+                                formula = '=%s/4.0' % cell
+                                result_sheet.write_formula(row, col, formula, cell_normal)
+                                col += 1
+
+                                # get the final exam total cell
+                                cell = xl_rowcol_to_cell(row, col - 3)
+                                formula = '=%s/2.0' % cell
+                                result_sheet.write_formula(row, col, formula, cell_normal)
+                                col += 1
+
+                                # write the grand total
+                                cell_range = xl_range(row, col - 3, row, col - 1)
+                                formula = '=SUM(%s)' % cell_range
+                                result_sheet.write_formula(row, col, formula, cell_normal)
+                                col +=1
                             # reset the chosen_stream to standard subjects
                             chosen_stream.pop()
                             row += 1
