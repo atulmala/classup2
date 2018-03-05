@@ -21,7 +21,7 @@ import xlsxwriter
 from xlsxwriter.utility import xl_range, xl_rowcol_to_cell
 import StringIO
 
-from setup.models import GlobalConf, Configurations
+from setup.models import Configurations
 from setup.forms import ExcelFileUploadForm
 from setup.models import School
 from setup.views import validate_excel_extension
@@ -30,7 +30,7 @@ from student.models import Student, DOB
 from academics.models import Class, Section, Subject, ThirdLang, ClassTest, \
     Exam, TermTestResult, TestResults, CoScholastics, ClassTeacher
 
-from .models import Scheme, HigherClassMapping, NotPromoted
+from .models import Scheme, HigherClassMapping, NPromoted
 from .forms import TermResultForm, ResultSheetForm
 
 
@@ -100,14 +100,14 @@ class NotPromoted(generics.ListCreateAPIView):
                         print('retrieved student associated with erp_id %s: %s of class %s-%s' %
                               (erp_id, student_name, student.current_class.standard, student.current_section.section))
                         try:
-                            entry = NotPromoted.objects.get(student=student)
-                            print('%s is already in the not_cleared. Not adding...' % (student_name))
+                            entry = NPromoted.objects.get(student=student)
+                            print('%s is already in the not_promoted. Not adding...' % (student_name))
                             print(entry)
                         except Exception as e:
-                            print('%s was not in not_cleared. Adding now...' % (student_name))
+                            print('%s was not in not_promoted. Adding now...' % (student_name))
                             print('exception 04032018-E from exam views.py %s %s' % (e.message, type(e)))
                             try:
-                                entry = NotPromoted(student=student)
+                                entry = NPromoted(student=student)
                                 entry.save()
                                 print('added %s to not_promoted. With sorrow :(' % (student_name))
                             except Exception as e:
@@ -1037,7 +1037,7 @@ def prepare_results(request, school_id, the_class, section):
                     c.drawString(left_margin, table3_top - 25, 'Promoted to Class: ')
                     # get the class to which this student is promoted. Only if he has passed the exam
                     try:
-                        not_promoted = NotPromoted.objects.get(student=s)
+                        not_promoted = NPromoted.objects.get(student=s)
                         print('student %s %s has failed in class %s.' % (s.fist_name, s.last_name, the_class))
                         print(not_promoted)
                         promoted_status = 'Not Promoted'
@@ -1079,7 +1079,7 @@ def prepare_results(request, school_id, the_class, section):
                 c.drawString(left_margin, table3_top - 25, 'Promoted to Class: ')
                 # get the class to which this student is promoted. Only if he has passed the exam
                 try:
-                    not_promoted = NotPromoted.objects.get(student=s)
+                    not_promoted = NPromoted.objects.get(student=s)
                     print('student %s %s has failed in class %s.' % (s.fist_name, s.last_name, the_class))
                     print(not_promoted)
                     promoted_status = 'Not Promoted'

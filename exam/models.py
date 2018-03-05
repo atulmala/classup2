@@ -22,3 +22,6 @@ class HigherClassMapping(models.Model):
 
 class NotPromoted(models.Model):
     student = models.ForeignKey(Student)
+
+class NPromoted(models.Model):
+    student = models.ForeignKey(Student)

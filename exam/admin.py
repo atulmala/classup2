@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from academics.models import ThirdLang
-from .models import Scheme, HigherClassMapping, NotPromoted
+from .models import Scheme, HigherClassMapping, NPromoted
 
 # Register your models here.
 
@@ -58,5 +58,5 @@ class NotPromotedAdmin(admin.ModelAdmin):
     list_display = ('get_school_name', 'get_class', 'get_section', 'student',)
     list_filter = ('student__school',)
 
-admin.site.register(NotPromoted, NotPromotedAdmin)
+admin.site.register(NPromoted, NotPromotedAdmin)
 
