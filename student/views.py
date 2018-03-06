@@ -3,6 +3,8 @@
 
 import StringIO
 import xlsxwriter
+import xlrd
+
 
 from rest_framework import generics
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
@@ -11,11 +13,15 @@ from django.shortcuts import render
 from django.contrib import messages
 
 from setup.models import School
-from academics.models import ClassTest, TestResults, TermTestResult, ThirdLang
-from exam.models import HigherClassMapping
+from academics.models import ClassTest, TestResults, TermTestResult, ThirdLang, Class, Section
+from exam.models import HigherClassMapping, NPromoted
 from exam.forms import ResultSheetForm
 from .models import Student, Parent
+
+from setup.forms import ExcelFileUploadForm
 from .forms import MidTermAdmissionForm
+
+from setup.views import validate_excel_extension
 
 from .serializers import StudentSerializer, ParentSerializer
 
@@ -134,6 +140,21 @@ class ParentList(generics.ListAPIView):
         q = Parent.objects.filter(student__id=student_id)
         return q
 
+class PromoteStudents(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def get(self, request, *args, **kwargs):
+        print ('from class based view')
+        context_dict = {
+
+        }
+        context_dict['user_type'] = 'school_admin'
+        context_dict['school_name'] = request.session['school_name']
+        context_dict['header'] = 'Upload Student Promotion List'
+        form = ExcelFileUploadForm()
+        context_dict['form'] = form
+        return render(request, 'classup/setup_data.html', context_dict)
+
 
 class StudentListDownload (generics.ListAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
@@ -189,14 +210,7 @@ class StudentListDownload (generics.ListAPIView):
                     'align': 'center',
                     'valign': 'vcenter'
                 })
-                header = workbook.add_format({
-                    'bold': True,
-                    'bg_color': '#F7F7F7',
-                    'color': 'black',
-                    'align': 'center',
-                    'valign': 'top',
-                    'border': 1
-                })
+
                 cell_normal = workbook.add_format({
                     'align': 'left',
                     'valign': 'top',
@@ -217,18 +231,7 @@ class StudentListDownload (generics.ListAPIView):
                     'rotation': 90
                 })
                 vertical_text.set_border()
-                perc_format = workbook.add_format({
-                    'num_format': '0.00%',
-                    'align': 'center',
-                    'valign': 'top',
-                    'border': 1
-                })
-                cell_grade = workbook.add_format({
-                    'align': 'center',
-                    'valign': 'top',
-                    'bold': True,
-                    'border': 1
-                })
+
 
                 row = 0
                 col = 0
@@ -237,8 +240,19 @@ class StudentListDownload (generics.ListAPIView):
                 sheet.set_column ('B:B', 16)
                 sheet.write_string (row, col, 'Admission No', title)
                 col = col + 1
-                sheet.set_column ('C:C', 20)
+                sheet.set_column ('C:G', 20)
                 sheet.write_string (row, col, 'Student Name', title)
+
+                # 06/03/2018 - coding to show the current class/sec and promoted class/sec will be required only during
+                # new session start, otherwise will be coded
+                col += 1
+                sheet.write_string(row, col, 'Current Class', title)
+                col += 1
+                sheet.write_string(row, col, 'Current Section', title)
+                col += 1
+                sheet.write_string(row, col, 'Promoted Class', title)
+                col += 1
+                sheet.write_string(row, col, 'Promoted Section', title)
 
                 try:
                     students = Student.objects.filter(school=school, current_class=the_class,
@@ -253,13 +267,32 @@ class StudentListDownload (generics.ListAPIView):
                         col = col + 1
                         sheet.write_string (row, col, student.student_erp_id, cell_normal)
                         col = col + 1
-                        student_name = student.fist_name + ' ' + student.last_name
+                        student_name = '%s %s' % (student.fist_name, student.last_name)
                         sheet.write_string (row, col, student_name, cell_normal)
 
-                        # set border for the next col. No value goes inside the cell.
-                        col = col + 1
-                        sheet.write_string (row, col, '', cell_normal)
+                        # current class & section
+                        col += 1
+                        current_class = student.current_class.standard
+                        sheet.write_string (row, col, current_class, cell_normal)
+                        col += 1
+                        current_section = student.current_section.section
+                        sheet.write_string(row, col, current_section, cell_normal)
+                        col += 1
 
+                        # promoted class & section
+                        current_class_seq = student.current_class.sequence
+                        next_class_seq = current_class_seq + 1
+                        try:
+                            next = Class.objects.get(school=student.school, sequence=next_class_seq)
+                            next_class = next.standard
+                            print('determined the next class for %s: %s-%s' %
+                                  (student_name, next_class, current_section))
+                            sheet.write_string(row, col, next_class, cell_normal)
+                            col += 1
+                            sheet.write_string(row, col, current_section, cell_normal)
+                        except Exception as e:
+                            print('failed to determine the next class for %s' % student_name)
+                            print('exception 06032018-A from student views.py %s %s' % (e.message, type(e)))
                         row = row + 1
                         s_no = s_no + 1
                         col = 0
@@ -531,3 +564,189 @@ class MidTermAdmission (generics.ListCreateAPIView):
                     context_dict['form'] = form
                     form.errors['__all__'] = form.error_class([error])
                     return render(request, 'classup/mid_term_admission.html', context_dict)
+
+
+class StudentPromotion(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def get(self, request, *args, **kwargs):
+        print ('from class based view')
+        context_dict = {
+
+        }
+        context_dict['user_type'] = 'school_admin'
+        context_dict['school_name'] = request.session['school_name']
+        context_dict['header'] = 'Upload Student Promotion List'
+        form = ExcelFileUploadForm()
+        context_dict['form'] = form
+        return render(request, 'classup/setup_data.html', context_dict)
+
+    def post(self, request, *args, **kwargs):
+        print ('from class based view')
+        context_dict = {
+
+        }
+        context_dict['user_type'] = 'school_admin'
+        context_dict['school_name'] = request.session['school_name']
+        context_dict['header'] = 'Setup Time Table'
+
+        # first see whether the cancel button was pressed
+        if "cancel" in request.POST:
+            return render(request, 'classup/setup_index.html', context_dict)
+
+        school_id = request.session['school_id']
+        school = School.objects.get(id=school_id)
+
+        # get the file uploaded by the user
+        form = ExcelFileUploadForm(request.POST, request.FILES)
+        context_dict['form'] = form
+
+        if form.is_valid():
+            try:
+                print ('now starting to process the uploaded file for student promotion...')
+                fileToProcess_handle = request.FILES['excelFile']
+
+                # check that the file uploaded should be a valid excel
+                # file with .xls or .xlsx
+                if not validate_excel_extension(fileToProcess_handle, form, context_dict):
+                    return render(request, 'classup/setup_data.html', context_dict)
+
+                # if this is a valid excel file - start processing it
+                fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
+                sheet = fileToProcess.sheet_by_index(0)
+                if sheet:
+                    print ('Successfully got hold of sheet!')
+                for row in range(sheet.nrows):
+                    if row == 0:
+                        continue
+                    print ('Processing a new row')
+                    erp_id = sheet.cell(row, 1).value
+                    try:
+                        student = Student.objects.get(school=school, student_erp_id=erp_id)
+                        student_name = '%s %s' % (student.fist_name, student.last_name)
+                        print('retrieved student associated with erp_id %s: %s of class %s-%s' %
+                              (erp_id, student_name, student.current_class.standard, student.current_section.section))
+                        try:
+                            # the student should not be in the not promoted list. Only then he/she will be promoted
+                            entry = NPromoted.objects.get(student=student)
+                            print('%s is  in the not_promoted. Hence not promoting...' % (student_name))
+                            print(entry)
+                        except Exception as e:
+                            print('exception 06032018-E from student views.py %s %s' % (e.message, type(e)))
+                            print('%s was not in not_promoted. Promoting now...' % (student_name))
+                            try:
+                                # get the new class
+                                new_class = sheet.cell(row, 5).value
+                                new_section = sheet.cell(row, 6).value
+                                print('%s is to be promoted to %s-%s' % (student_name, new_class, new_section))
+                                try:
+                                    student.current_class = Class.objects.get(school=school, standard=new_class)
+                                    student.current_section = Section.objects.get(school=school, section=new_section)
+                                    student.save()
+                                    print('successfully promoted %s to %s-%s' % (student_name, new_class, new_section))
+                                except Exception as e:
+                                    print('failed to promote %s to %s-%s' % (student_name, new_class, new_section))
+                                    print('exception 06032018-B from student views.py %s %s' % (e.message, type(e)))
+                            except Exception as e:
+                                print('failed to add %s (%s) to not_promoted' % (student_name, erp_id))
+                                print('exception 06032018-C from student views.py %s %s' % (e.message, type(e)))
+                    except Exception as e:
+                        print('failed to retrieve student with erp_id %s' % erp_id)
+                        print('exception 06032018-A from student views.py %s %s' % (e.message, type(e)))
+                messages.success(request._request, 'uploaded list of promoted students')
+                context_dict['status'] = 'success'
+                return render(request, 'classup/setup_index.html', context_dict)
+            except Exception as e:
+                error = 'invalid excel file uploaded.'
+                print (error)
+                print ('exception 04032018-G from student views.py %s %s ' % (e.message, type(e)))
+                form.errors['__all__'] = form.error_class([error])
+                return render(request, 'classup/setup_data.html', context_dict)
+
+
+class NotPromoted(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def get(self, request, *args, **kwargs):
+        print ('from class based view')
+        context_dict = {
+
+        }
+        context_dict['user_type'] = 'school_admin'
+        context_dict['school_name'] = request.session['school_name']
+        context_dict['header'] = 'Upload Not Promoted Student List'
+        form = ExcelFileUploadForm()
+        context_dict['form'] = form
+        return render(request, 'classup/setup_data.html', context_dict)
+
+    def post(self, request, *args, **kwargs):
+        print ('from class based view')
+        context_dict = {
+
+        }
+        context_dict['user_type'] = 'school_admin'
+        context_dict['school_name'] = request.session['school_name']
+        context_dict['header'] = 'Setup Time Table'
+
+        # first see whether the cancel button was pressed
+        if "cancel" in request.POST:
+            return render(request, 'classup/setup_index.html', context_dict)
+
+        school_id = request.session['school_id']
+        school = School.objects.get(id=school_id)
+
+        # get the file uploaded by the user
+        form = ExcelFileUploadForm(request.POST, request.FILES)
+        context_dict['form'] = form
+
+        if form.is_valid():
+            try:
+                print ('now starting to process the uploaded file for student not_promotion...')
+                fileToProcess_handle = request.FILES['excelFile']
+
+                # check that the file uploaded should be a valid excel
+                # file with .xls or .xlsx
+                if not validate_excel_extension(fileToProcess_handle, form, context_dict):
+                    return render(request, 'classup/setup_data.html', context_dict)
+
+                # if this is a valid excel file - start processing it
+                fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
+                sheet = fileToProcess.sheet_by_index(0)
+                if sheet:
+                    print ('Successfully got hold of sheet!')
+                for row in range(sheet.nrows):
+                    if row == 0:
+                        continue
+                    print ('Processing a new row')
+                    erp_id = sheet.cell(row, 1).value
+                    try:
+                        student = Student.objects.get(school=school, student_erp_id=erp_id)
+                        student_name = '%s %s' % (student.fist_name, student.last_name)
+                        print('retrieved student associated with erp_id %s: %s of class %s-%s' %
+                              (erp_id, student_name, student.current_class.standard, student.current_section.section))
+                        try:
+                            entry = NPromoted.objects.get(student=student)
+                            print('%s is already in the not_promoted. Not adding...' % (student_name))
+                            print(entry)
+                        except Exception as e:
+                            print('%s was not in not_promoted. Adding now...' % (student_name))
+                            print('exception 04032018-E from student views.py %s %s' % (e.message, type(e)))
+                            try:
+                                entry = NPromoted(student=student)
+                                entry.save()
+                                print('added %s to not_promoted. With sorrow :(' % (student_name))
+                            except Exception as e:
+                                print('failed to add %s (%s) to not_promoted' % (student_name, erp_id))
+                                print('exception 04032018-F from student views.py %s %s' % (e.message, type(e)))
+                    except Exception as e:
+                        print('failed to retrieve student with erp_id %s' % erp_id)
+                        print('exception 04032018-G from student views.py %s %s' % (e.message, type(e)))
+                messages.success(request._request, 'uploaded list of not_cleared students')
+                context_dict['status'] = 'success'
+                return render(request, 'classup/setup_index.html', context_dict)
+            except Exception as e:
+                error = 'invalid excel file uploaded.'
+                print (error)
+                print ('exception 04032018-G from student views.py %s %s ' % (e.message, type(e)))
+                form.errors['__all__'] = form.error_class([error])
+                return render(request, 'classup/setup_data.html', context_dict)
