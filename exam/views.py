@@ -1566,7 +1566,8 @@ class ResultSheet(generics.ListCreateAPIView):
                                 result_sheet.write(row, col, '', border)
                         for student in students:
                             sub_dict = []
-                            # for higher classes we need to determine the stream selected by student as well as the elective
+                            # for higher classes we need to determine the stream selected by
+                            # student as well as the elective
                             mapping = HigherClassMapping.objects.filter(student=student)
                             for m in mapping:
                                 sub_dict.append(m.subject.subject_name)

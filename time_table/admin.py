@@ -20,14 +20,18 @@ admin.site.register(DaysOfWeek, DaysOfWeekAdmin)
 
 
 class PeriodAdmin (admin.ModelAdmin):
-    list_display = ('school', 'period', 'start_time', 'end_time',)
+    list_display = ('school', 'period', 'symbol', 'start_time', 'end_time',)
 
 
 admin.site.register(Period, PeriodAdmin)
 
 
 class TimeTableAdmin (admin.ModelAdmin):
-    list_display = ('school', 'day', 'period', 'the_class', 'section', 'period', 'subject', 'teacher',)
+    def get_symbol(self, obj):
+        return obj.period.symbol
+    get_symbol.short_description = 'Symbol'
+
+    list_display = ('school', 'day', 'period', 'get_symbol', 'the_class', 'section', 'subject', 'teacher',)
     search_fields = ('teacher__first_name',)
 
 

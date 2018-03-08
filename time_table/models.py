@@ -45,6 +45,7 @@ class Period(models.Model):
     period = models.CharField(max_length=10)
     start_time = models.TimeField()
     end_time = models.TimeField()
+    symbol = models.CharField(max_length=6, null=True)
 
     def __unicode__(self):
         return self.period
