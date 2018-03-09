@@ -642,86 +642,52 @@ def create_test1(request, school_id, the_class, section, subject,
                                             student.fist_name, student.last_name))
 
                                         # 21/09/2017 some more data need to be created for a Term test
-                                        try:
-                                            if test_type == 'term':
-                                                # 01/02/2018 - If this is a second term test,
-                                                # ie the final exam for class
-                                                # V-VIII, then we need to auto fill the PA marks. The marks will be the
-                                                # average of all the unit test conducted between the
-                                                # first term test till now
+                                        if test_type == 'term':
+                                            try:
+                                                # we need to auto fill the PA marks. The marks will be the
+                                                # average of all the unit test conducted till now
+                                                print('this is the second term (final) test for %s-%s subject %s' %
+                                                        (the_class, s, sub))
+                                                print('periodic assessments marks will be the average of unit tests')
 
-                                                term_tests = ClassTest.objects.filter(the_class=c, section=s,
-                                                                                      subject=sub,
-                                                                                      test_type='term'). \
-                                                    order_by('date_conducted')
-                                                print('term tests conducted so far for class %s-%s for subject %s' %
-                                                      (the_class, s, sub))
-                                                print(term_tests)
-                                                if term_tests.count() > 1:  # this is the second term test
-                                                    print('this is the second term (final) test for %s-%s subject %s' %
-                                                          (the_class, s, sub))
-                                                    print(
-                                                        'periodic assessments marks will be the average of unit tests')
-                                                    term1_test = term_tests[0]
-                                                    term1_date = term1_test.date_conducted
-                                                    print('previous first term test was conducted on ')
-                                                    print(term1_date)
-
-                                                    # get all the unit tests conducted between term1 & term2
-                                                    unit_tests = ClassTest.objects.filter(the_class=c, section=s,
-                                                                                          subject=sub,
-                                                                                          date_conducted__gt=term1_date,
-                                                                                          date_conducted__lt=the_date)
-                                                    print('%i unit tests have been conducted for in class %s-%s for %s' %
-                                                                (unit_tests.count(), the_class, s, sub))
-                                                    print(unit_tests)
-                                                    marks_array = []
-                                                    for ut in unit_tests:
-                                                        ut_result = TestResults.objects.get(class_test=ut,
-                                                                                            student=student)
-                                                        marks_array.append \
-                                                            ((ut_result.marks_obtained / ut.max_marks) * Decimal(10.0))
-                                                        print('marks_array = ')
-                                                        print(marks_array)
-                                                    marks_array.sort(reverse=True)
-                                                    try:
-                                                        # average of best of two tests
-                                                        pa_marks = (marks_array[0] + marks_array[1]) / Decimal(2.0)
-                                                    except Exception as e:
-                                                        print('looks only one cycle test has been conducted for %s in '
-                                                              'class %s-%s between Term1 & Terms 2'
-                                                              % sub.subject_name, the_class, s)
-                                                        print('exception 11022018-X from academics views.py %s %s' %
-                                                              (e.message, type(e)))
-                                                        print(
-                                                            'hence, taking the single unit/cycle test marks as PA marks')
-                                                        pa_marks = marks_array[0]
-                                                    if pa_marks < Decimal(0.0):
-                                                        print('all unit test marks for subject %s are not entered for %s' %
-                                                                    (sub, student.fist_name))
-                                                        pa_marks = -5000.0
-
-                                                    term_test_result = TermTestResult(test_result=test_result,
-                                                                                      periodic_test_marks=pa_marks,
-                                                                                      note_book_marks=-5000.0,
-                                                                                      sub_enrich_marks=-5000.0)
-                                                    term_test_result.save()
-                                                else:
-                                                    # 01/02/2018 - this is the first term test.
-                                                    # The periodic_test_marks should be the average of all unit tests
-                                                    # conducted from the start of the session till this term test.
-                                                    # We will do the thorough coding later.
-                                                    # For the time being it is -5000.0
-                                                    term_test_result = TermTestResult(test_result=test_result,
-                                                                                      periodic_test_marks=-5000.0,
-                                                                                      note_book_marks=-5000.0,
-                                                                                      sub_enrich_marks=-5000.0)
-                                                    term_test_result.save()
-                                        except Exception as e:
-                                            print ('failed to create term test results')
-                                            print ('Exception 02012018-B from acacemics views.py = %s (%s)' % (
-                                            e.message, type(e)))
-                                            return HttpResponse('Failed to create term test results')
+                                                # get all the unit tests conducted till now
+                                                unit_tests = ClassTest.objects.filter(the_class=c, section=s,
+                                                                                      subject=sub,)
+                                                print('%i unit tests have been conducted for in class %s-%s for %s' %
+                                                      (unit_tests.count(), the_class, s, sub))
+                                                print(unit_tests)
+                                                marks_array = []
+                                                for ut in unit_tests:
+                                                    ut_result = TestResults.objects.get(class_test=ut, student=student)
+                                                    marks_array.append \
+                                                        ((ut_result.marks_obtained / ut.max_marks) * Decimal(10.0))
+                                                    print('marks_array = ')
+                                                    print(marks_array)
+                                                marks_array.sort(reverse=True)
+                                                try:
+                                                    # average of best of two tests
+                                                    pa_marks = (marks_array[0] + marks_array[1]) / Decimal(2.0)
+                                                except Exception as e:
+                                                    print('looks only one cycle test has been conducted for %s in '
+                                                            'class %s-%s ' % (sub.subject_name, the_class, s))
+                                                    print('exception 11022018-X from academics views.py %s %s' %
+                                                            (e.message, type(e)))
+                                                    print('hence, taking the single unit/cycle test marks as PA marks')
+                                                    pa_marks = marks_array[0]
+                                                if pa_marks < Decimal(0.0):
+                                                    print('all unit test marks for subject %s are not entered for %s' %
+                                                                (sub, student.fist_name))
+                                                    pa_marks = -5000.0
+                                                term_test_result = TermTestResult(test_result=test_result,
+                                                                                  periodic_test_marks=pa_marks,
+                                                                                  note_book_marks=-5000.0,
+                                                                                  sub_enrich_marks=-5000.0)
+                                                term_test_result.save()
+                                            except Exception as e:
+                                                print ('failed to create term test results')
+                                                print ('Exception 02012018-B from acacemics views.py = %s (%s)' % (
+                                                e.message, type(e)))
+                                                return HttpResponse('Failed to create term test results')
                                     except Exception as e:
                                         print ('failed to create test results')
                                         print ('Exception 02012018-B from acacemics views.py = %s (%s)' %
@@ -739,26 +705,19 @@ def create_test1(request, school_id, the_class, section, subject,
                                 try:
                                     test_result.save()
                                     if test_type == 'term':
-                                        # 01/02/2018 - If this is a second term test, ie the final exam for class
-                                        # V-VIII, then we need to auto fill the PA marks. The marks will be the
-                                        # average of all the unit test conducted between the first term test till now
-
-                                        term_tests = ClassTest.objects.filter(the_class=c, section=s, subject=sub,
-                                                                              test_type='term'). \
-                                            order_by('date_conducted')
-                                        if term_tests.count() > 1:  # this is the second term test
+                                        try:
+                                            # we need to auto fill the PA marks. The marks will be the
+                                            # average of all the unit test conducted till now
                                             print('this is the second term (final) test for %s-%s subject %s' %
                                                   (the_class, s, sub))
                                             print('periodic assessments marks will be the average of unit tests')
-                                            term1_test = term_tests[0]
-                                            term1_date = term1_test.date_conducted
 
-                                            # get all the unit tests conducted between term1 & term2
-                                            unit_tests = ClassTest.objects.filter(the_class=c, section=s, subject=sub,
-                                                                                  date_conducted__gt=term1_date,
-                                                                                  date_conducted__lt=the_date)
+                                            # get all the unit tests conducted till now
+                                            unit_tests = ClassTest.objects.filter(the_class=c, section=s,
+                                                                                  subject=sub, )
                                             print('%i unit tests have been conducted for in class %s-%s for %s' %
                                                   (unit_tests.count(), the_class, s, sub))
+                                            print(unit_tests)
                                             marks_array = []
                                             for ut in unit_tests:
                                                 ut_result = TestResults.objects.get(class_test=ut, student=student)
@@ -772,9 +731,8 @@ def create_test1(request, school_id, the_class, section, subject,
                                                 pa_marks = (marks_array[0] + marks_array[1]) / Decimal(2.0)
                                             except Exception as e:
                                                 print('looks only one cycle test has been conducted for %s in '
-                                                      'class %s-%s between Term1 & Terms 2'
-                                                      % sub.subject_name, the_class, s)
-                                                print('exception 11022018-Y from academics views.py %s %s' %
+                                                      'class %s-%s ' % (sub.subject_name, the_class, s))
+                                                print('exception 11022018-X from academics views.py %s %s' %
                                                       (e.message, type(e)))
                                                 print('hence, taking the single unit/cycle test marks as PA marks')
                                                 pa_marks = marks_array[0]
@@ -787,21 +745,11 @@ def create_test1(request, school_id, the_class, section, subject,
                                                                               note_book_marks=-5000.0,
                                                                               sub_enrich_marks=-5000.0)
                                             term_test_result.save()
-                                        else:
-                                            # 01/02/2018 - this is the first term test.
-                                            # The periodic_test_marks should be the average of all unit tests
-                                            # conducted from the start of the session till this term test.
-                                            # We will do the thorough coding later. For the time being it is -5000.0
-                                            term_test_result = TermTestResult(test_result=test_result,
-                                                                              periodic_test_marks=-5000.0,
-                                                                              note_book_marks=-5000.0,
-                                                                              sub_enrich_marks=-5000.0)
-                                            term_test_result.save()
-                                        print (' term test results successfully created for %s %s' %
-                                               (student.fist_name, student.last_name))
-
-                                    print (' test results successfully created for %s %s' % (
-                                        student.fist_name, student.last_name))
+                                        except Exception as e:
+                                            print ('failed to create term test results')
+                                            print ('Exception 02012018-B from acacemics views.py = %s (%s)' % (
+                                                e.message, type(e)))
+                                            return HttpResponse('Failed to create term test results')
                                 except Exception as e:
                                     print ('failed to create test resutls')
                                     print ('Exception 071117-A from academics views.py %s %s' % (e.message, type(e)))

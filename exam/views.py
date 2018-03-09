@@ -1431,7 +1431,7 @@ class ResultSheet(generics.ListCreateAPIView):
                     result_sheet.merge_range(row, col, row+3, col, 'Result/Remark', cell_center)
                     row = row + 1
 
-                    sub_list = ['English', 'Third Language', 'Mathematics', 'Science', 'Social Studies']
+                    sub_list = ['English', 'Third Language', 'Mathematics', 'Science', 'Social Studies', 'Computer']
                     # header rows are ready, now is the time to get the result of each student
                     try:
                         students = Student.objects.filter(school=school, current_class=the_class,
@@ -1514,8 +1514,9 @@ class ResultSheet(generics.ListCreateAPIView):
                                 print('exception 27012018-C from exam views.py %s %s' % (e.message, type(e)))
                                 print('failed to retrieve term test marks for %s in subject %s' %
                                       (student_name, subject.subject_name))
-                                marks_col = marks_col + 2
+                                marks_col = marks_col + 3
                         result_sheet.write_number(row, marks_col, grand_totl, cell_normal)
+                        marks_col += 1
                         formula = '=X%s/600.00' % str(row + 1)
                         result_sheet.write_formula (row, marks_col, formula, perc_format)
                         marks_col = marks_col + 1
