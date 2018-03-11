@@ -46,7 +46,7 @@ class Subject(models.Model):
     subject_type = models.CharField(max_length=40, default='Regular')
 
     def __unicode__(self):
-        return '%s (%s)' % (self.subject_name, self.school.school_name)
+        return self.subject_name
 
 
     class Meta:
