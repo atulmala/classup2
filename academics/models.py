@@ -46,7 +46,12 @@ class Subject(models.Model):
     subject_type = models.CharField(max_length=40, default='Regular')
 
     def __unicode__(self):
-        return self.subject_name
+        return '%s (%s)' % (self.subject_name, self.school.school_name)
+
+
+    class Meta:
+        ordering = ('subject_name', )
+
 
 
 class ThirdLang(models.Model):
