@@ -110,7 +110,10 @@ class CompletedTestList(generics.ListCreateAPIView):
         t = self.kwargs['teacher']
 
         the_teacher = Teacher.objects.get(email=t)
-        q = ClassTest.objects.filter(teacher=the_teacher, is_completed=True).order_by('date_conducted')
+        q = ClassTest.objects.filter(teacher=the_teacher, is_completed=True).order_by('the_class__sequence',
+                                                                                      'section__section',
+                                                                                      'date_conducted')
+
 
         try:
             action = 'Retrieving completed test list for ' + the_teacher.first_name + ' ' + the_teacher.last_name
@@ -129,7 +132,9 @@ class PendingTestList(generics.ListCreateAPIView):
         t = self.kwargs['teacher']
 
         the_teacher = Teacher.objects.get(email=t)
-        q = ClassTest.objects.filter(teacher=the_teacher, is_completed=False).order_by('date_conducted')
+        q = ClassTest.objects.filter(teacher=the_teacher, is_completed=False).order_by('the_class__sequence',
+                                                                                      'section__section',
+                                                                                      'date_conducted')
 
         try:
             action = 'Retrieving pending test list for ' + the_teacher.first_name + ' ' + the_teacher.last_name
@@ -801,6 +806,7 @@ def create_test1(request, school_id, the_class, section, subject,
                                             try:
                                                 # average of best of two tests
                                                 pa_marks = (marks_array[0] + marks_array[1]) / Decimal(2.0)
+                                                print('average of best of two tests = %f' % pa_marks)
                                             except Exception as e:
                                                 print('looks only one cycle test has been conducted for %s in '
                                                       'class %s-%s between Term1 & Terms 2'
