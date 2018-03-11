@@ -32,7 +32,7 @@ class Student(models.Model):
         ordering = ('fist_name', )
 
     def __unicode__(self):
-        return self.fist_name + ' ' + self.last_name
+        return '%s %s (%s %s)' % (self.fist_name, self.last_name, self.school.school_name, self.student_erp_id)
 
 
 class DOB(models.Model):
