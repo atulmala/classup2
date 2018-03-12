@@ -856,7 +856,7 @@ def prepare_results(request, school_id, the_class, section):
                                       (s.fist_name, term, sub.subject_name, grade))
                                 sub_row.append(grade)
 
-                                sub_row = [sub.subject_name, pa, notebook, sub_enrich, main, total, grade]
+                                #sub_row = [sub.subject_name, pa, notebook, sub_enrich, main, total, grade]
 
                             except Exception as e:
                                 print('%s test for %s is not yet scheduled' % (term, sub))
