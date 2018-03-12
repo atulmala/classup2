@@ -828,34 +828,40 @@ def prepare_results(request, school_id, the_class, section):
                             print(exam)
                             start_date = exam.start_date
                             end_date = exam.end_date
-                            test = ClassTest.objects.get(subject=sub, the_class=standard, section=sec,
-                                                         date_conducted__gte=start_date, date_conducted__lte=end_date)
-                            tr = TestResults.objects.get(class_test=test, student=s)
+                            try:
+                                test = ClassTest.objects.get(subject=sub, the_class=standard, section=sec,
+                                                             date_conducted__gte=start_date,
+                                                             date_conducted__lte=end_date)
+                                tr = TestResults.objects.get(class_test=test, student=s)
 
-                            ttr = TermTestResult.objects.get(test_result=tr)
+                                ttr = TermTestResult.objects.get(test_result=tr)
 
-                            pa = ttr.periodic_test_marks
-                            sub_row.append(pa)
+                                pa = ttr.periodic_test_marks
+                                sub_row.append(pa)
 
-                            notebook = ttr.note_book_marks
-                            sub_row.append(notebook)
+                                notebook = ttr.note_book_marks
+                                sub_row.append(notebook)
 
-                            sub_enrich = ttr.sub_enrich_marks
-                            sub_row.append(sub_enrich)
+                                sub_enrich = ttr.sub_enrich_marks
+                                sub_row.append(sub_enrich)
 
-                            main = tr.marks_obtained
-                            sub_row.append(main)
+                                main = tr.marks_obtained
+                                sub_row.append(main)
 
-                            total = float(main) + float(pa) + float(notebook) + float(sub_enrich)
-                            sub_row.append(total)
+                                total = float(main) + float(pa) + float(notebook) + float(sub_enrich)
+                                sub_row.append(total)
 
-                            grade = get_grade(total)
-                            print('grade obtained by %s in %s exam of %s: %s' %
-                                  (s.fist_name, term, sub.subject_name, grade))
-                            sub_row.append(grade)
+                                grade = get_grade(total)
+                                print('grade obtained by %s in %s exam of %s: %s' %
+                                      (s.fist_name, term, sub.subject_name, grade))
+                                sub_row.append(grade)
 
-                            sub_row = [sub.subject_name, pa, notebook, sub_enrich, main, total, grade]
-                            data1.append(sub_row)
+                                sub_row = [sub.subject_name, pa, notebook, sub_enrich, main, total, grade]
+                                data1.append(sub_row)
+                            except Exception as e:
+                                print('%s test for %s is not yet scheduled' % (term, sub))
+                                print('exception 12032018-A from exam views.py %s %s' % (e.message))
+                                data1.append(sub_row)
                     except Exception as e:
                         print('Error while preparing results')
                         print ('Exception 21102017-A from exam views.py %s %s' % (e.message, type(e)))
