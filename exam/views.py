@@ -863,7 +863,7 @@ def prepare_results(request, school_id, the_class, section):
                                 print('exception 12032018-A from exam views.py %s %s' % (e.message))
                                 data1.append(sub_row)
                     except Exception as e:
-                        print('Error while preparing results')
+                        print('Error while preparing results for %s in exam %s' % (sub, term))
                         print ('Exception 21102017-A from exam views.py %s %s' % (e.message, type(e)))
                 try:
                     table1 = Table(data1)
