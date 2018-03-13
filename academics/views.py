@@ -554,8 +554,12 @@ def create_test1(request, school_id, the_class, section, subject,
                                             marks_array = []
                                             for ut in unit_tests:
                                                 ut_result = TestResults.objects.get(class_test=ut, student=student)
-                                                marks_array.append\
-                                                    ((ut_result.marks_obtained/ut.max_marks)*Decimal(10.0))
+                                                ut_marks = (ut_result.marks_obtained/ut.max_marks)*Decimal(10.0)
+                                                # 13/03/2018 - if the student was absent, then marks will be < 0
+                                                if ut_marks < 0.0:
+                                                    ut_marks = 0.0
+                                                else:
+                                                    marks_array.append(ut_marks)
                                                 print('marks_array = ')
                                                 print(marks_array)
                                             marks_array.sort(reverse=True)
