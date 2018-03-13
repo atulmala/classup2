@@ -194,7 +194,7 @@ class MarksListForTest(generics.ListCreateAPIView):
         test_id = self.kwargs['test_id']
         t = ClassTest.objects.get(pk=test_id)
 
-        q = TestResults.objects.filter(class_test=t).order_by('roll_no')
+        q = TestResults.objects.filter(class_test=t).order_by('student__fist_name', 'student__last_name')
         return q
 
 
@@ -557,6 +557,7 @@ def create_test1(request, school_id, the_class, section, subject,
                                                 ut_marks = (ut_result.marks_obtained/ut.max_marks)*Decimal(10.0)
                                                 # 13/03/2018 - if the student was absent, then marks will be < 0
                                                 if ut_marks < 0.0:
+                                                    print('marks = %f' % ut_marks)
                                                     ut_marks = 0.0
                                                 else:
                                                     marks_array.append(ut_marks)
@@ -573,13 +574,14 @@ def create_test1(request, school_id, the_class, section, subject,
                                                 print('exception 11022018-A from academics views.py %s %s' %
                                                       (e.message, type(e)))
                                                 print('hence, taking the single unit/cycle test marks as PA marks')
-                                                pa_marks = marks_array[0]
-
-                                            if pa_marks < Decimal(0.0):
-                                                print('all unit test marks for subject %s are not entered for %s' %
-                                                      (sub, student.fist_name))
-                                                pa_marks = -5000.0
-
+                                                try:
+                                                    pa_marks = marks_array[0]
+                                                except Exception as e:
+                                                    print('looks that marks for % s in %s have not been '
+                                                          'entered for any test' % (student.fist_name, sub))
+                                                    print('exception 13032018-B from academics views.py %s %s' %
+                                                          (e.message, type(e)))
+                                                    pa_marks = -5000.0
                                             term_test_result = TermTestResult(test_result=test_result,
                                                                               periodic_test_marks=pa_marks,
                                                                               note_book_marks=-5000.0,
@@ -668,8 +670,13 @@ def create_test1(request, school_id, the_class, section, subject,
                                                 marks_array = []
                                                 for ut in unit_tests:
                                                     ut_result = TestResults.objects.get(class_test=ut, student=student)
-                                                    marks_array.append \
-                                                        ((ut_result.marks_obtained / ut.max_marks) * Decimal(10.0))
+                                                    ut_marks = (ut_result.marks_obtained / ut.max_marks) * Decimal(10.0)
+                                                    # 13/03/2018 - if the student was absent, then marks will be < 0
+                                                    if ut_marks < 0.0:
+                                                        print('marks = %f' % ut_marks)
+                                                        ut_marks = 0.0
+                                                    else:
+                                                        marks_array.append(ut_marks)
                                                     print('marks_array = ')
                                                     print(marks_array)
                                                 marks_array.sort(reverse=True)
@@ -682,11 +689,14 @@ def create_test1(request, school_id, the_class, section, subject,
                                                     print('exception 11022018-X from academics views.py %s %s' %
                                                             (e.message, type(e)))
                                                     print('hence, taking the single unit/cycle test marks as PA marks')
-                                                    pa_marks = marks_array[0]
-                                                if pa_marks < Decimal(0.0):
-                                                    print('all unit test marks for subject %s are not entered for %s' %
-                                                                (sub, student.fist_name))
-                                                    pa_marks = -5000.0
+                                                    try:
+                                                        pa_marks = marks_array[0]
+                                                    except Exception as e:
+                                                        print('looks that marks for % s in %s have not been '
+                                                              'entered for any test' % (student.fist_name, sub))
+                                                        print('exception 13032018-C from academics views.py %s %s' %
+                                                              (e.message, type(e)))
+                                                        pa_marks = -5000.0
                                                 term_test_result = TermTestResult(test_result=test_result,
                                                                                   periodic_test_marks=pa_marks,
                                                                                   note_book_marks=-5000.0,
@@ -730,8 +740,13 @@ def create_test1(request, school_id, the_class, section, subject,
                                             marks_array = []
                                             for ut in unit_tests:
                                                 ut_result = TestResults.objects.get(class_test=ut, student=student)
-                                                marks_array.append \
-                                                    ((ut_result.marks_obtained / ut.max_marks) * Decimal(10.0))
+                                                ut_marks = (ut_result.marks_obtained / ut.max_marks) * Decimal(10.0)
+                                                # 13/03/2018 - if the student was absent, then marks will be < 0
+                                                if ut_marks < 0.0:
+                                                    print('marks = %f' % ut_marks)
+                                                    ut_marks = 0.0
+                                                else:
+                                                    marks_array.append(ut_marks)
                                                 print('marks_array = ')
                                                 print(marks_array)
                                             marks_array.sort(reverse=True)
@@ -744,11 +759,14 @@ def create_test1(request, school_id, the_class, section, subject,
                                                 print('exception 11022018-X from academics views.py %s %s' %
                                                       (e.message, type(e)))
                                                 print('hence, taking the single unit/cycle test marks as PA marks')
-                                                pa_marks = marks_array[0]
-                                            if pa_marks < Decimal(0.0):
-                                                print('all unit test marks for subject %s are not entered for %s' %
-                                                      (sub, student.fist_name))
-                                                pa_marks = -5000.0
+                                                try:
+                                                    pa_marks = marks_array[0]
+                                                except Exception as e:
+                                                    print('looks that marks for % s in %s have not been '
+                                                          'entered for any test' % (student.fist_name, sub))
+                                                    print('exception 13032018-D from academics views.py %s %s' %
+                                                          (e.message, type(e)))
+                                                    pa_marks = -5000.0
                                             term_test_result = TermTestResult(test_result=test_result,
                                                                               periodic_test_marks=pa_marks,
                                                                               note_book_marks=-5000.0,
@@ -802,8 +820,13 @@ def create_test1(request, school_id, the_class, section, subject,
                                             marks_array = []
                                             for ut in unit_tests:
                                                 ut_result = TestResults.objects.get(class_test=ut, student=student)
-                                                marks_array.append \
-                                                    ((ut_result.marks_obtained / ut.max_marks) * Decimal(10.0))
+                                                ut_marks = (ut_result.marks_obtained / ut.max_marks) * Decimal(10.0)
+                                                # 13/03/2018 - if the student was absent, then marks will be < 0
+                                                if ut_marks < 0.0:
+                                                    print('marks = %f' % ut_marks)
+                                                    ut_marks = 0.0
+                                                else:
+                                                    marks_array.append(ut_marks)
                                                 print('marks_array = ')
                                                 print(marks_array)
                                             marks_array.sort(reverse=True)
@@ -818,11 +841,14 @@ def create_test1(request, school_id, the_class, section, subject,
                                                 print('exception 11022018-Z from academics views.py %s %s' %
                                                       (e.message, type(e)))
                                                 print('hence, taking the single unit/cycle test marks as PA marks')
-                                                pa_marks = marks_array[0]
-                                            if pa_marks < Decimal(0.0):
-                                                print('all unit test marks for subject %s are not entered for %s' %
-                                                      (sub, student.fist_name))
-                                                pa_marks = -5000.0
+                                                try:
+                                                    pa_marks = marks_array[0]
+                                                except Exception as e:
+                                                    print('looks that marks for % s in %s have not been '
+                                                          'entered for any test' % (student.fist_name, sub))
+                                                    print('exception 13032018-A from academics views.py %s %s' %
+                                                          (e.message, type(e)))
+                                                    pa_marks = -5000.0
 
                                             term_test_result = TermTestResult(test_result=test_result,
                                                                               periodic_test_marks=pa_marks,
