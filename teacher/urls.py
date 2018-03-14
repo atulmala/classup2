@@ -37,6 +37,9 @@ urlpatterns = [
     url(r'^message_list/(?P<teacher>[\w.@+-]+)/$', views.TeacherMessageList.as_view(), name='message_list'),
 
     url(r'^receivers_list/(?P<key>\w+)/$', views.MessageReceiversList.as_view(), name='receivers_list'),
+
+    url(r'^circulars/(?P<teacher>[\w.@+-]+)/(?P<sender_type>\w+)/$', views.CircularList.as_view(),
+        name='circular_list'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

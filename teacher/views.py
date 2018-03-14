@@ -16,7 +16,10 @@ from operations import sms
 from authentication.views import log_entry
 from academics.models import Subject, ClassTeacher, Class, Section, TeacherSubjects
 from setup.models import School, UserSchoolMapping, Configurations
+from operations.models import SMSRecord
 from .models import Teacher, TeacherAttendance, TeacherAttendnceTaken, TeacherMessageRecord, MessageReceivers
+
+from operations.serializers import SMSDetailSerializer
 
 from .serializers import TeacherSubjectSerializer, TeacherSerializer, \
     TeacherAttendanceSerializer, TeacherMessageRecordSerializer, MessageReceiversSerializer
@@ -38,6 +41,19 @@ class TeacherMessageList (generics.ListAPIView):
 
         q = TeacherMessageRecord.objects.filter(teacher=the_teacher).order_by ('-date')
 
+        return q
+
+class CircularList(generics.ListAPIView):
+    serializer_class = SMSDetailSerializer
+
+    def get_queryset(self):
+        teacher_email = self.kwargs['teacher']
+        sender_type = self.kwargs['sender_type']
+        teacher = Teacher.objects.get(email=teacher_email)
+        mobile = teacher.mobile
+
+        print('getting the list of SMS received by %s %s' % (teacher.first_name, teacher.last_name))
+        q = SMSRecord.objects.filter(recipient_number=mobile, sender_type=sender_type).order_by('-date')
         return q
 
 
