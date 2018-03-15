@@ -1740,7 +1740,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                         print('exception 04032018-C from exam views.py %s %s' % (e.message, type(e)))
                                         col += 1
                                 result_sheet.write_number(row, col, ut_total/4.0, cell_normal)
-                                result_sheet.write_comment(row, col, comments, {'height': 100})
+                                result_sheet.write_comment(row, col, comments, {'height': 150})
                                 col += 1
 
                                 # get the half yearly marks & final exam marks
