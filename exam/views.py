@@ -1705,7 +1705,9 @@ class ResultSheet(generics.ListCreateAPIView):
                                     print('exception 04032018-A from exams views.py %s %s' % (e.message, type(e)))
 
                                 ut_total = 0.0
+                                comments = 'UT details for %s in %s: \n' % (student_name, sub)
                                 for ut in ut_list:
+                                    comments += '\n%s: ' % ut
                                     try:
                                         print('now trying to retrieve test in %s for subject %s class %s' %
                                               (ut, sub, the_class.standard))
@@ -1723,6 +1725,9 @@ class ResultSheet(generics.ListCreateAPIView):
                                             print(result)
                                             # convert the marks to be out of 25
                                             if float(result.marks_obtained > -1000.0):
+                                                comments += '%s/%s' % (str(result.marks_obtained),
+                                                                         str(round(test.max_marks, 0)))
+                                                print(comments)
                                                 marks = (25.0*float(result.marks_obtained))/(float(test.max_marks))
                                                 ut_total += marks
                                         except Exception as e:
@@ -1735,6 +1740,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                         print('exception 04032018-C from exam views.py %s %s' % (e.message, type(e)))
                                         col += 1
                                 result_sheet.write_number(row, col, ut_total/4.0, cell_normal)
+                                result_sheet.write_comment(row, col, comments, {'height': 100})
                                 col += 1
 
                                 # get the half yearly marks & final exam marks
@@ -1772,7 +1778,6 @@ class ResultSheet(generics.ListCreateAPIView):
                                         formula = '=SUM(%s)' % cell_range
                                         result_sheet.write_formula(row, col, formula, cell_normal)
                                         col += 1
-
                                     except Exception as e:
                                         print('no test could be found corresponding to %s class %s subject %s' %
                                               (ut, the_class.standard, sub))
