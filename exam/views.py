@@ -1787,7 +1787,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                 # fill in cumulative results
                                 # get the UT cell
                                 cell = xl_rowcol_to_cell(row, col-7)
-                                formula = '=%s/4.0' % cell
+                                formula = '=%s' % cell
                                 result_sheet.write_formula(row, col, formula, cell_normal)
                                 col += 1
 
