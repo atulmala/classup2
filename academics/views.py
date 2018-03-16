@@ -570,7 +570,7 @@ def create_test1(request, school_id, the_class, section, subject,
                                             except Exception as e:
                                                 print('looks only one cycle test has been conducted for %s in '
                                                       'class %s-%s between Term1 & Terms 2'
-                                                      % sub.subject_name, the_class, s)
+                                                      % (sub.subject_name, the_class, s))
                                                 print('exception 11022018-A from academics views.py %s %s' %
                                                       (e.message, type(e)))
                                                 print('hence, taking the single unit/cycle test marks as PA marks')
