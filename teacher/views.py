@@ -43,6 +43,7 @@ class TeacherMessageList (generics.ListAPIView):
 
         return q
 
+
 class CircularList(generics.ListAPIView):
     serializer_class = SMSDetailSerializer
 

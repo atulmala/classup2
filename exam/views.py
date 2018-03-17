@@ -463,9 +463,10 @@ def prepare_results(request, school_id, the_class, section):
         report_card_top = session_top - 10
         stu_detail_top = report_card_top - 20
         if the_class not in higher_classes:
-            table1_top = stu_detail_top - 245
+            table1_top = stu_detail_top - 265
         else:
-            table1_top = stu_detail_top - 210
+            table1_top = stu_detail_top - 230
+        print('table1_top at the time of declaration = %i' % table1_top)
         tab = 80
 
         # get logos
@@ -814,8 +815,8 @@ def prepare_results(request, school_id, the_class, section):
                             sub = third_lang.third_lang
                             print ('third language for %s is %s' % (s.fist_name, sub.subject_name))
                         except Exception as e:
-                            print ('failed to determine third lang for %s. Exception 061117-B from exam views.py %s %s' %
-                                   (s.fist_name, e.message, type(e)))
+                            print ('failed to determine third lang for %s. Exception 061117-B from exam views.py %s %s'
+                                   % (s.fist_name, e.message, type(e)))
                     sub_row = [sub.subject_name]
                     terms = ['Term1', 'Term2']
                     try:
@@ -834,26 +835,28 @@ def prepare_results(request, school_id, the_class, section):
                                                              date_conducted__lte=end_date)
                                 tr = TestResults.objects.get(class_test=test, student=s)
 
-                                ttr = TermTestResult.objects.get(test_result=tr)
-
-                                pa = ttr.periodic_test_marks
+                                if sub.subject_name == 'GK':
+                                    grade = tr.grade
+                                    pa = 'NA'
+                                    sub_enrich = 'NA'
+                                    main = 'NA'
+                                    notebook = 'NA'
+                                    total = 'NA'
+                                else:
+                                    ttr = TermTestResult.objects.get(test_result=tr)
+                                    pa = ttr.periodic_test_marks
+                                    notebook = ttr.note_book_marks
+                                    sub_enrich = ttr.sub_enrich_marks
+                                    main = tr.marks_obtained
+                                    total = float(main) + float(pa) + float(notebook) + float(sub_enrich)
+                                    grade = get_grade(total)
+                                    print('grade obtained by %s in %s exam of %s: %s' %
+                                          (s.fist_name, term, sub.subject_name, grade))
                                 sub_row.append(pa)
-
-                                notebook = ttr.note_book_marks
                                 sub_row.append(notebook)
-
-                                sub_enrich = ttr.sub_enrich_marks
                                 sub_row.append(sub_enrich)
-
-                                main = tr.marks_obtained
                                 sub_row.append(main)
-
-                                total = float(main) + float(pa) + float(notebook) + float(sub_enrich)
                                 sub_row.append(total)
-
-                                grade = get_grade(total)
-                                print('grade obtained by %s in %s exam of %s: %s' %
-                                      (s.fist_name, term, sub.subject_name, grade))
                                 sub_row.append(grade)
 
                                 #sub_row = [sub.subject_name, pa, notebook, sub_enrich, main, total, grade]
@@ -870,6 +873,7 @@ def prepare_results(request, school_id, the_class, section):
                     table1.setStyle(TableStyle(style1))
                     table1.wrapOn(c, left_margin, 0)
                     table1.drawOn(c, left_margin, table1_top)
+                    print('table1_top = %i' % table1_top)
                     print('table1 drawn for %s %s' % (s.fist_name, s.last_name))
                 except Exception as e:
                     print('Error while preparing results')
