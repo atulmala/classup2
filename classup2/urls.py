@@ -31,6 +31,7 @@ urlpatterns = patterns(' ',
     url(r'^exam/', include('exam.urls')),
     url(r'^time_table/', include('time_table.urls')),
     url(r'^activity_groups/', include ('activity_groups.urls')),
+    url(r'erp/', include('erp.urls')),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 )
 
