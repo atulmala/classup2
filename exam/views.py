@@ -26,7 +26,7 @@ from setup.forms import ExcelFileUploadForm
 from setup.models import School
 from setup.views import validate_excel_extension
 
-from student.models import Student, DOB
+from student.models import Student, DOB, AdditionalDetails
 from academics.models import Class, Section, Subject, ThirdLang, ClassTest, \
     Exam, TermTestResult, TestResults, CoScholastics, ClassTeacher
 
@@ -606,7 +606,17 @@ def prepare_results(request, school_id, the_class, section):
             c.drawString(tab, stu_detail_top - 15, s.fist_name + ' ' + s.last_name)
 
             c.drawString(left_margin, stu_detail_top - 30, father_name_lbl)
-            c.drawString(tab, stu_detail_top - 30, s.parent.parent_name)
+
+            # 19/03/2018 We need to show both mother & father's name
+            try:
+                additional_details = AdditionalDetails.objects.get(student=s)
+                mother_name = additional_details.mother_name
+            except Exception as e:
+                print('exception 19032018-A from exam views.py %s %s' % (e.message, type(e)))
+                print('failed to retrieve mother name for %s %s' % (s.fist_name, s.last_name))
+                mother_name = ' '
+            parent_name = '%s / Mr. %s' % (mother_name, s.parent.parent_name)
+            c.drawString(tab, stu_detail_top - 30, parent_name)
 
             c.drawString(left_margin, stu_detail_top - 45, dob_lbl)
             try:
