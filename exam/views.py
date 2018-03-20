@@ -465,7 +465,7 @@ def prepare_results(request, school_id, the_class, section):
         if the_class not in higher_classes:
             table1_top = stu_detail_top - 265
         else:
-            table1_top = stu_detail_top - 230
+            table1_top = stu_detail_top - 200
         print('table1_top at the time of declaration = %i' % table1_top)
         tab = 80
 
@@ -506,6 +506,15 @@ def prepare_results(request, school_id, the_class, section):
                       ('FONT', (0, 2), (14, 2), 'Times-Bold'),
                       ('FONT', (0, 2), (14, 1), 'Times-Bold')
                       ]
+            style2 = style3 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+                               ('BOX', (0, 0), (-1, -1), 1, colors.black),
+                               ('TOPPADDING', (0, 0), (-1, -1), 1),
+                               ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+                               ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                               ('ALIGN', (0, 0), (1, 0), 'CENTER'),
+                               ('SPAN', (0, 0), (1, 0)),
+                               ('FONTSIZE', (0, 0), (-1, -1), 8),
+                               ('FONT', (0, 0), (1, 0), 'Times-Bold')]
         if the_class in middle_classes:
             print('result being prepared for %s, a middle class. Hence both Term1 & Term2 results to be shown.' %
                   the_class)
@@ -772,7 +781,6 @@ def prepare_results(request, school_id, the_class, section):
                         except Exception as e:
                             print('failed to enter Cumulative Result. This may be because certain marks not entered')
                             print('exception 01032018-A from exam views.py %s %s' % (e.message, type(e)))
-
                         data1.append(sub_row)
                     table1 = Table(data1)
                     table1.setStyle(TableStyle(style1))
@@ -784,10 +792,73 @@ def prepare_results(request, school_id, the_class, section):
                     c.drawString(left_margin, table1_top - 20, theory_prac_split)
                     theory_prac_split = 'English, Mathematics - Max Marks: Theory-100, Prac: Not Applicable (NA)'
                     c.drawString(left_margin, table1_top-30, theory_prac_split)
-
                 except Exception as e:
                     print('Error while preparing results for class: %s' % (the_class))
                     print ('Exception 25022018-A from exam views.py %s %s' % (e.message, type(e)))
+
+                # get the CoScholastic Grades for this student
+                print('getting the Coscholastic grades for %s %s' % (s.fist_name, s.last_name))
+                table2_top = table1_top - 70
+                try:
+                    data2 = ['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale]', '']
+                    work_array = []
+                    art_array = []
+                    health_array = []
+                    dscpln_array = []
+
+                    try:
+                        co_scl = CoScholastics.objects.get(term='Term2', student=s)
+                        work_array.append('Work Education (or Pre-vocational Education)')
+                        work_ed = co_scl.work_education
+                        work_array.append(work_ed)
+
+                        art_array.append('Art Education')
+                        art_ed = co_scl.art_education
+                        art_array.append(art_ed)
+
+                        health_array.append('Health & Physical Education')
+                        health_ed = co_scl.health_education
+                        health_array.append(health_ed)
+
+                        dscpln_array.append('Discipline: Term-1[On a 3-point(A-C) grading scale]')
+                        dscpln = co_scl.discipline
+                        dscpln_array.append(dscpln)
+                        remark = co_scl.teacher_remarks
+                    except Exception as e:
+                        print('failed to retrieve %s Co-scholastic grades for %s %s for ' %
+                                    ('Term2', s.fist_name, s.last_name))
+                        print('exception 20032017-X from exam views.py %s %s' % (e.message, type(e)))
+                except Exception as e:
+                    print('failed to retrieve Co-scholastic grades for %s %s for ' % (s.fist_name, s.last_name))
+                    print('exception 07022018-B from exam views.py %s %s' % (e.message, type(e)))
+
+                try:
+                    data2.append(work_array)
+                    data2.append(art_array)
+                    data2.append(health_array)
+                    table2 = Table(data2)
+                    table2.setStyle(TableStyle(style2))
+                    table2.wrapOn(c, left_margin, 0)
+                    table2.drawOn(c, left_margin, table2_top)
+                    print('table2 drawn for %s %s' % (s.fist_name, s.last_name))
+                except Exception as e:
+                    print('failed to draw table2 for %s %s' % (s.fist_name, s.last_name))
+                    print('exception 20032018-Y from exam views.py %s %s' % (e.message, type(e)))
+
+                print('preparing table3 for %s %s' % (s.fist_name, s.last_name))
+                table3_top = table2_top - 40
+                try:
+                    data3 = ['Grade', '']
+
+                    data3.append(dscpln_array)
+                    table3 = Table(data3)
+                    table3.setStyle(TableStyle(style3))
+                    table3.wrapOn(c, 0, 0)
+                    table3.drawOn(c, left_margin, table3_top)
+                    print('drawn table3 for %s %s' % (s.fist_name, s.last_name))
+                except Exception as e:
+                    print('failed to draw table3 for %s %s' % (s.fist_name, s.last_name))
+                    print('exception 20032018-Z from exam views.py %s %s' % (e.message, type(e)))
             else:
                 # 02/11/2017 - get the scheme for this class. The scheme will provide the subjects of this class and
                 # the sequence. Subjects in the Marksheet would appear in the order of sequence
@@ -877,6 +948,8 @@ def prepare_results(request, school_id, the_class, section):
                         data1.append(sub_row)
                         print('sub_row = ')
                         print(sub_row)
+                        print('data1 =')
+                        print(data1)
                     except Exception as e:
                         print('Error while preparing results for %s in exam %s' % (sub, term))
                         print ('Exception 21102017-A from exam views.py %s %s' % (e.message, type(e)))
