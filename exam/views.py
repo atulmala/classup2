@@ -941,9 +941,6 @@ def prepare_results(request, school_id, the_class, section):
                                 sub_row.append(main)
                                 sub_row.append(total)
                                 sub_row.append(grade)
-
-                                #sub_row = [sub.subject_name, pa, notebook, sub_enrich, main, total, grade]
-
                             except Exception as e:
                                 print('%s test for %s is not yet scheduled' % (term, sub))
                                 print('exception 12032018-A from exam views.py %s %s' % (e.message, type(e)))
@@ -957,6 +954,7 @@ def prepare_results(request, school_id, the_class, section):
                         print ('Exception 21102017-A from exam views.py %s %s' % (e.message, type(e)))
                 try:
                     table1 = Table(data1)
+                    print('table1 object created')
                     table1.setStyle(TableStyle(style1))
                     table1.wrapOn(c, left_margin, 0)
                     table1.drawOn(c, left_margin, table1_top)
