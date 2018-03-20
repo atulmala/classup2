@@ -562,7 +562,7 @@ def prepare_results(request, school_id, the_class, section):
                                 ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
                                 ('VALIGN', (0, 0), (-1, -1), 'TOP'),
                                 ('ALIGN', (0, 0), (1, 0), 'RIGHT'),
-
+                                ('SPAN', (0, 0), (1, 0)),
                                 ('FONTSIZE', (0, 0), (-1, -1), 8),
                                 ('FONT', (0, 0), (1, 0), 'Times-Bold')]
 
@@ -972,7 +972,7 @@ def prepare_results(request, school_id, the_class, section):
                         data2 = [['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale]', '',
                                 'Co-Scholastic Areas: Term-2[On a 3-point(A-C) grading scale]', '']]
                     if the_class in ninth_tenth:
-                        data2 = ['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale]', '']
+                        data2 = [['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale]', '']]
                     work_array = []
                     art_array = []
                     health_array = []
@@ -1029,7 +1029,7 @@ def prepare_results(request, school_id, the_class, section):
                     if the_class in middle_classes:
                         data3 = [['Grade', '', 'Grade', '']]
                     if the_class in ninth_tenth:
-                        data3 = ['Grade', '']
+                        data3 = [['Grade', '']]
 
                     data3.append(dscpln_array)
                     table3 = Table(data3)
