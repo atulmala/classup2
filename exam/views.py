@@ -800,7 +800,7 @@ def prepare_results(request, school_id, the_class, section):
 
                 # get the CoScholastic Grades for this student
                 print('getting the Coscholastic grades for %s %s' % (s.fist_name, s.last_name))
-                table2_top = table1_top - 70
+                table2_top = table1_top - 100
                 try:
                     data2 = [['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale]', '']]
                     work_array = []
@@ -1083,7 +1083,7 @@ def prepare_results(request, school_id, the_class, section):
 
             # 24/02/2018 - we are re-defining certain variables because in case of higher classes they may have been
             # left undefined till this point
-            table2_top = table1_top - 100
+            table2_top = table1_top - 70
             table3_top = table2_top - 40
             c.line(left_margin, table3_top - 60, 6.75 * inch, table3_top - 60)
             try:
