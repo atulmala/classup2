@@ -1168,7 +1168,7 @@ class ResultSheet(generics.ListCreateAPIView):
                 })
 
                 school_name = school.school_name + ' ' + school.school_address
-                title_text = 'CONSILIDATED RESULT SHEET (2017-2018) FOR CLASS %s-%s' % \
+                title_text = 'CONSOLIDATED RESULT SHEET (2017-2018) FOR CLASS %s-%s' % \
                              (the_class.standard, section.section)
                 print (title_text)
                 # get the name of the class teacher
@@ -1449,7 +1449,9 @@ class ResultSheet(generics.ListCreateAPIView):
                     col = col + 1
                     result_sheet.merge_range(row, col, row+3, col, 'Health/Phy Ed.', vertical_text)
                     col = col + 1
-                    result_sheet.set_column('AE:AE', 12)
+                    result_sheet.merge_range(row, col, row + 3, col, 'Discipline', vertical_text)
+                    col = col + 1
+                    result_sheet.set_column('AF:AF', 12)
                     result_sheet.merge_range(row, col, row+3, col, 'Result/Remark', cell_center)
                     row = row + 1
 
