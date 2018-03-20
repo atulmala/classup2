@@ -782,6 +782,8 @@ def prepare_results(request, school_id, the_class, section):
                             print('failed to enter Cumulative Result. This may be because certain marks not entered')
                             print('exception 01032018-A from exam views.py %s %s' % (e.message, type(e)))
                         data1.append(sub_row)
+                        print('data1 = ')
+                        print(data1)
                     table1 = Table(data1)
                     table1.setStyle(TableStyle(style1))
                     table1.wrapOn(c, left_margin, 0)
