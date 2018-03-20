@@ -559,7 +559,9 @@ def prepare_results(request, school_id, the_class, section):
             style2 = style3 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
                                 ('BOX', (0, 0), (-1, -1), 1, colors.black),
                                 ('TOPPADDING', (0, 0), (-1, -1), 1),
-                                ('BOTTOMPADDING', (0, 0), (-1, -1), 1)]
+                                ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+                                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                                ('ALIGN', (0, 0), (1, 0), 'RIGHT')]
 
         style4 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black), ('TOPPADDING', (0, 0), (-1, -1), 1),
                       ('BOTTOMPADDING', (0, 0), (-1, -1), 1), ('FONT', (0, 0), (1, 0), 'Times-Bold'),
