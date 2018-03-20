@@ -1432,7 +1432,7 @@ class ResultSheet(generics.ListCreateAPIView):
                             result_sheet.write_string(row, col, 'Annual\n(80)', cell_center)
                         if col%3 == 1:
                             result_sheet.write_string(row, col, 'Total\n(100)', cell_center)
-                    result_sheet.set_column('AA:AD', 3)
+                    result_sheet.set_column('AA:AE', 3)
                     col = col_range
                     result_sheet.write_string(row, col, 'Marks', cell_center)
                     col = col + 1
@@ -1551,7 +1551,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                   (index, index, index, index, index, index, index)
                         print ('formula for grade = %s' % formula)
                         result_sheet.write_formula(row, marks_col, formula, cell_grade)
-                        marks_col = marks_col + 1
+                        marks_col = marks_col + 2
 
                         # co-scholastic grades. We will show grades for both terms separated by /, eg B/A.
                         # As this is IX class there will be term2
