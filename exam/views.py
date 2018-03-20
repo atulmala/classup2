@@ -553,7 +553,7 @@ def prepare_results(request, school_id, the_class, section):
                         ('ALIGN', (1, 0), (6, 0), 'CENTER'),
                         ('SPAN', (1, 0), (6, 0)),
                         ('FONTSIZE', (0, 0), (-1, -1), 7),
-                        ('FONT', (0, 0), (12, 0), 'Times-Bold'),
+                        ('FONT', (0, 0), (6, 0), 'Times-Bold'),
                         ('FONT', (0, 1), (0, 1), 'Times-Bold')]
 
             style2 = style3 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
