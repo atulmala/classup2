@@ -561,8 +561,8 @@ def prepare_results(request, school_id, the_class, section):
                                 ('TOPPADDING', (0, 0), (-1, -1), 1),
                                 ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
                                 ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                                ('ALIGN', (0, 0), (1, 0), 'CENTER'),
-
+                                ('ALIGN', (0, 0), (1, 0), 'RIGHT'),
+                                ('SPAN', (0, 0), (1, 0)),
                                 ('FONTSIZE', (0, 0), (-1, -1), 8),
                                 ('FONT', (0, 0), (1, 0), 'Times-Bold')]
 
