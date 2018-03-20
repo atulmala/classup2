@@ -802,7 +802,7 @@ def prepare_results(request, school_id, the_class, section):
                 print('getting the Coscholastic grades for %s %s' % (s.fist_name, s.last_name))
                 table2_top = table1_top - 70
                 try:
-                    data2 = ['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale]', '']
+                    data2 = [['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale]', '']]
                     work_array = []
                     art_array = []
                     health_array = []
@@ -850,7 +850,7 @@ def prepare_results(request, school_id, the_class, section):
                 print('preparing table3 for %s %s' % (s.fist_name, s.last_name))
                 table3_top = table2_top - 40
                 try:
-                    data3 = ['Grade', '']
+                    data3 = [['Grade', '']]
 
                     data3.append(dscpln_array)
                     table3 = Table(data3)
