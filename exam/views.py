@@ -1087,7 +1087,7 @@ def prepare_results(request, school_id, the_class, section):
             if the_class not in higher_classes:
                 table3_top = table2_top - 40
             else:
-                table3_top = table1_top - 70
+                table3_top = table1_top - 100
             c.line(left_margin, table3_top - 60, 6.75 * inch, table3_top - 60)
             try:
                 c.drawString(left_margin, table3_top - 25, 'Promoted to Class: ')
