@@ -532,17 +532,17 @@ def prepare_results(request, school_id, the_class, section):
                       ('FONT', (0, 1), (0, 1), 'Times-Bold')]
 
             style2 = style3 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-                                            ('BOX', (0, 0), (-1, -1), 1, colors.black),
-                                            ('TOPPADDING', (0, 0), (-1, -1), 1),
-                                            ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
-                                            ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                                            ('ALIGN', (0, 0), (1, 0), 'RIGHT'),
-                                            ('ALIGN', (2, 0), (3, 0), 'RIGHT'),
-                                            ('SPAN', (0, 0), (1, 0)),
-                                            ('SPAN', (2, 0), (3, 0)),
-                                            ('FONTSIZE', (0, 0), (-1, -1), 8),
-                                            ('FONT', (0, 0), (1, 0), 'Times-Bold'),
-                                            ('FONT', (2, 0), (3, 0), 'Times-Bold')]
+                                ('BOX', (0, 0), (-1, -1), 1, colors.black),
+                                ('TOPPADDING', (0, 0), (-1, -1), 1),
+                                ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+                                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                                ('ALIGN', (0, 0), (1, 0), 'RIGHT'),
+                                ('ALIGN', (2, 0), (3, 0), 'RIGHT'),
+                                ('SPAN', (0, 0), (1, 0)),
+                                ('SPAN', (2, 0), (3, 0)),
+                                ('FONTSIZE', (0, 0), (-1, -1), 8),
+                                ('FONT', (0, 0), (1, 0), 'Times-Bold'),
+                                ('FONT', (2, 0), (3, 0), 'Times-Bold')]
         if the_class in ninth_tenth:
             print('result being prepared for class %s, hence only final Term Results will be prepared' % the_class)
             style1 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
@@ -562,7 +562,7 @@ def prepare_results(request, school_id, the_class, section):
                                 ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
                                 ('VALIGN', (0, 0), (-1, -1), 'TOP'),
                                 ('ALIGN', (0, 0), (1, 0), 'CENTER'),
-                                ('SPAN', (0, 0), (1, 0)),
+
                                 ('FONTSIZE', (0, 0), (-1, -1), 8),
                                 ('FONT', (0, 0), (1, 0), 'Times-Bold')]
 
