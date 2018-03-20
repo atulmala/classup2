@@ -1012,6 +1012,7 @@ def prepare_results(request, school_id, the_class, section):
                     data2.append(art_array)
                     data2.append(health_array)
                     table2 = Table(data2)
+                    print('table2 object created')
                     table2.setStyle(TableStyle(style2))
                     table2.wrapOn(c, left_margin, 0)
                     table2.drawOn(c, left_margin, table2_top)
