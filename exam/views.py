@@ -1083,7 +1083,7 @@ def prepare_results(request, school_id, the_class, section):
 
             # 24/02/2018 - we are re-defining certain variables because in case of higher classes they may have been
             # left undefined till this point
-            table2_top = table1_top - 70
+            table2_top = table1_top - 100
             table3_top = table2_top - 40
             c.line(left_margin, table3_top - 60, 6.75 * inch, table3_top - 60)
             try:
