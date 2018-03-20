@@ -889,7 +889,7 @@ def prepare_results(request, school_id, the_class, section):
                     print('table1 drawn for %s %s' % (s.fist_name, s.last_name))
                 except Exception as e:
                     print('Error while preparing results')
-                    print ('Exception 21102017-H from exam views.py %s %s' % (e.message, type(e)))
+                    print('Exception 21102017-H from exam views.py %s %s' % (e.message, type(e)))
 
                 # get the CoScholastic Grades for this student
                 print('getting the Coscholastic grades for %s %s' % (s.fist_name, s.last_name))
@@ -1639,6 +1639,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                 result_sheet.write_string(row + 2, col1, 'Pr', cell_center)
                                 col1 += 1
                                 result_sheet.write_string(row + 2, col1, 'Total', cell_center)
+                                result_sheet.set_column(col1, col1, options={'hidden': True})
                                 col1 += 1
 
                                 # Final Exam
@@ -1648,6 +1649,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                 result_sheet.write_string(row + 2, col1, 'Pr', cell_center)
                                 col1 += 1
                                 result_sheet.write_string(row + 2, col1, 'Total', cell_center)
+                                result_sheet.set_column(col1, col1, options={'hidden': True})
                                 col1 += 1
 
                                 # Cumulative
