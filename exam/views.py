@@ -1433,7 +1433,7 @@ class ResultSheet(generics.ListCreateAPIView):
                         cell_range = xl_range(row, 15, row, 22)
                         formula = '=SUM(%s)' % cell_range
                         result_sheet.write_formula(row, 23, formula, cell_normal)
-                        formula = '=%s/700.00' % cell_range
+                        formula = '=SUM(%s)/700.00' % cell_range
                         result_sheet.write_formula(row, 24, formula, perc_format)
                         index = 'Y%s*100' % str(row + 1)
                         print ('index = %s' % index)
