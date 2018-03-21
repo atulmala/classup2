@@ -1432,9 +1432,9 @@ class ResultSheet(generics.ListCreateAPIView):
                         # formula for term II
                         cell_range = xl_range(row, 15, row, 22)
                         formula = '=SUM(%s)' % cell_range
-                        # result_sheet.write_formula(row, 23, formula, cell_normal)
+                        result_sheet.write_formula(row, 23, formula, cell_normal)
                         formula = '=%s/700.00' % cell_range
-                        # result_sheet.write_formula(row, 24, formula, perc_format)
+                        result_sheet.write_formula(row, 24, formula, perc_format)
                         index = 'Y%s*100' % str(row + 1)
                         print ('index = %s' % index)
                         formula = '=IF(%s > 90, "A1", IF(%s > 80, "A2", IF(%s > 70, "B1", IF(%s > 60, "B2", ' \
@@ -1445,9 +1445,9 @@ class ResultSheet(generics.ListCreateAPIView):
 
                         # formula for overall
                         formula = '=sum(M%s, X%s)' % (str(row+1), str(row+1))
-                        # result_sheet.write_formula (row, 26, formula, cell_normal)
+                        result_sheet.write_formula (row, 26, formula, cell_normal)
                         formula = '=AA%s/1400.00' % str(row+1)
-                        # result_sheet.write_formula (row, 27, formula, perc_format)
+                        result_sheet.write_formula (row, 27, formula, perc_format)
                         index = 'AB%s*100' % str(row + 1)
                         print ('index = %s' % index)
                         formula = '=IF(%s > 90, "A1", IF(%s > 80, "A2", IF(%s > 70, "B1", IF(%s > 60, "B2", ' \
