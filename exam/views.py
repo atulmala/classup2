@@ -1597,7 +1597,7 @@ class ResultSheet(generics.ListCreateAPIView):
                             print('now retriving marks secured by %s in %s' % (student_name, subject.subject_name))
                             try:
                                 term_test = ClassTest.objects.filter(the_class=the_class, section=section,
-                                                                  subject=subject, test_type='term').first()
+                                                                  subject=subject, test_type='term').last()
                                 print('retrieved term test for %s' % subject.subject_name)
                                 print(term_test)
                                 # get the test results for this term test
