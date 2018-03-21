@@ -1441,7 +1441,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                   'IF(%s > 50, "C1", IF(%s > 40, "C2", IF(%s > 32, "D", "E")))))))' % \
                                   (index, index, index, index, index, index, index)
                         print ('formula for grade = %s' % formula)
-                        # result_sheet.write_formula(row, 25, formula, cell_grade)
+                        result_sheet.write_formula(row, 25, formula, cell_grade)
 
                         # formula for overall
                         formula = '=sum(M%s, X%s)' % (str(row+1), str(row+1))
@@ -1454,7 +1454,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                   'IF(%s > 50, "C1", IF(%s > 40, "C2", IF(%s > 32, "D", "E")))))))' % \
                                   (index, index, index, index, index, index, index)
                         print ('formula for grade = %s' % formula)
-                        # result_sheet.write_formula(row, 28, formula, cell_grade)
+                        result_sheet.write_formula(row, 28, formula, cell_grade)
 
                         # co-scholastic grades. We will show grades for both terms separated by /, eg B/A
                         try:
