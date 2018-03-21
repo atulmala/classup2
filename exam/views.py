@@ -466,6 +466,8 @@ def prepare_results(request, school_id, the_class, section):
             table1_top = stu_detail_top - 265
         else:
             table1_top = stu_detail_top - 200
+        if the_class in ninth_tenth:
+            table1_top = stu_detail_top - 220
         print('table1_top at the time of declaration = %i' % table1_top)
         tab = 80
 
@@ -1087,7 +1089,7 @@ def prepare_results(request, school_id, the_class, section):
             if the_class not in higher_classes:
                 table3_top = table2_top - 40
             else:
-                table3_top = table1_top - 100
+                table3_top = table2_top - 70
             c.line(left_margin, table3_top - 60, 6.75 * inch, table3_top - 60)
             try:
                 c.drawString(left_margin, table3_top - 25, 'Promoted to Class: ')
