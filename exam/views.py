@@ -1706,7 +1706,7 @@ class ResultSheet(generics.ListCreateAPIView):
                             result_sheet.set_column('F:BH', 4.5)
                             for sub in chosen_stream:
                                 print('now creating heading for subject: %s' % sub)
-                                result_sheet.merge_range(row, col, row, col + 10, sub, cell_center)
+                                result_sheet.merge_range(row, col, row, col + 10, sub, vertical_text)
                                 col1 = col
 
                                 # UT
