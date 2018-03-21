@@ -1395,7 +1395,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                         if sub_marks < 0:
                                             print ('subject %s is not opted by %s' % (s, student_name))
                                             result_sheet.write_string (row, marks_col, 'NA', cell_grade)
-                                            marks_col = marks_col + 1
+                                            marks_col = marks_col + 11
                                             continue
                                         result_sheet.write_number (row, marks_col, sub_marks, cell_normal)
                                         print ('successfully retrieved %s marks for %s and sheet updated' %
