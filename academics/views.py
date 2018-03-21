@@ -544,10 +544,16 @@ def create_test1(request, school_id, the_class, section, subject,
                                             print('previous first term test was conducted on ')
                                             print(term1_date)
 
-                                            # get all the unit tests conducted between term1 & term2
-                                            unit_tests = ClassTest.objects.filter(the_class=c, section=s, subject=sub,
-                                                                                  date_conducted__gt=term1_date,
-                                                                                  date_conducted__lt=the_date)
+                                            # get all the unit tests conducted between term1 & term2 (for V-VIII)
+                                            # for IX it will be all the unit tests created till now
+                                            if the_class in middle_classes:
+                                                unit_tests = ClassTest.objects.filter(the_class=c, section=s,
+                                                                                      subject=sub,
+                                                                                      date_conducted__gt=term1_date,
+                                                                                      date_conducted__lt=the_date)
+                                            if the_class in ninth_tenth:
+                                                unit_tests = ClassTest.objects.filter(the_class=c, section=s,
+                                                                                      subject=sub)
                                             print('%i unit tests have been conducted for in class %s-%s for %s' %
                                                   (unit_tests.count(), the_class, s, sub.subject_name))
                                             print(unit_tests)
