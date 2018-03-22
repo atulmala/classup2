@@ -1415,10 +1415,12 @@ class ResultSheet(generics.ListCreateAPIView):
                             # 22/03/2018 we show GK Grades as well
                             try:
                                 gk = Subject.objects.get(school=school, subject_name='GK')
-                                gk_test = ClassTest.objects.get(the_class=the_class, section=section,
+                                gk_tests = ClassTest.filter.get(the_class=the_class, section=section,
                                                                       subject=gk)
-                                gk_result = TestResults.objects.get(class_test=gk_test, student=student)
-                                gk_grade = gk_result.grade
+                                gk_grade1 = TestResults.objects.get(class_test=gk_tests.first(), student=student)
+                                gk_grade = gk_grade1
+                                gk_grade2 = TestResults.objects.get(class_test=gk_tests.last(), student=student)
+                                gk_grade = '%s/%s' % (gk_grade1, gk_grade2)
                                 print('GK grade secured by %s: %s' % (student_name, gk_grade))
                             except Exception as e:
                                 print('exception 22032018-A from exam views.py %s %s' % (e.message, type(e)))
