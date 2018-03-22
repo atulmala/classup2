@@ -1937,6 +1937,23 @@ class ResultSheet(generics.ListCreateAPIView):
                                 formula = '=SUM(%s)' % cell_range
                                 result_sheet.write_formula(row, col, formula, cell_normal)
                                 col +=1
+
+                                # write the total, %, & grade of all the subjects
+                                formula = '=SUM(%s, %s, %s, %s, %s)' % ('P', 'AA', 'AL', 'AW', 'BH')
+                                result_sheet.write_formula(row, col, formula, cell_normal)
+                                col += 1
+                                formula = '=SUM(%s)/500.00' % 'BH'
+                                result_sheet.write_formula(row, col, formula, perc_format)
+                                col += 1
+                                index = 'BH%s*100'
+                                print ('index = %s' % index)
+                                formula = '=IF(%s > 90, "A1", IF(%s > 80, "A2", IF(%s > 70, "B1", IF(%s > 60, "B2", ' \
+                                          'IF(%s > 50, "C1", IF(%s > 40, "C2", IF(%s > 32, "D", "E")))))))' % \
+                                          (index, index, index, index, index, index, index)
+                                print ('formula for grade = %s' % formula)
+                                result_sheet.write_formula(row, col, formula, cell_grade)
+
+
                             # reset the chosen_stream to standard subjects
                             chosen_stream.pop()
                             row += 1
