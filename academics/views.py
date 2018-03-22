@@ -669,7 +669,7 @@ def create_test1(request, school_id, the_class, section, subject,
 
                                                 # get all the unit tests conducted till now
                                                 unit_tests = ClassTest.objects.filter(the_class=c, section=s,
-                                                                                      subject=sub,)
+                                                                                      subject=sub)
                                                 print('%i unit tests have been conducted for in class %s-%s for %s' %
                                                       (unit_tests.count(), the_class, s, sub))
                                                 print(unit_tests)
@@ -739,7 +739,7 @@ def create_test1(request, school_id, the_class, section, subject,
 
                                             # get all the unit tests conducted till now
                                             unit_tests = ClassTest.objects.filter(the_class=c, section=s,
-                                                                                  subject=sub, )
+                                                                                  subject=sub)
                                             print('%i unit tests have been conducted for in class %s-%s for %s' %
                                                   (unit_tests.count(), the_class, s, sub))
                                             print(unit_tests)

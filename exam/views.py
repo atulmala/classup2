@@ -1764,6 +1764,14 @@ class ResultSheet(generics.ListCreateAPIView):
 
                                 col = col + 11
                             break
+                        result_sheet.merge_range(row, col1, row+2, col1)
+                        result_sheet.write_string(row, col1, 'Grand\nTotal', cell_center)
+                        col1 += 1
+                        result_sheet.merge_range(row, col1, row + 2, col1)
+                        result_sheet.write_string(row, col1, '%', cell_center)
+                        col1 += 1
+                        result_sheet.merge_range(row, col1, row + 2, col1)
+                        result_sheet.write_string(row, col1, 'Grade', cell_center)
                         row += 3
 
                         # delete the "Elective" entry from the sub_dict. We will now substitute it with the real
@@ -1814,6 +1822,7 @@ class ResultSheet(generics.ListCreateAPIView):
                             student_name = student.fist_name + ' ' + student.last_name
                             print('starting to retrieve the marks for %s of class %s-%s' %
                                   (student_name, the_class.standard, section.section))
+
                             for sub in chosen_stream:
                                 print('retrieving UT marks for %s for %s' % (student_name, sub))
                                 try:
