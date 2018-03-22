@@ -917,7 +917,7 @@ def prepare_results(request, school_id, the_class, section):
                             try:
                                 test = ClassTest.objects.get(subject=sub, the_class=standard, section=sec,
                                                              date_conducted__gte=start_date,
-                                                             date_conducted__lte=end_date)
+                                                             date_conducted__lte=end_date, test_type='term')
                                 tr = TestResults.objects.get(class_test=test, student=s)
 
                                 if sub.subject_name == 'GK':
