@@ -1764,14 +1764,7 @@ class ResultSheet(generics.ListCreateAPIView):
 
                                 col = col + 11
                             break
-                        result_sheet.merge_range(row, col1, row+2, col1, 'Grand\nTotal', cell_center)
-                        #result_sheet.write_string(row, col1, 'Grand\nTotal', cell_center)
-                        col1 += 1
-                        result_sheet.merge_range(row, col1, row + 2, col1, '%', cell_center)
-                        #result_sheet.write_string(row, col1, '%', cell_center)
-                        col1 += 1
-                        result_sheet.merge_range(row, col1, row + 2, col1, 'Grade', cell_center)
-                        #result_sheet.write_string(row, col1, 'Grade', cell_center)
+
                         row += 3
 
                         # delete the "Elective" entry from the sub_dict. We will now substitute it with the real
@@ -1822,7 +1815,6 @@ class ResultSheet(generics.ListCreateAPIView):
                             student_name = student.fist_name + ' ' + student.last_name
                             print('starting to retrieve the marks for %s of class %s-%s' %
                                   (student_name, the_class.standard, section.section))
-
                             for sub in chosen_stream:
                                 print('retrieving UT marks for %s for %s' % (student_name, sub))
                                 try:
@@ -1937,23 +1929,6 @@ class ResultSheet(generics.ListCreateAPIView):
                                 formula = '=SUM(%s)' % cell_range
                                 result_sheet.write_formula(row, col, formula, cell_normal)
                                 col +=1
-
-                                # write the total, %, & grade of all the subjects
-                                formula = '=SUM(%s, %s, %s, %s, %s)' % ('P', 'AA', 'AL', 'AW', 'BH')
-                                result_sheet.write_formula(row, col, formula, cell_normal)
-                                col += 1
-                                formula = '=SUM(%s)/500.00' % 'BH'
-                                result_sheet.write_formula(row, col, formula, perc_format)
-                                col += 1
-                                index = 'BH%s*100'
-                                print ('index = %s' % index)
-                                formula = '=IF(%s > 90, "A1", IF(%s > 80, "A2", IF(%s > 70, "B1", IF(%s > 60, "B2", ' \
-                                          'IF(%s > 50, "C1", IF(%s > 40, "C2", IF(%s > 32, "D", "E")))))))' % \
-                                          (index, index, index, index, index, index, index)
-                                print ('formula for grade = %s' % formula)
-                                result_sheet.write_formula(row, col, formula, cell_grade)
-
-
                             # reset the chosen_stream to standard subjects
                             chosen_stream.pop()
                             row += 1
