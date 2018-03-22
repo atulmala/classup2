@@ -1685,7 +1685,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                                           active_status=True).order_by('fist_name')
                         print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
                         print (students)
-                        last_col = 60
+                        last_col = 64
                         for row in range(6, students.count() + 7):
                             for col in range(0, last_col):
                                 result_sheet.write(row, col, '', border)
