@@ -1654,7 +1654,7 @@ class ResultSheet(generics.ListCreateAPIView):
 
                         # co-scholastic grades. We will show grades for both terms separated by /, eg B/A.
                         # As this is IX class there will be term2
-                        result_sheet.set_column('AE:AI', 6)
+                        result_sheet.set_column('AE:AI', 10)
                         try:
                             cs_term2 = CoScholastics.objects.get(term='term2', student=student)
                             work_ed = cs_term2.work_education
