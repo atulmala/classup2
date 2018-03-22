@@ -1415,7 +1415,7 @@ class ResultSheet(generics.ListCreateAPIView):
                             # 22/03/2018 we show GK Grades as well
                             try:
                                 gk = Subject.objects.get(school=school, subject_name='GK')
-                                gk_tests = ClassTest.filter.get(the_class=the_class, section=section,
+                                gk_tests = ClassTest.objects.filter(the_class=the_class, section=section,
                                                                       subject=gk)
                                 gk_grade1 = TestResults.objects.get(class_test=gk_tests.first(), student=student)
                                 gk_grade = gk_grade1
