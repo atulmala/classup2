@@ -1961,7 +1961,7 @@ class ResultSheet(generics.ListCreateAPIView):
                             col += 1
 
                             # percentage
-                            cell_range = xl_range(row, col, row, col)
+                            cell_range = xl_range(row, col-1, row, col-1)
                             formula = '=%s/500.00' % cell_range
                             result_sheet.write_formula(row, col, formula, perc_format)
                             col += 1
