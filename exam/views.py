@@ -726,32 +726,31 @@ def prepare_results(request, school_id, the_class, section):
                                     sub_row.append(marks)
                                     if exam.title in term_exams:
                                         # this is a half yearly or annual exam. The possibility of practical marks...
-                                        if sub in prac_marks:
-                                            try:
-                                                term_test_results = TermTestResult.objects.get(test_result=result)
-                                                if sub in prac_subjects:
-                                                    print('%s has practical component' % (sub))
-                                                    prac_marks = float(term_test_results.prac_marks)
-                                                    if prac_marks < 0.0:
-                                                        prac_marks = ' '
-                                                        tot_marks = marks
-                                                    else:
-                                                        tot_marks = marks + prac_marks
-                                                else:
-                                                    print('%s does not have practical component' % (sub))
-                                                    prac_marks = 'NA'
+                                        try:
+                                            term_test_results = TermTestResult.objects.get(test_result=result)
+                                            if sub in prac_subjects:
+                                                print('%s has practical component' % (sub))
+                                                prac_marks = float(term_test_results.prac_marks)
+                                                if prac_marks < 0.0:
+                                                    prac_marks = ' '
                                                     tot_marks = marks
-                                                sub_row.append(prac_marks)
-                                                sub_row.append(tot_marks)
+                                                else:
+                                                    tot_marks = marks + prac_marks
+                                            else:
+                                                print('%s does not have practical component' % (sub))
+                                                prac_marks = 'NA'
+                                                tot_marks = marks
+                                            sub_row.append(prac_marks)
+                                            sub_row.append(tot_marks)
 
-                                                if exam.title == term_exams[0]:
-                                                    half_yearly_marks = tot_marks
-                                                if exam.title == term_exams[1]:
-                                                    final_marks = tot_marks
-                                            except Exception as e:
-                                                print('subject %s has no practical component' % (sub))
-                                                print('exception 27022018-A from exam views.py %s %s'
-                                                      % (e.message, type(e)))
+                                            if exam.title == term_exams[0]:
+                                                half_yearly_marks = tot_marks
+                                            if exam.title == term_exams[1]:
+                                                final_marks = tot_marks
+                                        except Exception as e:
+                                            print('subject %s has no practical component' % (sub))
+                                            print('exception 27022018-A from exam views.py %s %s'
+                                                  % (e.message, type(e)))
                                 except Exception as e:
                                     print('no test has been created for %s for exam %s for class %s' %
                                           (sub, exam.title, the_class))
