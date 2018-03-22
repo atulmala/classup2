@@ -1306,8 +1306,9 @@ class ResultSheet(generics.ListCreateAPIView):
                     result_sheet.merge_range (3, 31, 6, 31, 'Art/Music', vertical_text)
                     result_sheet.merge_range (3, 32, 6, 32, 'Health/Phy Ed.', vertical_text)
                     result_sheet.merge_range (3, 33, 6, 33, 'Discipline', vertical_text)
-                    result_sheet.merge_range(3, 34, 6, 34, 'Result/Remark', cell_center)
-                    result_sheet.set_column ('AI:AI', 12)
+                    result_sheet.merge_range(3, 34, 6, 34, 'GK', cell_center)
+                    result_sheet.merge_range(3, 35, 6, 35, 'Result/Remark', cell_center)
+                    result_sheet.set_column ('AJ:AJ', 12)
 
                     sub_short = ['Eng\n(100)', 'Hindi\n(100)', 'Sanskrit\n(100)', 'French\n(100)', 'Maths\n(100)',
                                  'Science\n(100)', 'SST\n(100)', 'Comp.\n(100)']
@@ -1342,7 +1343,7 @@ class ResultSheet(generics.ListCreateAPIView):
                         print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
                         print (students)
                         # prepare the borders
-                        last_col = 35
+                        last_col = 37
                         for row in range(7, students.count() + 7):
                             for col in range(0, last_col):
                                 result_sheet.write(row, col, '', border)
@@ -1411,6 +1412,18 @@ class ResultSheet(generics.ListCreateAPIView):
                                 print ('failed to retrieved the term tests for class: %s-%s, subject: %s' %
                                        (the_class.standard, section.section, s))
                                 continue
+                            # 22/03/2018 we show GK Grades as well
+                            try:
+                                gk = Subject.objects.get(school=school, subject_name='GK')
+                                gk_test = ClassTest.objects.get(the_class=the_class, section=section,
+                                                                      subject=gk)
+                                gk_result = TestResults.objects.get(class_test=gk_test, student=student)
+                                gk_grade = gk_result.grade
+                                print('GK grade secured by %s: %s' % (student_name, gk_grade))
+                            except Exception as e:
+                                print('exception 22032018-A from exam views.py %s %s' % (e.message, type(e)))
+                                print('could not retrieve the GK grade for %s' % student_name)
+                                gk_grade = ' '
                             col = col + 1
                             marks_col = col + 1
                         # now is the time to insert formulas in the designated cells
@@ -1477,6 +1490,7 @@ class ResultSheet(generics.ListCreateAPIView):
                             result_sheet.write_string(row, 32, health_ed1 + '/' + health_ed2, cell_grade)
                             discipline2 = cs_term2.discipline
                             result_sheet.write_string(row, 33, discipline1 + '/' + discipline2, cell_grade)
+                            result_sheet.write_string(row, 34, gk_grade, cell_grade)
                         except Exception as e:
                             print ('exception 21012018-A from exam views.py %s %s' % (e.message, type(e)))
                             print ('failed to retrieve Co-scholastics grade for %s' % student_name)
@@ -1706,7 +1720,7 @@ class ResultSheet(generics.ListCreateAPIView):
                             result_sheet.set_column('F:BH', 4.5)
                             for sub in chosen_stream:
                                 print('now creating heading for subject: %s' % sub)
-                                result_sheet.merge_range(row, col, row, col + 10, sub, vertical_text)
+                                result_sheet.merge_range(row, col, row, col + 10, sub, cell_center)
                                 col1 = col
 
                                 # UT
