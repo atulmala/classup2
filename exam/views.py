@@ -1691,7 +1691,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                                           active_status=True).order_by('fist_name')
                         print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
                         print (students)
-                        last_col = 64
+                        last_col = 67
                         for row in range(6, students.count() + 7):
                             for col in range(0, last_col):
                                 result_sheet.write(row, col, '', border)
@@ -1770,7 +1770,20 @@ class ResultSheet(generics.ListCreateAPIView):
 
                                 col = col + 11
                             break
-
+                        g_col = 60
+                        result_sheet.merge_range(row, g_col, row+2, g_col, 'Grand Total', vertical_text)
+                        g_col += 1
+                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Percentage', vertical_text)
+                        g_col += 1
+                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Grade', vertical_text)
+                        g_col += 1
+                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'GS', vertical_text)
+                        g_col += 1
+                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Work Ed', vertical_text)
+                        g_col += 1
+                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Art Ed', vertical_text)
+                        g_col += 1
+                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Discipline', vertical_text)
                         row += 3
 
                         # delete the "Elective" entry from the sub_dict. We will now substitute it with the real
@@ -1934,7 +1947,33 @@ class ResultSheet(generics.ListCreateAPIView):
                                 cell_range = xl_range(row, col - 3, row, col - 1)
                                 formula = '=SUM(%s)' % cell_range
                                 result_sheet.write_formula(row, col, formula, cell_normal)
-                                col +=1
+                                col += 1
+
+                            # write the total for all subjects for this student
+                            c1 = xl_rowcol_to_cell(row, 15)
+                            c2 = xl_rowcol_to_cell(row, 26)
+                            c3 = xl_rowcol_to_cell(row, 37)
+                            c4 = xl_rowcol_to_cell(row, 48)
+                            c5 = xl_rowcol_to_cell(row, 59)
+                            formula = '=SUM(%s, %s, %s, %s, %s)' % (c1, c2, c3, c4, c5)
+                            print('formula for grand total = %s' % formula)
+                            result_sheet.write_formula(row, col, formula, cell_normal)
+                            col += 1
+
+                            # percentage
+                            cell_range = xl_range(row, col, row, col)
+                            formula = '=%s/500.00' % cell_range
+                            result_sheet.write_formula(row, col, formula, perc_format)
+                            col += 1
+
+                            index = 'BI%s*100' % str(row)
+                            print ('index = %s' % index)
+                            formula = '=IF(%s > 90, "A1", IF(%s > 80, "A2", IF(%s > 70, "B1", IF(%s > 60, "B2", ' \
+                                        'IF(%s > 50, "C1", IF(%s > 40, "C2", IF(%s > 32, "D", "E")))))))' % \
+                                        (index, index, index, index, index, index, index)
+                            print ('formula for grade = %s' % formula)
+                            result_sheet.write_formula(row, col, formula, cell_grade)
+
                             # reset the chosen_stream to standard subjects
                             chosen_stream.pop()
                             row += 1
