@@ -1973,6 +1973,20 @@ class ResultSheet(generics.ListCreateAPIView):
                                         (index, index, index, index, index, index, index)
                             print ('formula for grade = %s' % formula)
                             result_sheet.write_formula(row, col, formula, cell_grade)
+                            col += 1
+
+                            cs_term1 = CoScholastics.objects.get(term='term2', student=student)
+                            work_ed1 = cs_term1.work_education
+                            result_sheet.write_string(row, col, work_ed1, cell_grade)
+                            col += 1
+                            art_ed1 = cs_term1.art_education
+                            result_sheet.write_string(row, col, art_ed1, cell_grade)
+                            col += 1
+                            health_ed1 = cs_term1.health_education
+                            result_sheet.write_string(row, col, health_ed1, cell_grade)
+                            col += 1
+                            discipline1 = cs_term1.discipline
+                            result_sheet.write_string(row, col, discipline1, cell_grade)
 
                             # reset the chosen_stream to standard subjects
                             chosen_stream.pop()
