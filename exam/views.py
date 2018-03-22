@@ -714,14 +714,14 @@ def prepare_results(request, school_id, the_class, section):
                                     result = TestResults.objects.get(class_test=test, student=s)
                                     marks = float(result.marks_obtained)
                                     if marks < 0.0:
-                                        marks = ' '
+                                        marks = 'ABS'
                                     if exam.title not in term_exams:
                                         if float(test.max_marks) != 25.0:
                                             print('max marks for %s in %s were %f. Conversion is required' %
                                                   (sub, exam.title, float(test.max_marks)))
                                             marks = round((25*marks)/float(test.max_marks), 2)
                                             if marks < 0.0:
-                                                marks = ' '
+                                                marks = 'ABS'
                                         ut_total = ut_total + marks
                                     sub_row.append(marks)
                                     if exam.title in term_exams:
@@ -755,7 +755,7 @@ def prepare_results(request, school_id, the_class, section):
                                     print('no test has been created for %s for exam %s for class %s' %
                                           (sub, exam.title, the_class))
                                     print('exception 28022018-A from exam views.py %s %s' % (e.message, type(e)))
-                                    marks = ' '
+                                    marks = 'ABS'
                                     sub_row.append(marks)
                                     # if it was a Half Yearly or Final exam we need to take care of prac & total marks
                                     if exam.title in term_exams:
@@ -791,7 +791,7 @@ def prepare_results(request, school_id, the_class, section):
                     table1.wrapOn(c, left_margin, 0)
                     table1.drawOn(c, left_margin, table1_top)
                     print('table1 drawn for %s %s' % (s.fist_name, s.last_name))
-                    theory_prac_split = 'Physics, Chemistry, Comp. Sc., Info. Prac., Biology, Phy. Edu., Eco, Acc - '
+                    theory_prac_split = 'Physics, Chemistry, Comp. Sc., Info. Prac., Biology, Phy. Edu., Eco, AccTB - '
                     theory_prac_split += '  Max Marks: Theory-70, Practical-30'
                     c.drawString(left_margin, table1_top - 20, theory_prac_split)
                     theory_prac_split = 'English, Mathematics - Max Marks: Theory-100, Prac: Not Applicable (NA)'
