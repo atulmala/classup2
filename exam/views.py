@@ -937,12 +937,13 @@ def prepare_results(request, school_id, the_class, section):
                                     grade = get_grade(total)
                                     print('grade obtained by %s in %s exam of %s: %s' %
                                           (s.fist_name, term, sub.subject_name, grade))
-                                sub_row.append(pa)
-                                sub_row.append(notebook)
-                                sub_row.append(sub_enrich)
-                                sub_row.append(main)
-                                sub_row.append(total)
-                                sub_row.append(grade)
+                                if total > -1000.0:
+                                    sub_row.append(pa)
+                                    sub_row.append(notebook)
+                                    sub_row.append(sub_enrich)
+                                    sub_row.append(main)
+                                    sub_row.append(total)
+                                    sub_row.append(grade)
                             except Exception as e:
                                 print('%s test for %s is not yet scheduled' % (term, sub))
                                 print('exception 12032018-A from exam views.py %s %s' % (e.message, type(e)))
