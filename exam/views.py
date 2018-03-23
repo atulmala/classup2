@@ -1903,7 +1903,8 @@ class ResultSheet(generics.ListCreateAPIView):
                                                 term_test_results = TermTestResult.objects.get(test_result=result)
                                                 print('%s has practical component' % (sub))
                                                 prac_marks = float(term_test_results.prac_marks)
-                                                result_sheet.write_number(row, col, prac_marks, cell_normal)
+                                                if prac_marks > -1000.00:
+                                                    result_sheet.write_number(row, col, prac_marks, cell_normal)
                                                 col += 1
                                             except Exception as e:
                                                 print('%s practical marks for %s could not be retrieved' %
