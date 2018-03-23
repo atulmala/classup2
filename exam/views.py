@@ -812,11 +812,11 @@ def prepare_results(request, school_id, the_class, section):
 
                     try:
                         co_scl = CoScholastics.objects.get(term='Term2', student=s)
-                        work_array.append('Work Education (or Pre-vocational Education)')
+                        work_array.append('General Studies (GS)')
                         work_ed = co_scl.work_education
                         work_array.append(work_ed)
 
-                        art_array.append('Art Education')
+                        art_array.append('Work Experience (Work Exp.)')
                         art_ed = co_scl.art_education
                         art_array.append(art_ed)
 
@@ -1779,9 +1779,9 @@ class ResultSheet(generics.ListCreateAPIView):
                         g_col += 1
                         result_sheet.merge_range(row, g_col, row + 2, g_col, 'GS', vertical_text)
                         g_col += 1
-                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Work Ed', vertical_text)
+                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Work Ex', vertical_text)
                         g_col += 1
-                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Art Ed', vertical_text)
+                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'PHED', vertical_text)
                         g_col += 1
                         result_sheet.merge_range(row, g_col, row + 2, g_col, 'Discipline', vertical_text)
                         row += 3
