@@ -1019,6 +1019,10 @@ def prepare_results(request, school_id, the_class, section):
                             print('failed to retrieve %s Co-scholastic grades for %s %s for ' %
                                   (term, s.fist_name, s.last_name))
                             print('exception 07022018-C from exam views.py %s %s' % (e.message, type(e)))
+                            work_array.append(' ')
+                            art_array.append(' ')
+                            health_array.append(' ')
+                            dscpln_array.append(' ')
                 except Exception as e:
                     print('failed to retrieve Co-scholastic grades for %s %s for ' % (s.fist_name, s.last_name))
                     print('exception 07022018-B from exam views.py %s %s' % (e.message, type(e)))
