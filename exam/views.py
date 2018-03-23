@@ -954,6 +954,12 @@ def prepare_results(request, school_id, the_class, section):
                             except Exception as e:
                                 print('%s test for %s is not yet scheduled' % (term, sub))
                                 print('exception 12032018-A from exam views.py %s %s' % (e.message, type(e)))
+                                sub_row.append(' ')
+                                sub_row.append(' ')
+                                sub_row.append(' ')
+                                sub_row.append(' ')
+                                sub_row.append(' ')
+                                sub_row.append(' ')
                         data1.append(sub_row)
                         print('sub_row = ')
                         print(sub_row)
