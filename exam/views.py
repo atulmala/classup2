@@ -1975,7 +1975,7 @@ class ResultSheet(generics.ListCreateAPIView):
                             result_sheet.write_formula(row, col, formula, perc_format)
                             col += 1
 
-                            index = 'BI%s*100' % str(row)
+                            index = 'BJ%s*100' % str(row)
                             print ('index = %s' % index)
                             formula = '=IF(%s > 90, "A1", IF(%s > 80, "A2", IF(%s > 70, "B1", IF(%s > 60, "B2", ' \
                                         'IF(%s > 50, "C1", IF(%s > 40, "C2", IF(%s > 32, "D", "E")))))))' % \
