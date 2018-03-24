@@ -53,13 +53,14 @@ class Subject(models.Model):
         ordering = ('subject_name', )
 
 
-
 class ThirdLang(models.Model):
     student = models.ForeignKey(Student)
     third_lang = models.ForeignKey(Subject)
 
     def __unicode__(self):
-        return self.student.fist_name + ' ' + self.student.last_name + ' ' + self.third_lang.subject_name
+        student_name = '%s %s' % (self.student.fist_name, self.student.last_name)
+        the_class = '%s %s' % (self.student.current_class.standard, self.student.current_section.section)
+        return '%s (%s)' % (student_name, the_class)
 
 
 class ClassTest(models.Model):
