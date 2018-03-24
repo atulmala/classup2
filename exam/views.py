@@ -933,7 +933,10 @@ def prepare_results(request, school_id, the_class, section):
                                     notebook = ttr.note_book_marks
                                     sub_enrich = ttr.sub_enrich_marks
                                     main = tr.marks_obtained
-                                    total = float(main) + float(pa) + float(notebook) + float(sub_enrich)
+                                    if float(main) > -1000.0:
+                                        total = float(main) + float(pa) + float(notebook) + float(sub_enrich)
+                                    else:
+                                        total = float(pa) + float(notebook) + float(sub_enrich)
                                     grade = get_grade(total)
                                     print('grade obtained by %s in %s exam of %s: %s' %
                                           (s.fist_name, term, sub.subject_name, grade))
@@ -941,7 +944,10 @@ def prepare_results(request, school_id, the_class, section):
                                     sub_row.append(pa)
                                     sub_row.append(notebook)
                                     sub_row.append(sub_enrich)
-                                    sub_row.append(main)
+                                    if float(main) > 0.0:
+                                        sub_row.append(main)
+                                    else:
+                                        sub_row.append('ABS')
                                     sub_row.append(total)
                                     sub_row.append(grade)
                                 else:
