@@ -921,21 +921,22 @@ def prepare_results(request, school_id, the_class, section):
                                 tr = TestResults.objects.get(class_test=test, student=s)
 
                                 if sub.subject_name == 'GK':
-                                    grade = tr.grade
                                     pa = 'NA'
                                     sub_enrich = 'NA'
                                     main = 'NA'
                                     notebook = 'NA'
                                     total = 'NA'
+                                    grade = tr.grade
                                 else:
                                     ttr = TermTestResult.objects.get(test_result=tr)
                                     pa = ttr.periodic_test_marks
                                     notebook = ttr.note_book_marks
                                     sub_enrich = ttr.sub_enrich_marks
                                     main = tr.marks_obtained
-                                    if float(main) > -1000.0:
-                                        total = float(main) + float(pa) + float(notebook) + float(sub_enrich)
-                                    else:
+                                    total = float(main) + float(pa) + float(notebook) + float(sub_enrich)
+                                    # in case the student was absent we need to show ABS in the marksheet.
+                                    if float(main) < 0.0:
+                                        main = 'ABS'
                                         total = float(pa) + float(notebook) + float(sub_enrich)
                                     grade = get_grade(total)
                                     print('grade obtained by %s in %s exam of %s: %s' %
@@ -944,19 +945,10 @@ def prepare_results(request, school_id, the_class, section):
                                     sub_row.append(pa)
                                     sub_row.append(notebook)
                                     sub_row.append(sub_enrich)
-                                    if float(main) > 0.0:
-                                        sub_row.append(main)
-                                    else:
-                                        sub_row.append('ABS')
+                                    sub_row.append(main)
                                     sub_row.append(total)
                                     sub_row.append(grade)
-                                else:
-                                    sub_row.append(' ')
-                                    sub_row.append(' ')
-                                    sub_row.append(' ')
-                                    sub_row.append(' ')
-                                    sub_row.append(' ')
-                                    sub_row.append(' ')
+
                             except Exception as e:
                                 print('%s test for %s is not yet scheduled' % (term, sub))
                                 print('exception 12032018-A from exam views.py %s %s' % (e.message, type(e)))
