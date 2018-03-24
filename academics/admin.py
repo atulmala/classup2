@@ -40,6 +40,9 @@ class ThirdLangAdmin(admin.ModelAdmin):
 
     list_display = ('student', 'get_class', 'get_school_name',)
 
+
+admin.site.register(ThirdLang, ThirdLangAdmin)
+
 class TestAdmin(admin.ModelAdmin):
     def get_school_name(self, obj):
         return obj.the_class.school
