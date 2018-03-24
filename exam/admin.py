@@ -7,6 +7,18 @@ from .models import Scheme, HigherClassMapping, NPromoted
 
 
 class ThirdLangAdmin(admin.ModelAdmin):
+    def get_school_name(self, obj):
+        return obj.student.school.school_name
+
+    get_school_name.short_description = 'School'
+
+    def get_class(self, obj):
+        return '%s-%s' % (obj.student.current_class.standard, obj.student.current_section.section)
+
+    get_class.short_description = 'Class'
+
+    list_display = ('student', 'get_class', 'third_lang', 'get_school_name',)
+
     list_display = ('student', 'third_lang',)
     search_fields = ('student__fist_name',)
 
