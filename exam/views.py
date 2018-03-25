@@ -1485,6 +1485,21 @@ class ResultSheet(generics.ListCreateAPIView):
                         print ('formula for grade = %s' % formula)
                         result_sheet.write_formula(row, 28, formula, cell_grade)
 
+                        # show the result/remarks. In the beginning it will show Promoted,
+                        #  but after the analysis is done, it will show the actual result
+                        try:
+                            not_promoted = NPromoted.objects.get(student=student)
+                            print('student %s %s has failed in class %s.' % (student.fist_name,
+                                                                             student.last_name, the_class))
+                            print(not_promoted)
+                            promoted_status = 'Not Promoted'
+                        except Exception as e:
+                            print('student %s %s has passed in class %s.' % (student.fist_name, student.last_name,
+                                                                             the_class))
+                            print('exception 25032018-A from exam views.py %s %s' % (e.message, type(e)))
+                            promoted_status = 'Promoted'
+                        result_sheet.write_string(row, 35, promoted_status, cell_grade)
+
                         # co-scholastic grades. We will show grades for both terms separated by /, eg B/A
                         try:
                             cs_term1 = CoScholastics.objects.get (term='term1', student=student)
@@ -1683,6 +1698,22 @@ class ResultSheet(generics.ListCreateAPIView):
                         except Exception as e:
                             print('exception 27012018-D from exam views.py %s %s' % (e.message, type(e)))
                             print('failed to retrieve Co-scholastic grades for %s' % student_name)
+                        marks_col += 1
+                        # show the result/remarks. In the beginning it will show Promoted,
+                        #  but after the analysis is done, it will show the actual result
+                        try:
+                            not_promoted = NPromoted.objects.get(student=student)
+                            print('student %s %s has failed in class %s.' % (student.fist_name,
+                                                                             student.last_name, the_class))
+                            print(not_promoted)
+                            promoted_status = 'Not Promoted'
+                        except Exception as e:
+                            print('student %s %s has passed in class %s.' % (student.fist_name, student.last_name,
+                                                                             the_class))
+                            print('exception 25032018-B from exam views.py %s %s' % (e.message, type(e)))
+                            promoted_status = 'Promoted'
+                        result_sheet.write_string(row, marks_col, promoted_status, cell_grade)
+
                         col = 0
                         s_no = s_no + 1
                         row = row + 1
@@ -1697,7 +1728,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                                           active_status=True).order_by('fist_name')
                         print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
                         print (students)
-                        last_col = 67
+                        last_col = 68
                         for row in range(6, students.count() + 7):
                             for col in range(0, last_col):
                                 result_sheet.write(row, col, '', border)
@@ -1790,6 +1821,8 @@ class ResultSheet(generics.ListCreateAPIView):
                         result_sheet.merge_range(row, g_col, row + 2, g_col, 'PHED', vertical_text)
                         g_col += 1
                         result_sheet.merge_range(row, g_col, row + 2, g_col, 'Discipline', vertical_text)
+                        g_col += 1
+                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Result', vertical_text)
                         row += 3
 
                         # delete the "Elective" entry from the sub_dict. We will now substitute it with the real
@@ -1994,6 +2027,9 @@ class ResultSheet(generics.ListCreateAPIView):
                             col += 1
                             discipline1 = cs_term1.discipline
                             result_sheet.write_string(row, col, discipline1, cell_grade)
+                            col += 1
+
+
 
                             # reset the chosen_stream to standard subjects
                             chosen_stream.pop()
