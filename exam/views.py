@@ -1699,6 +1699,7 @@ class ResultSheet(generics.ListCreateAPIView):
                             print('exception 27012018-D from exam views.py %s %s' % (e.message, type(e)))
                             print('failed to retrieve Co-scholastic grades for %s' % student_name)
                         marks_col += 1
+
                         # show the result/remarks. In the beginning it will show Promoted,
                         #  but after the analysis is done, it will show the actual result
                         try:
@@ -2029,7 +2030,20 @@ class ResultSheet(generics.ListCreateAPIView):
                             result_sheet.write_string(row, col, discipline1, cell_grade)
                             col += 1
 
-
+                            # show the result/remarks. In the beginning it will show Promoted,
+                            #  but after the analysis is done, it will show the actual result
+                            try:
+                                not_promoted = NPromoted.objects.get(student=student)
+                                print('student %s %s has failed in class %s.' % (student.fist_name,
+                                                                                 student.last_name, the_class))
+                                print(not_promoted)
+                                promoted_status = 'Not Promoted'
+                            except Exception as e:
+                                print('student %s %s has passed in class %s.' % (student.fist_name, student.last_name,
+                                                                                 the_class))
+                                print('exception 25032018-C from exam views.py %s %s' % (e.message, type(e)))
+                                promoted_status = 'Promoted'
+                            result_sheet.write_string(row, marks_col, promoted_status, cell_grade)
 
                             # reset the chosen_stream to standard subjects
                             chosen_stream.pop()
