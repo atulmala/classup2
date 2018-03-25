@@ -1919,7 +1919,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                         print('%s could not be retrieved for class %s' % (ut, the_class.standard))
                                         print('exception 04032018-C from exam views.py %s %s' % (e.message, type(e)))
                                         col += 1
-                                result_sheet.write_number(row, col, ut_total/4.0, cell_normal)
+                                result_sheet.write_number(row, col, round(ut_total/4.0, 2), cell_normal)
                                 result_sheet.write_comment(row, col, comments, {'height': 150})
                                 col += 1
 
