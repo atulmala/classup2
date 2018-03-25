@@ -2032,6 +2032,7 @@ class ResultSheet(generics.ListCreateAPIView):
 
                             # show the result/remarks. In the beginning it will show Promoted,
                             #  but after the analysis is done, it will show the actual result
+                            result_sheet.set_column('BP:BP', 20)
                             try:
                                 not_promoted = NPromoted.objects.get(student=student)
                                 print('student %s %s has failed in class %s.' % (student.fist_name,
