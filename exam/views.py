@@ -1996,7 +1996,7 @@ class ResultSheet(generics.ListCreateAPIView):
                             c3 = xl_rowcol_to_cell(row, 37)
                             c4 = xl_rowcol_to_cell(row, 48)
                             c5 = xl_rowcol_to_cell(row, 59)
-                            formula = '=SUM(%s, %s, %s, %s, %s)' % (c1, c2, c3, c4, c5)
+                            formula = '=ROUND(SUM(%s, %s, %s, %s, %s), 1)' % (c1, c2, c3, c4, c5)
                             print('formula for grand total = %s' % formula)
                             result_sheet.write_formula(row, col, formula, cell_normal)
                             col += 1
