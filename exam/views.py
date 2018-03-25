@@ -2043,7 +2043,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                                                                  the_class))
                                 print('exception 25032018-C from exam views.py %s %s' % (e.message, type(e)))
                                 promoted_status = 'Promoted'
-                            result_sheet.write_string(row, marks_col, promoted_status, cell_grade)
+                            result_sheet.write_string(row, col, promoted_status, cell_grade)
 
                             # reset the chosen_stream to standard subjects
                             chosen_stream.pop()
