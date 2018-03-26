@@ -1846,9 +1846,9 @@ class ResultSheet(generics.ListCreateAPIView):
                         g_col += 1
                         result_sheet.merge_range(row, g_col, row + 2, g_col, 'Percentage', vertical_text)
                         g_col += 1
-                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Rank', vertical_text)
-                        g_col += 1
                         result_sheet.merge_range(row, g_col, row + 2, g_col, 'Grade', vertical_text)
+                        g_col += 1
+                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Rank', vertical_text)
                         g_col += 1
                         result_sheet.merge_range(row, g_col, row + 2, g_col, 'GS', vertical_text)
                         g_col += 1
@@ -2070,8 +2070,8 @@ class ResultSheet(generics.ListCreateAPIView):
 
                             # show the result/remarks. In the beginning it will show Promoted,
                             #  but after the analysis is done, it will show the actual result
-                            result_sheet.set_column('BP:BP', 15)
-                            result_sheet.set_column('BQ:BQ', 30)
+                            result_sheet.set_column('BQ:BQ', 15)
+                            result_sheet.set_column('BR:BR', 30)
                             details = ' '
                             try:
                                 not_promoted = NPromoted.objects.get(student=student)
