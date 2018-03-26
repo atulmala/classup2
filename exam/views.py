@@ -2067,7 +2067,8 @@ class ResultSheet(generics.ListCreateAPIView):
 
                             # show the result/remarks. In the beginning it will show Promoted,
                             #  but after the analysis is done, it will show the actual result
-                            result_sheet.set_column('BP:BQ', 30)
+                            result_sheet.set_column('BP:BP', 15)
+                            result_sheet.set_column('BQ:BQ', 30)
                             details = ' '
                             try:
                                 not_promoted = NPromoted.objects.get(student=student)
