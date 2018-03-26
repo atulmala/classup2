@@ -1716,6 +1716,7 @@ class ResultSheet(generics.ListCreateAPIView):
                         # show the result/remarks. In the beginning it will show Promoted,
                         #  but after the analysis is done, it will show the actual result
                         details = ' '
+                        result_sheet.set_column('AG:AG', 20)
                         try:
                             not_promoted = NPromoted.objects.get(student=student)
                             details = not_promoted.details
@@ -1840,7 +1841,9 @@ class ResultSheet(generics.ListCreateAPIView):
                         g_col += 1
                         result_sheet.merge_range(row, g_col, row + 2, g_col, 'Discipline', vertical_text)
                         g_col += 1
-                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Result', vertical_text)
+                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Result', cell_center)
+                        g_col += 1
+                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Details', cell_center)
                         row += 3
 
                         # delete the "Elective" entry from the sub_dict. We will now substitute it with the real
@@ -2049,9 +2052,11 @@ class ResultSheet(generics.ListCreateAPIView):
 
                             # show the result/remarks. In the beginning it will show Promoted,
                             #  but after the analysis is done, it will show the actual result
-                            result_sheet.set_column('BP:BP', 20)
+                            result_sheet.set_column('BP:BQ', 20)
+                            details = ' '
                             try:
                                 not_promoted = NPromoted.objects.get(student=student)
+                                details = not_promoted.details
                                 print('student %s %s has failed in class %s.' % (student.fist_name,
                                                                                  student.last_name, the_class))
                                 print(not_promoted)
@@ -2062,6 +2067,8 @@ class ResultSheet(generics.ListCreateAPIView):
                                 print('exception 25032018-C from exam views.py %s %s' % (e.message, type(e)))
                                 promoted_status = 'Promoted'
                             result_sheet.write_string(row, col, promoted_status, cell_grade)
+                            col += 1
+                            result_sheet.write_string(row, col, details, cell_grade)
 
                             # reset the chosen_stream to standard subjects
                             chosen_stream.pop()
