@@ -1494,7 +1494,7 @@ class ResultSheet(generics.ListCreateAPIView):
 
                         # determine the rank
                         count = students.count()
-                        formula = '=RANK(AB%s, $AB$%s:$AB$%s)' % (str(row), str(row), str(count))
+                        formula = '=RANK(AB%s, $AB$%s:$AB$%s)' % (str(row), str(row), str(count + 7))
                         print('formula for rank: %s', formula)
                         result_sheet.write_formula(row, 29, formula, cell_grade)
 
