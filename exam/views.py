@@ -735,7 +735,12 @@ def prepare_results(request, school_id, the_class, section):
                                                     prac_marks = ' '
                                                     tot_marks = marks
                                                 else:
-                                                    tot_marks = marks + prac_marks
+                                                    # 26032018 - there is a possibility that student was absent
+                                                    # in theory but present in practical
+                                                    if marks >= 0.0:
+                                                        tot_marks = marks + prac_marks
+                                                    else:
+                                                        tot_marks = prac_marks
                                             else:
                                                 print('%s does not have practical component' % (sub))
                                                 prac_marks = 'NA'

@@ -113,8 +113,6 @@ class CompletedTestList(generics.ListCreateAPIView):
         q = ClassTest.objects.filter(teacher=the_teacher, is_completed=True).order_by('the_class__sequence',
                                                                                       'section__section',
                                                                                       'date_conducted')
-
-
         try:
             action = 'Retrieving completed test list for ' + the_teacher.first_name + ' ' + the_teacher.last_name
             log_entry(t, action, 'Normal', True)
