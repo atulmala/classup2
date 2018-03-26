@@ -1590,6 +1590,8 @@ class ResultSheet(generics.ListCreateAPIView):
                     col = col + 1
                     result_sheet.set_column('AF:AF', 12)
                     result_sheet.merge_range(row, col, row+3, col, 'Result/Remark', cell_center)
+                    col += 1
+                    result_sheet.merge_range(row, col, row+3, col, 'Details', cell_center)
                     row = row + 1
 
                     sub_list = ['English', 'Third Language', 'Mathematics', 'Science', 'Social Studies', 'Computer']
@@ -1601,7 +1603,7 @@ class ResultSheet(generics.ListCreateAPIView):
                         print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
                         print (students)
                         # prepare the borders
-                        last_col = 32
+                        last_col = 34
                         for row in range(7, students.count() + 7):
                             for col in range(0, last_col):
                                 result_sheet.write(row, col, '', border)
@@ -1713,8 +1715,10 @@ class ResultSheet(generics.ListCreateAPIView):
 
                         # show the result/remarks. In the beginning it will show Promoted,
                         #  but after the analysis is done, it will show the actual result
+                        details = ' '
                         try:
                             not_promoted = NPromoted.objects.get(student=student)
+                            details = not_promoted.details
                             print('student %s %s has failed in class %s.' % (student.fist_name,
                                                                              student.last_name, the_class))
                             print(not_promoted)
@@ -1725,6 +1729,8 @@ class ResultSheet(generics.ListCreateAPIView):
                             print('exception 25032018-B from exam views.py %s %s' % (e.message, type(e)))
                             promoted_status = 'Promoted'
                         result_sheet.write_string(row, marks_col, promoted_status, cell_grade)
+                        marks_col += 1
+                        result_sheet.write_string(row, marks_col, details, cell_grade)
 
                         col = 0
                         s_no = s_no + 1
