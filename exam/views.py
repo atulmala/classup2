@@ -1492,6 +1492,11 @@ class ResultSheet(generics.ListCreateAPIView):
                         print ('formula for grade = %s' % formula)
                         result_sheet.write_formula(row, 28, formula, cell_grade)
 
+                        # determine the rank
+                        count = students.count
+                        formula = '=RANK(AB%s, $AB$%s:$AB$%s)' % (str(row), str(row), str(count))
+                        result_sheet.write_formula(row, 29, formula, cell_grade)
+
                         # show the result/remarks. In the beginning it will show Promoted,
                         #  but after the analysis is done, it will show the actual result
                         details = ' '
