@@ -1538,13 +1538,6 @@ class ResultSheet(generics.ListCreateAPIView):
                         col = 0
                         row = row + 1
                         s_no = s_no + 1
-                    row += 4
-                    sig_col = col + 2
-                    result_sheet.merge_range(row, sig_col, row, sig_col + 6, "Class Teacher's Signature", title)
-                    sig_col += 10
-                    result_sheet.merge_range(row, sig_col, row, sig_col + 6, "Vice Principal's Signature", title)
-                    sig_col += 10
-                    result_sheet.merge_range(row, sig_col, row, sig_col + 6, "Principal's Signature", title)
                 if the_class.standard in ninth_tenth:
                     row = 3
                     col = 4
@@ -1742,13 +1735,6 @@ class ResultSheet(generics.ListCreateAPIView):
                         col = 0
                         s_no = s_no + 1
                         row = row + 1
-                    row += 4
-                    sig_col = col + 2
-                    result_sheet.merge_range(row, sig_col, row, sig_col + 6, "Class Teacher's Signature", title)
-                    sig_col += 10
-                    result_sheet.merge_range(row, sig_col, row, sig_col + 6, "Vice Principal's Signature", title)
-                    sig_col += 10
-                    result_sheet.merge_range(row, sig_col, row, sig_col + 6, "Principal's Signature", title)
                 if the_class.standard in higher_classes:
                     maths_stream = ['English', 'Mathematics', 'Physics', 'Chemistry', 'Elective']
                     bio_stream = ['English', 'Biology', 'Physics', 'Chemistry', 'Elective']
@@ -2087,17 +2073,18 @@ class ResultSheet(generics.ListCreateAPIView):
                             chosen_stream.pop()
                             row += 1
                             s_no += 1
-                        row += 4
-                        sig_col = col + 2
-                        result_sheet.merge_range(row, sig_col, row, sig_col + 6, "Class Teacher's Signature", title)
-                        sig_col += 10
-                        result_sheet.merge_range(row, sig_col, row, sig_col + 6, "Vice Principal's Signature", title)
-                        sig_col += 10
-                        result_sheet.merge_range(row, sig_col, row, sig_col + 6, "Principal's Signature", title)
+
                     except Exception as e:
                         print('failed to retrieve the list of students for class %s-%s' %
                               (the_class.standard, section.section))
                         print('exception 03032018-B from exam views.py %s %s' % (e.message, type(e)))
+                row += 4
+                sig_col = 3
+                result_sheet.merge_range(row, sig_col, row, sig_col + 6, "Class Teacher's Signature", title)
+                sig_col += 10
+                result_sheet.merge_range(row, sig_col, row, sig_col + 6, "Vice Principal's Signature", title)
+                sig_col += 10
+                result_sheet.merge_range(row, sig_col, row, sig_col + 6, "Principal's Signature", title)
                 workbook.close()
                 response = HttpResponse(content_type='application/vnd.ms-excel')
                 response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
