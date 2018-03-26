@@ -1329,7 +1329,6 @@ class ResultSheet(generics.ListCreateAPIView):
                     result_sheet.merge_range(3, 36, 6, 36, 'Details', cell_center)
                     result_sheet.set_column('AK:AK', 20)
 
-
                     sub_short = ['Eng\n(100)', 'Hindi\n(100)', 'Sanskrit\n(100)', 'French\n(100)', 'Maths\n(100)',
                                  'Science\n(100)', 'SST\n(100)', 'Comp.\n(100)']
                     sub_full = ['English', 'Hindi', 'Sanskrit', 'French', 'Mathematics', 'Science', 'Social Studies',
@@ -1363,7 +1362,7 @@ class ResultSheet(generics.ListCreateAPIView):
                         print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
                         print (students)
                         # prepare the borders
-                        last_col = 38
+                        last_col = 37
                         for row in range(7, students.count() + 7):
                             for col in range(0, last_col):
                                 result_sheet.write(row, col, '', border)
@@ -1603,7 +1602,7 @@ class ResultSheet(generics.ListCreateAPIView):
                         print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
                         print (students)
                         # prepare the borders
-                        last_col = 34
+                        last_col = 33
                         for row in range(7, students.count() + 7):
                             for col in range(0, last_col):
                                 result_sheet.write(row, col, '', border)
@@ -2052,7 +2051,7 @@ class ResultSheet(generics.ListCreateAPIView):
 
                             # show the result/remarks. In the beginning it will show Promoted,
                             #  but after the analysis is done, it will show the actual result
-                            result_sheet.set_column('BP:BQ', 20)
+                            result_sheet.set_column('BP:BQ', 30)
                             details = ' '
                             try:
                                 not_promoted = NPromoted.objects.get(student=student)
