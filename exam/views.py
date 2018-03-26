@@ -1362,7 +1362,7 @@ class ResultSheet(generics.ListCreateAPIView):
                         print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
                         print (students)
                         # prepare the borders
-                        last_col = 37
+                        last_col = 38
                         for row in range(7, students.count() + 7):
                             for col in range(0, last_col):
                                 result_sheet.write(row, col, '', border)
@@ -1846,6 +1846,8 @@ class ResultSheet(generics.ListCreateAPIView):
                         g_col += 1
                         result_sheet.merge_range(row, g_col, row + 2, g_col, 'Percentage', vertical_text)
                         g_col += 1
+                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Rank', vertical_text)
+                        g_col += 1
                         result_sheet.merge_range(row, g_col, row + 2, g_col, 'Grade', vertical_text)
                         g_col += 1
                         result_sheet.merge_range(row, g_col, row + 2, g_col, 'GS', vertical_text)
@@ -2049,6 +2051,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                         (index, index, index, index, index, index, index)
                             print ('formula for grade = %s' % formula)
                             result_sheet.write_formula(row, col, formula, cell_grade)
+                            col += 1
                             col += 1
 
                             cs_term1 = CoScholastics.objects.get(term='term2', student=student)
