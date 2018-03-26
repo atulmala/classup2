@@ -719,6 +719,8 @@ class NotPromoted(generics.ListCreateAPIView):
                         continue
                     print ('Processing a new row')
                     erp_id = sheet.cell(row, 1).value
+                    # 26/03/2018 - Now we store some additional details like compartment subject, detained etc
+                    details = sheet.cell(row, 4).value
                     try:
                         student = Student.objects.get(school=school, student_erp_id=erp_id)
                         student_name = '%s %s' % (student.fist_name, student.last_name)
@@ -732,9 +734,10 @@ class NotPromoted(generics.ListCreateAPIView):
                             print('%s was not in not_promoted. Adding now...' % (student_name))
                             print('exception 04032018-E from student views.py %s %s' % (e.message, type(e)))
                             try:
-                                entry = NPromoted(student=student)
+                                entry = NPromoted(student=student, details=details)
                                 entry.save()
-                                print('added %s to not_promoted. With sorrow :(' % (student_name))
+                                print('With sorrow :(, added %s to not_promoted. Details: %s ' %
+                                      (student_name, details))
                             except Exception as e:
                                 print('failed to add %s (%s) to not_promoted' % (student_name, erp_id))
                                 print('exception 04032018-F from student views.py %s %s' % (e.message, type(e)))

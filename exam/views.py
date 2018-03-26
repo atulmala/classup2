@@ -1325,7 +1325,10 @@ class ResultSheet(generics.ListCreateAPIView):
                     result_sheet.merge_range (3, 33, 6, 33, 'Discipline', vertical_text)
                     result_sheet.merge_range(3, 34, 6, 34, 'GK', cell_center)
                     result_sheet.merge_range(3, 35, 6, 35, 'Result/Remark', cell_center)
-                    result_sheet.set_column ('AJ:AJ', 12)
+                    result_sheet.set_column('AJ:AJ', 12)
+                    result_sheet.merge_range(3, 36, 6, 36, 'Details', cell_center)
+                    result_sheet.set_column('AK:AK', 20)
+
 
                     sub_short = ['Eng\n(100)', 'Hindi\n(100)', 'Sanskrit\n(100)', 'French\n(100)', 'Maths\n(100)',
                                  'Science\n(100)', 'SST\n(100)', 'Comp.\n(100)']
@@ -1360,7 +1363,7 @@ class ResultSheet(generics.ListCreateAPIView):
                         print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
                         print (students)
                         # prepare the borders
-                        last_col = 37
+                        last_col = 38
                         for row in range(7, students.count() + 7):
                             for col in range(0, last_col):
                                 result_sheet.write(row, col, '', border)
@@ -1412,7 +1415,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                         # not opted for this subject then marks will be -20000.00
                                         if sub_marks < 0:
                                             print ('subject %s is not opted by %s' % (s, student_name))
-                                            result_sheet.write_string (row, marks_col, 'ABS', cell_grade)
+                                            result_sheet.write_string (row, marks_col, 'NA', cell_grade)
                                             marks_col = marks_col + 11
                                             continue
                                         result_sheet.write_number (row, marks_col, sub_marks, cell_normal)
@@ -1494,6 +1497,7 @@ class ResultSheet(generics.ListCreateAPIView):
                         #  but after the analysis is done, it will show the actual result
                         try:
                             not_promoted = NPromoted.objects.get(student=student)
+                            details = not_promoted.details
                             print('student %s %s has failed in class %s.' % (student.fist_name,
                                                                              student.last_name, the_class))
                             print(not_promoted)
@@ -1504,6 +1508,7 @@ class ResultSheet(generics.ListCreateAPIView):
                             print('exception 25032018-A from exam views.py %s %s' % (e.message, type(e)))
                             promoted_status = 'Promoted'
                         result_sheet.write_string(row, 35, promoted_status, cell_grade)
+                        result_sheet.write_string(row, 36, details, cell_grade)
 
                         # co-scholastic grades. We will show grades for both terms separated by /, eg B/A
                         try:

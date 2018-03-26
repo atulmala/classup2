@@ -25,3 +25,4 @@ class NotPromoted(models.Model):
 
 class NPromoted(models.Model):
     student = models.ForeignKey(Student)
+    details = models.CharField(max_length=100, default='  ')

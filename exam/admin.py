@@ -66,7 +66,7 @@ class NotPromotedAdmin(admin.ModelAdmin):
 
     get_school_name.short_description = 'School'
     search_fields = ('student__fist_name',)
-    list_display = ('get_school_name', 'get_class', 'get_section', 'student',)
+    list_display = ('get_school_name', 'student', 'get_class', 'get_section', 'details',)
     list_filter = ('student__school',)
 
 admin.site.register(NPromoted, NotPromotedAdmin)
