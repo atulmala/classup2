@@ -1703,7 +1703,7 @@ class ResultSheet(generics.ListCreateAPIView):
                         start_row = 8
                         formula = '=RANK(Y%s, $Y$%s:$Y$%s)' % (str(row + 1), str(start_row), str(count + 7))
                         print('formula for rank: %s', formula)
-                        result_sheet.write_formula(row, 29, formula, cell_grade)
+                        result_sheet.write_formula(row, marks_col, formula, cell_grade)
 
                         marks_col += 1
 
