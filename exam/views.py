@@ -737,7 +737,7 @@ def prepare_results(request, school_id, the_class, section):
                                                 else:
                                                     # 26032018 - there is a possibility that student was absent
                                                     # in theory but present in practical
-                                                    if marks >= 0.0:
+                                                    if marks != 'ABS':
                                                         tot_marks = marks + prac_marks
                                                     else:
                                                         tot_marks = prac_marks
