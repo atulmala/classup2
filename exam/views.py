@@ -1696,7 +1696,16 @@ class ResultSheet(generics.ListCreateAPIView):
                                   (index, index, index, index, index, index, index)
                         print ('formula for grade = %s' % formula)
                         result_sheet.write_formula(row, marks_col, formula, cell_grade)
-                        marks_col = marks_col + 2
+                        marks_col += 1
+
+                        # determine the rank
+                        count = students.count()
+                        start_row = 8
+                        formula = '=RANK(Y%s, $Y$%s:$Y$%s)' % (str(row + 1), str(start_row), str(count + 7))
+                        print('formula for rank: %s', formula)
+                        result_sheet.write_formula(row, 29, formula, cell_grade)
+
+                        marks_col += 1
 
                         # co-scholastic grades. We will show grades for both terms separated by /, eg B/A.
                         # As this is IX class there will be term2
