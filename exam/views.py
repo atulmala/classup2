@@ -2052,6 +2052,12 @@ class ResultSheet(generics.ListCreateAPIView):
                             print ('formula for grade = %s' % formula)
                             result_sheet.write_formula(row, col, formula, cell_grade)
                             col += 1
+                            # determine the rank
+                            count = students.count()
+                            start_row = 8
+                            formula = '=RANK(BI%s, $BI$%s:$BI$%s)' % (str(row + 1), str(start_row), str(count + 7))
+                            print('formula for rank: %s', formula)
+                            result_sheet.write_formula(row, col, formula, cell_grade)
                             col += 1
 
                             cs_term1 = CoScholastics.objects.get(term='term2', student=student)
