@@ -1168,7 +1168,7 @@ def submit_marks(request, school_id):
                             ttr = TermTestResult.objects.get(test_result=tr)
                             if the_class == 'XI' or the_class == 'XII':
                                 if sub.subject_name in prac_subjects:
-                                    message += ', Practical Marks: ' + str(ttr.prac_marks)
+                                    message += ', Practical: ' + str(ttr.prac_marks)
                                     total = float(marks) + float(ttr.prac_marks)
                                     message += '. Total: %.2f/%s' % (total, '100')
                                 else:
