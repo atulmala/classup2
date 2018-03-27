@@ -14,7 +14,7 @@ from django.views.decorators.csrf import csrf_exempt
 from authentication.views import JSONResponse, log_entry
 from student.models import Student
 from setup.models import School, Configurations
-from academics.models import Subject, ClassTeacher, ClassTest, TestResults, Exam
+from academics.models import Subject, ClassTeacher, ClassTest, TestResults, TermTestResult, Exam
 from attendance.models import AttendanceTaken, Attendance
 from setup.forms import ExcelFileUploadForm
 from setup.views import validate_excel_extension
@@ -389,9 +389,21 @@ def get_exam_result(request, student_id, exam_id):
     }
     response_array = []
 
+    higher_classes = ['XI', 'XII']
+    ninth_tenth = ['IX', 'X']
+    middle_classes = ['V', 'VI', 'VII', 'VIII']
+
+    prac_subjects = ["Biology", "Physics", "Chemistry",
+                     "Accountancy", "Business Studies", "Economics", "Fine Arts",
+                     "Information Practices", "Informatics Practices", "Computer Science", "Painting",
+                     "Physical Education"]
+
     if request.method == 'GET':
         student = Student.objects.get(id=student_id)
-        print (student)
+        student_name = '%s %s' % (student.fist_name, student.last_name)
+        print (student_name)
+        the_class = student.current_class.standard
+        print('%s is in class %s' % (student_name, the_class))
         exam = Exam.objects.get(id=exam_id)
         print (exam)
 
@@ -409,22 +421,48 @@ def get_exam_result(request, student_id, exam_id):
                     exam_result['subject'] = test.subject.subject_name
                     print (exam_result)
 
-                    test_result = TestResults.objects.filter(class_test=test, student=student)
-                    print (test_result)
-                    if test.grade_based:
-                        exam_result['max_marks'] = 'Grade Based'
-                        for tr in test_result:
+                    # 27/03/2018 - in case of third language in V-VIII, second language in IX and all subjects in XI
+                    # the student may have not opted for it. So a check has to be made
+                    try:
+                        tr = TestResults.objects.get(class_test=test, student=student)
+                        print (tr)
+                        if test.grade_based:
+                            exam_result['max_marks'] = 'Grade Based'
                             exam_result['marks'] = tr.grade
-                            break
-                    else:
-                        exam_result['max_marks'] = test.max_marks
-                        for tr in test_result:
-                            print (tr.marks_obtained)
-                            exam_result['marks'] = tr.marks_obtained
-                            break
 
-                    d = dict(exam_result)
-                    response_array.append(d)
+                        else:
+                            if test.test_type == 'term':
+                                print('this is a term test')
+                                exam_result['max_marks'] = 100
+                                main = tr.marks_obtained
+                                # if student was absent then main marks would be -1000
+                                if float(main) < 0.0:
+                                    print('%s was absent in the test of %s' % (student_name, test.subject.subject_name))
+                                    main = 0.0
+                                print('this is a term test. PA, Notebook Sub & Sub Enrich marks/prac will be considered')
+                                ttr = TermTestResult.objects.get(test_result=tr)
+                                if the_class in higher_classes:
+                                    prac = 0.0
+                                    if test.subject.subject_name in prac_subjects:
+                                        prac = ttr.prac_marks
+                                    total = float(main) + float(prac)
+                                    exam_result['marks'] = total
+                                else:
+                                    pa = ttr.periodic_test_marks
+                                    notebook = ttr.note_book_marks
+                                    sub_enrich = ttr.sub_enrich_marks
+                                    total = float(main) + float(pa) + float(notebook) + float(sub_enrich)
+                                    exam_result['marks'] = round(total, 2)
+                            else:
+                                print('this is a unit test')
+                                exam_result['max_marks'] = test.max_marks
+                                print (tr.marks_obtained)
+                                exam_result['marks'] = tr.marks_obtained
+                        d = dict(exam_result)
+                        response_array.append(d)
+                    except Exception as e:
+                        print('exception 27032018-A from parents views.py %s %s' % (e.message, type(e)))
+                        print('subject %s is not opted by %s' % (test.subject.subject_name, student_name))
             try:
                 parent_mobile = student.parent.parent_mobile1
                 action = 'Retrieved ' + exam.title + ' results for ' + student.fist_name + ' ' + student.last_name

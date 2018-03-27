@@ -980,6 +980,10 @@ def save_marks(request):
 @csrf_exempt
 def submit_marks(request, school_id):
     t1 = datetime.datetime.now()
+    higher_classes = ['XI', 'XII']
+    ninth_tenth = ['IX', 'X']
+    middle_classes = ['V', 'VI', 'VII', 'VIII']
+
     prac_subjects = ["Biology", "Physics", "Chemistry",
                      "Accountancy", "Business Studies", "Economics", "Fine Arts"
                      "Information Practices", "Computer Science", "Painting",
@@ -1149,19 +1153,37 @@ def submit_marks(request, school_id):
                         marks = float(tr.marks_obtained)
                         if marks.is_integer():
                             marks = int(marks)
-                        message += str(marks) + '/' + str(int(test.max_marks))
+                        if test.test_type == 'term':
+                            if the_class in higher_classes:
+                                message += ' Theory: %s' % str(int(marks))
+                            else:
+                                message += ' Term: %s' % str(int(marks))
+                        else:
+                            message += str(marks) + '/' + str(int(test.max_marks))
 
                     # 24/09/2017 - if this is a term test, we need to include marks for Periodic Assessment,
                     # Notebook submission, and Subject Enrichment
-                    if test.test_type == 'term':
-                        ttr = TermTestResult.objects.get(test_result=tr)
-                        if the_class == 'XI' or the_class == 'XII':
-                            if sub.subject_name in prac_subjects:
-                                message += '. Practical Marks: ' + str(ttr.prac_marks)
-                        else:
-                            message += '. Periodic Test: ' + str(ttr.periodic_test_marks) + '/10, '
-                            message += 'Notebook Submission: ' + str(ttr.note_book_marks) + '/5, '
-                            message += 'Subject Enrichment: ' + str(ttr.sub_enrich_marks) + '/5'
+                    try:
+                        if test.test_type == 'term':
+                            ttr = TermTestResult.objects.get(test_result=tr)
+                            if the_class == 'XI' or the_class == 'XII':
+                                if sub.subject_name in prac_subjects:
+                                    message += ', Practical Marks: ' + str(ttr.prac_marks)
+                                    total = float(marks) + float(ttr.prac_marks)
+                                    message += '. Total: %.2f/%s' % (total, '100')
+                                else:
+                                    message += '/100, Practical: NA'
+                            else:
+                                message += ', Periodic Test: %.2f, ' % float(ttr.periodic_test_marks)
+                                message += 'Notebook Submission: %.2f, ' % float(ttr.note_book_marks)
+                                message += 'Subject Enrichment: %.2f, ' % float(ttr.sub_enrich_marks)
+                                print('message till now %s' % message)
+                                total = float(tr.marks_obtained) + float(ttr.note_book_marks) + float(ttr.periodic_test_marks)
+                                total += float(ttr.sub_enrich_marks)
+                                message += 'Total: %.2f/100' % total
+                    except Exception as e:
+                        print('exception 27032018-X from academics views.py %s %s' % (e.message, type(e)))
+                        print('failed to create a part of message')
 
                 if not grade_based:
                     # 04/12/2016 - some schools don't want to include max and average marks in the sms
@@ -1169,6 +1191,7 @@ def submit_marks(request, school_id):
                         message += '. Highest marks: ' + str(highest_marks)
                         message += ' & Avg marks: ' + str(round(average_marks))
                 message += ". Regards, " + school_name
+                print(message)
 
                 try:
                     action = 'Test Marks SMS Drafted for ' + student.parent.parent_name

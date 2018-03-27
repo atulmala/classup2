@@ -48,7 +48,6 @@ class Subject(models.Model):
     def __unicode__(self):
         return self.subject_name
 
-
     class Meta:
         ordering = ('subject_name', )
 
