@@ -1,6 +1,5 @@
 import xlrd
-import StringIO
-import xlsxwriter
+
 
 from django.shortcuts import render
 from django.contrib import messages
@@ -12,7 +11,7 @@ from setup.forms import ExcelFileUploadForm
 from setup.views import validate_excel_extension
 
 from setup.models import School
-from student.models import Student, AdditionalDetails
+from student.models import Student, AdditionalDetails, House
 
 # Create your views here.
 
@@ -81,6 +80,7 @@ class SetupAddDetails(generics.ListCreateAPIView):
                         erp_id = sheet.cell(row, 1).value
                         mother_name = sheet.cell(row, 4).value
                         address = sheet.cell(row, 5).value
+                        house = sheet.cell(row, 7).value
                     except Exception as e:
                         print('exception 19032018-E from erp views. %s %s' % (e.message, type(e)))
 
@@ -89,23 +89,39 @@ class SetupAddDetails(generics.ListCreateAPIView):
                         student_name = '%s %s of class %s-%s' % (student.fist_name, student.last_name,
                                                                  student.current_class.standard,
                                                                  student.current_section.section)
-                        print('setting the additional details for %s with erp_id %s' % (student_name, erp_id))
+                        # print('setting the additional details for %s with erp_id %s' % (student_name, erp_id))
+                        # try:
+                        #     ad = AdditionalDetails.objects.get(student=student)
+                        #     print('additional details for %s with erp_id %s are already set. Those will be updated'
+                        #           % (erp_id, student_name))
+                        #     ad.mother_name = mother_name
+                        #     ad.address = address
+                        #     ad.save()
+                        #     print('successfully updated the additional details for %s' % student_name)
+                        # except Exception as e:
+                        #     print('exception 19032018-A from erp views.py %s %s' % (e.message, type(e)))
+                        #     print('additional details for %s with erp_id %s were not set. Setting now...' %
+                        #           (student_name, erp_id))
+                        #     ad = AdditionalDetails(student=student, mother_name=mother_name, address= address)
+                        #     ad.save()
+                        #     print('successfully created additional details for %s with erp_id %s' %
+                        #           (student_name, erp_id))
+                        print('setting the house details for %s with erp_id %s' % (student_name, erp_id))
                         try:
-                            ad = AdditionalDetails.objects.get(student=student)
-                            print('additional details for %s with erp_id %s are already set. Those will be updated'
-                                  % (erp_id, student_name))
-                            ad.mother_name = mother_name
-                            ad.address = address
-                            ad.save()
-                            print('successfully updated the additional details for %s' % student)
+                            h = House.objects.get(student=student)
+                            print('house details for %s with erp_id %s are already set. Those will be updated' %
+                                  (erp_id, student_name))
+                            h.house = house
+                            h.save()
+                            print('successfully updated the house details for %s' % student_name)
                         except Exception as e:
-                            print('exception 19032018-A from erp views.py %s %s' % (e.message, type(e)))
-                            print('additional details for %s with erp_id %s were not set. Setting now...' %
+                            print('exception 28032018-A from erp views.py %s %s' % (e.message, type(e)))
+                            print('house details for %s with erp_id %s were not set. Setting now...' %
                                   (student_name, erp_id))
-                            ad = AdditionalDetails(student=student, mother_name=mother_name, address= address)
-                            ad.save()
-                            print('successfully created additional details for %s with erp_id %s' %
-                                  (student_name, erp_id))
+                            h = House(student=student, house=house)
+                            h.save()
+                            print('successfully set house %s for student %s with erp_id %s' %
+                                  (house, student_name, erp_id))
                     except Exception as e:
                         print('exception 19032018-B from erp views.py %s %s' % (e.message, type(e)))
                         print('no student associated with erp_id %s' % erp_id)

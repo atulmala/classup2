@@ -29,8 +29,6 @@ class SubjectAdmin(admin.ModelAdmin):
 admin.site.register(Subject, SubjectAdmin)
 
 
-
-
 class TestAdmin(admin.ModelAdmin):
     def get_school_name(self, obj):
         return obj.the_class.school

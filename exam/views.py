@@ -26,7 +26,7 @@ from setup.forms import ExcelFileUploadForm
 from setup.models import School
 from setup.views import validate_excel_extension
 
-from student.models import Student, DOB, AdditionalDetails
+from student.models import Student, DOB, AdditionalDetails, House
 from academics.models import Class, Section, Subject, ThirdLang, ClassTest, \
     Exam, TermTestResult, TestResults, CoScholastics, ClassTeacher
 
@@ -1380,9 +1380,19 @@ class ResultSheet(generics.ListCreateAPIView):
                         admission_no = student.student_erp_id
                         result_sheet.write_string(row, col, admission_no, cell_normal)
                         col = col + 1
-                        result_sheet.write_string (row, col, '', cell_normal)
-                        col = col + 1
                         student_name = student.fist_name + ' ' + student.last_name
+
+                        # get the house information
+                        try:
+                            h = House.objects.get(student=student)
+                            house = h.house
+                            result_sheet.write_string (row, col, house, cell_normal)
+                        except Exception as e:
+                            print('exception 28032018-A from exam views.py %s %s' % (e.message, type(e)))
+                            print('failed to retrieve house for %s' % student_name)
+                            result_sheet.write_string(row, col, ' ', cell_normal)
+                        col = col + 1
+
                         result_sheet.write_string(row, col, student_name, cell_normal)
                         marks_col = col + 1
                         for s in sub_full:
@@ -1627,9 +1637,19 @@ class ResultSheet(generics.ListCreateAPIView):
                         admission_no = student.student_erp_id
                         result_sheet.write_string(row, col, admission_no, cell_normal)
                         col = col + 1
-                        result_sheet.write_string(row, col, '', cell_normal)
-                        col = col + 1
                         student_name = student.fist_name + ' ' + student.last_name
+
+                        # get the house information
+                        try:
+                            h = House.objects.get(student=student)
+                            house = h.house
+                            result_sheet.write_string(row, col, house, cell_normal)
+                        except Exception as e:
+                            print('exception 28032018-A from exam views.py %s %s' % (e.message, type(e)))
+                            print('failed to retrieve house for %s' % student_name)
+                            result_sheet.write_string(row, col, ' ', cell_normal)
+                        col = col + 1
+
                         result_sheet.write_string(row, col, student_name, cell_normal)
 
                         # next column is for mentioning the second language, and marks will start after that. Hence,
@@ -1882,8 +1902,17 @@ class ResultSheet(generics.ListCreateAPIView):
                             admission_no = student.student_erp_id
                             result_sheet.write_string(row, col, admission_no, cell_normal)
                             col += 1
-                            result_sheet.write_string(row, col, '', cell_normal)
-                            col += 1
+                            student_name = student.fist_name + ' ' + student.last_name
+                            # get the house information
+                            try:
+                                h = House.objects.get(student=student)
+                                house = h.house
+                                result_sheet.write_string(row, col, house, cell_normal)
+                            except Exception as e:
+                                print('exception 28032018-A from exam views.py %s %s' % (e.message, type(e)))
+                                print('failed to retrieve house for %s' % student_name)
+                                result_sheet.write_string(row, col, ' ', cell_normal)
+                            col = col + 1
                             student_name = student.fist_name + ' ' + student.last_name
                             result_sheet.write_string(row, col, student_name, cell_normal)
                             col += 1
