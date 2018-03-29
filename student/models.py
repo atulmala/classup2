@@ -43,6 +43,7 @@ class DOB(models.Model):
 
 class AdditionalDetails(models.Model):
     student = models.ForeignKey(Student)
+    gender = models.CharField(max_length=6, default=' ')
     mother_name = models.CharField(max_length=50, default='Not Available')
     address = models.CharField(max_length=200, default=' ')
     adhar = models.CharField(max_length=30, default='Not Available')
