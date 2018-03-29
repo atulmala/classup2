@@ -23,7 +23,7 @@ class Student(models.Model):
     school = models.ForeignKey(School)
     fist_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
-    roll_number = models.IntegerField()
+    roll_number = models.IntegerField(default=50)
     current_class = models.ForeignKey('academics.Class')
     current_section = models.ForeignKey('academics.Section')
     parent = models.ForeignKey(Parent, default=None)
