@@ -9,14 +9,19 @@ key = '58fc1def26489'
 
 try:
     # connect to the database
-    db = MySQLdb.connect('classup-prod-1-aurora-cluster.cluster-ceglypsnyux3.us-west-2.rds.amazonaws.com',
-                         'classup', 'classup', 'classup2')
-    cursor1 = db.cursor()
+    try:
+        db = MySQLdb.connect('classup-prod-1-aurora-cluster.cluster-ceglypsnyux3.us-west-2.rds.amazonaws.com',
+                             'classup', 'classup', 'classup2')
+        cursor1 = db.cursor()
 
-    # extract the list of all sms for which api_called = false
-    sql1 = "select id, sender_code, recipient_number, message from operations_smsrecord " \
-           "where api_called = 0 and message_type = 'Bulk SMS (Web Interface)'"
-    cursor1.execute(sql1)
+        # extract the list of all sms for which api_called = false
+        sql1 = "select id, sender_code, recipient_number, message from operations_smsrecord " \
+               "where api_called = 0 and message_type = 'Bulk SMS (Web Interface)'"
+        cursor1.execute(sql1)
+    except Exception as e:
+        print('exception 29032018-A from send_bulk_sms.py %s (%s)' % (e.message, type(e)))
+        print('failed to establish sql connection or executing sql')
+
 
     # send messages one by one
     row = cursor1.fetchone()
@@ -46,7 +51,7 @@ try:
             print('sending to=' + mobile)
             print('message received in send_bulk_sms.py=' + message)
 
-            response = urllib2.urlopen(url)
+            response = urllib.urlopen(url)
             print('response = ')
             message_id = response.read()
             print(message_id)
@@ -62,7 +67,7 @@ try:
                 cursor2.close()
             except Exception as e:
                 print('Error while trying to update the delivery status of sms with message_id = ' + message_id)
-                print ('Exception3 from operations get_sms_dlvry_status.py = %s (%s)' % (e.message, type(e)))
+                print ('Exception3 from operations get_sms_dlvry_status.py = %s (%s) %s' % (e.message, type(e), e.args))
         except Exception as e:
             print ('Exception1 from send_bulk_sms.py = %s (%s)' % (e.message, type(e)))
             print('failed to send message: ' + message + ' to mobile number: ' + str(mobile))

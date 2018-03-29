@@ -89,24 +89,25 @@ class SetupAddDetails(generics.ListCreateAPIView):
                         student_name = '%s %s of class %s-%s' % (student.fist_name, student.last_name,
                                                                  student.current_class.standard,
                                                                  student.current_section.section)
-                        # print('setting the additional details for %s with erp_id %s' % (student_name, erp_id))
-                        # try:
-                        #     ad = AdditionalDetails.objects.get(student=student)
-                        #     print('additional details for %s with erp_id %s are already set. Those will be updated'
-                        #           % (erp_id, student_name))
-                        #     ad.mother_name = mother_name
-                        #     ad.address = address
-                        #     ad.save()
-                        #     print('successfully updated the additional details for %s' % student_name)
-                        # except Exception as e:
-                        #     print('exception 19032018-A from erp views.py %s %s' % (e.message, type(e)))
-                        #     print('additional details for %s with erp_id %s were not set. Setting now...' %
-                        #           (student_name, erp_id))
-                        #     ad = AdditionalDetails(student=student, mother_name=mother_name, address= address)
-                        #     ad.save()
-                        #     print('successfully created additional details for %s with erp_id %s' %
-                        #           (student_name, erp_id))
+                        print('setting the additional details for %s with erp_id %s' % (student_name, erp_id))
+                        try:
+                            ad = AdditionalDetails.objects.get(student=student)
+                            print('additional details for %s with erp_id %s are already set. Those will be updated'
+                                  % (erp_id, student_name))
+                            ad.mother_name = mother_name
+                            ad.address = address
+                            ad.save()
+                            print('successfully updated the additional details for %s' % student_name)
+                        except Exception as e:
+                            print('exception 19032018-A from erp views.py %s %s' % (e.message, type(e)))
+                            print('additional details for %s with erp_id %s were not set. Setting now...' %
+                                  (student_name, erp_id))
+                            ad = AdditionalDetails(student=student, mother_name=mother_name, address= address)
+                            ad.save()
+                            print('successfully created additional details for %s with erp_id %s' %
+                                  (student_name, erp_id))
                         print('setting the house details for %s with erp_id %s' % (student_name, erp_id))
+
                         try:
                             h = House.objects.get(student=student)
                             print('house details for %s with erp_id %s are already set. Those will be updated' %
