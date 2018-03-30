@@ -13,7 +13,7 @@ admin.site.register(Section, SectionAdmin)
 
 
 class ClassAdmin(admin.ModelAdmin):
-    list_display = ['school', 'standard']
+    list_display = ['school', 'standard', 'sequence',]
     list_filter = ['school']
 
 
