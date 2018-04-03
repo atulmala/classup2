@@ -658,7 +658,7 @@ class StudentPromotion(generics.ListCreateAPIView):
                                         message += 'Jagarn Public School welcomes all students to new session 2018-19. '
                                         message += 'Regards, Dr D.K. Sinha, Principal, JPS Noida'
                                         print(message)
-                                        sms.send_sms1(school, 'admin@jps.com', mobile, message, 'Student Promotion')
+                                        #sms.send_sms1(school, 'admin@jps.com', mobile, message, 'Student Promotion')
                                         print('sent Student promotion message to %s, parent of %s' %
                                               (parent, student_name))
                                     except Exception as e:
