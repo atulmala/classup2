@@ -27,6 +27,8 @@ from .serializers import StudentSerializer, ParentSerializer
 
 from authentication.views import JSONResponse
 
+from operations import sms
+
 class CsrfExemptSessionAuthentication(SessionAuthentication):
     def enforce_csrf(self, request):
         return  # To not perform the csrf check previously happening
@@ -188,6 +190,8 @@ class StudentListDownload (generics.ListAPIView):
         else:
             school_id = request.session['school_id']
             school = School.objects.get(id=school_id)
+            school_name = school.school_name
+            school_name = school_name.replace(' ', '_')
             form = ResultSheetForm(request.POST, school_id=school_id)
 
             if form.is_valid():
@@ -196,7 +200,7 @@ class StudentListDownload (generics.ListAPIView):
                 print ('result sheet will be generated for %s-%s' % (the_class.standard, section.section))
 
                 excel_file_name = 'Student_List' + str(the_class.standard) + '-' + str(section.section) + '.xlsx'
-
+                excel_file_name = '%s_Student_List_%s-%s.xlsx' % (str(school_name), str(the_class.standard), str(section.section))
                 output = StringIO.StringIO(excel_file_name)
                 workbook = xlsxwriter.Workbook(output)
                 sheet = workbook.add_worksheet('Student List %s-%s' % (str(the_class.standard), section.section))
@@ -644,6 +648,23 @@ class StudentPromotion(generics.ListCreateAPIView):
                                     student.current_section = Section.objects.get(school=school, section=new_section)
                                     student.save()
                                     print('successfully promoted %s to %s-%s' % (student_name, new_class, new_section))
+
+                                    # 03/04/208 - also send message to parents
+                                    try:
+                                        parent = student.parent.parent_name
+                                        mobile = student.parent.parent_mobile1
+                                        message = 'Dear %s, your ward %s is promoted to class %s-%s. ' % \
+                                                  (parent, student_name, new_class, new_section)
+                                        message += 'Jagarn Public School welcomes all students to new session 2018-19. '
+                                        message += 'Regards, Dr D.K. Sinha, Principal, JPS Noida'
+                                        print(message)
+                                        sms.send_sms1(school, 'admin@jps.com', mobile, message, 'Student Promotion')
+                                        print('sent Student promotion message to %s, parent of %s' %
+                                              (parent, student_name))
+                                    except Exception as e:
+                                        print('failed to send Student Prmotion sms for %s' % student_name)
+                                        print('exception 03042018-A from student views.py %s (%s)' %
+                                              (e.message, type(e)))
                                 except Exception as e:
                                     print('failed to promote %s to %s-%s' % (student_name, new_class, new_section))
                                     print('exception 06032018-B from student views.py %s %s' % (e.message, type(e)))

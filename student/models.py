@@ -1,6 +1,7 @@
 from django.db import models
 from setup.models import School
 
+
 # Create your models here.
 
 
