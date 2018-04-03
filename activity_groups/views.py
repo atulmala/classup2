@@ -81,7 +81,7 @@ class ActivityMembersManager (generics.ListCreateAPIView):
                             return render(request, 'classup/setup_data.html', context_dict)
 
                     print ('Processing a new row')
-                    erp_id = sheet.cell(row, 0).value
+                    erp_id = sheet.cell(row, 1).value
                     print ('erp_id = %s. Will now try to add to Activity Group %s' % (erp_id, group_name))
                     try:
                         student = Student.objects.get (school=school, student_erp_id=erp_id)
