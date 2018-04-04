@@ -11,6 +11,7 @@ from rest_framework.authentication import SessionAuthentication, BasicAuthentica
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.contrib import messages
+from django.db.models import Max
 
 from setup.models import School
 from academics.models import ClassTest, TestResults, TermTestResult, ThirdLang, Class, Section
@@ -581,8 +582,69 @@ class StudentPromotion(generics.ListCreateAPIView):
         context_dict['user_type'] = 'school_admin'
         context_dict['school_name'] = request.session['school_name']
         context_dict['header'] = 'Upload Student Promotion List'
-        form = ExcelFileUploadForm()
-        context_dict['form'] = form
+        school_id = request.session['school_id']
+        school = School.objects.get(id=school_id)
+        highest_class_dict = Class.objects.filter(school=school).aggregate(Max('sequence'))
+        print(highest_class_dict['sequence__max'])
+        highest_class = Class.objects.get(school=school, sequence=highest_class_dict['sequence__max'])
+        print(highest_class)
+        try:
+            students = Student.objects.filter(school=school, current_class=highest_class)
+            if students.count() > 0:
+                print(students)
+                print('Student promotion for %s has already been done. Hence not doing again' % school.school_name)
+                error = 'Student promotion has already been done'
+                messages.error(request._request, 'Promotion has already been carried out.')
+                print (error)
+                return render(request, 'classup/setup_index.html', context_dict)
+            else:
+                print('Student promotion for %s has not been done. Will do now...' % school.school_name)
+                classes = Class.objects.filter(school=school).order_by('-sequence')
+                print('retrieved classes for %s' % school.school_name)
+                sections = Section.objects.filter(school=school).order_by('section')
+                print(sections)
+                print(classes)
+
+                for a_class in classes:
+                    if a_class.sequence == highest_class_dict['sequence__max']:
+                        continue
+                    for a_section in sections:
+                        students = Student.objects.filter(current_class=a_class, current_section=a_section)
+                        for student in students:
+                            try:
+                                student_name = '%s %s' % (student.fist_name, student.last_name)
+                                try:
+                                    # the student should not be in the not promoted list.
+                                    #  Only then he/she will be promoted
+                                    entry = NPromoted.objects.get(student=student)
+                                    print('%s is  in the not_promoted. Hence not promoting...' % (student_name))
+                                    print(entry)
+                                except Exception as e:
+                                    print('exception 04042018-B from student views.py %s %s' % (e.message, type(e)))
+                                    print('%s was not in not_promoted. Promoting now...' % (student_name))
+                                    promoted_to_class = Class.objects.get(school=school, sequence=a_class.sequence + 1)
+                                    print('%s is going to be promoted to %s-%s' %
+                                          (student_name, promoted_to_class.standard, a_section.section))
+                                    print('%s current class is %s-%s' %
+                                          (student_name, student.current_class.standard,
+                                           student.current_section.section))
+                                    student.current_class = promoted_to_class
+                                    student.save()
+                                    print('%s now promoted to %s-%s' %
+                                          (student_name, promoted_to_class.standard, a_section.section))
+                            except Exception as e:
+                                print('failed to promote student %s' % student.fist_name)
+                                print('exception 04042018-A from student views.py %s %s' % (e.message, type(e)))
+                messages.success(request._request, 'students promoted.')
+                return render(request, 'classup/setup_index.html', context_dict)
+        except Exception as e:
+            print('exception 04042018-C from student views.py %s %s' % (e.message, type(e)))
+
+        return render(request, 'classup/setup_index.html', context_dict)
+
+
+        #form = ExcelFileUploadForm()
+        #context_dict['form'] = form
         return render(request, 'classup/setup_data.html', context_dict)
 
     def post(self, request, *args, **kwargs):
