@@ -106,76 +106,83 @@ class TheTimeTable(generics.ListCreateAPIView):
                             teacher = Teacher.objects.get(school=school, email=t)
                             teacher_name = '%s %s' % (teacher.first_name, teacher.last_name)
                             print('successfull retrieved teacher for id %s: %s' % (t, teacher_name))
+                            d = sheet.cell(row, 3).value
+                            print('setting time table for %s for %s' % (teacher_name, d))
+
+                            try:
+                                day = DaysOfWeek.objects.get(day=d)
+                                print('successfully retrieved the day object for %s' % d)
+                                print(day)
+                            except Exception as e:
+                                print('failed to retrieved the day object for %s' % d)
+                                print('exception 06032018-C fron time_table views.py' % (e.message, type(e)))
+                            prd = 1
+                            for counter in range(4, 27, 3):
+                                period = Period.objects.get(school=school, period=prd)
+                                print('setting period %s of %s for %s' % (prd, teacher_name, d))
+                                col = counter
+                                if col % 3 == 1:
+                                    try:
+                                        cls = sheet.cell(row, col).value
+                                        print('class mentioned in the sheet = %s' % cls)
+                                        # get the class object
+                                        if cls != '':
+                                            the_class = Class.objects.get(school=school, standard=cls)
+                                            print('retrieved class object associated with %s' % the_class)
+                                            print(the_class)
+                                        col += 1
+                                        sec = sheet.cell(row, col).value
+
+                                        col += 1
+                                        sub = sheet.cell(row, col).value
+                                        print('subject mentioned in the sheet = %s' % sub)
+                                        if len(sec) > 0:
+                                            print('period %s for %s subject %s multiple sections of class %s: %s' %
+                                                  (prd, teacher_name, sub, cls, sec))
+                                            sec = sec.split()[0][0]
+                                            print('only first section %s will be taken into account' % sec)
+                                        if sec != '':
+                                            section = Section.objects.get(school=school, section=sec)
+                                            print('retrieved section object associated with %s' % sec)
+                                            print(section)
+                                        if sub != '':
+                                            subject = Subject.objects.get(school=school, subject_name=sub)
+                                            print('retrieved subject object associated with %s' % sub)
+                                            print(subject)
+                                        # assign the class, section, subject & period to the teacher
+                                        try:
+                                            tt = TimeTable.objects.get(school=school, day=day, period=period,
+                                                                       teacher=teacher)
+                                            print(
+                                                'period %s for %s was already assigned for %s. This will be updated...')
+                                            tt.the_class = the_class
+                                            tt.section = section
+                                            tt.subject = subject
+                                            tt.save()
+                                            print('updated period %s on %s for teacher %s to subject %s, class %s-%s' %
+                                                  (prd, d, teacher_name, sub, cls, sec))
+                                        except Exception as e:
+                                            print('exception 07032018-B from time_table views.py %s %s' % (
+                                                e.message, type(e)))
+                                            print(
+                                                        'period %s on %s for teacher %s has not been assigned. Assigning now...' %
+                                                        (prd, d, teacher_name))
+                                            tt = TimeTable(school=school, day=day, period=period, teacher=teacher)
+                                            tt.the_class = the_class
+                                            tt.section = section
+                                            tt.subject = subject
+                                            tt.save()
+                                            print('assigned period %s on %s for teacher %s to subject %s, class %s-%s' %
+                                                  (prd, d, teacher_name, sub, cls, sec))
+                                    except Exception as e:
+                                        print('something went wrong while retrieving objects associated with %s %s %s' %
+                                              (cls, sec, sub))
+                                        print('exception 07032018-A from time_table views.py %s %s' % (
+                                        e.message, type(e)))
+                                prd += 1
                         except Exception as e:
                             print('failed to retrieve teacher for id %s' % t)
                             print('exception 06032018-B from time_table views.py %s %s' % (e.message, type(e)))
-
-
-                    d = sheet.cell(row, 3).value
-                    print('setting time table for %s for %s' % (teacher_name, d))
-
-                    try:
-                        day = DaysOfWeek.objects.get(day=d)
-                        print('successfully retrieved the day object for %s' % d)
-                        print(day)
-                    except Exception as e:
-                        print('failed to retrieved the day object for %s' % d)
-                        print('exception 06032018-C fron time_table views.py' % (e.message, type(e)))
-                    prd = 1
-                    for counter in range(4, 27, 3):
-                        period = Period.objects.get(school=school, period=prd)
-                        print('setting period %s of %s for %s' % (prd, teacher_name, d))
-                        col = counter
-                        if col % 3 == 1:
-                            try:
-                                cls = sheet.cell(row, col).value
-                                print('class mentioned in the sheet = %s' % cls)
-                                # get the class object
-                                if cls != 'Free':
-                                    the_class = Class.objects.get(school=school, standard=cls)
-                                    print('retrieved class object associated with %s' % the_class)
-                                    print(the_class)
-                                col += 1
-                                sec = sheet.cell(row, col).value
-                                if sec != 'Free':
-                                    section = Section.objects.get(school=school, section=sec)
-                                    print('retrieved section object associated with %s' % sec)
-                                    print(section)
-                                col += 1
-                                sub = sheet.cell(row, col).value
-                                print('subject mentioned in the sheet = %s' % sub)
-                                if sub != 'Free':
-                                    subject = Subject.objects.get(school=school, subject_name=sub)
-                                    print('retrieved subject object associated with %s' % sub)
-                                    print(subject)
-                                # assign the class, section, subject & period to the teacher
-                                try:
-                                    tt = TimeTable.objects.get(school=school, day=day, period=period,
-                                                                teacher=teacher)
-                                    print('period %s for %s was already assigned for %s. This will be updated...')
-                                    tt.the_class = the_class
-                                    tt.section = section
-                                    tt.subject = subject
-                                    tt.save()
-                                    print('updated period %s on %s for teacher %s to subject %s, class %s-%s' %
-                                            (prd, d, teacher_name, cls, sec))
-                                except Exception as e:
-                                    print('exception 07032018-B from time_table views.py %s %s' % (
-                                    e.message, type(e)))
-                                    print('period %s on %s for teacher %s has not been assigned. Assigning now...' %
-                                            (prd, d, teacher_name))
-                                    tt = TimeTable(school=school, day=day, period=period, teacher=teacher)
-                                    tt.the_class = the_class
-                                    tt.section = section
-                                    tt.subject = subject
-                                    tt.save()
-                                    print('assigned period %s on %s for teacher %s to subject %s, class %s-%s' %
-                                            (prd, d, teacher_name, cls, sec))
-                            except Exception as e:
-                                print('something went wrong while retrieving objects associated with %s %s %s' %
-                                      (cls, sec, sub))
-                                print('exception 07032018-A from time_table views.py %s %s' % (e.message, type(e)))
-                        prd += 1
                 # file upload and saving to db was successful. Hence go back to the main menu
                 messages.success(request._request, 'time table successfully uploaded')
                 return render(request, 'classup/setup_index.html', context_dict)
