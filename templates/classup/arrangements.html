@@ -36,6 +36,7 @@
                 $("#" + period_no).modal('hide')
                 var $widget = $(this);
                 var teacher = $widget.attr('teacherName')
+                teacher = teacher.slice(0, -3)
                 var teacher_id = $widget.attr('teacherId')
 
                 $('#main_table tr').eq(row_index + 1).find('td').eq(5).text(teacher).css("color", "color:#328332");
@@ -193,7 +194,7 @@
 
     {% for key, value in available_teachers.items %}
         <div class="modal fade" id="{{ key }}" tabindex="-1" role="dialog"
-             aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+             aria-labelledby="exampleModalLongTitle" aria-hidden="true" data-backdrop="false">
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">

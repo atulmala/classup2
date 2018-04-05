@@ -132,6 +132,7 @@ class TheTimeTable(generics.ListCreateAPIView):
                                             print(the_class)
                                         col += 1
                                         sec = sheet.cell(row, col).value
+                                        print('section mentioned in the sheet %s' % sec)
 
                                         col += 1
                                         sub = sheet.cell(row, col).value
@@ -149,31 +150,34 @@ class TheTimeTable(generics.ListCreateAPIView):
                                             subject = Subject.objects.get(school=school, subject_name=sub)
                                             print('retrieved subject object associated with %s' % sub)
                                             print(subject)
-                                        # assign the class, section, subject & period to the teacher
-                                        try:
-                                            tt = TimeTable.objects.get(school=school, day=day, period=period,
-                                                                       teacher=teacher)
-                                            print(
-                                                'period %s for %s was already assigned for %s. This will be updated...')
-                                            tt.the_class = the_class
-                                            tt.section = section
-                                            tt.subject = subject
-                                            tt.save()
-                                            print('updated period %s on %s for teacher %s to subject %s, class %s-%s' %
-                                                  (prd, d, teacher_name, sub, cls, sec))
-                                        except Exception as e:
-                                            print('exception 07032018-B from time_table views.py %s %s' % (
-                                                e.message, type(e)))
-                                            print(
-                                                        'period %s on %s for teacher %s has not been assigned. Assigning now...' %
-                                                        (prd, d, teacher_name))
-                                            tt = TimeTable(school=school, day=day, period=period, teacher=teacher)
-                                            tt.the_class = the_class
-                                            tt.section = section
-                                            tt.subject = subject
-                                            tt.save()
-                                            print('assigned period %s on %s for teacher %s to subject %s, class %s-%s' %
-                                                  (prd, d, teacher_name, sub, cls, sec))
+
+                                        if cls != '':
+                                            # assign the class, section, subject & period to the teacher
+                                            try:
+                                                tt = TimeTable.objects.get(school=school, day=day, period=period,
+                                                                           teacher=teacher)
+                                                print('period %i for %s was already assigned for %s. '
+                                                     'This will be updated...' % (prd, teacher_name, sub))
+                                                tt.the_class = the_class
+                                                tt.section = section
+                                                tt.subject = subject
+                                                tt.save()
+                                                print('updated period %s on %s for teacher %s to '
+                                                      'subject %s, class %s-%s' %
+                                                      (prd, d, teacher_name, sub, cls, sec))
+                                            except Exception as e:
+                                                print('exception 07032018-B from time_table views.py %s %s' % (
+                                                    e.message, type(e)))
+                                                print('period %s on %s for teacher %s has not been assigned. '
+                                                      'Assigning now...' %
+                                                            (prd, d, teacher_name))
+                                                tt = TimeTable(school=school, day=day, period=period, teacher=teacher)
+                                                tt.the_class = the_class
+                                                tt.section = section
+                                                tt.subject = subject
+                                                tt.save()
+                                                print('assigned period %s on %s for teacher %s to subject %s, '
+                                                      'class %s-%s' % (prd, d, teacher_name, sub, cls, sec))
                                     except Exception as e:
                                         print('something went wrong while retrieving objects associated with %s %s %s' %
                                               (cls, sec, sub))
