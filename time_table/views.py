@@ -587,13 +587,13 @@ class AbsentTeacherPeriods (generics.ListAPIView):
             for period in periods:
                 # now, find which teacher is free on this period
                 available = []
-                all_teachers = Teacher.objects.filter(school=school).order_by('first_name')
+                all_teachers = Teacher.objects.filter(school=school, active_status=True).order_by('first_name')
                 for a_teacher in all_teachers:
                     if a_teacher.email not in excluded_list:
                         print ('now checking %s %s availability for period # %s on %s' %
                                (a_teacher.first_name, a_teacher.last_name, period.period, d))
                         try:
-                            TeacherPeriods.objects.get(teacher=a_teacher, day=day, period=period)
+                            TimeTable.objects.get(teacher=a_teacher, day=day, period=period)
                             print ('%s %s is not available on %s for period: %s' %
                                    (a_teacher.first_name, a_teacher.last_name, d, period.period))
                         except Exception as e:
@@ -603,7 +603,7 @@ class AbsentTeacherPeriods (generics.ListAPIView):
                                    % (a_teacher.first_name, a_teacher.last_name, d, str(period.period)))
                             # 24/01/2018 - a requirement from JPS that they should also be able to see the load
                             # of the teacher for today. A less loaded teacher should be given arrangements on priority
-                            periods_count = TeacherPeriods.objects.filter(teacher=a_teacher, day=day).count()
+                            periods_count = TimeTable.objects.filter(teacher=a_teacher, day=day).count()
                             print('%s %s has %i periods today' %
                                   (a_teacher.first_name, a_teacher.last_name, periods_count))
                             available_teacher["login_id"] = str(a_teacher.email)
