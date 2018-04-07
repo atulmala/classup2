@@ -283,7 +283,7 @@ class TheTimeTable(generics.ListCreateAPIView):
 
                                 # part II - each teacher's period assignment for every day
                                 try:
-                                    tp = TeacherPeriods.objects.get(teacher=teacher, day=day, period=period)
+                                    tp = TeacherPeriods.objects.get(teacher=teacher, day=day, period=period) # third
                                     print ('period %s for %s %s is already set. This will be updated' %
                                            (str(the_period), teacher.first_name, teacher.last_name))
                                     tp.the_class = c
@@ -343,19 +343,26 @@ class TheTeacherPeriod (generics.ListAPIView):
             'valign': 'top',
             'border': 1
         })
-
-        sheet.write(2, 0, ugettext("S No."), header)
-        sheet.write(2, 1, ugettext("Teacher"), header)
-        sheet.write(2, 2, ugettext("Day"), header)
-        sheet.write(2, 3, ugettext("1"), header)
-        sheet.write(2, 4, ugettext("2"), header)
-        sheet.write(2, 5, ugettext("3"), header)
-        sheet.write(2, 6, ugettext("4"), header)
-        sheet.write(2, 7, ugettext("5"), header)
-        sheet.write(2, 8, ugettext("6"), header)
-        sheet.write(2, 9, ugettext("7"), header)
-        sheet.write(2, 10, ugettext("8"), header)
-        sheet.write(2, 11, ugettext("Total"), header)
+        cell_center = workbook.add_format({
+            'text_wrap': True,
+        })
+        row = 2
+        sheet.write(row, 0, ugettext("S No."), header)
+        sheet.write(row, 1, ugettext("Teacher"), header)
+        sheet.write(row, 2, ugettext("Day"), header)
+        sheet.write(row, 3, ugettext("I"), header)
+        sheet.write(row, 4, ugettext("II"), header)
+        sheet.write(row, 5, ugettext("III"), header)
+        sheet.write(row, 6, ugettext("IV"), header)
+        sheet.write(row, 7, ugettext("V"), header)
+        sheet.write(row, 8, ugettext("VI"), header)
+        sheet.write(row, 9, ugettext("VII"), header)
+        sheet.write(row, 10, ugettext("VIII"), header)
+        sheet.write(row, 11, ugettext("Total"), header)
+        sheet.set_column('A:A', 5)
+        sheet.set_column('B:B', 10)
+        sheet.set_column('C:C', 6)
+        sheet.set_column('D:K', 9)
 
         school_id = request.session['school_id']
         school = School.objects.get(id=school_id)
@@ -376,11 +383,12 @@ class TheTeacherPeriod (generics.ListAPIView):
                 for i in range(1, 9):
                     period = Period.objects.get(school=school, period=str(i))
                     try:
-                        tp = TeacherPeriods.objects.get(teacher=t, day=day, period=period)
-                        the_class = tp.the_class.standard
-                        section = tp.section.section
-                        class_sec = the_class + '-' + section
-                        sheet.write_string (row, i+2, class_sec)
+                        tt = TimeTable.objects.get(teacher=t, day=day, period=period) # first occurrence
+                        the_class = tt.the_class.standard
+                        section = tt.section.section
+                        subject = tt.subject.subject_name
+                        class_sec_sub = '%s-%s \n(%s)' % (the_class, section, subject)
+                        sheet.write_string (row, i+2, class_sec_sub, cell_center)
                         day_total = day_total + 1
                         week_total = week_total + 1
 
@@ -394,7 +402,19 @@ class TheTeacherPeriod (generics.ListAPIView):
                     sheet.write_number (row, i+2+1, day_total)
                 row = row + 1
             sheet.write_number (row, i+2+1, week_total, header)
-            row = row + 2
+            row += 2
+            sheet.write(row, 1, ugettext("Teacher"), header)
+            sheet.write(row, 2, ugettext("Day"), header)
+            sheet.write(row, 3, ugettext("I"), header)
+            sheet.write(row, 4, ugettext("II"), header)
+            sheet.write(row, 5, ugettext("III"), header)
+            sheet.write(row, 6, ugettext("IV"), header)
+            sheet.write(row, 7, ugettext("V"), header)
+            sheet.write(row, 8, ugettext("VI"), header)
+            sheet.write(row, 9, ugettext("VII"), header)
+            sheet.write(row, 10, ugettext("VIII"), header)
+            sheet.write(row, 11, ugettext("Total"), header)
+            row += 1
             s_no = s_no + 1
 
         workbook.close()
@@ -544,8 +564,8 @@ class AbsentTeacherPeriods (generics.ListAPIView):
 
                 # get the period list that this teacher was supposed to take today
                 try:
-                    teacher_periods = TeacherPeriods.objects.\
-                        filter(teacher=absent_teacher, day=day).order_by ('period__period')
+                    teacher_periods = TimeTable.objects.filter(teacher=absent_teacher,
+                                                               day=day).order_by ('period__period')
                     print ('periods = ')
                     print (teacher_periods)
                     for tp in teacher_periods:
@@ -782,8 +802,8 @@ class GetArrangements (generics.ListAPIView):
 
                 # get the period list that this teacher was supposed to take today
                 try:
-                    teacher_periods = TeacherPeriods.objects.\
-                        filter(teacher=absent_teacher, day=day).order_by ('period__period')
+                    teacher_periods = TeacherPeriods.objects.filter(teacher=absent_teacher,
+                                                                    day=day).order_by ('period__period') # second
                     print ('periods = ')
                     print (teacher_periods)
                     for tp in teacher_periods:
