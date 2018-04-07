@@ -38,6 +38,18 @@ class TimeTableAdmin (admin.ModelAdmin):
 admin.site.register (TimeTable, TimeTableAdmin)
 
 
+class CTimeTableAdmin (admin.ModelAdmin):
+    def get_symbol(self, obj):
+        return obj.period.symbol
+    get_symbol.short_description = 'Symbol'
+
+    list_display = ('school', 'day', 'period', 'get_symbol', 'the_class', 'section', 'subject', 'teacher',)
+    search_fields = ('teacher__first_name',)
+
+
+admin.site.register (CTimeTable, CTimeTableAdmin)
+
+
 class TeacherPeriodsAdmin (admin.ModelAdmin):
     list_display = ('school', 'day', 'the_class', 'section', 'period', 'teacher',)
     list_filter = ('day',)

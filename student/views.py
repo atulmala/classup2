@@ -28,7 +28,6 @@ from .serializers import StudentSerializer, ParentSerializer
 
 from authentication.views import JSONResponse
 
-from operations import sms
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
     def enforce_csrf(self, request):
@@ -167,7 +166,7 @@ class StudentListDownload (generics.ListAPIView):
 
         }
         context_dict['school_name'] = request.session['school_name']
-        context_dict['header'] = 'Download Result Sheets'
+        context_dict['header'] = 'Download Student List for a Class'
 
         if request.session['user_type'] == 'school_admin':
             context_dict['user_type'] = 'school_admin'
@@ -200,8 +199,8 @@ class StudentListDownload (generics.ListAPIView):
                 section = form.cleaned_data['section']
                 print ('result sheet will be generated for %s-%s' % (the_class.standard, section.section))
 
-                excel_file_name = 'Student_List' + str(the_class.standard) + '-' + str(section.section) + '.xlsx'
-                excel_file_name = '%s_Student_List_%s-%s.xlsx' % (str(school_name), str(the_class.standard), str(section.section))
+                excel_file_name = '%s_Student_List_%s-%s.xlsx' % (str(school_name),
+                                                                  str(the_class.standard), str(section.section))
                 output = StringIO.StringIO(excel_file_name)
                 workbook = xlsxwriter.Workbook(output)
                 sheet = workbook.add_worksheet('Student List %s-%s' % (str(the_class.standard), section.section))

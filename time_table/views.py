@@ -14,6 +14,7 @@ from rest_framework.authentication import SessionAuthentication, BasicAuthentica
 from rest_framework import generics
 
 from setup.forms import ExcelFileUploadForm
+from exam.forms import ResultSheetForm
 from setup.views import validate_excel_extension
 
 from teacher.models import TeacherAttendance
@@ -131,17 +132,19 @@ class TheTimeTable(generics.ListCreateAPIView):
                                             print('retrieved class object associated with %s' % the_class)
                                             print(the_class)
                                         col += 1
-                                        sec = sheet.cell(row, col).value
-                                        print('section mentioned in the sheet %s' % sec)
+                                        the_sec = sheet.cell(row, col).value
+                                        print('section mentioned in the sheet %s' % the_sec)
 
                                         col += 1
                                         sub = sheet.cell(row, col).value
                                         print('subject mentioned in the sheet = %s' % sub)
-                                        if len(sec) > 0:
+                                        if len(the_sec) > 0:
                                             print('period %s for %s subject %s multiple sections of class %s: %s' %
-                                                  (prd, teacher_name, sub, cls, sec))
-                                            sec = sec.split()[0][0]
+                                                  (prd, teacher_name, sub, cls, the_sec))
+                                            sec = the_sec.split()[0][0]
                                             print('only first section %s will be taken into account' % sec)
+                                        else:
+                                            sec = the_sec
                                         if sec != '':
                                             section = Section.objects.get(school=school, section=sec)
                                             print('retrieved section object associated with %s' % sec)
@@ -178,6 +181,40 @@ class TheTimeTable(generics.ListCreateAPIView):
                                                 tt.save()
                                                 print('assigned period %s on %s for teacher %s to subject %s, '
                                                       'class %s-%s' % (prd, d, teacher_name, sub, cls, sec))
+                                            # 07/04/2018 - also make same entries in the ClassTimeTable
+                                            if len(the_sec) > 1:
+                                                print('dealing with multiple sections here %s' % the_sec)
+                                            sec_list = list(the_sec)
+                                            print('sec_list = ')
+                                            print(sec_list)
+                                            for sec in sec_list:
+                                                section = Section.objects.get(school=school, section=sec)
+                                                try:
+                                                    ctt = CTimeTable.objects.get(school=school, day=day, period=period,
+                                                                                 section=section, teacher=teacher)
+                                                    print('CTimeTable period %i for %s was already assigned for %s. '
+                                                          'This will be updated...' % (prd, teacher_name, sub))
+                                                    ctt.the_class = the_class
+                                                    ctt.section = section
+                                                    ctt.subject = subject
+                                                    ctt.save()
+                                                    print('updated period %s on %s for teacher %s to '
+                                                          'subject %s, class %s-%s' %
+                                                          (prd, d, teacher_name, sub, cls, sec))
+                                                except Exception as e:
+                                                    print('exception 07032018-C from time_table views.py %s %s' % (
+                                                        e.message, type(e)))
+                                                    print('CTimeTable period %s on %s for teacher %s has not been assigned. '
+                                                          'Assigning now...' %
+                                                          (prd, d, teacher_name))
+                                                    ctt = CTimeTable(school=school, day=day,
+                                                                    period=period, teacher=teacher)
+                                                    ctt.the_class = the_class
+                                                    ctt.section = section
+                                                    ctt.subject = subject
+                                                    ctt.save()
+                                                    print('assigned period %s on %s for teacher %s to subject %s, '
+                                                          'class %s-%s' % (prd, d, teacher_name, sub, cls, sec))
                                     except Exception as e:
                                         print('something went wrong while retrieving objects associated with %s %s %s' %
                                               (cls, sec, sub))
@@ -1018,3 +1055,156 @@ class NotifyArrangements(generics.ListCreateAPIView):
             print ('failed to load json from request')
             print ('Exception 06012018-A from time_table views.py %s %s' % (e.message, type(e)))
             return HttpResponse(status=201)
+
+
+class ClassTimeTable(generics.ListAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def get(self, request, *args, **kwargs):
+        context_dict = {
+
+        }
+        context_dict['school_name'] = request.session['school_name']
+        context_dict['header'] = 'Download Time Table for a Class'
+
+        if request.session['user_type'] == 'school_admin':
+            context_dict['user_type'] = 'school_admin'
+
+        school_id = request.session['school_id']
+        form = ResultSheetForm(school_id=school_id)
+        context_dict['form'] = form
+        return render(request, 'classup/student_list.html', context_dict)
+
+    def post(self, request, *args, **kwargs):
+        context_dict = {
+
+        }
+        context_dict['school_name'] = request.session['school_name']
+        context_dict['header'] = 'Download Time Table for a Class'
+
+        if request.session['user_type'] == 'school_admin':
+            context_dict['user_type'] = 'school_admin'
+        if "cancel" in request.POST:
+            return render(request, 'classup/student_list.html', context_dict)
+        else:
+            school_id = request.session['school_id']
+            school = School.objects.get(id=school_id)
+            print(school)
+            school_name = school.school_name
+            school_name = school_name.replace(' ', '_')
+            print(school_name)
+            form = ResultSheetForm(request.POST, school_id=school_id)
+
+            if form.is_valid():
+                the_class = form.cleaned_data['the_class']
+                print(the_class)
+                section = form.cleaned_data['section']
+                print(section)
+                print ('Time Table will be generated for %s-%s' % (the_class.standard, section.section))
+
+                excel_file_name = '%s_Time_Table_%s-%s.xlsx' % (str(school_name),
+                                                                  str(the_class.standard), str(section.section))
+                output = StringIO.StringIO(excel_file_name)
+                workbook = xlsxwriter.Workbook(output)
+                sheet = workbook.add_worksheet('Time Table %s-%s' % (str(the_class.standard), section.section))
+
+                border = workbook.add_format()
+                border.set_border()
+
+                title = workbook.add_format({
+                    'bold': True,
+                    'font_size': 14,
+                    'align': 'center',
+                    'valign': 'vcenter'
+                })
+
+                cell_normal = workbook.add_format({
+                    'align': 'left',
+                    'valign': 'top',
+                    'text_wrap': True
+                })
+                cell_normal.set_border()
+                cell_center = workbook.add_format({
+                    'align': 'center',
+                    'valign': 'vcenter',
+                    'text_wrap': True,
+                    'bold': True
+                })
+                cell_center.set_border()
+
+                heading = 'Time Table for %s-%s' % (the_class, section)
+                sheet.merge_range('B1:J1', heading, title)
+                sheet.set_column('A:A', 2)
+                sheet.set_column('B:B', 9)
+                sheet.set_column('C:J', 12)
+
+                # set the border
+                for row in range(2, 9):
+                    for col in range(1, 10):
+                        sheet.write(row, col, '', border)
+                days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+                sequence = ['1', '2', '3', '4', '5', '6', '7', '8']
+                period = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII']
+
+                row = 2
+                col = 1
+                sheet.write_string(row, col, 'Day', cell_center)
+                col += 1
+                for p in period:
+                    sheet.write_string(row, col, p, cell_center)
+                    col +=1
+                row += 1
+                col = 1
+                for d in days:
+                    day = DaysOfWeek.objects.get(day=d)
+                    sheet.write_string(row, col, d, cell_center)
+                    col += 1
+                    for seq in sequence:
+                        try:
+                            period = Period.objects.filter(school=school, period=seq)
+                            tt = CTimeTable.objects.get(school=school, day=day, period=period,
+                                                       the_class=the_class, section=section)
+                            subject = tt.subject.subject_name
+                            teacher = '%s %s' % (tt.teacher.first_name, tt.teacher.last_name)
+                            print('on %s, period %s in class %s-%s is of subject %s taken by %s' %
+                                  (d, seq, the_class.standard, section.section, subject, teacher))
+                            entry = '%s\n(%s)' % (subject, teacher)
+                            sheet.write_string(row, col, entry, cell_normal)
+                            col += 1
+                        except Exception as e:
+                            print('failed to retrieve the time table details of %s period %s class %s-%s' %
+                                  (d, seq, the_class.standard, section.section))
+                            print('exception 07042018-A from time_table views.py %s %s' % (e.message, type(e)))
+                            # see if multiple teachers are assigned (in case of subjects like music)
+                            try:
+                                tt = CTimeTable.objects.filter(school=school, day=day, period=period,
+                                                        the_class=the_class, section=section)
+
+                                if tt.count() > 0:
+                                    print(tt)
+                                    print('multiple teacher assignment case')
+                                    tt = tt[:1].get()
+                                    subject = tt.subject.subject_name
+                                    teacher = '%s %s' % (tt.teacher.first_name, tt.teacher.last_name)
+                                    print('on %s, period %s in class %s-%s is of subject %s taken by %s' %
+                                          (d, seq, the_class.standard, section.section, subject, teacher))
+                                    entry = '%s\n(%s)' % (subject, teacher)
+                                    sheet.write_string(row, col, entry, cell_normal)
+                            except Exception as e:
+                                print('%s period %s for class %s-%s is not set' %
+                                      (d, seq, the_class.standard, section.section))
+                                print('exception 07042018-E from time_table views.py %s %s' % (e.message, type(e)))
+                            col += 1
+                    row += 1
+                    col = 1
+                workbook.close()
+                response = HttpResponse(content_type='application/vnd.ms-excel')
+                response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
+                response.write(output.getvalue())
+                return response
+            else:
+                error = 'You have missed to select either Class, or Section'
+                form = ResultSheetForm(request)
+                context_dict['form'] = form
+                form.errors['__all__'] = form.error_class([error])
+                return render(request, 'classup/student_list.html', context_dict)

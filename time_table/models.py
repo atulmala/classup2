@@ -61,6 +61,31 @@ class TimeTable(models.Model):
     teacher = models.ForeignKey(Teacher)
 
 
+class CTimeTable(models.Model):
+    school = models.ForeignKey(School)
+    day = models.ForeignKey(DaysOfWeek)
+    the_class = models.ForeignKey(Class)
+    section = models.ForeignKey(Section)
+    period = models.ForeignKey(Period)
+    subject = models.ForeignKey(Subject, null=True)
+    teacher = models.ForeignKey(Teacher)
+
+    def __unicode__(self):
+        details = '%s-%s subject: %s %s' % (self.the_class.standard, self.section.section,
+                                            self.subject.subject_name, self.teacher.email)
+        return details
+
+
+class ClassTimeTable(models.Model):
+    school = models.ForeignKey(School)
+    day = models.ForeignKey(DaysOfWeek)
+    the_class = models.ForeignKey(Class)
+    section = models.ForeignKey(Section)
+    period = models.ForeignKey(Period)
+    subject = models.ForeignKey(Subject, null=True)
+    teacher = models.ForeignKey(Teacher)
+
+
 class TeacherPeriods (models.Model):
     school = models.ForeignKey(School)
     teacher = models.ForeignKey(Teacher)

@@ -24,6 +24,8 @@ urlpatterns = [
     url(r'^download_arrangements/$', views.GetArrangements.as_view(), name='download_arrangements'),
 
     url(r'^generate_entry_sheet/$', views.GenerateEntrySheet.as_view(), name='generate_entry_sheet'),
+
+    url(r'^class_time_table/$', views.ClassTimeTable.as_view(), name='class_time_table'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)
