@@ -21,3 +21,12 @@ class ArrangementSerializer (serializers.ModelSerializer):
 
     class Meta:
         model = Arrangements
+
+
+class CTimeTableSerializer(serializers.ModelSerializer):
+    the_class = serializers.SlugRelatedField(read_only=True, slug_field='standard')
+    section = serializers.SlugRelatedField(read_only=True, slug_field='section')
+    subject = serializers.SlugRelatedField(read_only=True, slug_field='subject_name')
+
+    class Meta:
+        model = CTimeTable

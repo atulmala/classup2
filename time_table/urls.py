@@ -26,6 +26,11 @@ urlpatterns = [
     url(r'^generate_entry_sheet/$', views.GenerateEntrySheet.as_view(), name='generate_entry_sheet'),
 
     url(r'^class_time_table/$', views.ClassTimeTable.as_view(), name='class_time_table'),
+
+    url(r'^get_time_table/(?P<school_id>\w+)/(?P<for>\w+)/(?P<id>[\w.@+-]+)/(?P<day>\w+)/$', views.PeriodList.as_view(),
+        name='get_time_table'),
+
+
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

@@ -16,6 +16,7 @@ from rest_framework import generics
 from setup.forms import ExcelFileUploadForm
 from exam.forms import ResultSheetForm
 from setup.views import validate_excel_extension
+from student.models import Student
 
 from teacher.models import TeacherAttendance
 
@@ -40,6 +41,36 @@ class ArrangementListForTeachers (generics.ListAPIView):
         teacher = Teacher.objects.get (email=email)
         q = Arrangements.objects.filter (teacher=teacher, date=datetime.datetime.today()).order_by ('period')
         return q
+
+
+class PeriodList(generics.ListAPIView):
+    serializer_class = CTimeTableSerializer
+
+    def get_queryset(self):
+        school_id = self.kwargs['school_id']
+        print('school_id = %s' % school_id)
+        d = self.kwargs['day']
+        print('d = %s' % d)
+        f = self.kwargs['for']
+        print('f = %s' % f)
+        id = self.kwargs['id']
+        print('id = %s' % id)
+
+        if school_id != 'na':
+            school = School.objects.get(id=school_id)
+
+        day = DaysOfWeek.objects.get(day=d)
+
+        if f == 'teacher':
+            teacher = Teacher.objects.get(school=school, email=id)
+            q = TimeTable.objects.filter(teacher=teacher, day=day).order_by('period__period')
+            return q
+        if f == 'student':
+            student = Student.objects.get(pk=id)
+            the_class = student.current_class
+            section = student.current_section
+            q = CTimeTable.objects.filter(the_class=the_class, section=section, day=day).order_by('period__period')
+            return q
 
 
 class TheTimeTable(generics.ListCreateAPIView):
