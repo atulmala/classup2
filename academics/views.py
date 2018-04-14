@@ -24,7 +24,7 @@ from teacher.models import Teacher
 from student.models import Student
 from setup.models import Configurations, School
 from exam.models import HigherClassMapping
-from .models import Class, Section, Subject, ClassTest, TestResults, Exam, HW, TermTestResult, CoScholastics, ThirdLang
+from .models import Class, Section, Subject, ClassTest, TestResults, Exam1, HW, TermTestResult, CoScholastics, ThirdLang
 from .serializers import ClassSerializer, SectionSerializer, \
     SubjectSerializer, TestSerializer, ClassSectionForTestSerializer, \
     TestMarksSerializer, TestTypeSerializer, ExamSerializer, HWSerializer, CoScholasticSerializer
@@ -79,7 +79,7 @@ class ExamList(generics.ListCreateAPIView):
         school = student.school
         the_class = student.current_class
         class_sequence = the_class.sequence
-        q = Exam.objects.filter(school=school, start_class_sequence__lte=class_sequence,
+        q = Exam1.objects.filter(school=school, start_class_sequence__lte=class_sequence,
                                 end_class_sequence__gte=class_sequence)
 
         try:

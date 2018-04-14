@@ -112,7 +112,6 @@ def log_entry(user, event, category, outcome):
         log["school"] = "Undetermined"
         r = requests.post(server, data=json.dumps(log), headers=headers)
         print(r.text)
-
         return
 
 

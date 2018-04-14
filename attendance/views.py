@@ -182,6 +182,9 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                     configuration = Configurations.objects.get(school=school)
                     school_name = school.school_name
 
+                    # 14/04/2018 - for collage students, SMS will be sent to students
+                    type = configuration.type
+
                     try:
                         parent_name = student.parent.parent_name
                         # prepare the message
@@ -196,13 +199,22 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                             (f_name, l_name) = the_name.split(' ')
                         else:
                             f_name = the_name
-                        message = 'Dear ' + parent_name + ', your ward ' + f_name
+                        if type == 'Collage':
+                            message = 'Dear %s, you' % the_name
+                        else:
+                            message = 'Dear ' + parent_name + ', your ward ' + f_name
+
+                        if type == 'Collage':
+                            message += ' were'
+                        else:
+                            message += 'was'
 
                         # if subject is main then we need to tell that student was absent
                         if subject == 'Main' or subject == 'main' or subject == 'MAIN':
-                            message += ' was absent on ' + str(d) + '/' + str(m) + '/' + str(y)
+
+                            message += ' absent on ' + str(d) + '/' + str(m) + '/' + str(y)
                         else:
-                            message += ' was absent on ' + str(d) + '/' + str(m) + '/' + str(y) + \
+                            message += ' absent on ' + str(d) + '/' + str(m) + '/' + str(y) + \
                                        ' in the attendance of ' + subject
                         # 04/05/2017 - coaching classes does not require application for absence
                         if configuration.type != 'school':

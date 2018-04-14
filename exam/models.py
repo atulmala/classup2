@@ -23,6 +23,7 @@ class HigherClassMapping(models.Model):
 class NotPromoted(models.Model):
     student = models.ForeignKey(Student)
 
+
 class NPromoted(models.Model):
     student = models.ForeignKey(Student)
     details = models.CharField(max_length=100, default='  ')

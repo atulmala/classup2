@@ -16,7 +16,7 @@ from setup.forms import ExcelFileUploadForm
 from authentication.views import JSONResponse
 
 from setup.models import School, UserSchoolMapping
-from academics.models import Class, Section, Subject, TestResults, ClassTest, ClassTeacher, Exam, TeacherSubjects
+from academics.models import Class, Section, Subject, TestResults, ClassTeacher, Exam1, TeacherSubjects
 from teacher.models import Teacher
 from student.models import Student, Parent, DOB
 from .models import Configurations
@@ -1408,7 +1408,7 @@ def setup_exam(request):
                     # to insert a duplicate
 
                     try:
-                        e = Exam.objects.get(school=school, title=exam_title, start_class=exam_start_class,
+                        e = Exam1.objects.get(school=school, title=exam_title, start_class=exam_start_class,
                                              end_class=exam_end_class)
                         if e:
                             print ('Exam ' + exam_title + ' for ' + exam_start_class + ' and ' + exam_end_class
@@ -1427,7 +1427,7 @@ def setup_exam(request):
                         print ('Exam  ' + exam_title + ' for ' + exam_start_class + ' and ' +
                                exam_end_class + ' is not yet set. Setting it now...')
                         try:
-                            e = Exam(school=school, title=exam_title, start_date=exam_start_date,
+                            e = Exam1(school=school, title=exam_title, start_date=exam_start_date,
                                      end_date=exam_end_date, start_class=exam_start_class, end_class=exam_end_class)
                             e.save()
                             print ('successfully created Exam  ' + exam_title + ' with start date: '

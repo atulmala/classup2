@@ -52,7 +52,6 @@ class Subject(models.Model):
         ordering = ('subject_name', )
 
 
-
 class ThirdLang(models.Model):
     student = models.ForeignKey(Student)
     third_lang = models.ForeignKey(Subject)
@@ -61,7 +60,33 @@ class ThirdLang(models.Model):
         return self.student.fist_name + ' ' + self.student.last_name + ' ' + self.third_lang.subject_name
 
 
+class Exam1(models.Model):
+    school = models.ForeignKey(School)
+    title = models.CharField(max_length=100)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    start_class = models.CharField(max_length=20, null=True)
+    start_class_sequence = models.SmallIntegerField(null=True)
+    end_class = models.CharField(max_length=20, null=True)
+    end_class_sequence = models.SmallIntegerField(null=True)
+
+    # what is provide in the data is the standard. We need to extract the sequence of the class
+    def save(self, *args, **kwargs):
+        sc = Class.objects.get(school=self.school, standard=self.start_class)
+        self.start_class_sequence = sc.sequence
+        ec = Class.objects.get(school=self.school, standard=self.end_class)
+        self.end_class_sequence = ec.sequence
+        super(Exam, self).save(*args, **kwargs)
+
+    def __unicode__(self):
+        return self.title + \
+               ' start date: ' + self.start_date.strftime('%d/%m/%Y') + \
+               ', end date: ' + self.end_date.strftime('%d/%m/%Y') + \
+               ', from class: ' + self.start_class + ' - ' + self.end_class
+
+
 class ClassTest(models.Model):
+    exam = models.ForeignKey(Exam1, null=True)
     date_conducted = models.DateField()
     teacher = models.ForeignKey(Teacher)
     subject = models.ForeignKey(Subject)
@@ -77,6 +102,31 @@ class ClassTest(models.Model):
     def __unicode__(self):
         return self.the_class.standard + ' ' + self.section.section + ' ' \
                + self.subject.subject_name + ' ' + (self.date_conducted).strftime('%d/%m/%Y')
+
+
+class Exam(models.Model):
+    school = models.ForeignKey(School)
+    title = models.CharField(max_length=100)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    start_class = models.CharField(max_length=20, null=True)
+    start_class_sequence = models.SmallIntegerField(null=True)
+    end_class = models.CharField(max_length=20, null=True)
+    end_class_sequence = models.SmallIntegerField(null=True)
+
+    # what is provide in the data is the standard. We need to extract the sequence of the class
+    def save(self, *args, **kwargs):
+        sc = Class.objects.get(school=self.school, standard=self.start_class)
+        self.start_class_sequence = sc.sequence
+        ec = Class.objects.get(school=self.school, standard=self.end_class)
+        self.end_class_sequence = ec.sequence
+        super(Exam, self).save(*args, **kwargs)
+
+    def __unicode__(self):
+        return self.title + \
+               ' start date: ' + self.start_date.strftime('%d/%m/%Y') + \
+               ', end date: ' + self.end_date.strftime('%d/%m/%Y') + \
+               ', from class: ' + self.start_class + ' - ' + self.end_class
 
 
 class TestResults(models.Model):
