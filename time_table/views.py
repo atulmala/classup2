@@ -870,7 +870,7 @@ class GetArrangements (generics.ListAPIView):
 
                 # get the period list that this teacher was supposed to take today
                 try:
-                    teacher_periods = TeacherPeriods.objects.filter(teacher=absent_teacher,
+                    teacher_periods = CTimeTable.objects.filter(teacher=absent_teacher,
                                                                     day=day).order_by ('period__period') # second
                     print ('periods = ')
                     print (teacher_periods)
@@ -884,6 +884,11 @@ class GetArrangements (generics.ListAPIView):
 
                         # see if an arrangement has been made for this period
                         try:
+                            print(school)
+                            print(today)
+                            print(period)
+                            print(the_class)
+                            print(section)
                             arrangement = Arrangements.objects.get(school=school, date=today, period=period,
                                                                    the_class=the_class, section=section)
                             substitute_teacher = arrangement.teacher.first_name + ' ' + arrangement.teacher.last_name
