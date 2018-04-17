@@ -136,7 +136,7 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                                 receiver.status = message_id
                                 receiver.save()
                             except Exception as e:
-                                print ('exception 291117 from sms.py %s %s' % (e.message, type(e)))
+                                print ('exception 2911201-X from sms.py %s %s' % (e.message, type(e)))
                                 print ('failed to store the status for Teacher Message History Recepient record')
                     except Exception as e:
                         print ('Exception60 from sms.py = %s (%s)' % (e.message, type(e)))
