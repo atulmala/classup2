@@ -807,8 +807,12 @@ def send_bulk_sms(request):
                     student_list = Student.objects.filter(current_class=the_class, active_status=True)
                     start_time = time.time()
                     for student in student_list:
+                        student_name = '%s %s' % (student.fist_name, student.last_name)
                         parent = student.parent
-                        message = 'Dear ' + parent.parent_name + ', '
+                        if configuration.type == 'Collage':
+                            message = 'Dear %s, ' % student_name
+                        else:
+                            message = 'Dear %s, ' % parent.parent_name
                         message += message_body + ' Regards, ' + school.school_name
                         print(message)
                         mobile = parent.parent_mobile1
@@ -994,7 +998,11 @@ def send_message(request, school_id):
                                 (f_name, l_name) = the_name.split(' ')
                             else:
                                 f_name = the_name
-                            message_header = 'Dear ' + p.parent_name + ', message regarding ' + \
+                            if configuration.type == 'Collage':
+                                student_name = '%s %s' % (s.fist_name, s.last_name)
+                                message_header = 'Dear %s, ' % student_name
+                            else:
+                                message_header = 'Dear ' + p.parent_name + ', message regarding ' + \
                                              f_name + ': '
                             message = message_header + message_content + message_trailer
                             print ('message = ' + message)

@@ -899,7 +899,6 @@ class GetArrangements (generics.ListAPIView):
                     print ('looks like %s %s had no periods today' % (absent_teacher.first_name,
                                                                       absent_teacher.last_name))
                 s_no = s_no + 1
-
         except Exception as e:
             print ('exception 211117-B from time_table views.py %s %s' % (e.message, type(e)))
 

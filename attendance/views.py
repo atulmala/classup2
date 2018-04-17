@@ -207,7 +207,7 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                         if type == 'Collage':
                             message += ' were'
                         else:
-                            message += 'was'
+                            message += ' was'
 
                         # if subject is main then we need to tell that student was absent
                         if subject == 'Main' or subject == 'main' or subject == 'MAIN':
@@ -286,7 +286,6 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
             except Exception as e:
                 print ('Exception6 from attendance views.py = %s (%s)' % (e.message, type(e)))
                 log_entry(teacher, "Absence was already marked. Exception 6 from attendance views.py", "Normal", True)
-
     response_data['status'] = 'success'
     log_entry(teacher, "Attendance Processing Complete", "Normal", True)
     return JSONResponse(response_data, status=200)
