@@ -26,9 +26,8 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
     if conf.send_sms:
         # values for softsms vendor
         key = '58fc1def26489'
-        msg = unicode(message)
-        print(msg)
-        m1 = msg.replace(" ", "+")
+
+        m1 = message.replace(" ", "+")
         print(m1)
         m2 = m1.replace("&", "%26")
         m0 = m2.replace("\n", "+")
@@ -40,7 +39,7 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
 
         url = 'http://softsms.in/app/smsapi/index.php?'
         url += 'key=%s' % key
-        url += '&type=Unicode'
+        url += '&type=Text'
         url += '&contacts=%s' % mobile
         url += '&senderid=%s' % sender_id
         url += '&msg=%s' % m3
