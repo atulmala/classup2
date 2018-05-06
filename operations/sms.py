@@ -39,7 +39,7 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
 
         url = 'http://softsms.in/app/smsapi/index.php?'
         url += 'key=%s' % key
-        url += '&type=Text'
+        url += '&type=Unicode'
         url += '&contacts=%s' % mobile
         url += '&senderid=%s' % sender_id
         url += '&msg=%s' % m3
@@ -136,7 +136,7 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                                 receiver.status = message_id
                                 receiver.save()
                             except Exception as e:
-                                print ('exception 2911201-X from sms.py %s %s' % (e.message, type(e)))
+                                print ('exception 29112017-X from sms.py %s %s' % (e.message, type(e)))
                                 print ('failed to store the status for Teacher Message History Recepient record')
                     except Exception as e:
                         print ('Exception60 from sms.py = %s (%s)' % (e.message, type(e)))
