@@ -26,7 +26,7 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
     if conf.send_sms:
         # values for softsms vendor
         key = '58fc1def26489'
-        message.encode('utf-8')
+        message.decode('utf-8', 'ignore')
         print(message)
         m1 = message.replace(" ", "+")
         print(m1)
