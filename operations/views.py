@@ -897,6 +897,8 @@ def send_message(request, school_id):
             print(data)
 
             message_content = data['message']
+            message_content.decode('utf-8')
+            print(message_content)
             email = data['teacher']
             t = Teacher.objects.get(email=email)
 
