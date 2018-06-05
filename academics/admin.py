@@ -22,7 +22,7 @@ admin.site.register(Class, ClassAdmin)
 
 class SubjectAdmin(admin.ModelAdmin):
     search_fields = ['subject_name']
-    list_display = ['school', 'subject_name', 'subject_sequence', 'subject_code', 'subject_type',]
+    list_display = ['school', 'subject_name', 'subject_prac', 'subject_sequence', 'subject_code', 'subject_type',]
     list_filter = ['school',]
 
 
@@ -42,8 +42,12 @@ class TestAdmin(admin.ModelAdmin):
         return obj.subject
     get_subject.short_description = 'Subject'
 
-    list_display = ('get_school_name', 'get_class', 'subject', 'teacher', 'date_conducted', 'test_type', 'max_marks',
-                    'passing_marks', 'is_completed', )
+    def get_exam(self, obj):
+        return obj.exam
+    get_exam.short_description = 'Exam'
+
+    list_display = ('get_school_name', 'get_class', 'subject', 'teacher', 'date_conducted', 'get_exam',
+                    'test_type', 'max_marks', 'passing_marks', 'is_completed', )
 
     list_filter = ('the_class__school', 'test_type',)
 
@@ -182,7 +186,8 @@ class ExamAdmin(admin.ModelAdmin):
         return obj.school
     get_school_name.short_description = 'School'
 
-    list_display = ('school', 'title', 'start_date', 'end_date', 'start_class', 'end_class',)
+    list_display = ('school', 'title', 'exam_type', 'start_date', 'end_date', 'start_class', 'end_class',)
+    list_filter = ('school',)
 
 
 admin.site.register(Exam, ExamAdmin)

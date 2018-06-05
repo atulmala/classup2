@@ -16,7 +16,7 @@ from setup.forms import ExcelFileUploadForm
 from authentication.views import JSONResponse
 
 from setup.models import School, UserSchoolMapping
-from academics.models import Class, Section, Subject, TestResults, ClassTeacher, Exam1, TeacherSubjects
+from academics.models import Class, Section, Subject, TestResults, ClassTeacher, Exam, TeacherSubjects
 from teacher.models import Teacher
 from student.models import Student, Parent, DOB
 from .models import Configurations
@@ -1403,18 +1403,21 @@ def setup_exam(request):
                     print (exam_start_class)
                     exam_end_class = sheet.cell(row, 4).value
                     print (exam_end_class)
+                    exam_type = sheet.cell(row, 5).value
+
 
                     # Now we are ready to insert into db. But, we need to be sure that we are not trying
                     # to insert a duplicate
 
                     try:
-                        e = Exam1.objects.get(school=school, title=exam_title, start_class=exam_start_class,
+                        e = Exam.objects.get(school=school, title=exam_title, start_class=exam_start_class,
                                              end_class=exam_end_class)
                         if e:
                             print ('Exam ' + exam_title + ' for ' + exam_start_class + ' and ' + exam_end_class
                                    + ' already set. This will be updated...')
                             e.start_date = exam_start_date
                             e.end_date = exam_end_date
+                            e.exam_type = exam_type
                             try:
                                 e.save()
                                 print ('successfully updated Exam ' + exam_title)
@@ -1427,8 +1430,9 @@ def setup_exam(request):
                         print ('Exam  ' + exam_title + ' for ' + exam_start_class + ' and ' +
                                exam_end_class + ' is not yet set. Setting it now...')
                         try:
-                            e = Exam1(school=school, title=exam_title, start_date=exam_start_date,
-                                     end_date=exam_end_date, start_class=exam_start_class, end_class=exam_end_class)
+                            e = Exam(school=school, title=exam_title, start_date=exam_start_date,
+                                      end_date=exam_end_date, start_class=exam_start_class, end_class=exam_end_class,
+                                      exam_type=exam_type)
                             e.save()
                             print ('successfully created Exam  ' + exam_title + ' with start date: '
                                    + str(exam_start_date) + ' and end date: ' + str(exam_end_date) +

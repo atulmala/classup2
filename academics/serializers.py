@@ -21,18 +21,22 @@ class SectionSerializer(serializers.ModelSerializer):
 class SubjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subject
-        fields = ('subject_name', 'subject_code', 'subject_sequence')
+        fields = ('subject_name', 'subject_code', 'subject_prac', 'subject_sequence',)
 
 
 class TestSerializer(serializers.ModelSerializer):
     subject = serializers.StringRelatedField()
     the_class = serializers.StringRelatedField()
     section = serializers.StringRelatedField()
+    subject_prac = serializers.SerializerMethodField()
 
     class Meta:
         model = ClassTest
-        fields = ('id', 'date_conducted', 'teacher', 'subject', 'the_class', 'section',
+        fields = ('id', 'date_conducted', 'exam', 'teacher', 'subject', 'subject_prac', 'the_class', 'section',
                   'max_marks', 'passing_marks', 'grade_based', 'is_completed', 'syllabus', 'test_type',)
+
+    def get_subject_prac(self, obj):
+        return obj.subject.subject_prac
 
 
 class TestTypeSerializer(serializers.ModelSerializer):
@@ -120,7 +124,7 @@ class ClassSectionForTestSerializer(serializers.ModelSerializer):
 class ExamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Exam
-        fields = ('id', 'title', 'start_date', 'end_date',)
+        fields = ('id', 'title', 'exam_type', 'start_date', 'end_date',)
 
 
 class WorkingDaysSerializer(serializers.ModelSerializer):

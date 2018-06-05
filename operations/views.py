@@ -896,8 +896,7 @@ def send_message(request, school_id):
             data = json.loads(request.body)
             print(data)
 
-            message_content = unicode(data['message'])
-            print(message_content)
+            message_content = data['message']
             email = data['teacher']
             t = Teacher.objects.get(email=email)
 

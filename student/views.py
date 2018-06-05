@@ -254,9 +254,13 @@ class StudentListDownload (generics.ListAPIView):
                 col += 1
                 sheet.write_string(row, col, 'Current Section', title)
                 col += 1
-                sheet.write_string(row, col, 'Promoted Class', title)
+                sheet.write_string(row, col, 'Parent Name', title)
                 col += 1
-                sheet.write_string(row, col, 'Promoted Section', title)
+                sheet.write_string(row, col, 'Parent Mobile', title)
+                col += 1
+                # sheet.write_string(row, col, 'Promoted Class', title)
+                # col += 1
+                # sheet.write_string(row, col, 'Promoted Section', title)
 
                 try:
                     students = Student.objects.filter(school=school, current_class=the_class,
@@ -268,9 +272,9 @@ class StudentListDownload (generics.ListAPIView):
                     s_no = 1
                     for student in students:
                         sheet.write_number (row, col, s_no, cell_normal)
-                        col = col + 1
+                        col += 1
                         sheet.write_string (row, col, student.student_erp_id, cell_normal)
-                        col = col + 1
+                        col += 1
                         student_name = '%s %s' % (student.fist_name, student.last_name)
                         sheet.write_string (row, col, student_name, cell_normal)
 
@@ -283,6 +287,14 @@ class StudentListDownload (generics.ListAPIView):
                         sheet.write_string(row, col, current_section, cell_normal)
                         col += 1
 
+                        # 05/06/2018 parent name and phone number
+                        parent = student.parent.parent_name
+                        sheet.write_string(row, col, parent, cell_normal)
+                        col += 1
+                        mobile = student.parent.parent_mobile1
+                        sheet.write_string(row, col, mobile, cell_normal)
+                        col += 1
+
                         # promoted class & section
                         current_class_seq = student.current_class.sequence
                         next_class_seq = current_class_seq + 1
@@ -291,9 +303,9 @@ class StudentListDownload (generics.ListAPIView):
                             next_class = next.standard
                             print('determined the next class for %s: %s-%s' %
                                   (student_name, next_class, current_section))
-                            sheet.write_string(row, col, next_class, cell_normal)
+                            #sheet.write_string(row, col, next_class, cell_normal)
                             col += 1
-                            sheet.write_string(row, col, current_section, cell_normal)
+                            #sheet.write_string(row, col, current_section, cell_normal)
                         except Exception as e:
                             print('failed to determine the next class for %s' % student_name)
                             print('exception 06032018-A from student views.py %s %s' % (e.message, type(e)))

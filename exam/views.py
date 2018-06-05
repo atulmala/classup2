@@ -1266,7 +1266,7 @@ class ResultSheet(generics.ListCreateAPIView):
                 })
 
                 school_name = school.school_name + ' ' + school.school_address
-                title_text = 'CONSOLIDATED RESULT SHEET (2017-2018) FOR CLASS %s-%s' % \
+                title_text = 'CONSOLIDATED RESULT SHEET (2018-2019) FOR CLASS %s-%s' % \
                              (the_class.standard, section.section)
                 print (title_text)
                 # get the name of the class teacher

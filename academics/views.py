@@ -70,6 +70,20 @@ class SubjectList(generics.ListCreateAPIView):
         return q
 
 
+class ExamListTeacher(generics.ListAPIView):
+    serializer_class = ExamSerializer
+
+    def get_queryset(self):
+        teacher_id = self.kwargs['teacher']
+        teacher = Teacher.objects.get(email=teacher_id)
+        teacher_name = '%s %s' % (teacher.first_name, teacher.last_name)
+        school = teacher.school
+
+        print('retrieving exam list for %s of %s' % (teacher_name, school.school_name))
+        q = Exam.objects.filter(school=school).order_by('start_date')
+        return q
+        
+
 class ExamList(generics.ListCreateAPIView):
     serializer_class = ExamSerializer
 
@@ -109,9 +123,12 @@ class CompletedTestList(generics.ListCreateAPIView):
 
     def get_queryset(self):
         t = self.kwargs['teacher']
+        exam_id = self.kwargs['exam_id']
+        exam = Exam.objects.get(pk=exam_id)
+        print(exam)
 
         the_teacher = Teacher.objects.get(email=t)
-        q = ClassTest.objects.filter(teacher=the_teacher, is_completed=True).order_by('the_class__sequence',
+        q = ClassTest.objects.filter(teacher=the_teacher, exam=exam, is_completed=True).order_by('the_class__sequence',
                                                                                       'section__section',
                                                                                       'date_conducted')
         try:
@@ -129,9 +146,12 @@ class PendingTestList(generics.ListCreateAPIView):
 
     def get_queryset(self):
         t = self.kwargs['teacher']
-
+        exam_id = self.kwargs['exam_id']
+        exam = Exam.objects.get(pk=exam_id)
+        print(exam)
         the_teacher = Teacher.objects.get(email=t)
-        q = ClassTest.objects.filter(teacher=the_teacher, is_completed=False).order_by('the_class__sequence',
+
+        q = ClassTest.objects.filter(teacher=the_teacher, exam=exam, is_completed=False).order_by('the_class__sequence',
                                                                                       'section__section',
                                                                                       'date_conducted')
 
@@ -425,7 +445,8 @@ def create_hw(request):
 
 @csrf_exempt
 def create_test1(request, school_id, the_class, section, subject,
-                teacher, d, m, y, max_marks, pass_marks, grade_based, comments, test_type):
+                teacher, d, m, y, max_marks, pass_marks, grade_based, comments, exam_id):
+    print(request.method)
     context_dict = {
 
     }
@@ -434,461 +455,216 @@ def create_test1(request, school_id, the_class, section, subject,
     ninth_tenth = ['IX', 'X']
     middle_classes = ['V', 'VI', 'VII', 'VIII']
     junior_classes = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV']
-    if request.method == 'POST':
-        # all of the above except date are foreign key in Attendance model. Hence we need to get the actual object
-        school = School.objects.get(id=school_id)
-        c = Class.objects.get(school=school, standard=the_class)
-        print (c)
-        s = Section.objects.get(school=school, section=section)
-        print (s)
-        sub = Subject.objects.get(school=school, subject_name=subject)
-        print (sub)
-        t = Teacher.objects.get(email=teacher)
-        print (t)
-        the_date = date(int(y), int(m), int(d))
-        print (the_date)
 
-        # check to see if this test has already been created.
+
+    # all of the above except date are foreign key in Attendance model. Hence we need to get the actual object
+    school = School.objects.get(id=school_id)
+    c = Class.objects.get(school=school, standard=the_class)
+    print (c)
+    s = Section.objects.get(school=school, section=section)
+    print (s)
+    sub = Subject.objects.get(school=school, subject_name=subject)
+    print (sub)
+    t = Teacher.objects.get(email=teacher)
+    print (t)
+    the_date = date(int(y), int(m), int(d))
+    print (the_date)
+
+    exam = Exam.objects.get(pk=exam_id)
+
+    q = ClassTest.objects.filter(exam=exam, the_class=c, section=s, subject=sub)
+    print (q.count())
+    if q.count() > 0:
+        outcome = ('test for %s %s %s-%s already exist. Hence not creating' %
+                   (exam.title, sub, the_class, section))
+        print(outcome)
+        context_dict['outcome'] = outcome
+        return JSONResponse(context_dict, status=201)
+
+    print('test for %s %s %s-%s does not exist. Hence  creating' % (exam.title, sub, the_class, section))
+    test = ClassTest(date_conducted=the_date)
+    test.exam = exam
+    test.the_class = c
+    test.section = s
+    test.subject = sub
+    test.teacher = t
+    test.max_marks = float(max_marks)  # max_marks and pass_marks are passed as strings
+    test.passing_marks = float(pass_marks)
+
+    # 24/12/2017 for class XI & XII max marks & passing marks are different for every subject.
+    # Hence let us keep max marks = 100 and passing marks = 0. School will analyze in the result sheets
+    if the_class in higher_classes:
+        if exam.exam_type == 'term':
+            test.max_marks = 100.0
+            test.passing_marks = 0.0
+
+    test.test_type = exam.exam_type
+
+    if grade_based == '0':
+        print ('grade_based is 0')
+        test.grade_based = True
+
+    if grade_based == '1':
+        print ('grade_based is 1')
+        test.grade_based = False
+
+    print (grade_based)
+
+    test.syllabus = comments
+    test.is_completed = False
+
+    try:
+        test.save()
         try:
-            q = ClassTest.objects.filter(date_conducted=the_date, the_class=c, section=s, subject=sub, teacher=t)
-            print (q.count())
-
-            # make an entry to database only it is a fresh entry
-            if q.count() == 0:
-                test = ClassTest(date_conducted=the_date)
-                test.the_class = c
-                test.section = s
-                test.subject = sub
-                test.teacher = t
-                test.max_marks = float(max_marks)  # max_marks and pass_marks are passed as strings
-                test.passing_marks = float(pass_marks)
-
-                # 24/12/2017 for class XI & XII max marks & passing marks are different for every subject.
-                # Hence let us keep max marks = 100 and passing marks = 0. School will analyze in the result sheets
-                if the_class in higher_classes:
-                    if test_type == 'term':
-                        test.max_marks = 100.0
-                        test.passing_marks = 0.0
-
-                test.test_type = test_type
-
-                if grade_based == '0':
-                    print ('grade_based is 0')
-                    test.grade_based = True
-
-                if grade_based == '1':
-                    print ('grade_based is 1')
-                    test.grade_based = False
-
-                print (grade_based)
-
-                test.syllabus = comments
-                test.test_type = test_type
-                test.is_completed = False
-
-                try:
-                    test.save()
-                    try:
-                        action = 'Created test for '  + the_class + '-' + section + ', Subject: ' + subject
-                        log_entry(t.email, action, 'Normal', True)
-                    except Exception as e:
-                        print('unable to crete logbook entry')
-                        print ('Exception 510 from academics views.py %s %s' % (e.message, type(e)))
-                    print ('test successfully created')
-
-                except Exception as e:
-                    print ('Test creation failed')
-                    print ('Exception 509 from academics views.py Exception = %s (%s)' % (e.message, type(e)))
-                    return HttpResponse('Test Creation Failed')
-
-                # now, create entry for each student in table TestResults. We need to retrieve the list of student
-                # of the class associated with this test
-
-                student_list = Student.objects.filter(school=school, current_section__section=section,
-                                                      current_class__standard=the_class, active_status=True)
-                for student in student_list:
-                    # 06/11/2017 if the subject is third language or elective subject (class XI & XII),
-                    #  we need to filter students
-                    if sub.subject_type == 'Third Language':
-                        print ('this is a third language. Hence test results will be created for selected students')
-                        try:
-                            third_lang = ThirdLang.objects.get(third_lang=sub, student=student)
-                            print ('%s has chosen %s as third language' % (student.fist_name, sub.subject_name))
-                            test_result = TestResults(class_test=test, roll_no=student.roll_number,
-                                                      student=third_lang.student, marks_obtained=-5000.00, grade='')
-                            try:
-                                test_result.save()
-                                print (' test results successfully created for %s %s' % (
-                                student.fist_name, student.last_name))
-
-                                # 21/09/2017 some more data need to be created for a Term test
-                                try:
-                                    if test_type == 'term':
-                                        # 01/02/2018 - If this is a second term test, ie the final exam for class
-                                        # V-VIII, then we need to auto fill the PA marks. The marks will be the
-                                        # average of all the unit test conducted between the first term test till now
-
-                                        term_tests = ClassTest.objects.filter(the_class=c, section=s, subject=sub,
-                                                                              test_type='term'). \
-                                            order_by('date_conducted')
-                                        print('term tests conducted so far for class %s-%s for subject %s' %
-                                              (the_class, s, sub.subject_name))
-                                        print(term_tests)
-                                        if term_tests.count() > 1:  # this is the second term test
-                                            print('this is the second term (final) test for %s-%s subject %s' %
-                                                  (the_class, s, sub))
-                                            print('periodic assessments marks will be the average of unit tests')
-                                            term1_test = term_tests[0]
-                                            term1_date = term1_test.date_conducted
-                                            print('previous first term test was conducted on ')
-                                            print(term1_date)
-
-                                            # get all the unit tests conducted between term1 & term2 (for V-VIII)
-                                            # for IX it will be all the unit tests created till now
-                                            if the_class in middle_classes:
-                                                unit_tests = ClassTest.objects.filter(the_class=c, section=s,
-                                                                                      subject=sub,
-                                                                                      date_conducted__gt=term1_date,
-                                                                                      date_conducted__lt=the_date)
-                                            if the_class in ninth_tenth:
-                                                unit_tests = ClassTest.objects.filter(the_class=c, section=s,
-                                                                                      subject=sub)
-                                            print('%i unit tests have been conducted for in class %s-%s for %s' %
-                                                  (unit_tests.count(), the_class, s, sub.subject_name))
-                                            print(unit_tests)
-                                            marks_array = []
-                                            for ut in unit_tests:
-                                                ut_result = TestResults.objects.get(class_test=ut, student=student)
-                                                ut_marks = (ut_result.marks_obtained/ut.max_marks)*Decimal(10.0)
-                                                # 13/03/2018 - if the student was absent, then marks will be < 0
-                                                if ut_marks < 0.0:
-                                                    print('marks = %f' % ut_marks)
-                                                    ut_marks = 0.0
-                                                else:
-                                                    marks_array.append(ut_marks)
-                                                print('marks_array = ')
-                                                print(marks_array)
-                                            marks_array.sort(reverse=True)
-                                            try:
-                                                # average of best of two tests
-                                                pa_marks = (marks_array[0] + marks_array[1])/Decimal(2.0)
-                                            except Exception as e:
-                                                print('looks only one cycle test has been conducted for %s in '
-                                                      'class %s-%s between Term1 & Terms 2'
-                                                      % (sub.subject_name, the_class, s))
-                                                print('exception 11022018-A from academics views.py %s %s' %
-                                                      (e.message, type(e)))
-                                                print('hence, taking the single unit/cycle test marks as PA marks')
-                                                try:
-                                                    pa_marks = marks_array[0]
-                                                except Exception as e:
-                                                    print('looks that marks for % s in %s have not been '
-                                                          'entered for any test' % (student.fist_name, sub))
-                                                    print('exception 13032018-B from academics views.py %s %s' %
-                                                          (e.message, type(e)))
-                                                    pa_marks = -5000.0
-                                            term_test_result = TermTestResult(test_result=test_result,
-                                                                              periodic_test_marks=pa_marks,
-                                                                              note_book_marks=-5000.0,
-                                                                              sub_enrich_marks=-5000.0)
-                                            term_test_result.save()
-                                        else:
-                                            # 01/02/2018 - this is the first term test.
-                                            # The periodic_test_marks should be the average of all unit tests
-                                            # conducted from the start of the session till this term test.
-                                            # We will do the thorough coding later. For the time being it is -5000.0
-                                            term_test_result = TermTestResult(test_result=test_result,
-                                                                              periodic_test_marks=-5000.0,
-                                                                              note_book_marks=-5000.0,
-                                                                              sub_enrich_marks=-5000.0)
-                                            term_test_result.save()
-                                        print (' term test results successfully created for %s %s' %
-                                               (student.fist_name, student.last_name))
-                                except Exception as e:
-                                    print ('failed to create term test results')
-                                    print ('Exception 600-A from acacemics views.py = %s (%s)' % (e.message, type(e)))
-                                    return HttpResponse('Failed to create term test results')
-                            except Exception as e:
-                                print ('failed to create test results')
-                                print ('Exception 600 from acacemics views.py = %s (%s)' % (e.message, type(e)))
-                                return HttpResponse('Failed to create test results')
-                        except Exception as e:
-                            print ('Exception 061117-X1 from acacemics views.py %s %s' % (e.message, type(e)))
-                            print ('%s has not chosen %s as third language' % (student.fist_name, sub.subject_name))
-                    else:
-                        print ('this is a regular subject. Hence test results will be created for all students')
-
-                        # 15/11/2017 - for higher classes (XI & XII) we need to look into the student subject mapping
-                        if the_class in higher_classes:
-                            print ('test is for higher class %s. Hence, mapping will be considered' % the_class)
-                            try:
-                                mapping = HigherClassMapping.objects.get(student=student, subject=sub)
-                                if mapping:
-                                    test_result = TestResults(class_test=test, roll_no=student.roll_number,
-                                                              student=student, marks_obtained=-5000.00, grade='')
-                                    test_result.save()
-                                    print ('test results successfully created for %s %s' % (
-                                        student.fist_name, student.last_name))
-
-                                    # 24/12/2017 in case of higher classes, practical marks need to be initialized
-                                    if test_type == 'term':
-                                        term_test_result = TermTestResult(test_result=test_result, prac_marks=-5000.0)
-                                        term_test_result.save()
-                                        print ('term test results successfully created for %s %s' % (
-                                            student.fist_name, student.last_name))
-                            except Exception as e:
-                                print ('mapping does not exist between subject %s and %s' % (sub, student.fist_name))
-                                print ('exception 151117-A from academics views.py %s %s' % (e.message, type(e)))
-
-                        # 02/01/2018 for IX & X Hindi is also an elective subject. If subject is Hindi and class is
-                        # IX or X, then test result will be created for selected students only
-                        if the_class in ninth_tenth:
-                            if sub.subject_name == 'Hindi':
-                                print ('mapping will have to be checked as the class is %s and subject is Hindi' %
-                                       the_class)
-                                try:
-                                    third_lang = ThirdLang.objects.get(third_lang=sub, student=student)
-                                    print ('%s has chosen %s as third language' % (student.fist_name, sub.subject_name))
-                                    test_result = TestResults(class_test=test, roll_no=student.roll_number,
-                                                              student=third_lang.student,
-                                                              marks_obtained=-5000.00, grade='')
-                                    try:
-                                        test_result.save()
-                                        print (' test results successfully created for %s %s' % (
-                                            student.fist_name, student.last_name))
-
-                                        # 21/09/2017 some more data need to be created for a Term test
-                                        if test_type == 'term':
-                                            try:
-                                                # we need to auto fill the PA marks. The marks will be the
-                                                # average of all the unit test conducted till now
-                                                print('this is the second term (final) test for %s-%s subject %s' %
-                                                        (the_class, s, sub))
-                                                print('periodic assessments marks will be the average of unit tests')
-
-                                                # get all the unit tests conducted till now
-                                                unit_tests = ClassTest.objects.filter(the_class=c, section=s,
-                                                                                      subject=sub)
-                                                print('%i unit tests have been conducted for in class %s-%s for %s' %
-                                                      (unit_tests.count(), the_class, s, sub))
-                                                print(unit_tests)
-                                                marks_array = []
-                                                for ut in unit_tests:
-                                                    ut_result = TestResults.objects.get(class_test=ut, student=student)
-                                                    ut_marks = (ut_result.marks_obtained / ut.max_marks) * Decimal(10.0)
-                                                    # 13/03/2018 - if the student was absent, then marks will be < 0
-                                                    if ut_marks < 0.0:
-                                                        print('marks = %f' % ut_marks)
-                                                        ut_marks = 0.0
-                                                    else:
-                                                        marks_array.append(ut_marks)
-                                                    print('marks_array = ')
-                                                    print(marks_array)
-                                                marks_array.sort(reverse=True)
-                                                try:
-                                                    # average of best of two tests
-                                                    pa_marks = (marks_array[0] + marks_array[1]) / Decimal(2.0)
-                                                except Exception as e:
-                                                    print('looks only one cycle test has been conducted for %s in '
-                                                            'class %s-%s ' % (sub.subject_name, the_class, s))
-                                                    print('exception 11022018-X from academics views.py %s %s' %
-                                                            (e.message, type(e)))
-                                                    print('hence, taking the single unit/cycle test marks as PA marks')
-                                                    try:
-                                                        pa_marks = marks_array[0]
-                                                    except Exception as e:
-                                                        print('looks that marks for % s in %s have not been '
-                                                              'entered for any test' % (student.fist_name, sub))
-                                                        print('exception 13032018-C from academics views.py %s %s' %
-                                                              (e.message, type(e)))
-                                                        pa_marks = -5000.0
-                                                term_test_result = TermTestResult(test_result=test_result,
-                                                                                  periodic_test_marks=pa_marks,
-                                                                                  note_book_marks=-5000.0,
-                                                                                  sub_enrich_marks=-5000.0)
-                                                term_test_result.save()
-                                            except Exception as e:
-                                                print ('failed to create term test results')
-                                                print ('Exception 02012018-B from acacemics views.py = %s (%s)' % (
-                                                e.message, type(e)))
-                                                return HttpResponse('Failed to create term test results')
-                                    except Exception as e:
-                                        print ('failed to create test results')
-                                        print ('Exception 02012018-B from acacemics views.py = %s (%s)' %
-                                               (e.message, type(e)))
-                                        return HttpResponse('Failed to create test results')
-                                except Exception as e:
-                                    print ('Exception 02012018-C from acacemics views.py %s %s' % (e.message, type(e)))
-                                    print ('%s has not chosen %s as third language' %
-                                           (student.fist_name, sub.subject_name))
-                            else:
-                                # 02/01/2018 class IX/X but subject is not third language,
-                                # hence results to be created for all subjects
-                                test_result = TestResults(class_test=test, roll_no=student.roll_number,
-                                                          student=student, marks_obtained=-5000.00, grade='')
-                                try:
-                                    test_result.save()
-                                    if test_type == 'term':
-                                        try:
-                                            # we need to auto fill the PA marks. The marks will be the
-                                            # average of all the unit test conducted till now
-                                            print('this is the second term (final) test for %s-%s subject %s' %
-                                                  (the_class, s, sub))
-                                            print('periodic assessments marks will be the average of unit tests')
-
-                                            # get all the unit tests conducted till now
-                                            unit_tests = ClassTest.objects.filter(the_class=c, section=s,
-                                                                                  subject=sub)
-                                            print('%i unit tests have been conducted for in class %s-%s for %s' %
-                                                  (unit_tests.count(), the_class, s, sub))
-                                            print(unit_tests)
-                                            marks_array = []
-                                            for ut in unit_tests:
-                                                ut_result = TestResults.objects.get(class_test=ut, student=student)
-                                                ut_marks = (ut_result.marks_obtained / ut.max_marks) * Decimal(10.0)
-                                                # 13/03/2018 - if the student was absent, then marks will be < 0
-                                                if ut_marks < 0.0:
-                                                    print('marks = %f' % ut_marks)
-                                                    ut_marks = 0.0
-                                                else:
-                                                    marks_array.append(ut_marks)
-                                                print('marks_array = ')
-                                                print(marks_array)
-                                            marks_array.sort(reverse=True)
-                                            try:
-                                                # average of best of two tests
-                                                pa_marks = (marks_array[0] + marks_array[1]) / Decimal(2.0)
-                                            except Exception as e:
-                                                print('looks only one cycle test has been conducted for %s in '
-                                                      'class %s-%s ' % (sub.subject_name, the_class, s))
-                                                print('exception 11022018-X from academics views.py %s %s' %
-                                                      (e.message, type(e)))
-                                                print('hence, taking the single unit/cycle test marks as PA marks')
-                                                try:
-                                                    pa_marks = marks_array[0]
-                                                except Exception as e:
-                                                    print('looks that marks for % s in %s have not been '
-                                                          'entered for any test' % (student.fist_name, sub))
-                                                    print('exception 13032018-D from academics views.py %s %s' %
-                                                          (e.message, type(e)))
-                                                    pa_marks = -5000.0
-                                            term_test_result = TermTestResult(test_result=test_result,
-                                                                              periodic_test_marks=pa_marks,
-                                                                              note_book_marks=-5000.0,
-                                                                              sub_enrich_marks=-5000.0)
-                                            term_test_result.save()
-                                        except Exception as e:
-                                            print ('failed to create term test results')
-                                            print ('Exception 02012018-B from acacemics views.py = %s (%s)' % (
-                                                e.message, type(e)))
-                                            return HttpResponse('Failed to create term test results')
-                                except Exception as e:
-                                    print ('failed to create test resutls')
-                                    print ('Exception 071117-A from academics views.py %s %s' % (e.message, type(e)))
-                                    return HttpResponse('Failed to create term test results')
-                        if the_class in middle_classes or the_class in junior_classes:
-                            test_result = TestResults(class_test=test, roll_no=student.roll_number,
-                                                      student=student, marks_obtained=-5000.00, grade='')
-                            try:
-                                test_result.save()
-
-                                # 18/01/2018 - PA, Notebook submission & Sub Enrichment to be created only for middle
-                                if test_type == 'term':
-                                    print ('determining whether %s is a junior or middle class' % the_class)
-                                    if the_class in middle_classes:
-                                        # 01/02/2018 - If this is a second term test, ie the final exam for class
-                                        # V-VIII, then we need to auto fill the PA marks. The marks will be the
-                                        # average of all the unit test conducted between the first term test till now
-
-                                        term_tests = ClassTest.objects.filter(the_class=c, section=s, subject=sub,
-                                                                              test_type='term'). \
-                                            order_by('date_conducted')
-                                        print('term tests conducted so far for class %s-%s for subject %s' %
-                                              (the_class, s, sub))
-                                        print(term_tests)
-                                        if term_tests.count() > 1:  # this is the second term test
-                                            print('this is the second term (final) test for %s-%s subject %s' %
-                                                  (the_class, s, sub))
-                                            print('periodic assessments marks will be the average of unit tests')
-                                            term1_test = term_tests[0]
-                                            term1_date = term1_test.date_conducted
-                                            print('previous first term test was conducted on ')
-                                            print(term1_date)
-
-                                            # get all the unit tests conducted between term1 & term2
-                                            unit_tests = ClassTest.objects.filter(the_class=c, section=s, subject=sub,
-                                                                                  date_conducted__gt=term1_date,
-                                                                                  date_conducted__lt=the_date)
-                                            print('%i unit tests have been conducted for in class %s-%s for %s' %
-                                                  (unit_tests.count(), the_class, s, sub))
-                                            print(unit_tests)
-                                            marks_array = []
-                                            for ut in unit_tests:
-                                                ut_result = TestResults.objects.get(class_test=ut, student=student)
-                                                ut_marks = (ut_result.marks_obtained / ut.max_marks) * Decimal(10.0)
-                                                # 13/03/2018 - if the student was absent, then marks will be < 0
-                                                if ut_marks < 0.0:
-                                                    print('marks = %f' % ut_marks)
-                                                    ut_marks = 0.0
-                                                else:
-                                                    marks_array.append(ut_marks)
-                                                print('marks_array = ')
-                                                print(marks_array)
-                                            marks_array.sort(reverse=True)
-                                            try:
-                                                # average of best of two tests
-                                                pa_marks = (marks_array[0] + marks_array[1]) / Decimal(2.0)
-                                                print('average of best of two tests = %f' % pa_marks)
-                                            except Exception as e:
-                                                print('looks only one cycle test has been conducted for %s in '
-                                                      'class %s-%s between Term1 & Terms 2'
-                                                      % (sub.subject_name, the_class, s))
-                                                print('exception 11022018-Z from academics views.py %s %s' %
-                                                      (e.message, type(e)))
-                                                print('hence, taking the single unit/cycle test marks as PA marks')
-                                                try:
-                                                    pa_marks = marks_array[0]
-                                                except Exception as e:
-                                                    print('looks that marks for % s in %s have not been '
-                                                          'entered for any test' % (student.fist_name, sub))
-                                                    print('exception 13032018-A from academics views.py %s %s' %
-                                                          (e.message, type(e)))
-                                                    pa_marks = -5000.0
-
-                                            term_test_result = TermTestResult(test_result=test_result,
-                                                                              periodic_test_marks=pa_marks,
-                                                                              note_book_marks=-5000.0,
-                                                                              sub_enrich_marks=-5000.0)
-                                            term_test_result.save()
-                                        else:
-                                            # 01/02/2018 - this is the first term test.
-                                            # The periodic_test_marks should be the average of all unit tests
-                                            # conducted from the start of the session till this term test.
-                                            # We will do the thorough coding later. For the time being it is -5000.0
-                                            term_test_result = TermTestResult(test_result=test_result,
-                                                                              periodic_test_marks=-5000.0,
-                                                                              note_book_marks=-5000.0,
-                                                                              sub_enrich_marks=-5000.0)
-                                            term_test_result.save()
-                                    else:
-                                        print ('%s is a junior class. Hence not creating PA, Notbook Sub & Sub enrich'
-                                               % the_class)
-                                print (' test results successfully created for %s %s' % (
-                                    student.fist_name, student.last_name))
-                            except Exception as e:
-                                print ('failed to create test resutls')
-                                print ('Exception 17012018-A from academics views.py %s %s' % (e.message, type(e)))
-                                return HttpResponse('Failed to create term test results')
-            else:
-                print ('Test already exist')
-                return HttpResponse('Test already exist')
+            action = 'Created test for ' + the_class + '-' + section + ', Subject: ' + subject
+            log_entry(t.email, action, 'Normal', True)
         except Exception as e:
-            print ('Exception 601 fro academics views.py = %s (%s)' % (e.message, type(e)))
-            return HttpResponse('Failed')
+            print('unable to crete logbook entry')
+            print ('Exception 510 from academics views.py %s %s' % (e.message, type(e)))
+        print ('sucssessfully created %s test for %s class %s-%s' % (exam.title, subject, the_class, section))
+    except Exception as e:
+        print ('failed to create %s test for %s class %s-%s' % (exam.title, subject, the_class, section))
+        print ('Exception 509 from academics views.py Exception = %s (%s)' % (e.message, type(e)))
+        context_dict['outcome'] = 'failed to create %s test for %s class %s-%s' % (exam.title, subject,
+                                                                                   the_class, section)
+        return JSONResponse(context_dict, status=201)
 
-    # this view is being called from mobile. We use dummy template so that we dont' run into exception
-    # return render(request, 'classup/dummy.html')
-    return HttpResponse('OK')
+    # now, create entry for each student in table TestResults. We need to retrieve the list of student
+    # of the class associated with this test
+
+    student_list = Student.objects.filter(school=school, current_section__section=section,
+                                          current_class__standard=the_class, active_status=True)
+    for student in student_list:
+        # 15/11/2017 - for higher classes (XI & XII) we need to look into the student subject mapping
+        if the_class in higher_classes:
+            print ('test is for higher class %s. Hence, mapping will be considered' % the_class)
+            try:
+                mapping = HigherClassMapping.objects.get(student=student, subject=sub)
+                if mapping:
+                    test_result = TestResults(class_test=test, roll_no=student.roll_number,
+                                              student=student, marks_obtained=-5000.00, grade='')
+                    test_result.save()
+                    print ('test results successfully created for %s %s' % (student.fist_name, student.last_name))
+
+                    # 24/12/2017 in case of higher classes, practical marks need to be initialized
+                    if exam.exam_type == 'term':
+                        print('term test for higher class. Hence provision for practical marks')
+                        term_test_result = TermTestResult(test_result=test_result, prac_marks=-5000.0)
+                        term_test_result.save()
+                        print ('term test results successfully created for %s %s' % (student.fist_name,
+                                                                                     student.last_name))
+            except Exception as e:
+                print ('mapping does not exist between subject %s and %s' % (sub, student.fist_name))
+                print ('exception 151117-A from academics views.py %s %s' % (e.message, type(e)))
+        else:
+            # 06/11/2017 if the subject is third language or elective subject (class XI & XII),
+            #  we need to filter students
+            check_for_term = False
+            if (sub.subject_type == 'Third Language') or \
+                    ((the_class in ninth_tenth) and (sub.subject_name == 'Hindi')):
+                print ('this is a second/third language. Hence test results will be created for selected students')
+                try:
+                    third_lang = ThirdLang.objects.get(third_lang=sub, student=student)
+                    print ('%s has chosen %s as second/third language' % (student.fist_name, sub.subject_name))
+                    test_result = TestResults(class_test=test, roll_no=student.roll_number,
+                                              student=third_lang.student, marks_obtained=-5000.00, grade='')
+                    try:
+                        test_result.save()
+                        print ('test results successfully created for %s %s' % (student.fist_name, student.last_name))
+                        check_for_term = True
+                    except Exception as e:
+                        print ('failed to create test results for %s %s' % (student.fist_name, student.last_name))
+                        print ('Exception 600 from acacemics views.py = %s (%s)' % (e.message, type(e)))
+                        context_dict['outcome'] = 'Failed to create test'
+                        return JSONResponse(context_dict, status=201)
+                except Exception as e:
+                    print ('Exception 061117-X1 from acacemics views.py %s %s' % (e.message, type(e)))
+                    print ('%s has not chosen %s as third language' % (student.fist_name, sub.subject_name))
+            else:
+                print ('this is a regular subject. Hence test results will be created for all students')
+                test_result = TestResults(class_test=test, roll_no=student.roll_number,
+                                              student=student, marks_obtained=-5000.00, grade='')
+                try:
+                    test_result.save()
+                    print ('test results successfully created for %s %s' % (student.fist_name, student.last_name))
+                    check_for_term = True
+                except Exception as e:
+                    print ('failed to create test resutls for %s %s' % (student.fist_name, student.last_name))
+                    print ('Exception 17012018-A from academics views.py %s %s' % (e.message, type(e)))
+                    context_dict['outcome'] = 'Failed to create test'
+                    return JSONResponse(context_dict, status=201)
+
+            if check_for_term:
+                if exam.exam_type == 'term':
+                    if the_class in middle_classes or the_class in ninth_tenth:
+                        # 01/02/2018 - If this is a second term test, ie the final exam for class
+                        # V-VIII, then we need to auto fill the PA marks. The marks will be the
+                        # average of all the unit test conducted between the first term test till now
+
+                        term_tests = ClassTest.objects.filter(the_class=c, section=s, subject=sub,
+                                                              test_type='term').order_by('date_conducted')
+                        print('term tests conducted so far for class %s-%s for subject %s' % (the_class, s, sub))
+                        print(term_tests)
+                        term1_test = term_tests[0]
+                        term1_date = term1_test.date_conducted
+                        if term_tests.count() > 1:  # this is the second term test
+                            print('this is the second term (final) test for %s-%s subject %s' %
+                                  (the_class, s, sub))
+                            print('periodic assessments marks will be the average of unit tests')
+
+                            print('previous first term test was conducted on ')
+                            print(term1_date)
+
+                            # get all the unit tests conducted between term1 & term2
+                            unit_tests = ClassTest.objects.filter(the_class=c, section=s, subject=sub,
+                                                                  date_conducted__gt=term1_date,
+                                                                  date_conducted__lt=the_date)
+                        else:
+                            # get all the unit tests conducted before term1
+                            unit_tests = ClassTest.objects.filter(the_class=c, section=s, subject=sub,
+                                                                  date_conducted__lt=term1_date)
+
+                        print('%i unit tests have been conducted for in class %s-%s for %s' %
+                                (unit_tests.count(), the_class, s, sub))
+                        print(unit_tests)
+                        marks_array = []
+                        for ut in unit_tests:
+                            ut_result = TestResults.objects.get(class_test=ut, student=student)
+                            ut_marks = (ut_result.marks_obtained / ut.max_marks) * Decimal(10.0)
+                            # 13/03/2018 - if the student was absent, then marks will be < 0
+                            if ut_marks < 0.0:
+                                print('marks = %f' % ut_marks)
+                                ut_marks = 0.0
+                            else:
+                                marks_array.append(ut_marks)
+                            print('marks_array = ')
+                            print(marks_array)
+                        marks_array.sort(reverse=True)
+                        try:
+                            # average of best of two tests
+                            pa_marks = (marks_array[0] + marks_array[1]) / Decimal(2.0)
+                            print('average of best of two tests = %f' % pa_marks)
+                        except Exception as e:
+                            print('looks only one cycle test has been conducted for %s in '
+                                    'class %s-%s between Term1 & Terms 2'% (sub.subject_name, the_class, s))
+                            print('exception 11022018-Z from academics views.py %s %s' % (e.message, type(e)))
+                            print('hence, taking the single unit/cycle test marks as PA marks')
+                            try:
+                                pa_marks = marks_array[0]
+                            except Exception as e:
+                                print('looks that marks for % s in %s have not been '
+                                        'entered for any test' % (student.fist_name, sub))
+                                print('exception 13032018-A from academics views.py %s %s' %(e.message, type(e)))
+                                pa_marks = -5000.0
+
+                        term_test_result = TermTestResult(test_result=test_result, periodic_test_marks=pa_marks,
+                                                            note_book_marks=-5000.0, sub_enrich_marks=-5000.0)
+                        term_test_result.save()
+                    else:
+                        print ('%s is a junior class. Hence not creating PA, Notbook Sub & Sub enrich' % the_class)
+                    print (' test results successfully created for %s %s' % (student.fist_name, student.last_name))
+    context_dict['outcome'] = 'Test successfully created'
+    return JSONResponse(context_dict, status=200)
 
 
 @csrf_exempt

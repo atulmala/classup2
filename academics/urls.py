@@ -12,9 +12,9 @@ urlpatterns = [
 
     url(r'^subject_list/(?P<school_id>\w+)/$', views.SubjectList.as_view()),
 
-    url(r'^completed_test_list/(?P<teacher>[\w.@+-]+)/$', views.CompletedTestList.as_view()),
+    url(r'^completed_test_list/(?P<teacher>[\w.@+-]+)/(?P<exam_id>[\w.@+-]+)/$', views.CompletedTestList.as_view()),
 
-    url(r'^pending_test_list/(?P<teacher>[\w.@+-]+)/$', views.PendingTestList.as_view()),
+    url(r'^pending_test_list/(?P<teacher>[\w.@+-]+)/(?P<exam_id>[\w.@+-]+)/$', views.PendingTestList.as_view()),
 
     url(r'^pending_test_list_parents/(?P<student>\w+)/$', views.PendingTestListParents.as_view()),
 
@@ -22,7 +22,7 @@ urlpatterns = [
         r'(?P<subject>[\w\ ]+)/(?P<teacher>[\w.@+-]+)'
         r'/(?P<d>\w+)/(?P<m>\w+)/(?P<y>\w+)/'
         r'(?P<max_marks>\w+)/(?P<pass_marks>\w+)/(?P<grade_based>\w+)'
-        r'/(?P<comments>[\w.@,&\ ]+)/(?P<test_type>[\w.@+-]+)/$',views.create_test1, name='create_test1'),
+        r'/(?P<comments>[\w.@,&\ ]+)/(?P<exam_id>[\w.@+-]+)/$',views.create_test1, name='create_test1'),
 
     url(r'^get_co_cscholastics/(?P<teacher>[\w.@+-]+)/(?P<class>[\w.@+-]+)/(?P<section>[\w.@+-]+)/(?P<term>[\w\ ]+)/$',
         views.TheCoScholastics.as_view(), name='coscholastic'),
@@ -48,6 +48,9 @@ urlpatterns = [
     url(r'get_test_type/(?P<test_id>\w+)/$', views.TestType.as_view()),
 
     url(r'^get_exam_list/(?P<student_id>[\w.@+-]+)/$', views.ExamList.as_view(), name='get_exam_list'),
+
+    url(r'^get_exam_list_teacher/(?P<teacher>[\w.@+-]+)/$', views.ExamListTeacher.as_view(),
+        name='get_exam_list_teacher'),
 
     url(r'^create_hw/', views.create_hw, name='create_hw'),
 
