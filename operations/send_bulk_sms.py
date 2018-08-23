@@ -31,8 +31,6 @@ try:
         mobile = row[2]
         message = row[3]
 
-        url = 'https://control.msg91.com/api/sendhttp.php'
-        print(url)
         m1 = message.replace(" ", "+")
         print(m1)
         m2 = m1.replace("&", "%26")
