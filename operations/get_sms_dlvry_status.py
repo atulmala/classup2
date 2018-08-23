@@ -10,12 +10,12 @@ try:
     # connect to the database
     db = MySQLdb.connect('classup-prod-1-aurora-cluster.cluster-ceglypsnyux3.us-west-2.rds.amazonaws.com',
                          'classup', 'classup', 'classup2')
-    db = MySQLdb.connect('localhost', 'root', 'kawasaki', 'prod_replica')
+    #db = MySQLdb.connect('localhost', 'root', 'kawasaki', 'prod_replica')
     cursor1 = db.cursor()
 
     # extract message_id of all the sms sent after 31/01/17 for which sms delivery status has not been extracted
     sql1 = "select outcome from operations_smsrecord where api_called = 1 and " \
-           "status_extracted = 0 and date > '2018-08-21' and date < DATE_SUB(NOW(), INTERVAL 3 HOUR)"
+           "status_extracted = 0 and date > '2018-08-21' and date < DATE_SUB(NOW(), INTERVAL 1 HOUR)"
     cursor1.execute(sql1)
 
     # now, try to extract delivery status of each sms by calling api of the bulk sms provider
