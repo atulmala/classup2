@@ -13,7 +13,7 @@ from .models import SMSRecord
 from push_notifications.gcm import gcm_send_message
 
 
-def send_sms2(school, sender, mobile, message, message_type, *args, **kwargs):
+def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
     # 25/12/2016 - added field to check whether sms sending is enabled for this school. Check that first
     try:
         # 25/12/2016 - there will be a unique sender id for each school
@@ -209,7 +209,7 @@ def send_sms2(school, sender, mobile, message, message_type, *args, **kwargs):
         print ('Send SMS is turned off for this school: ' + school.school_name + ', ' + school.school_address)
 
 
-def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
+def send_sms2(school, sender, mobile, message, message_type, *args, **kwargs):
     # 25/12/2016 - added field to check whether sms sending is enabled for this school. Check that first
     try:
         # 25/12/2016 - there will be a unique sender id for each school
