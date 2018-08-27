@@ -10,6 +10,8 @@ class AttendanceAdmin(admin.ModelAdmin):
         return obj.the_class.school
     get_school_name.short_description = 'School'
     list_display = ('date', 'get_school_name', 'the_class', 'section', 'subject', 'taken_by', 'student',)
+    list_filter = ('the_class__school',)
+    search_fields = ('student__fist_name', 'student__last_name')
 
 admin.site.register(Attendance, AttendanceAdmin)
 
