@@ -617,6 +617,7 @@ def att_register_class(request):
         db_hit = 1
         for s in Student.objects.filter(school=school, current_class=the_class,
                                         current_section=section, active_status=True).order_by('fist_name'):
+            print('dealing with: %s %s' % (s.fist_name, s.last_name))
             attendance_sheet.write_number(row, 0, idx+1, cell_center)
             attendance_sheet.write_number(row, 1, s.roll_number, cell_center)
             attendance_sheet.write_string(row, 2, ugettext(s.fist_name + ' ' + s.last_name), cell_left)
