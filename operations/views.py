@@ -672,10 +672,15 @@ def att_register_class(request):
                 print('the session start month is %i' % session_start_month)
                 if month_int < session_start_month:
                     start = date(year_int-1, session_start_month, 1)
+
                 else:
                     start = date(year_int, session_start_month, 1)
+                print('start = ')
+                print(start)
                 no_of_days = calendar.monthrange(year_int, month_int)[1]
                 end = date (year_int, month_int, no_of_days)
+                print('end = ')
+                print(end)
 
                 q = AttendanceTaken.objects.filter(the_class=the_class, section=section,
                                                    subject=subject, date__range=[start, end])
