@@ -668,6 +668,7 @@ def att_register_class(request):
             try:
                 conf = Configurations.objects.get(school=school)
                 session_start_month = conf.session_start_month
+                print('the session start month is %i' % session_start_month)
                 if month_int < session_start_month:
                     start = date(year_int-1, session_start_month, 1)
                 else:
@@ -678,11 +679,13 @@ def att_register_class(request):
                 q = AttendanceTaken.objects.filter(the_class=the_class, section=section,
                                                    subject=subject, date__range=[start, end])
                 working_days_till_date = q.count()
+                print('total working days till date: %i' % working_days_till_date)
 
                 q = Attendance.objects.filter(student=s, subject=subject, date__range=[start, end])
                 absent_days_till_date = q.count()
-
+                print('absent days till date: %i' % absent_days_till_date)
                 present_days_till_date = working_days_till_date - absent_days_till_date
+                print('present days till date: %i' % present_days_till_date)
                 attendance_sheet.write(row, d+5,
                                        ugettext(str(present_days_till_date) + '/' + str(working_days_till_date)),
                                        cell_center)
