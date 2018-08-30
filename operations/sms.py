@@ -215,11 +215,13 @@ def send_sms2(school, sender, mobile, message, message_type, *args, **kwargs):
         # 25/12/2016 - there will be a unique sender id for each school
         conf = Configurations.objects.get(school=school)
         sender_id = conf.sender_id
+        vendor = conf.vendor_sms
     except Exception as e:
         print('unable to retrieve configuration')
         print ('Exception70 from sms.py = %s (%s)' % (e.message, type(e)))
 
-    operator = 'Bulk SMS Leads'
+    # values for softsms vendor
+    key = '58fc1def26489'
     api_called = False
 
     if conf.send_sms:
@@ -233,12 +235,26 @@ def send_sms2(school, sender, mobile, message, message_type, *args, **kwargs):
 
         print(m3)
 
-        url = 'http://sms.bulksmsleads.com/index.php/smsapi/httpapi/?uname=classup&password=classup&sender='
-        url += 'CLSSUP'
-        url += '&receiver=%s' % mobile
-        url += '&route=TA&msgtype=1'
-        url += '&sms=%s' % m3
-        print('url = %s' % url)
+
+        operator = 'unknow'
+        if vendor == 1:
+            operator = 'softsms'
+            url = 'http://softsms.in/app/smsapi/index.php?'
+            url += 'key=%s' % key
+            url += '&type=Text'
+            url += '&contacts=%s' % mobile
+            url += '&senderid=%s' % sender_id
+            url += '&msg=%s' % m3
+            print('url=%s' % url)
+
+        if vendor == 2:
+            operator = 'bulksmsleads'
+            url = 'http://sms.bulksmsleads.com/index.php/smsapi/httpapi/?uname=classup&password=classup&sender='
+            url += 'CLSSUP'
+            url += '&receiver=%s' % mobile
+            url += '&route=TA&msgtype=1'
+            url += '&sms=%s' % m3
+            print('url = %s' % url)
 
         # 06/12/2016 - we don't want to send sms to a dummy number
         if mobile == '1234567890' or len(str(mobile)) != 10:
@@ -258,11 +274,15 @@ def send_sms2(school, sender, mobile, message, message_type, *args, **kwargs):
                         r = urllib2.urlopen(url)
                         response = r.read()
                         print('response = ')
-                        s1, s2 = response.split(':')
-                        print(s2)
-                        message_id, s4 = s2.split('}')
-                        print('message id = %s' % message_id)
-                        api_called = True
+                        if vendor == 1:
+                            message_id = response
+                            print('message id = %s' % message_id)
+                        if vendor == 2:
+                            s1, s2 = response.split(':')
+                            print(s2)
+                            message_id, s4 = s2.split('}')
+                            print('message id = %s' % message_id)
+                            api_called = True
                     except Exception as e:
                         print ('exception 22082018-A from sms.py %s %s' % (e.message, type(e)))
                         print ('operator %s API is not working' % operator)
@@ -282,7 +302,6 @@ def send_sms2(school, sender, mobile, message, message_type, *args, **kwargs):
                     except Exception as e:
                         print('Exception 160 from sms.py  %s (%s)' % (e.message, type(e)))
                         print('failed to push notification to ' + str(mobile))
-
                 else:
                     print('message type was Bulk SMS (Web Interface). '
                           'Batch process to send those SMS will have to be run!')

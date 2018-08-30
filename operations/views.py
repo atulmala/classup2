@@ -602,6 +602,7 @@ def att_register_class(request):
         attendance_sheet.write(3, days+4, ugettext("%"), header)
         attendance_sheet.write(3, days+5, ugettext("Till Date"), header)
         attendance_sheet.write(3, days+6, ugettext("Till Date %"), header)
+        attendance_sheet.write(3, days + 7, ugettext("Student Reg No"), header)
 
         idx = 0
         row = 4 + idx
