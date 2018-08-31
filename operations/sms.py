@@ -13,7 +13,7 @@ from .models import SMSRecord
 from push_notifications.gcm import gcm_send_message
 
 
-def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
+def send_sms2(school, sender, mobile, message, message_type, *args, **kwargs):
     # 25/12/2016 - added field to check whether sms sending is enabled for this school. Check that first
     try:
         # 25/12/2016 - there will be a unique sender id for each school
@@ -209,7 +209,7 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
         print ('Send SMS is turned off for this school: ' + school.school_name + ', ' + school.school_address)
 
 
-def send_sms2(school, sender, mobile, message, message_type, *args, **kwargs):
+def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
     # 25/12/2016 - added field to check whether sms sending is enabled for this school. Check that first
     try:
         # 25/12/2016 - there will be a unique sender id for each school
@@ -219,6 +219,9 @@ def send_sms2(school, sender, mobile, message, message_type, *args, **kwargs):
     except Exception as e:
         print('unable to retrieve configuration')
         print ('Exception70 from sms.py = %s (%s)' % (e.message, type(e)))
+    # 31/08/2018 - If the message is bulk sms from device then we have to use softsms api
+    if message_type == 'Bulk SMS (Device)':
+        vendor = 1
 
     # values for softsms vendor
     key = '58fc1def26489'
@@ -230,13 +233,11 @@ def send_sms2(school, sender, mobile, message, message_type, *args, **kwargs):
         m2 = m1.replace("&", "%26")
         m0 = m2.replace("\n", "+")
         m00 = m0.replace("\r", "+")
-
         m3 = m00.replace("\r\n", "+")
-
         print(m3)
 
 
-        operator = 'unknow'
+        operator = 'unknown'
         if vendor == 1:
             operator = 'softsms'
             url = 'http://softsms.in/app/smsapi/index.php?'
@@ -269,6 +270,7 @@ def send_sms2(school, sender, mobile, message, message_type, *args, **kwargs):
                 message_id = 'Not Available'
                 if message_type != 'Bulk SMS (Web Interface)':
                     # send the message
+                    print('sending sms using %s api' % operator)
                     print ('sending to ' + mobile)
                     try:
                         r = urllib2.urlopen(url)

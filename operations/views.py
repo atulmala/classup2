@@ -788,7 +788,6 @@ def send_bulk_sms(request):
             else:
                 print('message size is well within limits')
 
-
             selected_classes = request.POST.getlist('Class')
             print('selected classes from web interface = ' + str(selected_classes) )
             staff = request.POST.getlist('Staff')
@@ -810,6 +809,8 @@ def send_bulk_sms(request):
         # send to parents
         try:
             configuration = Configurations.objects.get(school=school)
+            vendor_sms = configuration.vendor_sms
+            bulk_sms_delay = configuration.bulk_sms_delay
             for sc in selected_classes:
                 print('class = ' + str(sc))
                 if sc != 'Teachers' and sc != 'Staff':
@@ -827,10 +828,20 @@ def send_bulk_sms(request):
                         print(message)
                         mobile = parent.parent_mobile1
                         sms.send_sms1(school, sender, mobile, message, message_type)
+
+                        # for bulksmsleads vendor there need to be a delay between two api calls as their server is not
+                        # so robust :(
+                        if vendor_sms == 2:
+                            print('sleeping for %i seconds' % bulk_sms_delay)
+                            time.sleep(bulk_sms_delay)
+                        else:
+                            print('no need to go to sleep!')
                         if configuration.send_absence_sms_both_to_parent:
                             mobile = parent.parent_mobile2
                             if mobile != '':
                                 sms.send_sms1(school, sender, mobile, message, message_type)
+                                if vendor_sms == 2:
+                                    time.sleep(bulk_sms_delay)
                 if sc == 'Teachers':
                     staff = ['teacher']
                 if sc == 'Staff':
