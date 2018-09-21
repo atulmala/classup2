@@ -13,7 +13,7 @@ from .models import SMSRecord
 from push_notifications.gcm import gcm_send_message
 
 
-def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
+def send_sms2(school, sender, mobile, message, message_type, *args, **kwargs):
     # 25/12/2016 - added field to check whether sms sending is enabled for this school. Check that first
     try:
         # 25/12/2016 - there will be a unique sender id for each school
@@ -36,7 +36,6 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
         m3 = m00.replace("\r\n", "+")
 
         print(m3)
-
         url = 'http://softsms.in/app/smsapi/index.php?'
         url += 'key=%s' % key
         url += '&type=Text'
@@ -209,7 +208,7 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
         print ('Send SMS is turned off for this school: ' + school.school_name + ', ' + school.school_address)
 
 
-def send_sms2(school, sender, mobile, message, message_type, *args, **kwargs):
+def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
     # 25/12/2016 - added field to check whether sms sending is enabled for this school. Check that first
     try:
         # 25/12/2016 - there will be a unique sender id for each school
@@ -256,6 +255,13 @@ def send_sms2(school, sender, mobile, message, message_type, *args, **kwargs):
             url += '&route=TA&msgtype=1'
             url += '&sms=%s' % m3
             print('url = %s' % url)
+
+            url2 = 'http://sms.bulksmsleads.com/index.php/Bulksmsapi/httpapi/?uname=classup&password=classup&sender='
+            url2 += 'CLSSUP'
+            url2 += '&receiver=%s' % mobile
+            url2 += '&route=TA&msgtype=1'
+            url2 += '&sms=%s' % m3
+            print('url2 = %s' % url2)
 
         # 06/12/2016 - we don't want to send sms to a dummy number
         if mobile == '1234567890' or len(str(mobile)) != 10:
