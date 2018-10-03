@@ -900,7 +900,7 @@ def send_bulk_sms(request):
         print('getting the bulk sms form')
         form = BulkSMSForm(school_id=school_id)
         context_dict['form'] = form
-
+        print(context_dict)
     return render(request, 'classup/bulk_sms.html', context_dict)
 
 

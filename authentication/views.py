@@ -415,7 +415,6 @@ def map_device_token(request):
                     print('device already existed')
                 try:
                     fcm_device.send_message('Welcome to ClassUp')
-                    gcm_send_message(device_token, {'body': 'welcome to classup'})
                 except Exception as e:
                     print('Exception 160 from authentication views.py %s (%s)' % (e.message , type(e)))
                     print('failed to send welcome notification to ' + user_name)

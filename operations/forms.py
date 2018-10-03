@@ -15,7 +15,6 @@ STAFF_CHOICES = (
     ('teacher', 'Teachers'),
 )
 
-
 class HorizontalRenderer(forms.CheckboxSelectMultiple.renderer):
     def render(self):
         return mark_safe(u'\n'.join([u'%s\n' % w for w in self]))
