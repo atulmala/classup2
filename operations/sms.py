@@ -1,6 +1,11 @@
 l__author__ = 'atulgupta'
 
 import urllib2
+import requests
+import json
+
+from firebase_admin import credentials
+
 
 from django.db.models import Q
 from authentication.models import user_device_mapping
@@ -66,16 +71,61 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
 
                     # 23/03/17 send notification also if we have the device token of this mobile number
                     try:
-                        device_token = user_device_mapping.objects.get(mobile_number=mobile)
+                        device = user_device_mapping.objects.get(mobile_number=mobile)
+                        device_token = device.token_id
                         print('device token exist for ' + str(mobile))
                         print('now trying to send push notification to ' + str(mobile))
                         try:
                             fcm_device = GCMDevice.objects.get(registration_id=device_token)
                             fcm_device.send_message(message)
+                            print('sent push notification to %s via fcm_device.send_message() function' % str(mobile))
                         except Exception as e:
                             print('Exception 170 from sms.py  %s (%s)' % (e.message, type(e)))
-                            print('failed to push notification via fcm_device.send() to ' + str(mobile))
-                        gcm_send_message(device_token, {'body': message})
+                            print('failed to push notification via fcm_device.send() to %s' % str(mobile))
+
+                        try:
+                            gcm_send_message(device_token, {'body': message})
+                            print('sent push notification to %s via gcm_send_message() function' % str(mobile))
+                        except Exception as e:
+                            print('Exception 04102018-A from operations sms.py %s (%s)' % (e.message, type(e)))
+                            print('failed to send push notification to %s via gcm_send_message' % str(mobile))
+
+                        try:
+                            cred = credentials.Certificate('operations/firebase.json')
+                            access_token = cred.get_access_token()
+                            print('cred = ')
+                            print(cred)
+                            print('access_token = ')
+                            print(access_token.access_token)
+                            hed = {
+                                'Authorization': 'Bearer %s' % access_token.access_token,
+                                'Content-Type': 'application/json; UTF-8'
+                            }
+
+                            nf = {
+                                'body': message,
+                                'title': 'Message from ClassUp'
+                            }
+
+                            msg = {
+                                'notification': nf,
+                                'token': device_token,
+                            }
+
+                            json_data = {
+                                'message': msg
+                            }
+                            print('json_data = ')
+                            print(json.dumps(json_data))
+
+                            url = 'https://fcm.googleapis.com/v1/projects/classup-dd5510/messages:send'
+                            response = requests.post(url, json=json.dumps(json_data), headers=hed)
+                            print('sent push notification to %s via google Firebase api' % mobile)
+                            print(response.text)
+                            print(response.json())
+                        except Exception as e:
+                            print('Exception 04102018-B from operations sms.py %s (%s)' % (e.message, type(e)))
+                            print('failed to send push notification to %s via google Firebase api' % mobile)
                     except Exception as e:
                         print('Exception 160 from sms.py  %s (%s)' % (e.message, type(e)))
                         print('failed to push notification to ' + str(mobile))

@@ -407,10 +407,12 @@ def map_device_token(request):
             u = User.objects.get(username=user)
             # create the fcm device
             try:
-                fcm_device, created = GCMDevice.objects.get_or_create(name=user_name,
-                                                                      registration_id=device_token, user=u)
+                fcm_device, created = GCMDevice.objects.get_or_create(registration_id=device_token)
                 if created:
                     print('device created')
+                    fcm_device.name = user_name
+                    fcm_device.user = u
+                    fcm_device.save()
                 else:
                     print('device already existed')
                 try:
