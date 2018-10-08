@@ -454,8 +454,8 @@ def create_test1(request, school_id, the_class, section, subject,
     context_dict['header'] = 'Create Test'
     higher_classes = ['XI', 'XII']
     ninth_tenth = ['IX', 'X']
-    middle_classes = ['V', 'VI', 'VII', 'VIII']
-    junior_classes = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III', 'IV']
+    middle_classes = ['IV', 'V', 'VI', 'VII', 'VIII']
+    junior_classes = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III']
 
 
     # all of the above except date are foreign key in Attendance model. Hence we need to get the actual object
