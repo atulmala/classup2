@@ -1621,7 +1621,10 @@ class ResultSheet(generics.ListCreateAPIView):
                         print('exception 09102018-A from academics views.py %s (%s)' % (e.message, type(e)))
                         print('looks the exam scheme is not yet set for class %s of %s' %
                               (the_class.standard, school_name))
-                    #sub_list = ['English', 'Third Language', 'Mathematics', 'Science', 'Social Studies', 'Computer']
+                    sub_count = len(sub_list)
+
+                    # 09/10/2018 - now re-initialize the subject list
+                    sub_list = ['English', 'Third Language', 'Mathematics', 'Science', 'Social Studies', 'Computer']
                     # header rows are ready, now is the time to get the result of each student
                     try:
                         students = Student.objects.filter(school=school, current_class=the_class,
