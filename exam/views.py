@@ -1431,6 +1431,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                             else:
                                                 print('subject %s marks not entered for %s' % (s, student_name))
                                                 result_sheet.write_string(row, marks_col, 'TBE', cell_grade)
+                                                marks_col = marks_col + 11
                                                 continue
                                         result_sheet.write_number (row, marks_col, sub_marks, cell_normal)
                                         print ('successfully retrieved %s marks for %s and sheet updated' %
@@ -1445,6 +1446,9 @@ class ResultSheet(generics.ListCreateAPIView):
                                 print ('exception 20012018-C from exam views.py %s %s' % (e.message, type(e)))
                                 print ('failed to retrieved the term tests for class: %s-%s, subject: %s' %
                                        (the_class.standard, section.section, s))
+                                print('test is not created for %s class %s-%s' %
+                                      (s, the_class.standard, section.section))
+                                result_sheet.write_string(row, marks_col, 'TBE', cell_grade)
                                 continue
                             # 22/03/2018 we show GK Grades as well
                             try:
