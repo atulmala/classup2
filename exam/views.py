@@ -1370,7 +1370,6 @@ class ResultSheet(generics.ListCreateAPIView):
                         print ('exception 20012018-A from exam views.py %s %s' % (e.message, type(e)))
                         print ('failed to retrieve the list of students for %s-%s' %
                                (the_class.standard, section.section))
-
                     s_no = 1
                     row = 7
                     col = 0
@@ -1408,6 +1407,12 @@ class ResultSheet(generics.ListCreateAPIView):
                                 term_tests = ClassTest.objects.filter(the_class=the_class, section=section,
                                                                       subject=subject, test_type='term').\
                                     order_by('date_conducted')
+                                if term_tests.count() < 1:
+                                    print('test is not created for %s class %s-%s' %
+                                          (s, the_class.standard, section.section))
+                                    result_sheet.write_string(row, marks_col, 'TBE', cell_grade)
+                                    col = col + 1
+                                    marks_col = col + 1
                                 print ('retrieved the term tests for class: %s-%s, subject: %s' %
                                        (the_class.standard, section.section, s))
                                 print (term_tests)
@@ -1446,9 +1451,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                 print ('exception 20012018-C from exam views.py %s %s' % (e.message, type(e)))
                                 print ('failed to retrieved the term tests for class: %s-%s, subject: %s' %
                                        (the_class.standard, section.section, s))
-                                print('test is not created for %s class %s-%s' %
-                                      (s, the_class.standard, section.section))
-                                result_sheet.write_string(row, marks_col, 'TBE', cell_grade)
+
                                 continue
                             # 22/03/2018 we show GK Grades as well
                             try:
