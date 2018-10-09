@@ -1415,6 +1415,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                     result_sheet.write_string(row, marks_col, 'TBE', cell_grade)
                                     col = col + 1
                                     marks_col = col + 1
+                                    continue
                                 print ('retrieved the term tests for class: %s-%s, subject: %s' %
                                        (the_class.standard, section.section, s))
                                 print (term_tests)
