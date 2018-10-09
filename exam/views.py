@@ -1609,19 +1609,19 @@ class ResultSheet(generics.ListCreateAPIView):
                     col += 1
                     result_sheet.merge_range(row, col, row+3, col, 'Details', cell_center)
                     row = row + 1
-                    sub_dict = {}
+                    sub_list = []
                     try:
                         scheme = Scheme.objects.filter(school=school, the_class=the_class)
                         sub_count = scheme.count()
                         for sc in scheme:
-                            sub_dict[sc.sequence] = sc.subject
-                            print('sub_dict = ')
-                            print (sub_dict)
+                            sub_list.append(sc.subject.subject_name)
+                            print('sub_list = ')
+                            print (sub_list)
                     except Exception as e:
                         print('exception 09102018-A from academics views.py %s (%s)' % (e.message, type(e)))
                         print('looks the exam scheme is not yet set for class %s of %s' %
                               (the_class.standard, school_name))
-                    sub_list = ['English', 'Third Language', 'Mathematics', 'Science', 'Social Studies', 'Computer']
+                    #sub_list = ['English', 'Third Language', 'Mathematics', 'Science', 'Social Studies', 'Computer']
                     # header rows are ready, now is the time to get the result of each student
                     try:
                         students = Student.objects.filter(school=school, current_class=the_class,
@@ -1669,7 +1669,7 @@ class ResultSheet(generics.ListCreateAPIView):
 
                         # get the marks of each subject
                         grand_totl = 0
-                        for s in sub_dict:
+                        for s in sub_list:
                             # if the subject is language, we need to determine which language this student has opted for
                             if s.subject_name == 'Third Language':
                                 try:
@@ -1685,7 +1685,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                     marks_col = marks_col + 2
                                     continue
                             else:
-                                subject = Subject.objects.get(school=school, subject_name=s.subject_name)
+                                subject = Subject.objects.get(school=school, subject_name=s)
 
                             # retrieve the term test for this subject. As this is IX/X class there will
                             # be only one term test
