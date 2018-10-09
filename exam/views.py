@@ -1711,7 +1711,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                 marks_col = marks_col + 1
                                 total_marks = pna_marks + annual_marks
                                 result_sheet.write_number(row, marks_col, total_marks, cell_normal)
-                                grand_totl = grand_totl + annual_marks
+                                grand_totl = grand_totl + total_marks
                                 marks_col = marks_col + 1
                             except Exception as e:
                                 print('exception 27012018-C from exam views.py %s %s' % (e.message, type(e)))
