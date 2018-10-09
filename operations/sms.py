@@ -4,6 +4,7 @@ import urllib2
 import requests
 import json
 
+import firebase_admin
 from firebase_admin import credentials
 
 
@@ -91,7 +92,7 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                             print('failed to send push notification to %s via gcm_send_message' % str(mobile))
 
                         try:
-                            cred = credentials.Certificate('operations/firebase.json')
+                            cred = credentials.Certificate('operations/classup-firebase.json')
                             access_token = cred.get_access_token()
                             print('cred = ')
                             print(cred)

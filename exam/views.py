@@ -1195,7 +1195,7 @@ class ResultSheet(generics.ListCreateAPIView):
 
             higher_classes = ['XI', 'XII']
             ninth_tenth = ['IX', 'X']
-            middle_classes = ['V', 'VI', 'VII', 'VIII']
+            middle_classes = ['IV', 'V', 'VI', 'VII', 'VIII']
 
             if form.is_valid():
                 the_class = form.cleaned_data['the_class']
@@ -1282,7 +1282,7 @@ class ResultSheet(generics.ListCreateAPIView):
                     result_sheet.merge_range('A2:AI2', title_text, title)
                     result_sheet.merge_range('A3:AI3', ('CLASS TEACHER: %s' % class_teacher), header)
                 else:
-                    result_sheet.merge_range('A1:AE1', 'JAGRAN PUBLIC SCHOOL NOIDA', title)
+                    result_sheet.merge_range('A1:AE1', school_name, title)
                     result_sheet.merge_range('A2:AE2', title_text, title)
                     result_sheet.merge_range('A3:AE3', ('CLASS TEACHER: %s' % class_teacher), header)
 
@@ -1731,7 +1731,7 @@ class ResultSheet(generics.ListCreateAPIView):
                         # As this is IX class there will be term2
                         result_sheet.set_column('AE:AI', 10)
                         try:
-                            cs_term2 = CoScholastics.objects.get(term='term2', student=student)
+                            cs_term2 = CoScholastics.objects.get(term='term1', student=student)
                             work_ed = cs_term2.work_education
                             result_sheet.write_string(row, marks_col, work_ed, cell_grade)
                             marks_col = marks_col + 1
