@@ -1609,7 +1609,18 @@ class ResultSheet(generics.ListCreateAPIView):
                     col += 1
                     result_sheet.merge_range(row, col, row+3, col, 'Details', cell_center)
                     row = row + 1
-
+                    sub_dict = {}
+                    try:
+                        scheme = Scheme.objects.filter(school=school, the_class=the_class.standard)
+                        sub_count = scheme.count()
+                        for sc in scheme:
+                            sub_dict[sc.sequence] = sc.subject
+                            print('sub_dict = ')
+                            print (sub_dict)
+                    except Exception as e:
+                        print('exception 09102018-A from academics views.py %s (%s)' % (e.message, type(e)))
+                        print('looks the exam scheme is not yet set for class %s of %s' %
+                              (the_class.standard, school_name))
                     sub_list = ['English', 'Third Language', 'Mathematics', 'Science', 'Social Studies', 'Computer']
                     # header rows are ready, now is the time to get the result of each student
                     try:
@@ -1658,7 +1669,7 @@ class ResultSheet(generics.ListCreateAPIView):
 
                         # get the marks of each subject
                         grand_totl = 0
-                        for s in sub_list:
+                        for s in sub_dict:
                             # if the subject is language, we need to determine which language this student has opted for
                             if s == 'Third Language':
                                 try:
@@ -1706,7 +1717,10 @@ class ResultSheet(generics.ListCreateAPIView):
                                 marks_col = marks_col + 3
                         result_sheet.write_number(row, marks_col, grand_totl, cell_normal)
                         marks_col += 1
-                        formula = '=X%s/600.00' % str(row + 1)
+                        if sub_count >= 6:
+                            formula = '=X%s/600.00' % str(row + 1)
+                        else:
+                            formula = '=X%s/500.00' % str(row + 1)
                         result_sheet.write_formula (row, marks_col, formula, perc_format)
                         marks_col = marks_col + 1
                         index = 'Y%s*100' % str(row + 1)
