@@ -1611,7 +1611,7 @@ class ResultSheet(generics.ListCreateAPIView):
                     row = row + 1
                     sub_dict = {}
                     try:
-                        scheme = Scheme.objects.filter(school=school, the_class=the_class.standard)
+                        scheme = Scheme.objects.filter(school=school, the_class=the_class)
                         sub_count = scheme.count()
                         for sc in scheme:
                             sub_dict[sc.sequence] = sc.subject
