@@ -1671,7 +1671,7 @@ class ResultSheet(generics.ListCreateAPIView):
                         grand_totl = 0
                         for s in sub_dict:
                             # if the subject is language, we need to determine which language this student has opted for
-                            if s == 'Third Language':
+                            if s.subject_name == 'Third Language':
                                 try:
                                     mapping = ThirdLang.objects.get(student=student)
                                     subject = mapping.third_lang
@@ -1685,7 +1685,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                     marks_col = marks_col + 2
                                     continue
                             else:
-                                subject = Subject.objects.get(school=school, subject_name=s)
+                                subject = Subject.objects.get(school=school, subject_name=s.subject_name)
 
                             # retrieve the term test for this subject. As this is IX/X class there will
                             # be only one term test
