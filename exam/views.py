@@ -1402,6 +1402,7 @@ class ResultSheet(generics.ListCreateAPIView):
                             except Exception as e:
                                 print ('exception 20012018-B from exam views.py %s %s' % (e.message, type(e)))
                                 print ('failed to retrieve subject for %s' % s)
+                                result_sheet.write_string(row, marks_col, 'NA', cell_grade)
                                 col = col + 1
                                 marks_col = col + 1
                                 continue
