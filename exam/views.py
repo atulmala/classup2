@@ -1720,10 +1720,10 @@ class ResultSheet(generics.ListCreateAPIView):
                                 marks_col = marks_col + 3
                         result_sheet.write_number(row, marks_col, grand_totl, cell_normal)
                         marks_col += 1
-                        if sub_count >= 6:
-                            formula = '=X%s/600.00' % str(row + 1)
-                        else:
+                        if sub_count < 6:
                             formula = '=X%s/500.00' % str(row + 1)
+                        else:
+                            formula = '=X%s/600.00' % str(row + 1)
                         result_sheet.write_formula (row, marks_col, formula, perc_format)
                         marks_col = marks_col + 1
                         index = 'Y%s*100' % str(row + 1)
