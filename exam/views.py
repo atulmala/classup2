@@ -1671,7 +1671,7 @@ class ResultSheet(generics.ListCreateAPIView):
                         grand_totl = 0
                         for s in sub_list:
                             # if the subject is language, we need to determine which language this student has opted for
-                            if s.subject_name == 'Third Language':
+                            if s == 'Third Language':
                                 try:
                                     mapping = ThirdLang.objects.get(student=student)
                                     subject = mapping.third_lang
