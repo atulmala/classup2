@@ -1426,8 +1426,8 @@ class ResultSheet(generics.ListCreateAPIView):
                                         test_result = TestResults.objects.get(class_test=test, student=student)
                                         term_test_result = TermTestResult.objects.get (test_result=test_result)
                                         term_marks = test_result.marks_obtained
-                                        pa_marks = term_test_result.periodic_test_marks
-                                        sub_marks = test_result.marks_obtained + term_test_result.periodic_test_marks
+                                        pa_marks = round(term_test_result.periodic_test_marks)
+                                        sub_marks = test_result.marks_obtained + pa_marks
                                         sub_marks = sub_marks + term_test_result.note_book_marks
                                         sub_marks = sub_marks + term_test_result.sub_enrich_marks
 
@@ -1440,12 +1440,11 @@ class ResultSheet(generics.ListCreateAPIView):
                                                 marks_col = marks_col + 11
                                                 continue
                                             else:
-
                                                 # this student was absent in term test
                                                 if term_marks < 0:
                                                     print('%s was absent in the term test of %s.' % (student_name, s))
                                                     print('hence, only pa plus notebook, sub enrich marks shown')
-                                                    sub_marks = term_test_result.periodic_test_marks
+                                                    sub_marks = pa_marks
                                                     sub_marks = sub_marks + term_test_result.note_book_marks
                                                     sub_marks = sub_marks + term_test_result.sub_enrich_marks
                                                     result_sheet.write_number(row, marks_col, sub_marks, cell_normal)
@@ -1490,7 +1489,12 @@ class ResultSheet(generics.ListCreateAPIView):
                         formula = '=SUM(%s)' % cell_range
                         result_sheet.write_formula(row, 12, formula, cell_normal)
                         cell_range = xl_range(row, 12, row, 12)
+
                         formula = '=%s/700.00' % cell_range
+                        # 10/10/2018 - for Rama Devi International School. In class IV they teach only 6 subjects
+                        if the_class.standard == 'IV':
+                            formula = '=%s/600.00' % cell_range
+
                         result_sheet.write_formula (row, 13, formula, perc_format)
                         index = 'N%s*100' % str(row+1)
                         print ('index = %s' % index)
@@ -1729,7 +1733,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                 annual_marks = test_result.marks_obtained
                                 term_test_result = TermTestResult.objects.get(test_result=test_result)
                                 pna_marks = term_test_result.periodic_test_marks
-                                pna_marks = pna_marks + term_test_result.note_book_marks
+                                pna_marks = round(pna_marks + term_test_result.note_book_marks)
                                 pna_marks = pna_marks + term_test_result.sub_enrich_marks
                                 result_sheet.write_number(row, marks_col, pna_marks, cell_normal)
                                 marks_col = marks_col + 1
