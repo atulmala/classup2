@@ -1440,12 +1440,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                                 marks_col = marks_col + 11
                                                 continue
                                             else:
-                                                # 10/10/2018 - if marks are not yet entered (or test is not yet created)
-                                                if term_marks < 0 and pa_marks < 0:
-                                                    print('subject %s marks not entered for %s' % (s, student_name))
-                                                    result_sheet.write_string(row, marks_col, 'TBE', cell_grade)
-                                                    marks_col = marks_col + 11
-                                                    continue
+
                                                 # this student was absent in term test
                                                 if term_marks < 0:
                                                     print('%s was absent in the term test of %s.' % (student_name, s))
