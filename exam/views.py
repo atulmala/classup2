@@ -1466,23 +1466,24 @@ class ResultSheet(generics.ListCreateAPIView):
                                        (the_class.standard, section.section, s))
 
                                 continue
-                        # 22/03/2018 we show GK Grades as well
-                        try:
-                            gk = Subject.objects.get(school=school, subject_name='GK')
-                            gk_tests = ClassTest.objects.filter(the_class=the_class, section=section, subject=gk)
-                            tr1 = TestResults.objects.get(class_test=gk_tests.first(), student=student)
-                            gk_grade1 = tr1.grade
-                            gk_grade = gk_grade1
-                            # tr2 = TestResults.objects.get(class_test=gk_tests.last(), student=student)
-                            # gk_grade2 = tr2.grade
-                            # gk_grade = '%s/%s' % (gk_grade1, gk_grade2)
-                            print('GK grade secured by %s: %s' % (student_name, gk_grade))
-                        except Exception as e:
-                            print('exception 22032018-A from exam views.py %s %s' % (e.message, type(e)))
-                            print('could not retrieve the GK grade for %s' % student_name)
-                            gk_grade = ' '
-                        col = col + 1
-                        marks_col = col + 1
+                            # 22/03/2018 we show GK Grades as well
+                            try:
+                                gk = Subject.objects.get(school=school, subject_name='GK')
+                                gk_tests = ClassTest.objects.filter(the_class=the_class, section=section,
+                                                                      subject=gk)
+                                tr1 = TestResults.objects.get(class_test=gk_tests.first(), student=student)
+                                gk_grade1 = tr1.grade
+                                gk_grade = gk_grade1
+                                # tr2 = TestResults.objects.get(class_test=gk_tests.last(), student=student)
+                                # gk_grade2 = tr2.grade
+                                # gk_grade = '%s/%s' % (gk_grade1, gk_grade2)
+                                print('GK grade secured by %s: %s' % (student_name, gk_grade))
+                            except Exception as e:
+                                print('exception 22032018-A from exam views.py %s %s' % (e.message, type(e)))
+                                print('could not retrieve the GK grade for %s' % student_name)
+                                gk_grade = ' '
+                            col = col + 1
+                            marks_col = col + 1
                         # now is the time to insert formulas in the designated cells
                         # formulaes for term I
                         cell_range = xl_range(row, 4, row, 11)
