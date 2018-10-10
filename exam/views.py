@@ -1474,9 +1474,9 @@ class ResultSheet(generics.ListCreateAPIView):
                                 tr1 = TestResults.objects.get(class_test=gk_tests.first(), student=student)
                                 gk_grade1 = tr1.grade
                                 gk_grade = gk_grade1
-                                tr2 = TestResults.objects.get(class_test=gk_tests.last(), student=student)
-                                gk_grade2 = tr2.grade
-                                gk_grade = '%s/%s' % (gk_grade1, gk_grade2)
+                                # tr2 = TestResults.objects.get(class_test=gk_tests.last(), student=student)
+                                # gk_grade2 = tr2.grade
+                                # gk_grade = '%s/%s' % (gk_grade1, gk_grade2)
                                 print('GK grade secured by %s: %s' % (student_name, gk_grade))
                             except Exception as e:
                                 print('exception 22032018-A from exam views.py %s %s' % (e.message, type(e)))
