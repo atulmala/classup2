@@ -1425,6 +1425,8 @@ class ResultSheet(generics.ListCreateAPIView):
                                         print ('retrieving % s marks for %s' % (s, student_name))
                                         test_result = TestResults.objects.get(class_test=test, student=student)
                                         term_test_result = TermTestResult.objects.get (test_result=test_result)
+                                        term_marks = test_result.marks_obtained
+                                        pa_marks = term_test_result.periodic_test_marks
                                         sub_marks = test_result.marks_obtained + term_test_result.periodic_test_marks
                                         sub_marks = sub_marks + term_test_result.note_book_marks
                                         sub_marks = sub_marks + term_test_result.sub_enrich_marks
@@ -1432,16 +1434,28 @@ class ResultSheet(generics.ListCreateAPIView):
                                         # if the subject if third language (Sanskrit/French) and if student has
                                         # not opted for this subject then marks will be -20000.00
                                         if sub_marks < 0:
-                                            if sub_full in ['Sanskrit', 'French']:
+                                            if s in ['Sanskrit', 'French']:
                                                 print ('subject %s is not opted by %s' % (s, student_name))
                                                 result_sheet.write_string (row, marks_col, 'NA', cell_grade)
                                                 marks_col = marks_col + 11
                                                 continue
                                             else:
-                                                print('subject %s marks not entered for %s' % (s, student_name))
-                                                result_sheet.write_string(row, marks_col, 'TBE', cell_grade)
-                                                marks_col = marks_col + 11
-                                                continue
+                                                # 10/10/2018 - if marks are not yet entered (or test is not yet created)
+                                                if term_marks < 0 and pa_marks < 0:
+                                                    print('subject %s marks not entered for %s' % (s, student_name))
+                                                    result_sheet.write_string(row, marks_col, 'TBE', cell_grade)
+                                                    marks_col = marks_col + 11
+                                                    continue
+                                                # this student was absent in term test
+                                                if term_marks < 0:
+                                                    print('%s was absent in the term test of %s.' % (student_name, s))
+                                                    print('hence, only pa plus notebook, sub enrich marks shown')
+                                                    sub_marks = term_test_result.periodic_test_marks
+                                                    sub_marks = sub_marks + term_test_result.note_book_marks
+                                                    sub_marks = sub_marks + term_test_result.sub_enrich_marks
+                                                    result_sheet.write_number(row, marks_col, sub_marks, cell_normal)
+                                                    marks_col = marks_col + 11
+                                                    continue
                                         result_sheet.write_number (row, marks_col, sub_marks, cell_normal)
                                         print ('successfully retrieved %s marks for %s and sheet updated' %
                                                (s, student_name))
