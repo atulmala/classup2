@@ -1563,6 +1563,7 @@ class ResultSheet(generics.ListCreateAPIView):
                             result_sheet.write_string (row, 32, health_ed1, cell_grade)
                             discipline1 = cs_term1.discipline
                             result_sheet.write_string (row, 33, discipline1, cell_grade)
+                            result_sheet.write_string(row, 34, gk_grade, cell_grade)
 
                             cs_term2 = CoScholastics.objects.get (term='term2', student=student)
                             work_ed2 = cs_term2.work_education
