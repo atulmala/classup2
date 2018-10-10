@@ -2,6 +2,7 @@
 import requests
 
 from PIL import Image
+from decimal import Decimal
 
 from django.shortcuts import render
 from django.contrib import messages
@@ -1308,8 +1309,13 @@ class ResultSheet(generics.ListCreateAPIView):
                     result_sheet.merge_range('D4:D7', 'Student Name', cell_center)
 
                 if the_class.standard in middle_classes:
-                    result_sheet.merge_range ('E4:O4', 'Term I (700)', cell_center)
-                    result_sheet.merge_range ('P4:Z4', 'Term II (700)', cell_center)
+                    # 10/10/2018 RDIS teaches only 6 subjects in class IV
+                    if the_class.standard == 'IV':
+                        result_sheet.merge_range('E4:O4', 'Term I (600)', cell_center)
+                        result_sheet.merge_range('P4:Z4', 'Term II (600)', cell_center)
+                    else:
+                        result_sheet.merge_range('E4:O4', 'Term I (700)', cell_center)
+                        result_sheet.merge_range('P4:Z4', 'Term II (700)', cell_center)
                     result_sheet.set_column ('E:AC', 6)
                     result_sheet.set_column ('AD:AI', 3)
                     result_sheet.set_column ('G:G', 6.5)
@@ -1426,8 +1432,10 @@ class ResultSheet(generics.ListCreateAPIView):
                                         test_result = TestResults.objects.get(class_test=test, student=student)
                                         term_test_result = TermTestResult.objects.get (test_result=test_result)
                                         term_marks = test_result.marks_obtained
-                                        pa_marks = term_test_result.periodic_test_marks
-                                        sub_marks = test_result.marks_obtained + term_test_result.periodic_test_marks
+
+                                        pa_marks = Decimal(round(term_test_result.periodic_test_marks))
+
+                                        sub_marks = test_result.marks_obtained + pa_marks
                                         sub_marks = sub_marks + term_test_result.note_book_marks
                                         sub_marks = sub_marks + term_test_result.sub_enrich_marks
 
@@ -1440,12 +1448,11 @@ class ResultSheet(generics.ListCreateAPIView):
                                                 marks_col = marks_col + 11
                                                 continue
                                             else:
-
                                                 # this student was absent in term test
                                                 if term_marks < 0:
                                                     print('%s was absent in the term test of %s.' % (student_name, s))
                                                     print('hence, only pa plus notebook, sub enrich marks shown')
-                                                    sub_marks = term_test_result.periodic_test_marks
+                                                    sub_marks = pa_marks
                                                     sub_marks = sub_marks + term_test_result.note_book_marks
                                                     sub_marks = sub_marks + term_test_result.sub_enrich_marks
                                                     result_sheet.write_number(row, marks_col, sub_marks, cell_normal)
@@ -1490,7 +1497,11 @@ class ResultSheet(generics.ListCreateAPIView):
                         formula = '=SUM(%s)' % cell_range
                         result_sheet.write_formula(row, 12, formula, cell_normal)
                         cell_range = xl_range(row, 12, row, 12)
+
                         formula = '=%s/700.00' % cell_range
+                        # 10/10/2018 - for RDIS they do not teach Sanskrit in class IV
+                        if the_class.standard == 'IV':
+                            formula = '=%s/600.00' % cell_range
                         result_sheet.write_formula (row, 13, formula, perc_format)
                         index = 'N%s*100' % str(row+1)
                         print ('index = %s' % index)
@@ -1728,8 +1739,8 @@ class ResultSheet(generics.ListCreateAPIView):
                                 test_result = TestResults.objects.get(class_test=term_test, student=student)
                                 annual_marks = test_result.marks_obtained
                                 term_test_result = TermTestResult.objects.get(test_result=test_result)
-                                pna_marks = term_test_result.periodic_test_marks
-                                pna_marks = pna_marks + term_test_result.note_book_marks
+                                pa_marks = Decimal(round(term_test_result.periodic_test_marks))
+                                pna_marks = pa_marks + term_test_result.note_book_marks
                                 pna_marks = pna_marks + term_test_result.sub_enrich_marks
                                 result_sheet.write_number(row, marks_col, pna_marks, cell_normal)
                                 marks_col = marks_col + 1
