@@ -617,7 +617,7 @@ def prepare_results(request, school_id, the_class, section):
             print('heading created')
 
             report_card = 'Report Card for Class ' + the_class + '-' + section
-            c.drawString(152, report_card_top + 2, report_card)
+            c.drawString(146, report_card_top + 2, report_card)
 
             c.setFont(font, 10)
             c.drawString(left_margin, stu_detail_top, adm_no_lbl)
