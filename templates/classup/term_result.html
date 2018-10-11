@@ -103,7 +103,8 @@
                         file_name = the_class + "-" + section + "_Term1_Results.pdf";
                     }
                     else    {
-                        file_name = selected_student + "_Term1_Results"
+                        ss = selected_student.replace('.', '-')
+                        file_name = ss + "_Term1_Results"
                     }
                     a.download = file_name;
                     document.body.appendChild(a);

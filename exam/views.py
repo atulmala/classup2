@@ -425,7 +425,7 @@ def prepare_results(request, school_id, the_class, section):
         conf = Configurations.objects.get(school=school)
         short_name = conf.school_short_name
     except Exception as e:
-        print('failed to retrieve the shore name for %s' % school_name)
+        print('failed to retrieve the short name for %s' % school_name)
         print('exception 04022018-A from exam views.py %s %s' % (e.message, type(e)))
 
     higher_classes = ['XI', 'XII']
@@ -446,13 +446,14 @@ def prepare_results(request, school_id, the_class, section):
             print('admission/registrtion no is %s' % adm_no)
             s = Student.objects.get(school=school, student_erp_id=adm_no)
             print(s)
-            adm_no = str(adm_no)
-            #pdf_name = s.fist_name + '_' + s.last_name + '_Term1_Results.pdf'
+            selected_student = ('%s_%s' % (s.fist_name, s.last_name))
+            print('selectd_student now = %s' % selected_student)
             pdf_name = ('%s_%s_TermI_Results.pdf' % (s.fist_name, s.last_name))
+            print('pdf_name = %s' % pdf_name)
         print('pdf file generated will be %s' % pdf_name)
 
         response = HttpResponse(content_type='application/pdf')
-        content_disposition = 'attachment; filename=' + pdf_name
+        content_disposition = ('attachment; filename= %s' % pdf_name)
         print (content_disposition)
         response['Content-Disposition'] = content_disposition
         print(response)
@@ -601,17 +602,20 @@ def prepare_results(request, school_id, the_class, section):
             c.translate(inch, inch)
             c.drawInlineImage(school_logo, 410, 690, width=65, height=50)
             c.drawInlineImage(cbse_logo, left_margin, 690, width=60, height=50)
-            c.drawString(120, top+8, school_name)
+            c.drawString(120, top+20, school_name)
             c.setFont(font, 10)
-            c.drawString(145, top-5, school_address)
+            c.drawString(145, top+7, school_address)
+            c.setFont(font, 8)
+            c.drawString(175, top-4, '(Affiliated to CBSE)')
+            c.setFont(font, 10)
             c.line(-30, line_top, 6.75 * inch, line_top)
 
             c.setFont(font, 10)
-            c.drawString(152, session_top, session)
+            c.drawString(152, session_top + 2, session)
             print('heading created')
 
             report_card = 'Report Card for Class ' + the_class + '-' + section
-            c.drawString(152, report_card_top, report_card)
+            c.drawString(152, report_card_top + 2, report_card)
 
             c.setFont(font, 10)
             c.drawString(left_margin, stu_detail_top, adm_no_lbl)
@@ -648,6 +652,8 @@ def prepare_results(request, school_id, the_class, section):
 
             c.drawString(left_margin, stu_detail_top - 60, class_sec_lbl)
             c.drawString(tab, stu_detail_top - 60, the_class + '-' + section)
+            #c.drawString(left_margin, stu_detail_top - 75, 'Attendance:')
+            c.drawString(tab + 300, stu_detail_top -60, 'Attendance:')
             print('report heading prepared')
 
             c.setFont(font, 8)
@@ -1083,7 +1089,7 @@ def prepare_results(request, school_id, the_class, section):
                         #c.drawString(tab - 20, table3_top - 25, promoted_status)
 
                     c.drawString(left_margin, table3_top - 55, 'Place & Date:')
-                    c.drawString(left_margin + 50, table3_top - 55, 'Noida   26/03/2018')
+                    #c.drawString(left_margin + 50, table3_top - 55, 'Noida   26/03/2018')
                     c.drawString(175, table3_top - 55, 'Signature of Class Teacher')
                     c.drawString(400, table3_top - 55, 'Signature of Principal')
                 except Exception as e:
@@ -1133,7 +1139,7 @@ def prepare_results(request, school_id, the_class, section):
 
                 c.drawString(tab - 20, table3_top - 25, '')
                 c.drawString(left_margin, table3_top - 55, 'Place & Date:')
-                c.drawString(left_margin + 50, table3_top - 55, 'Noida   26/03/2018')
+                c.drawString(left_margin + 50, table3_top - 55, 'Gr. Noida (W)   12/10/2018')
                 c.drawString(175, table3_top - 55, 'Signature of Class Teacher')
                 c.drawString(400, table3_top - 55, 'Signature of Principal')
             except Exception as e:
