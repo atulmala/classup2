@@ -930,10 +930,14 @@ def prepare_results(request, school_id, the_class, section):
                             exam = Exam.objects.get(school=school, title=term)
                             print(exam)
                             try:
-                                test = ClassTest.objects.get(subject=sub, the_class=standard, section=sec, exam=exam)
-                                tr = TestResults.objects.get(class_test=test, student=s)
+                                if sub.subject_name != 'GK':
+                                    test = ClassTest.objects.get(subject=sub, the_class=standard,
+                                                                 section=sec, exam=exam)
+                                    tr = TestResults.objects.get(class_test=test, student=s)
 
                                 if sub.subject_name == 'GK':
+                                    test = ClassTest.objects.get(subject=sub, the_class=standard, section=sec)
+                                    tr = TestResults.objects.get(class_test=test, student=s)
                                     pa = 'NA'
                                     sub_enrich = 'NA'
                                     main = 'NA'
@@ -942,7 +946,7 @@ def prepare_results(request, school_id, the_class, section):
                                     grade = tr.grade
                                 else:
                                     ttr = TermTestResult.objects.get(test_result=tr)
-                                    pa = ttr.periodic_test_marks
+                                    pa = round(ttr.periodic_test_marks)
                                     notebook = ttr.note_book_marks
                                     sub_enrich = ttr.sub_enrich_marks
                                     main = tr.marks_obtained
