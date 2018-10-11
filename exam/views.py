@@ -602,6 +602,8 @@ def prepare_results(request, school_id, the_class, section):
             c.translate(inch, inch)
             c.drawInlineImage(school_logo, 410, 690, width=65, height=50)
             c.drawInlineImage(cbse_logo, left_margin, 690, width=60, height=50)
+            font = 'Times-Bold'
+            c.setFont(font, 14)
             c.drawString(120, top+20, school_name)
             c.setFont(font, 10)
             c.drawString(145, top+7, school_address)
