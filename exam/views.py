@@ -443,10 +443,13 @@ def prepare_results(request, school_id, the_class, section):
             pdf_name = the_class + '-' + section + '_Term1_Results.pdf'
         else:
             adm_no = selected_student.partition('(')[-1].rpartition(')')[0]
+            print('admission/registrtion no is %s' % adm_no)
             s = Student.objects.get(school=school, student_erp_id=adm_no)
             print(s)
-            pdf_name = s.fist_name + '_' + s.last_name + '_Term1_Results.pdf'
-        print(pdf_name)
+            adm_no = str(adm_no)
+            #pdf_name = s.fist_name + '_' + s.last_name + '_Term1_Results.pdf'
+            pdf_name = ('%s_%s_TermI_Results.pdf' % (s.fist_name, s.last_name))
+        print('pdf file generated will be %s' % pdf_name)
 
         response = HttpResponse(content_type='application/pdf')
         content_disposition = 'attachment; filename=' + pdf_name
@@ -1057,7 +1060,7 @@ def prepare_results(request, school_id, the_class, section):
                     c.drawString(tab - 20, table3_top - 15, remark)
 
                     if the_class not in ninth_tenth:
-                        c.drawString(left_margin, table3_top - 25, 'Promoted to Class: ')
+                        c.drawString(left_margin, table3_top - 25, 'Promoted to Class: N/A')
                         # get the class to which this student is promoted. Only if he has passed the exam
                         try:
                             not_promoted = NPromoted.objects.get(student=s)
@@ -1077,7 +1080,7 @@ def prepare_results(request, school_id, the_class, section):
                                 print('%s %s of class %s has passed. But failed to determine his next class' %
                                       (s.fist_name, s.last_name, the_class))
                                 print('exception 02032018-B from exam views.py %s %s' % (e.message, type(e)))
-                        c.drawString(tab - 20, table3_top - 25, promoted_status)
+                        #c.drawString(tab - 20, table3_top - 25, promoted_status)
 
                     c.drawString(left_margin, table3_top - 55, 'Place & Date:')
                     c.drawString(left_margin + 50, table3_top - 55, 'Noida   26/03/2018')
@@ -1106,7 +1109,7 @@ def prepare_results(request, school_id, the_class, section):
                 if the_class in ninth_tenth:
                     c.drawString(left_margin, table3_top - 25, 'Result: ')
                 else:
-                    c.drawString(left_margin, table3_top - 25, 'Promoted to Class: ')
+                    c.drawString(left_margin, table3_top - 25, 'Promoted to Class: N/A')
                     # get the class to which this student is promoted. Only if he has passed the exam
                     try:
                         not_promoted = NPromoted.objects.get(student=s)
@@ -1126,7 +1129,7 @@ def prepare_results(request, school_id, the_class, section):
                             print('%s %s of class %s has passed. But failed to determine his next class' %
                                   (s.fist_name, s.last_name, the_class))
                             print('exception 02032018-D from exam views.py %s %s' % (e.message, type(e)))
-                    c.drawString(tab - 20, table3_top - 25, promoted_status)
+                    #c.drawString(tab - 20, table3_top - 25, promoted_status)
 
                 c.drawString(tab - 20, table3_top - 25, '')
                 c.drawString(left_margin, table3_top - 55, 'Place & Date:')
@@ -1340,7 +1343,12 @@ class ResultSheet(generics.ListCreateAPIView):
                     for col in range (4, col_range):
                         result_sheet.merge_range (4, col, 6, col, sub_short[col-4], cell_center)
                     result_sheet.merge_range ('M5:O5', '(A)', cell_center)
-                    result_sheet.merge_range ('M6:O6', 'Total(700)', cell_center)
+
+                    if the_class.standard == 'IV':
+                        result_sheet.merge_range ('M6:O6', 'Total(600)', cell_center)
+                    else:
+                        result_sheet.merge_range('M6:O6', 'Total(700)', cell_center)
+
                     result_sheet.write_string ('M7', 'Marks', cell_center)
                     result_sheet.write_string ('N7', '%', cell_center)
                     result_sheet.write_string ('O7', 'Grade', cell_center)
