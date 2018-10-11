@@ -845,7 +845,6 @@ def prepare_results(request, school_id, the_class, section):
                         dscpln_array.append('Discipline: Term-1[On a 3-point(A-C) grading scale]')
                         dscpln = co_scl.discipline
                         dscpln_array.append(dscpln)
-                        remark = co_scl.teacher_remarks
                     except Exception as e:
                         print('failed to retrieve %s Co-scholastic grades for %s %s for ' %
                                     ('Term2', s.fist_name, s.last_name))
@@ -1562,6 +1561,7 @@ class ResultSheet(generics.ListCreateAPIView):
                         result_sheet.write_formula(row, 29, formula, cell_grade)
 
                         # 11/10/2018 show teachers remarks
+                        result_sheet.set_column('AJ:AJ', 35)
                         cs_term2 = CoScholastics.objects.get(term='term1', student=student)
                         teacher_remarks = cs_term2.teacher_remarks
                         result_sheet.write_string(row, 35, teacher_remarks, cell_normal)
@@ -1828,6 +1828,7 @@ class ResultSheet(generics.ListCreateAPIView):
                         marks_col += 1
 
                         # 11/10/2018 show teachers remarks
+                        result_sheet.set_column('AF:AF', 35)
                         teacher_remarks = cs_term2.teacher_remarks
                         result_sheet.write_string(row, marks_col, teacher_remarks, cell_normal)
                         marks_col += 1
