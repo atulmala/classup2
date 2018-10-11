@@ -924,8 +924,8 @@ def prepare_results(request, school_id, the_class, section):
                     try:
                         for term in terms:
                             # for class IX, only the result of Term2, ie the final exam is to be shown
-                            if term == 'Term1' and the_class in ninth_tenth:
-                                continue
+                            #if term == 'Term1' and the_class in ninth_tenth:
+                                #continue
 
                             exam = Exam.objects.get(school=school, title=term)
                             print(exam)
@@ -1003,8 +1003,8 @@ def prepare_results(request, school_id, the_class, section):
                     dscpln_array = []
                     for term in terms:
                         # for class IX, only the result of Term2, ie the final exam is to be shown
-                        if term == 'Term1' and the_class in ninth_tenth:
-                            continue
+                        #if term == 'Term1' and the_class in ninth_tenth:
+                            #continue
                         try:
                             co_scl = CoScholastics.objects.get(term=term, student=s)
                             work_array.append('Work Education (or Pre-vocational Education)')
@@ -1117,7 +1117,7 @@ def prepare_results(request, school_id, the_class, section):
             c.line(left_margin, table3_top - 60, 6.75 * inch, table3_top - 60)
             try:
                 if the_class in ninth_tenth:
-                    c.drawString(left_margin, table3_top - 25, 'Result: ')
+                    c.drawString(left_margin, table3_top - 25, 'Result: N/A ')
                 else:
                     c.drawString(left_margin, table3_top - 25, 'Promoted to Class: N/A')
                     # get the class to which this student is promoted. Only if he has passed the exam
