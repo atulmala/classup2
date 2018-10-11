@@ -430,7 +430,7 @@ def prepare_results(request, school_id, the_class, section):
 
     higher_classes = ['XI', 'XII']
     ninth_tenth = ['IX', 'X']
-    middle_classes = ['V', 'VI', 'VII', 'VIII']
+    middle_classes = ['IV', 'V', 'VI', 'VII', 'VIII']
 
     if request.method == 'GET':
         print(request.body)
