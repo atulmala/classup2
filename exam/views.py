@@ -1561,6 +1561,11 @@ class ResultSheet(generics.ListCreateAPIView):
                         print('formula for rank: %s', formula)
                         result_sheet.write_formula(row, 29, formula, cell_grade)
 
+                        # 11/10/2018 show teachers remarks
+                        cs_term2 = CoScholastics.objects.get(term='term1', student=student)
+                        teacher_remarks = cs_term2.teacher_remarks
+                        result_sheet.write_string(row, 35, teacher_remarks, cell_normal)
+
                         # show the result/remarks. In the beginning it will show Promoted,
                         #  but after the analysis is done, it will show the actual result
                         details = ' '
@@ -1576,8 +1581,8 @@ class ResultSheet(generics.ListCreateAPIView):
                                                                              the_class))
                             print('exception 25032018-A from exam views.py %s %s' % (e.message, type(e)))
                             promoted_status = 'Promoted'
-                        result_sheet.write_string(row, 35, promoted_status, cell_grade)
-                        result_sheet.write_string(row, 36, details, cell_grade)
+                        result_sheet.write_string(row, 36, promoted_status, cell_grade)
+                        result_sheet.write_string(row, 37, details, cell_grade)
 
                         # co-scholastic grades. We will show grades for both terms separated by /, eg B/A
                         try:
@@ -1602,6 +1607,10 @@ class ResultSheet(generics.ListCreateAPIView):
                             discipline2 = cs_term2.discipline
                             result_sheet.write_string(row, 33, discipline1 + '/' + discipline2, cell_grade)
                             result_sheet.write_string(row, 34, gk_grade, cell_grade)
+                            # 11/10/2018 show teachers remarks
+                            teacher_remarks = cs_term2.teacher_remarks
+                            result_sheet.write_string(row, 35, teacher_remarks, cell_normal)
+                            marks_col += 1
                         except Exception as e:
                             print ('exception 21012018-A from exam views.py %s %s' % (e.message, type(e)))
                             print ('failed to retrieve Co-scholastics grade for %s' % student_name)
@@ -1627,7 +1636,7 @@ class ResultSheet(generics.ListCreateAPIView):
                     col = col + 3
                     result_sheet.merge_range(row, col, row+2, col+2, 'FIT\n(100)', cell_center)
                     col = col + 3
-                    result_sheet.merge_range(row, col, row+2, col+2, 'Grand Total\n(600)', cell_center)
+                    result_sheet.merge_range(row, col, row+2, col+2, 'Grand Total\n(500)', cell_center)
 
                     row = 6
                     col_range = 23
@@ -1816,6 +1825,11 @@ class ResultSheet(generics.ListCreateAPIView):
                         except Exception as e:
                             print('exception 27012018-D from exam views.py %s %s' % (e.message, type(e)))
                             print('failed to retrieve Co-scholastic grades for %s' % student_name)
+                        marks_col += 1
+
+                        # 11/10/2018 show teachers remarks
+                        teacher_remarks = cs_term2.teacher_remarks
+                        result_sheet.write_string(row, marks_col, teacher_remarks, cell_normal)
                         marks_col += 1
 
                         # show the result/remarks. In the beginning it will show Promoted,
