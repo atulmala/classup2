@@ -413,6 +413,7 @@ def prepare_results(request, school_id, the_class, section):
                      "Physical Education"]
     school = School.objects.get(id=school_id)
     school_name = school.school_name
+    school_address = school.school_address
     print(school)
     standard = Class.objects.get(school=school, standard=the_class)
     print(standard)
@@ -582,15 +583,12 @@ def prepare_results(request, school_id, the_class, section):
                  ['41 - 50', 'C 2'],
                  ['33 - 40', 'D'],
                  ['32 & Below', 'E (Needs improvement)']]
-        session = 'Academic Session 2017-18'
+        session = 'Academic Session 2018-19'
         adm_no_lbl = 'Admission No:'
         stu_name_lbl = 'Student Name:'
         father_name_lbl = 'Mother/Father Name:'
         dob_lbl = 'Date of Birth:'
         class_sec_lbl = 'Class/Section:'
-
-        exam = Exam.objects.get(school=school, title='Term1')
-        print(exam)
 
         sub_dict = {}
 
@@ -598,9 +596,11 @@ def prepare_results(request, school_id, the_class, section):
 
         def marksheet(c, s):
             c.translate(inch, inch)
-            c.drawInlineImage(school_logo, 410, 690, width=50, height=50)
+            c.drawInlineImage(school_logo, 410, 690, width=65, height=50)
             c.drawInlineImage(cbse_logo, left_margin, 690, width=60, height=50)
-            c.drawString(141, top, school_name)
+            c.drawString(120, top+8, school_name)
+            c.setFont(font, 10)
+            c.drawString(145, top-5, school_address)
             c.line(-30, line_top, 6.75 * inch, line_top)
 
             c.setFont(font, 10)
@@ -612,7 +612,7 @@ def prepare_results(request, school_id, the_class, section):
 
             c.setFont(font, 10)
             c.drawString(left_margin, stu_detail_top, adm_no_lbl)
-            c.drawString(tab, stu_detail_top, s.student_erp_id)
+            #c.drawString(tab, stu_detail_top, s.student_erp_id)
 
             c.drawString(left_margin, stu_detail_top - 15, stu_name_lbl)
             c.drawString(tab, stu_detail_top - 15, s.fist_name + ' ' + s.last_name)
@@ -627,7 +627,10 @@ def prepare_results(request, school_id, the_class, section):
                 print('exception 19032018-A from exam views.py %s %s' % (e.message, type(e)))
                 print('failed to retrieve mother name for %s %s' % (s.fist_name, s.last_name))
                 mother_name = ' '
-            parent_name = '%s / Mr. %s' % (mother_name, s.parent.parent_name)
+            if mother_name == ' ':
+                parent_name = s.parent.parent_name
+            else:
+                parent_name = '%s / Mr. %s' % (mother_name, s.parent.parent_name)
             c.drawString(tab, stu_detail_top - 30, parent_name)
 
             c.drawString(left_margin, stu_detail_top - 45, dob_lbl)
@@ -881,7 +884,6 @@ def prepare_results(request, school_id, the_class, section):
                             sub_dict[sc.sequence] = sc.subject
                         print('sub_dict = ')
                         print (sub_dict)
-
                 except Exception as e:
                     print('Looks like the scheme for class %s is not yet set' % the_class)
                     print('exception 10022018-A from exam views.py %s %s' % (e.message, type(e)))
@@ -909,7 +911,7 @@ def prepare_results(request, school_id, the_class, section):
                             print ('failed to determine third lang for %s. Exception 061117-B from exam views.py %s %s'
                                    % (s.fist_name, e.message, type(e)))
                     sub_row = [sub.subject_name]
-                    terms = ['Term1', 'Term2']
+                    terms = ['Term1']
                     try:
                         for term in terms:
                             # for class IX, only the result of Term2, ie the final exam is to be shown
@@ -918,12 +920,8 @@ def prepare_results(request, school_id, the_class, section):
 
                             exam = Exam.objects.get(school=school, title=term)
                             print(exam)
-                            start_date = exam.start_date
-                            end_date = exam.end_date
                             try:
-                                test = ClassTest.objects.get(subject=sub, the_class=standard, section=sec,
-                                                             date_conducted__gte=start_date,
-                                                             date_conducted__lte=end_date)
+                                test = ClassTest.objects.get(subject=sub, the_class=standard, section=sec, exam=exam)
                                 tr = TestResults.objects.get(class_test=test, student=s)
 
                                 if sub.subject_name == 'GK':
@@ -954,7 +952,6 @@ def prepare_results(request, school_id, the_class, section):
                                     sub_row.append(main)
                                     sub_row.append(total)
                                     sub_row.append(grade)
-
                             except Exception as e:
                                 print('%s test for %s is not yet scheduled' % (term, sub))
                                 print('exception 12032018-A from exam views.py %s %s' % (e.message, type(e)))
