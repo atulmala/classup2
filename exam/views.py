@@ -1152,7 +1152,8 @@ def prepare_results(request, school_id, the_class, section):
 
         if whole_class == 'true':
             # get the list of all the students, then get the marks of each test conducted for this exam
-            students = Student.objects.filter(school=school, current_class=standard, current_section=sec)
+            students = Student.objects.filter(school=school, current_class=standard,
+                                              current_section=sec, active_status=True)
             for s in students:
                 print('Entering loop')
                 marksheet(c, s)
