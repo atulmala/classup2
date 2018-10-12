@@ -905,7 +905,7 @@ def prepare_results(request, school_id, the_class, section):
                               'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
                               'Yearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
                 if the_class in ninth_tenth:
-                    data1 = [['Scholastic\nAreas', 'Academic Year (100 Marks)', '', '', '', '', ''],
+                    data1 = [['Scholastic\nAreas', 'Term I (100 Marks)', '', '', '', '', ''],
                              ['Sub Name', 'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
                               'Annual\nExamination\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
                 for i in range(0, sub_count):
