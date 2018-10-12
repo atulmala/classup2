@@ -637,7 +637,7 @@ def prepare_results(request, school_id, the_class, section):
                 print('failed to retrieve mother name for %s %s' % (s.fist_name, s.last_name))
                 mother_name = ' '
             if mother_name == ' ':
-                parent_name = s.parent.parent_name
+                parent_name = 'Mr. %s' % s.parent.parent_name
             else:
                 parent_name = '%s / Mr. %s' % (mother_name, s.parent.parent_name)
             c.drawString(tab, stu_detail_top - 30, parent_name)
@@ -655,7 +655,7 @@ def prepare_results(request, school_id, the_class, section):
             c.drawString(left_margin, stu_detail_top - 60, class_sec_lbl)
             c.drawString(tab, stu_detail_top - 60, the_class + '-' + section)
             #c.drawString(left_margin, stu_detail_top - 75, 'Attendance:')
-            c.drawString(tab + 300, stu_detail_top -60, 'Attendance:')
+            #c.drawString(tab + 300, stu_detail_top -60, 'Attendance:')
             print('report heading prepared')
 
             c.setFont(font, 8)
@@ -1069,9 +1069,11 @@ def prepare_results(request, school_id, the_class, section):
                 try:
                     c.drawString(left_margin, table3_top - 15, 'Class Teacher Remarks: ')
                     c.drawString(tab - 20, table3_top - 15, remark)
+                    c.drawString(left_margin, table3_top - 25, 'Attendance: ')
 
                     if the_class not in ninth_tenth:
-                        c.drawString(left_margin, table3_top - 25, 'Promoted to Class: N/A')
+                        c.drawString(left_margin, table3_top - 35, 'Promoted to Class: N/A')
+
                         # get the class to which this student is promoted. Only if he has passed the exam
                         try:
                             not_promoted = NPromoted.objects.get(student=s)
@@ -1118,9 +1120,9 @@ def prepare_results(request, school_id, the_class, section):
             c.line(left_margin, table3_top - 60, 6.75 * inch, table3_top - 60)
             try:
                 if the_class in ninth_tenth:
-                    c.drawString(left_margin, table3_top - 25, 'Result: N/A ')
+                    c.drawString(left_margin, table3_top - 35, 'Result: N/A ')
                 else:
-                    c.drawString(left_margin, table3_top - 25, 'Promoted to Class: N/A')
+                    c.drawString(left_margin, table3_top - 35, 'Promoted to Class: N/A')
                     # get the class to which this student is promoted. Only if he has passed the exam
                     try:
                         not_promoted = NPromoted.objects.get(student=s)
