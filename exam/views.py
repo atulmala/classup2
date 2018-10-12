@@ -1144,7 +1144,7 @@ def prepare_results(request, school_id, the_class, section):
 
                 c.drawString(tab - 20, table3_top - 25, '')
                 c.drawString(left_margin, table3_top - 55, 'Place & Date:')
-                c.drawString(left_margin + 50, table3_top - 55, 'Gr. Noida (W)   12/10/2018')
+                c.drawString(left_margin + 50, table3_top - 55, 'Gr. Noida (W)   13/10/2018')
                 c.drawString(175, table3_top - 55, 'Signature of Class Teacher')
                 c.drawString(400, table3_top - 55, 'Signature of Principal')
             except Exception as e:
