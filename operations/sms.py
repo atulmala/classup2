@@ -6,17 +6,18 @@ import json
 
 import firebase_admin
 from firebase_admin import credentials
+from oauth2client.service_account import ServiceAccountCredentials
 
 
 from django.db.models import Q
 from authentication.models import user_device_mapping
-from push_notifications.models import GCMDevice
+#from push_notifications.models import GCMDevice
 from setup.models import Configurations
 from teacher.models import Teacher
 from student.models import Parent
 from .models import SMSRecord
 
-from push_notifications.gcm import gcm_send_message
+#from push_notifications.gcm import gcm_send_message
 
 
 def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
@@ -92,7 +93,11 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                             print('failed to send push notification to %s via gcm_send_message' % str(mobile))
 
                         try:
-                            cred = credentials.Certificate('operations/classup-firebase.json')
+                            SCOPES = ['https://www.googleapis.com/auth/firebase.messaging']
+                            #cred = credentials.Certificate('operations/firebase.json')
+                            cred = ServiceAccountCredentials.from_json_keyfile_name('operations/firebase.json',
+                                                                                    SCOPES)
+
                             access_token = cred.get_access_token()
                             print('cred = ')
                             print(cred)
@@ -117,8 +122,18 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                                 'message': msg
                             }
                             print('json_data = ')
-                            print(json.dumps(json_data))
 
+
+                            json_data = {
+                                'message': {
+                                  'topic': 'news',
+                                  'notification': {
+                                    'title': 'FCM Notification',
+                                    'body': 'Notification from FCM'
+                                  }
+                                }
+                              }
+                            print(json.dumps(json_data))
                             url = 'https://fcm.googleapis.com/v1/projects/classup-dd5510/messages:send'
                             response = requests.post(url, json=json.dumps(json_data), headers=hed)
                             print('sent push notification to %s via google Firebase api' % mobile)

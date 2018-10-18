@@ -16,10 +16,12 @@ Including another URLconf
 from django.conf.urls import include, url, patterns
 from django.contrib import admin
 
+
 urlpatterns = patterns(' ',
     url(r'^grappelli/', include('grappelli.urls')), # grappelli URLS
-    url(r'^', include('authentication.urls')),
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^', include('authentication.urls')),
+
     url(r'^setup/', include('setup.urls')),
     url(r'^academics/', include('academics.urls')),
     url(r'^student/', include('student.urls')),
@@ -34,4 +36,6 @@ urlpatterns = patterns(' ',
     url(r'erp/', include('erp.urls')),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 )
+
+
 

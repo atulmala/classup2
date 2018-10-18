@@ -16,8 +16,8 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import generics
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.renderers import JSONRenderer
-from push_notifications.models import GCMDevice
-from push_notifications.gcm import gcm_send_message
+#from push_notifications.models import GCMDevice
+#from push_notifications.gcm import gcm_send_message
 
 from setup.models import UserSchoolMapping, GlobalConf
 from teacher.models import Teacher

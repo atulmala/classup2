@@ -129,8 +129,6 @@ class ClassTest(models.Model):
                + self.subject.subject_name + ' ' + (self.date_conducted).strftime('%d/%m/%Y')
 
 
-
-
 class TestResults(models.Model):
     class_test = models.ForeignKey(ClassTest)
     student = models.ForeignKey(Student, db_column='student_erp_id')

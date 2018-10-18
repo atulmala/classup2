@@ -1014,11 +1014,17 @@ def send_message(request, school_id):
                             m2 = p.parent_mobile2
                             print (m2)
 
-                            the_name = s.fist_name
-                            if ' ' in s.fist_name:
-                                (f_name, l_name) = the_name.split(' ')
-                            else:
-                                f_name = the_name
+                            try:
+                                the_name = s.fist_name
+                                if ' ' in s.fist_name:
+                                    (f_name, l_name) = the_name.split(' ')
+                                else:
+                                    f_name = the_name
+                            except Exception as e:
+                                print('exception 16082018 from operations views.py %s (%s)' % (e.message, type(e)))
+                                print('unable to extract firts name for %s %s' % (s.fist_name, s.last_name))
+                                f_name = s.fist_name
+
                             if configuration.type == 'Collage':
                                 student_name = '%s %s' % (s.fist_name, s.last_name)
                                 message_header = 'Dear %s, ' % student_name

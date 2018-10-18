@@ -25,6 +25,7 @@ admin.site.register(GlobalConf, GlobalConfAdmin)
 
 class UserSchoolMappingAdmin(admin.ModelAdmin):
     list_display = ['user', 'school']
+    list_filter = ['school',]
     search_fields = ['school__school_name',]
 
 admin.site.register(UserSchoolMapping, UserSchoolMappingAdmin)
