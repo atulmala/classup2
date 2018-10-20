@@ -49,7 +49,7 @@ def _build_common_message():
   """
   return {
     'message': {
-      'token': 'sseirwoieuoerjow',
+      'token': 'cSE0uNB6u6g:APA91bE8aRPeqixSlJOutyTKOdiuJXQH1V51mC0AbXkzQi2tEPqz_By-rbB9IudpjPAEK1Js7ttOCkbuFy0jKXtfnNEeJfL8jB3OWYiLP7xUel3Xux_DMFax1Kx5yr7tw5Tu1owIdQPi	',
       'notification': {
         'title': 'FCM Notification',
         'body': 'Notification from FCM'
