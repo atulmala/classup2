@@ -1741,6 +1741,45 @@ class ResultSheet(generics.ListCreateAPIView):
                     result_sheet.write_formula(row, col, rank_formula, cell_grade)
                     col += 1
 
+                    # co-scholastic grades. We will show grades for both terms separated by /, eg B/A
+                    try:
+                        cs_term1 = CoScholastics.objects.get(term=term, student=student)
+                        work_ed1 = cs_term1.work_education
+                        result_sheet.merge_range(row, col, row + 5, col,  work_ed1, cell_grade)
+                        col += 1
+
+                        art_ed1 = cs_term1.art_education
+                        result_sheet.merge_range(row, col, row + 5, col, art_ed1, cell_grade)
+                        col += 1
+
+                        health_ed1 = cs_term1.health_education
+                        result_sheet.merge_range(row, col, row + 5, col, health_ed1, cell_grade)
+                        col += 1
+
+                        discipline1 = cs_term1.discipline
+                        result_sheet.merge_range(row, col, row + 5, col, discipline1, cell_grade)
+                        col += 1
+
+                        teacher_remarks = cs_term1.teacher_remarks
+                        result_sheet.merge_range(row, col, row + 5, teacher_remarks, cell_normal)
+
+                        cs_term2 = CoScholastics.objects.get(term='term2', student=student)
+                        work_ed2 = cs_term2.work_education
+                        result_sheet.write_string(row, 30, work_ed1 + '/' + work_ed2, cell_grade)
+                        art_ed2 = cs_term2.art_education
+                        result_sheet.write_string(row, 31, art_ed1 + '/' + art_ed2, cell_grade)
+                        health_ed2 = cs_term2.health_education
+                        result_sheet.write_string(row, 32, health_ed1 + '/' + health_ed2, cell_grade)
+                        discipline2 = cs_term2.discipline
+                        result_sheet.write_string(row, 33, discipline1 + '/' + discipline2, cell_grade)
+                        result_sheet.write_string(row, 34, gk_grade, cell_grade)
+                        # 11/10/2018 show teachers remarks
+                        teacher_remarks = cs_term2.teacher_remarks
+                        result_sheet.write_string(row, 35, teacher_remarks, cell_normal)
+                    except Exception as e:
+                        print ('exception 21012018-A from exam views.py %s %s' % (e.message, type(e)))
+                        print ('failed to retrieve Co-scholastics grade for %s' % student_name)
+
                     col = 0
                     row += 6
                     s_no = s_no + 1
