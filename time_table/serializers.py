@@ -27,6 +27,7 @@ class CTimeTableSerializer(serializers.ModelSerializer):
     the_class = serializers.SlugRelatedField(read_only=True, slug_field='standard')
     section = serializers.SlugRelatedField(read_only=True, slug_field='section')
     subject = serializers.SlugRelatedField(read_only=True, slug_field='subject_name')
+    period = serializers.SlugRelatedField(read_only=True, slug_field='period')
 
     class Meta:
         model = CTimeTable
