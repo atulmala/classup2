@@ -21,6 +21,7 @@ admin.site.register(DaysOfWeek, DaysOfWeekAdmin)
 
 class PeriodAdmin (admin.ModelAdmin):
     list_display = ('school', 'period', 'symbol', 'start_time', 'end_time',)
+    list_filter = ('school',)
 
 
 admin.site.register(Period, PeriodAdmin)
@@ -33,6 +34,7 @@ class TimeTableAdmin (admin.ModelAdmin):
 
     list_display = ('school', 'day', 'period', 'get_symbol', 'the_class', 'section', 'subject', 'teacher',)
     search_fields = ('teacher__first_name',)
+    list_filter = ('school',)
 
 
 admin.site.register (TimeTable, TimeTableAdmin)
@@ -44,6 +46,7 @@ class CTimeTableAdmin (admin.ModelAdmin):
     get_symbol.short_description = 'Symbol'
 
     list_display = ('school', 'day', 'period', 'get_symbol', 'the_class', 'section', 'subject', 'teacher',)
+    list_filter = ('school', 'day',)
     search_fields = ('teacher__first_name',)
 
 
@@ -52,7 +55,7 @@ admin.site.register (CTimeTable, CTimeTableAdmin)
 
 class TeacherPeriodsAdmin (admin.ModelAdmin):
     list_display = ('school', 'day', 'the_class', 'section', 'period', 'teacher',)
-    list_filter = ('day',)
+    list_filter = ('day', 'teacher__school',)
     search_fields = ('teacher__first_name', 'teacher__last_name',)
 
 
