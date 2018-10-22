@@ -832,8 +832,9 @@ def send_bulk_sms(request):
                         # for bulksmsleads vendor there need to be a delay between two api calls as their server is not
                         # so robust :(
                         if vendor_sms == 2:
-                            print('sleeping for %i seconds' % bulk_sms_delay)
-                            time.sleep(bulk_sms_delay)
+                            #print('sleeping for %i seconds' % bulk_sms_delay)
+                            #time.sleep(bulk_sms_delay)
+                            print('earlier there was a delay but now it has been removed')
                         else:
                             print('no need to go to sleep!')
                         if configuration.send_absence_sms_both_to_parent:
@@ -855,7 +856,7 @@ def send_bulk_sms(request):
 
         # send to teachers/staff
         print('now sending bulk sms to teacher & staff')
-        if staff is not None:
+        if staff is not None or whole_school == 'true':     # 22/10/2018 - if whole school is selected, why exclude teachers?
             for st in staff:
                 print('st = ' + str(st))
                 if st == 'teacher' or st == 'Teachers':
