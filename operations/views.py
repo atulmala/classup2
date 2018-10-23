@@ -856,7 +856,7 @@ def send_bulk_sms(request):
 
         # send to teachers/staff
         print('now sending bulk sms to teacher & staff')
-        if staff is not None or whole_school == 'true':     # 22/10/2018 - if whole school is selected, why exclude teachers?
+        if staff is not None:
             for st in staff:
                 print('st = ' + str(st))
                 if st == 'teacher' or st == 'Teachers':
@@ -869,6 +869,23 @@ def send_bulk_sms(request):
                         teacher_mobile = teacher.mobile
                         print(teacher_mobile)
                         sms.send_sms1(school, sender, teacher_mobile, message, message_type)
+
+        # 23/10/2018 - there was a demand that if whole school is chosen then send to teachers as well
+        try:
+            if whole_school == 'true':
+                for teacher in Teacher.objects.filter(school=school):
+                    teacher_name = teacher.first_name + ' ' + teacher.last_name
+                    print(teacher_name)
+                    message = 'Dear ' + teacher_name + ', '
+                    message += message_body + ' Regards, ' + school.school_name
+                    print(message)
+                    teacher_mobile = teacher.mobile
+                    print(teacher_mobile)
+                    sms.send_sms1(school, sender, teacher_mobile, message, message_type)
+                print('sent bulk sms message: %s : to all the teachers of %s' % (message, school.school_name))
+        except Exception as e:
+            print('exception 23102018-A from operations views.py %s %s' % (e.message, type(e)))
+            print('trying to send bulk sms to teachers of %s but failed' % school.school_name)
 
         elapsed_time = time.time() - start_time
         print('time taken to send sms=' + str(elapsed_time))

@@ -1,109 +1,26 @@
-import argparse
-import json
-import requests
+from pyfcm import FCMNotification
 
-from oauth2client.service_account import ServiceAccountCredentials
+push_service = FCMNotification(api_key="AAAAntWM_N0:APA91bGgdoc-8iADBMRqiTtk4rn2KJ9VoC5AKBos26njb_b6SjDjyxpsTOOgch-7Z21--7dL9tLxo94zx6AoD7W7b9o2hSwvGy4GrSPnDQ7Xs4Ig2nKkKtXRVGKnGHAv-5uA2yKK8hQC")
 
-PROJECT_ID = 'classup-dd5510'
-BASE_URL = 'https://fcm.googleapis.com'
-FCM_ENDPOINT = 'v1/projects/' + PROJECT_ID + '/messages:send'
-FCM_URL = BASE_URL + '/' + FCM_ENDPOINT
-SCOPES = ['https://www.googleapis.com/auth/firebase.messaging']
+# OR initialize with proxies
 
-# [START retrieve_access_token]
-def _get_access_token():
-  """Retrieve a valid access token that can be used to authorize requests.
-  :return: Access token.
-  """
-  credentials = ServiceAccountCredentials.from_json_keyfile_name(
-      'firebase.json', SCOPES)
-  access_token_info = credentials.get_access_token()
-  return access_token_info.access_token
-# [END retrieve_access_token]
+proxy_dict = {
+    "http": "http://127.0.0.1",
+    "https": "http://127.0.0.1",
+}
+#push_service = FCMNotification(api_key="<api-key>", proxy_dict=proxy_dict)
 
-def _send_fcm_message(fcm_message):
-  """Send HTTP request to FCM with given message.
-  Args:
-    fcm_message: JSON object that will make up the body of the request.
-  """
-  # [START use_access_token]
-  headers = {
-    'Authorization': 'Bearer ' + _get_access_token(),
-    'Content-Type': 'application/json; UTF-8',
-  }
-  # [END use_access_token]
-  resp = requests.post(FCM_URL, json=json.dumps(fcm_message), headers=headers)
+# Your api-key can be gotten from:  https://console.firebase.google.com/project/<project-name>/settings/cloudmessaging
 
-  if resp.status_code == 200:
-    print('Message sent to Firebase for delivery, response:')
-    print(resp.text)
-  else:
-    print('Unable to send message to Firebase')
-    print(resp.text)
+registration_id = 'eK16i1uXHhI:APA91bEiEnfNrlRwYVRPPK5zPmSQwUCm_f1nK9__TRXPjXMjbn-hl-tvC9UNOxo-QjuRTIb6YVbXmHD5QS0wpEYiEjT02-Gx_oe6PYqlRse3_7FPoJLfEUbhqX1JVuS68x7xIoJkA8VM'
+message_title = "welcome to classup"
+message_body = "welcome to classup"
+result = push_service.notify_single_device(registration_id=registration_id, message_title=message_title,
+                                           message_body=message_body)
 
-def _build_common_message():
-  """Construct common notifiation message.
-  Construct a JSON object that will be used to define the
-  common parts of a notification message that will be sent
-  to any app instance subscribed to the news topic.
-  """
-  return {
-    'message': {
-      'token': 'cSE0uNB6u6g:APA91bE8aRPeqixSlJOutyTKOdiuJXQH1V51mC0AbXkzQi2tEPqz_By-rbB9IudpjPAEK1Js7ttOCkbuFy0jKXtfnNEeJfL8jB3OWYiLP7xUel3Xux_DMFax1Kx5yr7tw5Tu1owIdQPi	',
-      'notification': {
-        'title': 'FCM Notification',
-        'body': 'Notification from FCM'
-      }
-    }
-  }
+print result
 
-def _build_override_message():
-  """Construct common notification message with overrides.
-  Constructs a JSON object that will be used to customize
-  the messages that are sent to iOS and Android devices.
-  """
-  fcm_message = _build_common_message()
+# Send to multiple devices by passing a list of ids.
 
-  apns_override = {
-    'payload': {
-      'aps': {
-        'badge': 1
-      }
-    },
-    'headers': {
-      'apns-priority': '10'
-    }
-  }
 
-  android_override = {
-    'notification': {
-      'click_action': 'android.intent.action.MAIN'
-    }
-  }
-
-  fcm_message['message']['android'] = android_override
-  fcm_message['message']['apns'] = apns_override
-
-  return fcm_message
-
-def main():
-  parser = argparse.ArgumentParser()
-  parser.add_argument('--message')
-  args = parser.parse_args()
-  if args.message and args.message == 'common-message':
-    common_message = _build_common_message()
-    print('FCM request body for message using common notification object:')
-    print(json.dumps(common_message, indent=2))
-    _send_fcm_message(common_message)
-  elif args.message and args.message == 'override-message':
-    override_message = _build_override_message()
-    print('FCM request body for override message:')
-    print(json.dumps(override_message, indent=2))
-    _send_fcm_message(override_message)
-  else:
-    print('''Invalid command. Please use one of the following commands:
-python messaging.py --message=common-message
-python messaging.py --message=override-message''')
-
-if __name__ == '__main__':
-  main()
+print result

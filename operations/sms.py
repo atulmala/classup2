@@ -5,6 +5,7 @@ import requests
 import json
 
 import firebase_admin
+from firebase_admin import messaging
 from firebase_admin import credentials
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -94,8 +95,11 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
 
                         try:
                             SCOPES = ['https://www.googleapis.com/auth/firebase.messaging']
-                            #cred = credentials.Certificate('operations/firebase.json')
-                            cred = ServiceAccountCredentials.from_json_keyfile_name('operations/firebase.json',
+                            cert = credentials.Certificate('operations/firebase.json')
+                            default_app = firebase_admin.initialize_app(cert)
+                            print('default_app = ')
+                            print(default_app)
+                            cred = ServiceAccountCredentials.from_json_keyfile_name('operations/classup-d5510.json',
                                                                                     SCOPES)
 
                             access_token = cred.get_access_token()
@@ -126,7 +130,7 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
 
                             json_data = {
                                 'message': {
-                                  'topic': 'news',
+                                  'to': 'eK16i1uXHhI:APA91bEiEnfNrlRwYVRPPK5zPmSQwUCm_f1nK9__TRXPjXMjbn-hl-tvC9UNOxo-QjuRTIb6YVbXmHD5QS0wpEYiEjT02-Gx_oe6PYqlRse3_7FPoJLfEUbhqX1JVuS68x7xIoJkA8VM',
                                   'notification': {
                                     'title': 'FCM Notification',
                                     'body': 'Notification from FCM'
