@@ -4,10 +4,10 @@ import urllib2
 import requests
 import json
 
-import firebase_admin
-from firebase_admin import messaging
-from firebase_admin import credentials
-from oauth2client.service_account import ServiceAccountCredentials
+# import firebase_admin
+# from firebase_admin import messaging
+# from firebase_admin import credentials
+# from oauth2client.service_account import ServiceAccountCredentials
 
 
 from django.db.models import Q
@@ -71,84 +71,6 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                     print('response = ')
                     message_id = response.read()
                     print(message_id)
-
-                    # 23/03/17 send notification also if we have the device token of this mobile number
-                    # try:
-                    #     device = user_device_mapping.objects.get(mobile_number=mobile)
-                    #     device_token = device.token_id
-                    #     print('device token exist for ' + str(mobile))
-                    #     print('now trying to send push notification to ' + str(mobile))
-                    #     try:
-                    #         fcm_device = GCMDevice.objects.get(registration_id=device_token)
-                    #         fcm_device.send_message(message)
-                    #         print('sent push notification to %s via fcm_device.send_message() function' % str(mobile))
-                    #     except Exception as e:
-                    #         print('Exception 170 from sms.py  %s (%s)' % (e.message, type(e)))
-                    #         print('failed to push notification via fcm_device.send() to %s' % str(mobile))
-                    #
-                    #     try:
-                    #         gcm_send_message(device_token, {'body': message})
-                    #         print('sent push notification to %s via gcm_send_message() function' % str(mobile))
-                    #     except Exception as e:
-                    #         print('Exception 04102018-A from operations sms.py %s (%s)' % (e.message, type(e)))
-                    #         print('failed to send push notification to %s via gcm_send_message' % str(mobile))
-                    #
-                    #     try:
-                    #         SCOPES = ['https://www.googleapis.com/auth/firebase.messaging']
-                    #         cert = credentials.Certificate('operations/firebase.json')
-                    #         default_app = firebase_admin.initialize_app(cert)
-                    #         print('default_app = ')
-                    #         print(default_app)
-                    #         cred = ServiceAccountCredentials.from_json_keyfile_name('operations/classup-d5510.json',
-                    #                                                                 SCOPES)
-                    #
-                    #         access_token = cred.get_access_token()
-                    #         print('cred = ')
-                    #         print(cred)
-                    #         print('access_token = ')
-                    #         print(access_token.access_token)
-                    #         hed = {
-                    #             'Authorization': 'Bearer %s' % access_token.access_token,
-                    #             'Content-Type': 'application/json; UTF-8'
-                    #         }
-                    #
-                    #         nf = {
-                    #             'body': message,
-                    #             'title': 'Message from ClassUp'
-                    #         }
-                    #
-                    #         msg = {
-                    #             'notification': nf,
-                    #             'token': device_token,
-                    #         }
-                    #
-                    #         json_data = {
-                    #             'message': msg
-                    #         }
-                    #         print('json_data = ')
-                    #
-                    #
-                    #         json_data = {
-                    #             'message': {
-                    #               'to': 'eK16i1uXHhI:APA91bEiEnfNrlRwYVRPPK5zPmSQwUCm_f1nK9__TRXPjXMjbn-hl-tvC9UNOxo-QjuRTIb6YVbXmHD5QS0wpEYiEjT02-Gx_oe6PYqlRse3_7FPoJLfEUbhqX1JVuS68x7xIoJkA8VM',
-                    #               'notification': {
-                    #                 'title': 'FCM Notification',
-                    #                 'body': 'Notification from FCM'
-                    #               }
-                    #             }
-                    #           }
-                    #         print(json.dumps(json_data))
-                    #         url = 'https://fcm.googleapis.com/v1/projects/classup-dd5510/messages:send'
-                    #         response = requests.post(url, json=json.dumps(json_data), headers=hed)
-                    #         print('sent push notification to %s via google Firebase api' % mobile)
-                    #         print(response.text)
-                    #         print(response.json())
-                    #     except Exception as e:
-                    #         print('Exception 04102018-B from operations sms.py %s (%s)' % (e.message, type(e)))
-                    #         print('failed to send push notification to %s via google Firebase api' % mobile)
-                    # except Exception as e:
-                    #     print('Exception 160 from sms.py  %s (%s)' % (e.message, type(e)))
-                    #     print('failed to push notification to ' + str(mobile))
                 else:
                     print('message type was Bulk SMS (Web Interface). '
                           'Batch process to send those SMS will have to be run!')
