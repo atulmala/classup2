@@ -27,6 +27,8 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
         # 25/12/2016 - there will be a unique sender id for each school
         conf = Configurations.objects.get(school=school)
         sender_id = conf.sender_id
+        vendor = conf.vendor_sms
+        vendor_bulk_sms = conf.vendor_bulk_sms
     except Exception as e:
         print('unable to retrieve configuration')
         print ('Exception70 from sms.py = %s (%s)' % (e.message, type(e)))
@@ -44,13 +46,36 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
         m3 = m00.replace("\r\n", "+")
 
         print(m3)
-        url = 'http://softsms.in/app/smsapi/index.php?'
-        url += 'key=%s' % key
-        url += '&type=Text'
-        url += '&contacts=%s' % mobile
-        url += '&senderid=%s' % sender_id
-        url += '&msg=%s' % m3
-        print('url=%s' % url)
+
+        # 26/10/2018 - after getting the issues of non delivery of sms from some schools, we will now be using
+        # services of at least two vendors and depending upon school category their sms will be sent through a
+        # specific vendor
+        if vendor == 1:
+            print('vendor for sending this sms for %s is softsms' % school.school_name)
+            url = 'http://softsms.in/app/smsapi/index.php?'
+            url += 'key=%s' % key
+            url += '&type=Text'
+            url += '&contacts=%s' % mobile
+            url += '&senderid=%s' % sender_id
+            url += '&msg=%s' % m3
+
+        if vendor == 2:
+            print('vendor for sending this sms for %s is smsbharti' % school.school_name)
+            url = 'http://webmsg.smsbharti.com/app/smsapi/index.php?key=55BCFFE4C1F2BC&campaign=0&routeid=35'
+            url += '&type=text'
+            url += '&type=Text'
+            url += '&contacts=%s' % mobile
+            url += '&senderid=%s' % 'SPANEL'
+            url += '&msg=%s' % m3
+            print('url=%s' % url)
+
+        # 26/10/2018 - bulksmsvalue api also seems to be working. additionally send sms through their api as well
+        url2 = 'http://websms.bulksmsvalue.com/index.php/smsapi/httpapi/?uname=classup1&password=classup&sender=CLSSUP'
+        url2 += '&receiver=%s' % mobile
+        url2 += '&route=TA&msgtype=1'
+        url2 += '&sms=%s' % m3
+
+        print('url2 = %s' % url2)
 
         # 06/12/2016 - we don't want to send sms to a dummy number
         if mobile == '1234567890' or len(str(mobile)) != 10:
@@ -71,6 +96,12 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                     print('response = ')
                     message_id = response.read()
                     print(message_id)
+
+                    response2 = urllib2.urlopen(url2)
+                    print('response2 = ')
+                    print(response2)
+                    message2_id = response2.read()
+                    print('message2 id = %s' % message2_id)
                 else:
                     print('message type was Bulk SMS (Web Interface). '
                           'Batch process to send those SMS will have to be run!')
