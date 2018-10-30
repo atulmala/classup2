@@ -1,6 +1,6 @@
 import MySQLdb
-import json
-import urllib, urllib2
+import urllib
+import boto3
 
 print('Starting to send bulk sms')
 
@@ -69,6 +69,37 @@ try:
         except Exception as e:
             print ('Exception1 from send_bulk_sms.py = %s (%s)' % (e.message, type(e)))
             print('failed to send message: ' + message + ' to mobile number: ' + str(mobile))
+
+        # 30/10/2018 Also send through AWS SNS
+        try:
+            AWS_ACCESS_KEY_ID = 'AKIAJ6X32EHNR26CXSWA'
+            AWS_SECRET_ACCESS_KEY = '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'
+
+            # Create an SNS client
+            client = boto3.client(
+                "sns",
+                aws_access_key_id = AWS_ACCESS_KEY_ID,
+                aws_secret_access_key = AWS_SECRET_ACCESS_KEY,
+                region_name="us-east-1"
+            )
+
+            client.set_sms_attributes(
+                attributes = {
+                    'DefaultSMSType': 'Transactional',
+                    'DefaultSenderID': 'CLSSUP',
+                }
+            )
+
+            # Send your sms message.
+            result = client.publish(
+                PhoneNumber = '+91%s' % mobile,
+                Message = message
+            )
+
+            print(result)
+        except Exception as e:
+            print('exception 30102018-A from send_bulks_sms.py %s %s' % (e.message, type(e)))
+            print('failed to send through AWS SNS')
         row = cursor1.fetchone()
 
     cursor1.close()
