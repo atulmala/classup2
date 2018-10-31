@@ -303,7 +303,10 @@ class HWList(generics.ListCreateAPIView):
 
         try:
             t = Teacher.objects.get(email=user)
+            print('will now try to retrieve the HWs created by %s' % t)
             q = HW.objects.filter(teacher=t.email).order_by('due_date')
+            print('query retrieved successfully for HW list of %s = ' % t)
+            print(q)
 
             try:
                 action = 'Retrieving HW list for ' + t.first_name + ' ' + t.last_name
@@ -311,6 +314,7 @@ class HWList(generics.ListCreateAPIView):
             except Exception as e:
                 print('unable to crete logbook entry')
                 print ('Exception 504 from academics views.py %s %s' % (e.message, type(e)))
+            print('now returning the query retrieved successfully for HW list of %s ' % t)
             return q
         except Exception as e:
             print('Exception 350 from academics view.py %s %s' % (e.message, type(e)))

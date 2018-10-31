@@ -9,6 +9,8 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 
+from google.cloud import storage
+
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework import generics
 
@@ -479,15 +481,31 @@ def prepare_results(request, school_id, the_class, section):
 
         # get logos
         try:
-            logo_url = 'https://s3-us-west-2.amazonaws.com/classup2/media/dev/school_logos/%s/%s.png' % \
+            storage_client = storage.Client()
+            bucket = storage_client.get_bucket('classup')
+            print(bucket)
+            cbse_logo_path = 'classup2/media/dev/cbse_logo/Logo/cbse-logo.png'
+            blob = bucket.blob(cbse_logo_path)
+            blob.download_to_filename('exam/cbse_logo.png')
+            cbse_logo = Image.open('exam/cbse_logo.png')
+
+            school_logo_path = 'classup2/media/dev/school_logos/%s/%s.png' % (short_name, short_name)
+            blob = bucket.blob(school_logo_path)
+            blob.download_to_filename('exam/%s.png' % short_name)
+            school_logo = Image.open('exam/%s.png' % short_name)
+
+            print('cbse logo downloaded')
+            # logo_url = 'https://s3-us-west-2.amazonaws.com/classup2/media/dev/school_logos/%s/%s.png' % \
+            #            (short_name, short_name)
+            logo_url = 'https://storage.googleapis.com/classup/classup2/media/dev/school_logos/%s/%s.png' % \
                        (short_name, short_name)
             print('logo_url = %s' % logo_url)
             resp = requests.get(logo_url)
-            school_logo = Image.open(StringIO.StringIO(resp.content))
+            #school_logo = Image.open(StringIO.StringIO(resp.content))
 
             cbse_logo_url = 'https://s3-us-west-2.amazonaws.com/classup2/media/dev/cbse_logo/Logo/cbse-logo.png'
             resp = requests.get(cbse_logo_url)
-            cbse_logo = Image.open(StringIO.StringIO(resp.content))
+            #cbse_logo = Image.open(StringIO.StringIO(resp.content))
         except Exception as e:
             print('failed to insert logo in the marksheet')
             print('exception 04022018-B from exam views.py %s %s' % (e.message, type(e)))
@@ -1170,6 +1188,17 @@ def prepare_results(request, school_id, the_class, section):
             print('error in saving the pdf')
             print ('Exception 21102017-P from exam views.py %s %s' % (e.message, type(e)))
         print('about to send the response')
+
+        # 31/10/2018 - delete the downloaded png files for school and cbse logo
+        try:
+            import os
+            os.remove('exam/cbse_logo.png')
+            print('successfully removed cbse_logo.png')
+            os.remove('exam/%s.png' % short_name)
+            print('successfully removed %s.png' % short_name)
+        except Exception as e:
+            print('exception 31102018-A from exam views.py %s %s' % (e.message, type(e)))
+            print('failed to delete downloaded png files for cbse and school logo')
         return response
     return HttpResponse()
 
