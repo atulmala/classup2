@@ -406,26 +406,26 @@ def map_device_token(request):
         try:
             u = User.objects.get(username=user)
             # create the fcm device
-            try:
-                fcm_device, created = GCMDevice.objects.get_or_create(registration_id=device_token)
-                if created:
-                    print('device created')
-                    fcm_device.name = user_name
-                    fcm_device.user = u
-                    fcm_device.save()
-                else:
-                    print('device already existed')
-                try:
-                    fcm_device.send_message('Welcome to ClassUp')
-                except Exception as e:
-                    print('Exception 160 from authentication views.py %s (%s)' % (e.message , type(e)))
-                    print('failed to send welcome notification to ' + user_name)
-            except urllib2.HTTPError, err:
-                print('Exception 150 from authentication views.py %s (%s)' % (err.message, type(err)))
-                print err.code
-            except Exception as e:
-                print('Exception 140 from authentication views.py %s (%s)' % (e.message, type(e)))
-                print('device creation failed')
+            # try:
+            #     fcm_device, created = GCMDevice.objects.get_or_create(registration_id=device_token)
+            #     if created:
+            #         print('device created')
+            #         fcm_device.name = user_name
+            #         fcm_device.user = u
+            #         fcm_device.save()
+            #     else:
+            #         print('device already existed')
+            #     try:
+            #         fcm_device.send_message('Welcome to ClassUp')
+            #     except Exception as e:
+            #         print('Exception 160 from authentication views.py %s (%s)' % (e.message , type(e)))
+            #         print('failed to send welcome notification to ' + user_name)
+            # except urllib2.HTTPError, err:
+            #     print('Exception 150 from authentication views.py %s (%s)' % (err.message, type(err)))
+            #     print err.code
+            # except Exception as e:
+            #     print('Exception 140 from authentication views.py %s (%s)' % (e.message, type(e)))
+            #     print('device creation failed')
 
             # now, create the mapping
             mapping = user_device_mapping.objects.get(user=u)

@@ -3,6 +3,7 @@ l__author__ = 'atulgupta'
 import urllib2
 import boto3
 
+
 from django.db.models import Q
 from setup.models import Configurations
 from teacher.models import Teacher
