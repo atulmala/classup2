@@ -8,8 +8,9 @@ key = '58fc1def26489'
 
 try:
     # connect to the database
-    db = MySQLdb.connect('classup-prod-1-aurora-cluster.cluster-ceglypsnyux3.us-west-2.rds.amazonaws.com',
-                         'classup', 'classup', 'classup2')
+    # db = MySQLdb.connect('classup-prod-1-aurora-cluster.cluster-ceglypsnyux3.us-west-2.rds.amazonaws.com',
+    #                      'classup', 'classup', 'classup2')
+    db = MySQLdb.connect('35.194.43.14', 'classup', 'classup', 'classup2')
     #db = MySQLdb.connect('localhost', 'root', 'kawasaki', 'prod_replica')
     cursor1 = db.cursor()
 
