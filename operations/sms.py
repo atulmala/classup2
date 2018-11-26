@@ -90,11 +90,11 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                     message_id = response.read()
                     print(message_id)
 
-                    response2 = urllib2.urlopen(url2)
-                    print('response2 = ')
-                    print(response2)
-                    message2_id = response2.read()
-                    print('message2 id = %s' % message2_id)
+                    # response2 = urllib2.urlopen(url2)
+                    # print('response2 = ')
+                    # print(response2)
+                    # message2_id = response2.read()
+                    # print('message2 id = %s' % message2_id)
 
                     # 30/11/2018 - AS we have credits from AWS send the broadcast messages using their SNS service
                     if message_type == 'Bulk SMS (Device)':
