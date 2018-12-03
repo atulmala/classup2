@@ -12,8 +12,6 @@ from .models import SMSRecord
 
 import classup2.settings as settings
 
-
-
 def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
     # 25/12/2016 - added field to check whether sms sending is enabled for this school. Check that first
     try:
