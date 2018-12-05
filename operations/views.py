@@ -423,9 +423,11 @@ def sms_summary(request):
                 try:
                     sms_date = s.date
                     iso_date = sms_date.isoformat()
-                    print('iso_date = %s' % iso_date)
+                    d, t = iso_date.split('T')
+                    date_time = '%s %s' % (d, t[:8])
+                    print('date_time = %s' % date_time)
                     #sms_sheet.write(current_row, 1, sms_date, date_format)
-                    sms_sheet.write(current_row, 1, sms_date.isoformat(), text_format)
+                    sms_sheet.write(current_row, 1, date_time, text_format)
                 except Exception as e:
                     print('exception 05122018-A from operations views.py %s %s' % (e.message, type(e)))
                     print('unable to insert date in the monthly sms report for %s for the month %s-%s' %
