@@ -421,7 +421,8 @@ def sms_summary(request):
 
                 # the date on which the sms was sent
                 sms_date = s.date
-                sms_sheet.write(current_row, 1, sms_date, date_format)
+                #sms_sheet.write(current_row, 1, sms_date, date_format)
+                sms_sheet.write(current_row, 1, sms_date, text_format)
 
                 # sender of the sma
                 sender = s.sender1
