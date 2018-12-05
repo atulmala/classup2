@@ -420,10 +420,15 @@ def sms_summary(request):
                 sms_sheet.write_number(current_row, 0, sr_no)
 
                 # the date on which the sms was sent
-                sms_date = s.date
-                print(sms_date)
-                #sms_sheet.write(current_row, 1, sms_date, date_format)
-                sms_sheet.write(current_row, 1, sms_date, text_format)
+                try:
+                    sms_date = s.date
+                    print(sms_date)
+                    #sms_sheet.write(current_row, 1, sms_date, date_format)
+                    sms_sheet.write(current_row, 1, sms_date, text_format)
+                except Exception as e:
+                    print('exception 05122018-A from operations views.py %s %s' % (e.message, type(e)))
+                    print('unable to insert date in the monthly sms report for %s for the month %s-%s' %
+                          (school_name, str(month), str(y)))
 
                 # sender of the sma
                 sender = s.sender1
