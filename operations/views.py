@@ -412,6 +412,8 @@ def sms_summary(request):
         try:
             sms_list = SMSRecord.objects.filter(school=school, date__month=month_int,
                                                 date__year=year_int).order_by('-date')
+            print('successfully retrieved the monthly sms queryset for %s for the month of %s-%s' %
+                  (school_name, str(month), str(y)))
             sr_no = 1
             for s in sms_list:
                 current_row += 1
@@ -468,6 +470,7 @@ def sms_summary(request):
                 sr_no += 1
 
             workbook.close()
+            print('workbook closed')
         except Exception as e:
             print('unable to write sms to excel file')
             print ('Exception50 from operations views.py = %s (%s)' % (e.message, type(e)))
