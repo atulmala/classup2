@@ -422,7 +422,8 @@ def sms_summary(request):
                 # the date on which the sms was sent
                 try:
                     sms_date = s.date
-                    print(sms_date)
+                    iso_date = sms_date.isoformat()
+                    print('iso_date = %s' % iso_date)
                     #sms_sheet.write(current_row, 1, sms_date, date_format)
                     sms_sheet.write(current_row, 1, sms_date.isoformat(), text_format)
                 except Exception as e:
