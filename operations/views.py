@@ -425,7 +425,7 @@ def sms_summary(request):
                     iso_date = sms_date.isoformat()
                     d, t = iso_date.split('T')
                     date_time = '%s %s' % (d, t[:8])
-                    print('date_time = %s' % date_time)
+                    #print('date_time = %s' % date_time)
                     #sms_sheet.write(current_row, 1, sms_date, date_format)
                     sms_sheet.write(current_row, 1, date_time, text_format)
                 except Exception as e:
