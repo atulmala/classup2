@@ -340,6 +340,3 @@ def delete_attendance2(request, school_id, the_class, section, subject, d, m, y)
         # return render(request, 'classup/dummy.html')
         response_data['status'] = 'success'
         return JSONResponse(response_data, status=200)
-
-
-
