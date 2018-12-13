@@ -10,8 +10,7 @@ key = '58fc1def26489'
 try:
     # connect to the database
     try:
-        db = MySQLdb.connect('classup-prod-1-aurora-cluster.cluster-ceglypsnyux3.us-west-2.rds.amazonaws.com',
-                             'classup', 'classup', 'classup2')
+        db = MySQLdb.connect('35.194.43.14', 'classup', 'classup', 'classup2')
         cursor1 = db.cursor()
 
         # extract the list of all sms for which api_called = false

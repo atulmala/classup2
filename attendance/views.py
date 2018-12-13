@@ -108,7 +108,6 @@ def attendance_taken(request, school_id, the_class, section, subject, d, m, y, t
             print ('Exception2 from attendance views.py = %s (%s)' % (e.message, type(e)))
             log_entry(teacher, "failed to record AttendanceUpdate. Exepction 2 from attendance views.py",
                       "Normal", False)
-
     return HttpResponse('OK')
 
 
@@ -307,7 +306,6 @@ def delete_attendance2(request, school_id, the_class, section, subject, d, m, y)
 
         the_date = date(int(y), int(m), int(d))
         print (the_date)
-
         data = json.loads(request.body)
         print ('correction list=')
         print (data)
