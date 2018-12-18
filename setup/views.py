@@ -536,7 +536,7 @@ def setup_students(request):
                     try:
                         p.save()
                     except Exception as e:
-                        print ('Exception3 from setup views.py = %s (%s)' % (e.message, type(e)))
+                        print ('Exception 18122018-A from setup views.py = %s (%s)' % (e.message, type(e)))
                         error = 'Unable to save the parent data for ' + parent_name + ' in Table Parent'
                         form.errors['__all__'] = form.error_class([error])
                         print (error)
