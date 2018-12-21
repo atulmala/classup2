@@ -18,6 +18,7 @@ class ThirdLangAdmin(admin.ModelAdmin):
     get_class.short_description = 'Class'
 
     list_display = ('student', 'get_class', 'third_lang', 'get_school_name',)
+    list_filter = ('student__school',)
 
     search_fields = ('student__fist_name',)
 

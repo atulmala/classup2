@@ -267,7 +267,7 @@ def setup_third_lang(request):
                     if row == 0:
                         continue
                     print ('Processing a new row')
-                    erp_id = sheet.cell(row, 0).value
+                    erp_id = sheet.cell(row, 1).value
                     print(erp_id)
                     try:
                         student = Student.objects.get(school=school, student_erp_id=erp_id)
@@ -278,7 +278,9 @@ def setup_third_lang(request):
                         continue
 
                     # 31/10/2017 - get the third language
-                    t_l = sheet.cell(row, 2).value
+                    t_l = sheet.cell(row, 7).value
+                    print('third language specified for %s %s in the sheet is %s' % 
+                        (student.fist_name, student.last_name, t_l))
                     try:
                         third_lang = Subject.objects.get(school=school, subject_name=t_l)
                     except Exception as e:
@@ -287,11 +289,15 @@ def setup_third_lang(request):
 
                     try:
                         record = ThirdLang.objects.get(student=student)
+                        print('third language for %s %s is already set as %s. This will be updated' % 
+                            (student.fist_name, student.last_name, record.third_lang.subject_name))
                         print ('third language ' + student.fist_name + ' ' +
                                student.last_name + ' already exists. This will be updated')
                         try:
                             record.third_lang = third_lang
                             record.save()
+                            print('successfully updated third language for %s %s as %s' % 
+                                (student.fist_name, student.last_name, t_l))
                             print ('successfully updated the third language for ' +
                                    student.fist_name, ' ' + student.last_name)
                         except Exception as e:

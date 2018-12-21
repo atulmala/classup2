@@ -207,12 +207,3 @@ class HWAdmin(admin.ModelAdmin):
 
 
 admin.site.register(HW, HWAdmin)
-
-
-
-
-
-
-
-
-
