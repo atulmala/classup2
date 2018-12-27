@@ -147,6 +147,10 @@ def setup_scheme(request):
 def setup_higher_class_subject_mapping(request):
     context_dict = {'user_type': 'school_admin', 'school_name': request.session['school_name']}
 
+    maths_stream = ['English', 'Mathematics', 'Physics', 'Chemistry']
+    biology_stream = ['English', 'Biology', 'Physics', 'Chemistry']
+    commerce_stream = ['English', 'Economics', 'Accountancy', 'Business Studies']
+
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
         return render(request, 'classup/setup_index.html', context_dict)
@@ -178,33 +182,30 @@ def setup_higher_class_subject_mapping(request):
                     print ('Successfully got hold of sheet!')
                 for row in range(sheet.nrows):
                     # get the subject name
-                    if row == 0:
-                        sub = sheet.cell(row, 1).value
+                    if row != 0:
+                        erp = str(sheet.cell(row, 0).value)
                         try:
-                            subject = Subject.objects.get (school=school, subject_name=sub)
-                            continue
-                        except Exception as e:
-                            print ('exception 141117-E from exam views.py %s %s' % (e.message, type(e)))
-                            error = 'failed to retrieve subject for %s ' % sub
-                            print (error)
-                            form.errors['__all__'] = form.error_class([error])
-                            return render(request, 'classup/setup_data.html', context_dict)
-                    else:
-                        partial_erp = str(sheet.cell(row, 0).value)
-                        student_name = sheet.cell(row, 1).value
-                        try:
-                            students = Student.objects.filter(school=school, student_erp_id__contains=partial_erp)
-                            for s in students:
-                                print ('full erp = %s' % s.student_erp_id)
+                            student = Student.objects.get(school=school, student_erp_id=erp)
+                            student_name = '%s %s' % (student.fist_name, student.last_name)
+
+                            stream = sheet.cell(row, 1)
+                            if stream == 'Mathematics':
+                                chosen_stream = maths_stream
+                            if stream == 'Biology':
+                                chosen_stream = biology_stream
+                            if stream == 'Commerce':
+                                chosen_stream = commerce_stream
+
+                            print('setting stream %s for %s' % (stream, student_name))
+                            for sub in stream:
+                                subject = Subject.objects.get(school=school, subject_name=sub)
                                 try:
                                     mapping = HigherClassMapping.objects.get(student=s, subject=subject)
                                     print (mapping)
-                                    print ('subject %s mapping for %s already exist. Not doing again.'
-                                           % (sub, student_name))
+                                    print ('subject %s mapping for %s already exist. Not doing again.' % (sub, student_name))
                                 except Exception as e:
                                     print ('exception 141117-C from exam views.py %s %s' % (e.message, type(e)))
-                                    print ('subject %s mapping for %s does not exist. Hence creating...'
-                                           % (sub, student_name))
+                                    print ('subject %s mapping for %s does not exist. Hence creating...' % (sub, student_name))
                                     try:
                                         mapping = HigherClassMapping(student=s, subject=subject)
                                         mapping.save()
