@@ -49,6 +49,7 @@ class HigherClassMappingAdmin (admin.ModelAdmin):
     get_school_name.short_description = 'School'
     search_fields = ('student__fist_name',)
     list_display = ('get_school_name', 'get_class', 'get_section', 'student', 'subject',)
+    list_filter = ('student__school',)
 
 
 admin.site.register(HigherClassMapping, HigherClassMappingAdmin)
