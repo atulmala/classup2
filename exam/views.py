@@ -150,6 +150,10 @@ def setup_higher_class_subject_mapping(request):
     maths_stream = ['English', 'Mathematics', 'Physics', 'Chemistry']
     biology_stream = ['English', 'Biology', 'Physics', 'Chemistry']
     commerce_stream = ['English', 'Economics', 'Accountancy', 'Business Studies']
+    maths = 'Mathematics'
+    bio = 'Biology'
+    commerce = 'Commerce'
+
 
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
@@ -179,40 +183,60 @@ def setup_higher_class_subject_mapping(request):
                 fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
                 sheet = fileToProcess.sheet_by_index(0)
                 if sheet:
-                    print ('Successfully got hold of sheet!')
+                    print ('Successfully got hold of sheet! the chako')
                 for row in range(sheet.nrows):
                     # get the subject name
                     if row != 0:
-                        erp = str(sheet.cell(row, 0).value)
+                        erp = str(sheet.cell(row, 1).value)
+                        print(erp)
                         try:
                             student = Student.objects.get(school=school, student_erp_id=erp)
                             student_name = '%s %s' % (student.fist_name, student.last_name)
 
-                            stream = sheet.cell(row, 1)
-                            if stream == 'Mathematics':
-                                chosen_stream = maths_stream
-                            if stream == 'Biology':
-                                chosen_stream = biology_stream
-                            if stream == 'Commerce':
-                                chosen_stream = commerce_stream
+                            stream = sheet.cell(row, 7).value
+                            
+                            print('stream chosen by %s is %s' % (student_name, stream))
+                            if stream == maths:
+                                print('going to set the chosen_stream to be %s' % stream)
+                                chosen_stream = list(maths_stream)
+                                print('chosen_stream = Mathematics')
+                            if stream == bio:
+                                print('going to set the chosen_stream to be %s' % stream)
+                                chosen_stream = list(biology_stream)
+                                print('chosen_stream = Biology')
+                            if stream == commerce:
+                                print('going to set the chosen_stream to be %s' % stream)
+                                chosen_stream = list(commerce_stream)
+                                print('chosen_stream = Commerce')
 
-                            print('setting stream %s for %s' % (stream, student_name))
-                            for sub in stream:
-                                subject = Subject.objects.get(school=school, subject_name=sub)
+                            elective = sheet.cell(row, 8).value
+                            print('elective chosen by %s is %s' % (student_name, elective))
+
+                            try:
+                                chosen_stream.append(str(elective))
+                                print('complete list of subjects to be mapped for %s' % student_name)
+                                print(chosen_stream)
+                            except Exception as e:
+                                print('failed to add elective %s to chosen stream' % elective)
+                                print('exception 28122018-A from exam views.py %s %s' % (e.message, type(e)))
+
+                            print('setting stream %s  & elective %s for %s' % (stream, elective, student_name))
+                            for sub in chosen_stream:
                                 try:
-                                    mapping = HigherClassMapping.objects.get(student=s, subject=subject)
-                                    print (mapping)
+                                    subject = Subject.objects.get(school=school, subject_name=sub)
+                                    print('retrieved the subject object for %s' % sub)
+                                    mapping = HigherClassMapping.objects.get(student=student, subject=subject)
                                     print ('subject %s mapping for %s already exist. Not doing again.' % (sub, student_name))
                                 except Exception as e:
                                     print ('exception 141117-C from exam views.py %s %s' % (e.message, type(e)))
                                     print ('subject %s mapping for %s does not exist. Hence creating...' % (sub, student_name))
                                     try:
-                                        mapping = HigherClassMapping(student=s, subject=subject)
+                                        mapping = HigherClassMapping(student=student, subject=subject)
                                         mapping.save()
                                         print ('created %s subject mapping for % s' % (sub, student_name))
                                     except Exception as e:
                                         print ('exception 141117-D from exam views.py %s %s' % (e.message, type(e)))
-                                        print ('failed to create %s subject mapping for % s' % (sub, student_name))
+                                        print ('failed to create %s subject mapping for %s' % (sub, student_name))
                         except Exception as e:
                             print ('failed to create %s subject mapping for %s ' % (sub, student_name))
                             print ('exception 141117-A from exam views.py %s %s' % (e.message, type(e)))
