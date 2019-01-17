@@ -149,29 +149,35 @@ def auth_login(request):
 
     if request.method == 'POST':
         #login_form = ClassUpLoginForm(request.POST)
-        context_dict['form'] = login_form
-        user_name = request.POST['username']
-        log_entry(user_name, "Login attempt from web", "Normal", True)
-        l.login_id = user_name
-        password = request.POST['password']
+        #context_dict['form'] = login_form
+        #user_name = request.POST['username']
+        data = json.loads(request.body)
+        the_user = data['user']
+        log_entry(the_user, "Login from device initiated", "Normal", True)
+        password = data['password']
+        l.login_id = the_user
+        l.password = password
+        log_entry(the_user, "Login attempt from web (vuejs)", "Normal", True)
+        l.login_id = the_user
+        #password = request.POST['password']
         l.password = password
 
-        user = authenticate(username=user_name, password=password)
-        log_entry(user_name, "User has been authenticated", "Normal", True)
+        user = authenticate(username=the_user, password=password)
+        log_entry(the_user, "User has been authenticated", "Normal", True)
         if user is not None:
             if user.is_active:
-                log_entry(user_name, "User is an Active user", "Normal", True)
+                log_entry(the_user, "User is an Active user", "Normal", True)
                 try:
                     login(request, user)
                     l.save()
                     u = UserSchoolMapping.objects.get(user=user)
                     school = u.school
-                    request.session['user'] = user_name
+                    request.session['user'] = the_user
                     request.session['school_name'] = school.school_name
                     request.session['school_id'] = school.id
                     context_dict['school_name'] = school.school_name
                     if school.subscription_active:
-                        log_entry(user_name, "School subscription found to be Active", "Normal", True)
+                        log_entry(the_user, "School subscription found to be Active", "Normal", True)
                         school_id = u.school.id
                         request.session['school_id'] = school_id
                         print ('school_id=' + str(school_id))
@@ -179,37 +185,37 @@ def auth_login(request):
                         error = school.school_name + "'s subscription has expired. "
                         error += 'Please contact ClassUp support at info@classup.in for renewal'
                         print(error)
-                        login_form.errors['__all__'] = login_form.error_class([error])
+                        #login_form.errors['__all__'] = login_form.error_class([error])
                         return render(request, 'classup/auth_login.html', context_dict)
                 except Exception as e:
                     print ('unable to retrieve schoo_id for ' + user.username)
                     print('Exception 8 from authentication views.py = %s (%s)' % (e.message, type(e)))
-                    log_entry(user_name, "Unable to retrieve School Id. Exception 8 authentication views.py",
+                    log_entry(the_user, "Unable to retrieve School Id. Exception 8 authentication views.py",
                               "Normal", True)
                 if user.groups.filter(name='school_admin').exists():
-                    log_entry(user_name, "User found to be an Admin User", "Normal", True)
+                    log_entry(the_user, "User found to be an Admin User", "Normal", True)
                     context_dict['user_type'] = 'school_admin'
                     request.session['user_type'] = 'school_admin'
                 else:
-                    log_entry(user_name, "User found to be non-Admin user", "Normal", True)
+                    log_entry(the_user, "User found to be non-Admin user", "Normal", True)
                     context_dict['user_type'] = 'non_admin'
                     request.session['user_type'] = 'non_admin'
                 print (context_dict)
-                log_entry(user_name, "Login Successful", "Normal", True)
+                log_entry(the_user, "Login Successful", "Normal", True)
                 return render(request, 'classup/setup_index.html', context_dict)
             else:
-                log_entry(user_name, "User is an Inactive user", "Normal", True)
-                error = 'User: ' + user_name + ' is disabled. Please contact your administrator'
+                log_entry(the_user, "User is an Inactive user", "Normal", True)
+                error = 'User: ' + the_user + ' is disabled. Please contact your administrator'
                 l.comments = error
                 l.save()
-                login_form.errors['__all__'] = login_form.error_class([error])
+                #login_form.errors['__all__'] = login_form.error_class([error])
                 print (error)
                 return render(request, 'classup/auth_login.html', context_dict)
         else:
             error = 'Invalid username/password or blank entry. Please try again.'
             l.comments = error
             l.save()
-            login_form.errors['__all__'] = login_form.error_class([error])
+            #login_form.errors['__all__'] = login_form.error_class([error])
             print (error)
             return render(request, 'classup/auth_login.html', context_dict)
     else:
