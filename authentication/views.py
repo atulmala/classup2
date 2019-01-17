@@ -122,7 +122,7 @@ def auth_index(request):
     response = render(request, 'classup/auth_index.html')
     return response
 
-
+@csrf_exempt
 def auth_login(request):
     # we need to record every login attempt into database
     l = LoginRecord()
@@ -148,7 +148,7 @@ def auth_login(request):
     }
 
     if request.method == 'POST':
-        login_form = ClassUpLoginForm(request.POST)
+        #login_form = ClassUpLoginForm(request.POST)
         context_dict['form'] = login_form
         user_name = request.POST['username']
         log_entry(user_name, "Login attempt from web", "Normal", True)
@@ -213,6 +213,7 @@ def auth_login(request):
             print (error)
             return render(request, 'classup/auth_login.html', context_dict)
     else:
+        print('get request')
         login_form = ClassUpLoginForm()
         context_dict['form'] = login_form
     return render(request, 'classup/auth_login.html', context_dict)
