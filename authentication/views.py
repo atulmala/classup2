@@ -185,6 +185,9 @@ def auth_login(request):
                         error = school.school_name + "'s subscription has expired. "
                         error += 'Please contact ClassUp support at info@classup.in for renewal'
                         print(error)
+                        context_dict['message'] = error
+                        context_dict['outcome'] = 'failed'
+                        return JSONResponse(context_dict)
                         #login_form.errors['__all__'] = login_form.error_class([error])
                         return render(request, 'classup/auth_login.html', context_dict)
                 except Exception as e:
@@ -202,6 +205,9 @@ def auth_login(request):
                     request.session['user_type'] = 'non_admin'
                 print (context_dict)
                 log_entry(the_user, "Login Successful", "Normal", True)
+                context_dict['message'] = 'Login Successful'
+                context_dict['outcome'] = 'success'
+                return JSONResponse(context_dict)
                 return render(request, 'classup/setup_index.html', context_dict)
             else:
                 log_entry(the_user, "User is an Inactive user", "Normal", True)
@@ -210,13 +216,19 @@ def auth_login(request):
                 l.save()
                 #login_form.errors['__all__'] = login_form.error_class([error])
                 print (error)
+                context_dict['message'] = error
+                context_dict['outcome'] = 'failed'
+                return JSONResponse(context_dict)
                 return render(request, 'classup/auth_login.html', context_dict)
         else:
             error = 'Invalid username/password or blank entry. Please try again.'
+            context_dict['message'] = error
+            context_dict['outcome'] = 'failed'
             l.comments = error
             l.save()
             #login_form.errors['__all__'] = login_form.error_class([error])
             print (error)
+            return JSONResponse(context_dict)
             return render(request, 'classup/auth_login.html', context_dict)
     else:
         print('get request')
