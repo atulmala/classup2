@@ -1567,8 +1567,24 @@ class ResultSheet(generics.ListCreateAPIView):
                     the_term = 'Term'
                     tot = 'Tot'
                     gr = 'Gr'
-                    term_exams = Exam.objects.filter(school=school, exam_type='term')
+
+                    if the_class.standard in middle_classes:
+                        print('%s is in middle_classes' % the_class.standard)
+                        wing = middle_classes
+                    if the_class.standard in ninth_tenth:
+                        print('%s is in ninth_tenth' % the_class.standard)
+                        wing = ninth_tenth
+                    if the_class.standard in higher_classes:
+                        print('%s is in higher_classes' % the_class.standard)
+                        wing = higher_classes
+                    start_class = wing[0]
+                    print('start class would be %s' % start_class)
+                    end_class = wing[len(wing) -1]
+                    print('end class would be %s' % end_class)
+                    term_exams = Exam.objects.filter(school=school, exam_type='term',
+                                                     start_class=start_class, end_class=end_class)
                     print('term exam count = %i' % term_exams.count())
+                    print('term exams: %s' % term_exams)
                     both_term_tot_formula = '=sum('
 
                     for index, term in enumerate(term_exams):
@@ -1621,11 +1637,19 @@ class ResultSheet(generics.ListCreateAPIView):
                                         subject = Subject.objects.get(school=school, subject_name=s)
                                     print ('retrieved the subject object for %s' % s)
                                     print (subject)
-                                    term_test = ClassTest.objects.get(the_class=the_class, section=section,
-                                                                 subject=subject, exam=term)
-                                    print ('retrieved the term tests for class: %s-%s, subject: %s' %
-                                           (the_class.standard, section.section, s))
-                                    print (term_test)
+                                    try:
+                                        term_test = ClassTest.objects.get(the_class=the_class, section=section,
+                                                                     subject=subject, exam=term)
+                                        print ('retrieved the term tests for class: %s-%s, subject: %s' %
+                                               (the_class.standard, section.section, s))
+                                        print (term_test)
+                                    except Exception as e:
+                                        print('failed to retrieve term_test for %s class %s exam %s' %
+                                              (subject.subject_name, the_class.standard, term.title))
+                                        print('exception 22012019-A from exam views.py %s %s' % (e.message, type(e)))
+                                        result_sheet.merge_range(row, col, row + 5, col + 1, 'TBE', cell_center)
+                                        col += 2
+                                        continue
                                 except Exception as e:
                                     print ('exception 20012018-B from exam views.py %s %s' % (e.message, type(e)))
                                     print ('failed to retrieve subject for %s' % s)
