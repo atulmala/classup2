@@ -2080,7 +2080,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                             print('test was conducted for %s under exam: %s for class %s' %
                                                   (sub, ut, the_class.standard))
                                             print(test)
-                                            ut_count += 1
+                                            ut_count += 1.0
                                             result = TestResults.objects.get(class_test=test, student=student)
                                             print(result)
                                             # convert the marks to be out of 25
