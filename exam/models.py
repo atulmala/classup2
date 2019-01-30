@@ -19,6 +19,9 @@ class HigherClassMapping(models.Model):
     student = models.ForeignKey(Student)
     subject = models.ForeignKey(Subject)
 
+    def __unicode__(self):
+        return self.subject.subject_name
+
 
 class NotPromoted(models.Model):
     student = models.ForeignKey(Student)
