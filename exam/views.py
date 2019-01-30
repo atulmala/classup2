@@ -2091,6 +2091,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                                 print(comments)
                                                 marks = (25.0*float(result.marks_obtained))/(float(test.max_marks))
                                                 ut_total += marks
+                                                print('ut_total = %f' % ut_total)
                                         except Exception as e:
                                             print('no test could be found corresponding to %s class %s subject %s' %
                                                   (ut, the_class.standard, sub))
