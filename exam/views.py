@@ -2000,14 +2000,7 @@ class ResultSheet(generics.ListCreateAPIView):
                         # elective chosen by each student.
                         chosen_stream.pop()
 
-                        ut_list = Exam.objects.filter(school=school, exam_type='unit',
-                                                         start_class=the_class.standard)
-                        term_exams = ['Half Yearly', 'Final Exam']
-                        prac_subjects = ["Biology", "Physics", "Chemistry", "Fine Arts",
-                                         "Accountancy", "Business Studies", "Economics",
-                                         "Information Practices", "Informatics Practices", "Computer Science",
-                                         "Painting",
-                                         "Physical Education"]
+                        ut_list = Exam.objects.filter(school=school, exam_type='unit', start_class=the_class.standard)
                         s_no = 1
                         for student in students:
                             col = 0
@@ -2111,12 +2104,18 @@ class ResultSheet(generics.ListCreateAPIView):
                                 col += 1
 
                                 # get the half yearly marks & final exam marks
+                                term_exams = Exam.objects.filter(school=school, exam_type='term',
+                                                         start_class=the_class.standard)
+                                prac_subjects = ["Biology", "Physics", "Chemistry", "Fine Arts",
+                                                 "Accountancy", "Business Studies", "Economics",
+                                                 "Information Practices", "Informatics Practices", "Computer Science",
+                                                 "Painting",
+                                                 "Physical Education"]
                                 for term in term_exams:
                                     try:
                                         term_exam = Exam.objects.get(school=school, title=term)
                                         test = ClassTest.objects.get(subject=subject, the_class=the_class,
-                                                                     section=section, date_conducted__range=
-                                                                     (term_exam.start_date, term_exam.end_date))
+                                                                     section=section, exam=term)
                                         print('test was conducted for %s under exam: %s for class %s' %
                                               (sub, term, the_class.standard))
                                         print(test)
