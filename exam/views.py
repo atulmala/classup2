@@ -2064,9 +2064,9 @@ class ResultSheet(generics.ListCreateAPIView):
                                     print('exception 04032018-A from exams views.py %s %s' % (e.message, type(e)))
 
                                 ut_total = 0.0
+                                ut_count = 0.0
                                 comments = 'UT details for %s in %s: \n' % (student_name, sub)
                                 for ut in ut_list:
-                                    ut_count = 0.0
                                     comments += '\n%s: ' % ut
                                     try:
                                         print('now trying to retrieve test in %s for subject %s class %s' %
