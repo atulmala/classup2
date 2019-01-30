@@ -2081,6 +2081,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                                   (sub, ut, the_class.standard))
                                             print(test)
                                             ut_count += 1.0
+                                            print('ut_count = %f' % float(ut_count))
                                             result = TestResults.objects.get(class_test=test, student=student)
                                             print(result)
                                             # convert the marks to be out of 25
@@ -2100,7 +2101,7 @@ class ResultSheet(generics.ListCreateAPIView):
                                         print('exception 04032018-C from exam views.py %s %s' % (e.message, type(e)))
                                         col += 1
                                 try:
-                                    result_sheet.write_number(row, col, round(ut_total/ut_count, 2), cell_normal)
+                                    result_sheet.write_number(row, col, round(ut_total/float(ut_count), 2), cell_normal)
                                     result_sheet.write_comment(row, col, comments, {'height': 150})
                                 except Exception as e:
                                     print('UT average not available for %s in %s' %
