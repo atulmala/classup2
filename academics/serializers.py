@@ -83,8 +83,8 @@ class TestMarksSerializer(serializers.ModelSerializer):
             term_test_result = TermTestResult.objects.get(test_result=obj)
             return term_test_result.note_book_marks
         except Exception as e:
-            print ('Failed to retrieve notebook marks. This is not a Term Test but a Unit Test')
-            print ('Exception 10 from academics serializer Exception = %s (%s)' % (e.message, type(e)))
+            # print ('Failed to retrieve notebook marks. This is not a Term Test but a Unit Test')
+            # print ('Exception 10 from academics serializer Exception = %s (%s)' % (e.message, type(e)))
             return "N/A"
 
     def get_periodic_test_marks(self, obj):
@@ -92,8 +92,8 @@ class TestMarksSerializer(serializers.ModelSerializer):
             term_test_result = TermTestResult.objects.get(test_result=obj)
             return term_test_result.periodic_test_marks
         except Exception as e:
-            print ('Failed to retrieve periodic test marks. This is not a Term Test but a Unit Test')
-            print ('Exception 20 from academics serializer Exception = %s (%s)' % (e.message, type(e)))
+            # print ('Failed to retrieve periodic test marks. This is not a Term Test but a Unit Test')
+            # print ('Exception 20 from academics serializer Exception = %s (%s)' % (e.message, type(e)))
             return "N/A"
 
     def get_sub_enrich_marks(self, obj):
@@ -101,8 +101,8 @@ class TestMarksSerializer(serializers.ModelSerializer):
             term_test_result = TermTestResult.objects.get(test_result=obj)
             return term_test_result.sub_enrich_marks
         except Exception as e:
-            print ('Failed to retrieve subject enrichment test marks. This is not a Term Test but a Unit Test')
-            print ('Exception 30 from academics serializer Exception = %s (%s)' % (e.message, type(e)))
+            # print ('Failed to retrieve subject enrichment test marks. This is not a Term Test but a Unit Test')
+            # print ('Exception 30 from academics serializer Exception = %s (%s)' % (e.message, type(e)))
             return "N/A"
 
     def get_prac_marks (self, obj):
