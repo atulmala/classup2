@@ -110,8 +110,8 @@ class TestMarksSerializer(serializers.ModelSerializer):
             term_test_result = TermTestResult.objects.get(test_result=obj)
             return term_test_result.prac_marks
         except Exception as e:
-            print ('failed to retrieve practical marks. Either this is a unit test or a Term Test for lower class')
-            print ('exception 24122017-A from academics serializer Exception = %s %s' % (e.message, type(e)));
+            # print ('failed to retrieve practical marks. Either this is a unit test or a Term Test for lower class')
+            print ('exception 24122017-A from academics serializer Exception = %s %s' % (e.message, type(e)))
 
 
 # serializer to return the class and section of test
