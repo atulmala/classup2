@@ -877,7 +877,7 @@ def send_bulk_sms(request):
                         teacher_name = teacher.first_name + ' ' + teacher.last_name
                         print(teacher_name)
                         message = 'Dear ' + teacher_name + ', '
-                        message += message_body + ' Regards, ' + school.school_name
+                        message += message_body + ' Regards, ' + configuration.school_short_name
                         print(message)
                         teacher_mobile = teacher.mobile
                         print(teacher_mobile)
