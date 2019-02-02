@@ -190,6 +190,9 @@ class TheTimeTable(generics.ListCreateAPIView):
                                     subject = Subject.objects.get(school=school, subject_name=sub)
                                     print('retrieved subject object associated with %s' % sub)
                                     print(subject)
+                                else:
+                                    if cls != '' and sec != '':
+                                        subject = Subject.objects.get(school=school, subject_name='Main')
 
                                 if cls != '':
                                     # assign the class, section, subject & period to the teacher
@@ -212,6 +215,9 @@ class TheTimeTable(generics.ListCreateAPIView):
                                               'Assigning now...' %
                                               (prd, d, teacher_name))
                                         tt = TimeTable(school=school, day=day, period=period, teacher=teacher)
+                                        # 02/02/2019 - save so that juhior classes teachers are engaged. Because in
+                                        # junior classes (LKG, UKG) there is no subject
+                                        #tt.save()
                                         tt.the_class = the_class
                                         tt.section = section
                                         tt.subject = subject
