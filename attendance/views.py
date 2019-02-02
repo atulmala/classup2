@@ -180,6 +180,7 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                     message = ''
                     configuration = Configurations.objects.get(school=school)
                     school_name = school.school_name
+                    school_short_name = configuration.school_short_name
 
                     # 14/04/2018 - for collage students, SMS will be sent to students
                     type = configuration.type
@@ -217,9 +218,9 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                                        ' in the attendance of ' + subject
                         # 04/05/2017 - coaching classes does not require application for absence
                         if configuration.type != 'school':
-                            message += '. Regards %s ' % school_name
+                            message += '. Regards %s ' % school_short_name
                         else:
-                            message += '. Please send an application (Ignore if already done). Regards, ' + school_name
+                            message += '. Please send an application (Ignore if already done). Regards, ' + school_short_name
                     except Exception as e:
                         print ('Exception4 from attendance views.py = %s (%s)' % (e.message, type(e)))
                         action = 'Error in drafting SMS for ' + parent_name + '. Exception 4 from attendance views.py'

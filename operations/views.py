@@ -837,7 +837,7 @@ def send_bulk_sms(request):
                             message = 'Dear %s, ' % student_name
                         else:
                             message = 'Dear %s, ' % parent.parent_name
-                        message += message_body + ' Regards, ' + school.school_name
+                        message += message_body + ' Regards, ' + configuration.school_short_name
                         print(message)
                         mobile = parent.parent_mobile1
                         sms.send_sms1(school, sender, mobile, message, message_type)
@@ -890,7 +890,7 @@ def send_bulk_sms(request):
                     teacher_name = teacher.first_name + ' ' + teacher.last_name
                     print(teacher_name)
                     message = 'Dear ' + teacher_name + ', '
-                    message += message_body + ' Regards, ' + school.school_name
+                    message += message_body + ' Regards, ' + configuration.school_short_name
                     print(message)
                     teacher_mobile = teacher.mobile
                     print(teacher_mobile)
@@ -956,7 +956,7 @@ def send_message(request, school_id):
             teacher_record = TeacherMessageRecord(teacher=t, message=message_content)
             teacher_name = t.first_name + ' ' + t.last_name
             school_name = school.school_name
-            message_trailer = '. Regards, ' + teacher_name + ', ' + school_name
+            message_trailer = '. Regards, ' + teacher_name + ', ' + configuration.school_short_name
 
             try:
                 coming_from = data['coming_from']

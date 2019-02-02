@@ -95,36 +95,36 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                     # print('message2 id = %s' % message2_id)
 
                     # 30/11/2018 - AS we have credits from AWS send the broadcast messages using their SNS service
-                    if message_type == 'Bulk SMS (Device)':
-                        try:
-                            AWS_ACCESS_KEY_ID = settings.AWS_ACCESS_KEY_ID
-                            AWS_SECRET_ACCESS_KEY = settings.AWS_SECRET_ACCESS_KEY
-
-                            # Create an SNS client
-                            client = boto3.client(
-                                "sns",
-                                aws_access_key_id = AWS_ACCESS_KEY_ID,
-                                aws_secret_access_key = AWS_SECRET_ACCESS_KEY,
-                                region_name = "us-east-1"
-                            )
-
-                            client.set_sms_attributes(
-                                attributes = {
-                                    'DefaultSMSType': 'Transactional',
-                                    'DefaultSenderID': 'CLSSUP',
-                                }
-                            )
-
-                            # Send your sms message.
-                            result = client.publish(
-                                PhoneNumber = '+91%s' % mobile,
-                                Message = message
-                            )
-                            print('being a broadcast, also sent this message using AWS SNS. Result = ')
-                            print(result)
-                        except Exception as e:
-                            print('exception 31102018-A from operations sms.py %s %s' % (e.message, type(e)))
-                            print('failed to send message to %s via AWS SNS' % mobile)
+                    # if message_type == 'Bulk SMS (Device)':
+                    #     try:
+                    #         AWS_ACCESS_KEY_ID = settings.AWS_ACCESS_KEY_ID
+                    #         AWS_SECRET_ACCESS_KEY = settings.AWS_SECRET_ACCESS_KEY
+                    #
+                    #         # Create an SNS client
+                    #         client = boto3.client(
+                    #             "sns",
+                    #             aws_access_key_id = AWS_ACCESS_KEY_ID,
+                    #             aws_secret_access_key = AWS_SECRET_ACCESS_KEY,
+                    #             region_name = "us-east-1"
+                    #         )
+                    #
+                    #         client.set_sms_attributes(
+                    #             attributes = {
+                    #                 'DefaultSMSType': 'Transactional',
+                    #                 'DefaultSenderID': 'CLSSUP',
+                    #             }
+                    #         )
+                    #
+                    #         # Send your sms message.
+                    #         result = client.publish(
+                    #             PhoneNumber = '+91%s' % mobile,
+                    #             Message = message
+                    #         )
+                    #         print('being a broadcast, also sent this message using AWS SNS. Result = ')
+                    #         print(result)
+                    #     except Exception as e:
+                    #         print('exception 31102018-A from operations sms.py %s %s' % (e.message, type(e)))
+                    #         print('failed to send message to %s via AWS SNS' % mobile)
                 else:
                     print('message type was Bulk SMS (Web Interface). '
                           'Batch process to send those SMS will have to be run!')

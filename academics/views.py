@@ -972,7 +972,7 @@ def submit_marks(request, school_id):
                     if conf.include_max_avg_marks:
                         message += '. Highest marks: ' + str(highest_marks)
                         message += ' & Avg marks: ' + str(round(average_marks))
-                message += ". Regards, " + school_name
+                message += ". Regards, " + conf.school_short_name
                 print(message)
 
                 try:
