@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Student, Parent, DOB
+from .models import Student, Parent, DOB, AdditionalDetails
 
 # Register your models here.
 
@@ -38,3 +38,10 @@ class DOBAdmin(admin.ModelAdmin):
 
 admin.site.register(DOB, DOBAdmin)
 
+
+# class AdditionalDetailsAdmin(admin.ModelAdmin):
+#     list_display = ('student', 'mother_name')
+#     search_fields = ('student__fist_name', 'student__last_name')
+#     list_filter = ('student__school',)
+
+#admin.site.register(AdditionalDetails, AdditionalDetailsAdmin)

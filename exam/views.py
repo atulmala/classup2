@@ -519,13 +519,15 @@ def prepare_results(request, school_id, the_class, section):
             blob = bucket.blob(cbse_logo_path)
             blob.download_to_filename('exam/cbse_logo.png')
             cbse_logo = Image.open('exam/cbse_logo.png')
+            print('cbse logo downloaded')
 
             school_logo_path = 'classup2/media/dev/school_logos/%s/%s.png' % (short_name, short_name)
             blob = bucket.blob(school_logo_path)
             blob.download_to_filename('exam/%s.png' % short_name)
             school_logo = Image.open('exam/%s.png' % short_name)
+            print('school logo downloaded')
 
-            print('cbse logo downloaded')
+
             # logo_url = 'https://s3-us-west-2.amazonaws.com/classup2/media/dev/school_logos/%s/%s.png' % \
             #            (short_name, short_name)
             logo_url = 'https://storage.googleapis.com/classup/classup2/media/dev/school_logos/%s/%s.png' % \
@@ -670,7 +672,7 @@ def prepare_results(request, school_id, the_class, section):
 
             c.setFont(font, 10)
             c.drawString(left_margin, stu_detail_top, adm_no_lbl)
-            #c.drawString(tab, stu_detail_top, s.student_erp_id)
+            c.drawString(tab, stu_detail_top, s.student_erp_id)
 
             c.drawString(left_margin, stu_detail_top - 15, stu_name_lbl)
             c.drawString(tab, stu_detail_top - 15, s.fist_name + ' ' + s.last_name)
@@ -686,9 +688,15 @@ def prepare_results(request, school_id, the_class, section):
                 print('failed to retrieve mother name for %s %s' % (s.fist_name, s.last_name))
                 mother_name = ' '
             if mother_name == ' ':
-                parent_name = 'Mr. %s' % s.parent.parent_name
+                if 'Mr.' not in s.parent.parent_name:
+                    parent_name = 'Mr. %s' % s.parent.parent_name
+                else:
+                    parent_name = s.parent.parent_name
             else:
-                parent_name = '%s / Mr. %s' % (mother_name, s.parent.parent_name)
+                if 'Mr.' not in s.parent.parent_name:
+                    parent_name = '%s / Mr. %s' % (mother_name, s.parent.parent_name)
+                else:
+                    parent_name = '%s / %s' % (mother_name, s.parent.parent_name)
             c.drawString(tab, stu_detail_top - 30, parent_name)
 
             c.drawString(left_margin, stu_detail_top - 45, dob_lbl)
@@ -703,8 +711,8 @@ def prepare_results(request, school_id, the_class, section):
 
             c.drawString(left_margin, stu_detail_top - 60, class_sec_lbl)
             c.drawString(tab, stu_detail_top - 60, the_class + '-' + section)
-            #c.drawString(left_margin, stu_detail_top - 75, 'Attendance:')
-            #c.drawString(tab + 300, stu_detail_top -60, 'Attendance:')
+            c.drawString(left_margin, stu_detail_top - 75, 'Attendance:')
+            c.drawString(tab + 300, stu_detail_top -60, 'Attendance:')
             print('report heading prepared')
 
             c.setFont(font, 8)
@@ -756,8 +764,10 @@ def prepare_results(request, school_id, the_class, section):
 
                 # 25/02/2018 - currently hard coding the test list. Ideally it should come from database
 
-                exam_list = ['UT I', 'UT II', 'Half Yearly', 'UT III', 'UT IV', 'Final Exam']
-                term_exams = ['Half Yearly', 'Final Exam']
+                #exam_list = ['UT I', 'UT II', 'Half Yearly', 'UT III', 'UT IV', 'Final Exam']
+                exam_list = Exam.objects.filter(school=school, start_class='XI')
+                #term_exams = ['Half Yearly', 'Final Exam']
+                term_exams = Exam.objects.filter(school=school, start_class='XI', exam_type='term')
                 try:
                     for sub in chosen_stream:
                         sub_row = [sub]
@@ -970,7 +980,7 @@ def prepare_results(request, school_id, the_class, section):
                             print ('failed to determine third lang for %s. Exception 061117-B from exam views.py %s %s'
                                    % (s.fist_name, e.message, type(e)))
                     sub_row = [sub.subject_name]
-                    terms = ['Term1']
+                    terms = Exam.objects.filter(school=school, exam_type='term')
                     try:
                         for term in terms:
                             # for class IX, only the result of Term2, ie the final exam is to be shown
