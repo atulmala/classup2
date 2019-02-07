@@ -719,8 +719,8 @@ def prepare_results(request, school_id, the_class, section):
 
             c.drawString(left_margin, stu_detail_top - 60, class_sec_lbl)
             c.drawString(tab, stu_detail_top - 60, the_class + '-' + section)
-            c.drawString(left_margin, stu_detail_top - 75, 'Attendance:')
-            c.drawString(tab + 300, stu_detail_top -60, 'Attendance:')
+            #c.drawString(left_margin, stu_detail_top - 75, 'Attendance:')
+            #c.drawString(tab + 300, stu_detail_top -60, 'Attendance:')
             print('report heading prepared')
 
             # 06/02/2019 - calculate the attendance
