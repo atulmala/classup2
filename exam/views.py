@@ -731,7 +731,7 @@ def prepare_results(request, school_id, the_class, section):
             att_taken_t2 = AttendanceTaken.objects.filter(date__gte='2018-11-01', date__lte='2019-03-15',
                                                           the_class=s.current_class, section=s.current_section).count()
             print('total working days in term II = %i' % att_taken_t2)
-            return
+            #return
 
             c.setFont(font, 8)
             if the_class in higher_classes:
