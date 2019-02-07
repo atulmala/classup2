@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from academics.models import ThirdLang
-from .models import Scheme, HigherClassMapping, NPromoted
+from .models import Scheme, HigherClassMapping, NPromoted, Marksheet
 
 # Register your models here.
 
@@ -72,5 +72,14 @@ class NotPromotedAdmin(admin.ModelAdmin):
     list_display = ('get_school_name', 'student', 'get_class', 'get_section', 'details',)
     list_filter = ('student__school',)
 
+
 admin.site.register(NPromoted, NotPromotedAdmin)
+
+
+class MarksheetAdmin(admin.ModelAdmin):
+    list_display = ('school', 'title_start', 'address_start', 'place', 'result_date',)
+    list_filter = ('school',)
+
+
+admin.site.register(Marksheet, MarksheetAdmin)
 

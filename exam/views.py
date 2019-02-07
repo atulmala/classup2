@@ -32,8 +32,9 @@ from setup.views import validate_excel_extension
 from student.models import Student, DOB, AdditionalDetails, House
 from academics.models import Class, Section, Subject, ThirdLang, ClassTest, \
     Exam, TermTestResult, TestResults, CoScholastics, ClassTeacher
+from attendance.models import Attendance, AttendanceTaken
 
-from .models import Scheme, HigherClassMapping, NPromoted
+from .models import Scheme, HigherClassMapping, NPromoted, Marksheet
 from .forms import TermResultForm, ResultSheetForm
 
 
@@ -528,17 +529,10 @@ def prepare_results(request, school_id, the_class, section):
             print('school logo downloaded')
 
 
-            # logo_url = 'https://s3-us-west-2.amazonaws.com/classup2/media/dev/school_logos/%s/%s.png' % \
-            #            (short_name, short_name)
             logo_url = 'https://storage.googleapis.com/classup/classup2/media/dev/school_logos/%s/%s.png' % \
                        (short_name, short_name)
             print('logo_url = %s' % logo_url)
-            resp = requests.get(logo_url)
-            #school_logo = Image.open(StringIO.StringIO(resp.content))
 
-            cbse_logo_url = 'https://s3-us-west-2.amazonaws.com/classup2/media/dev/cbse_logo/Logo/cbse-logo.png'
-            resp = requests.get(cbse_logo_url)
-            #cbse_logo = Image.open(StringIO.StringIO(resp.content))
         except Exception as e:
             print('failed to insert logo in the marksheet')
             print('exception 04022018-B from exam views.py %s %s' % (e.message, type(e)))
@@ -655,11 +649,25 @@ def prepare_results(request, school_id, the_class, section):
             c.drawInlineImage(cbse_logo, left_margin, 690, width=60, height=50)
             font = 'Times-Bold'
             c.setFont(font, 14)
-            c.drawString(120, top+20, school_name)
+
+            # 07/04/2019 - get the start position for school name and address to appear on the top
+            try:
+                ms = Marksheet.objects.get(school=school)
+                title_start = ms.title_start
+                address_start = ms.address_start
+                place = ms.place
+                result_date = ms.result_date
+            except Exception as e:
+                print('failed to retrieve the start coordinates for school name and address %s ' % school.school_name)
+                print('exception 07022019-A from exam view.py %s %s' % (e.message, type(e)))
+                title_start = 130
+                address_start = 155
+
+            c.drawString(title_start, top+20, school_name)
             c.setFont(font, 10)
-            c.drawString(145, top+7, school_address)
+            c.drawString(address_start, top+7, school_address)
             c.setFont(font, 8)
-            c.drawString(175, top-4, '(Affiliated to CBSE)')
+            c.drawString(180, top-4, '(Affiliated to CBSE)')
             c.setFont(font, 10)
             c.line(-30, line_top, 6.75 * inch, line_top)
 
@@ -714,6 +722,16 @@ def prepare_results(request, school_id, the_class, section):
             c.drawString(left_margin, stu_detail_top - 75, 'Attendance:')
             c.drawString(tab + 300, stu_detail_top -60, 'Attendance:')
             print('report heading prepared')
+
+            # 06/02/2019 - calculate the attendance
+            att_taken_t1 = AttendanceTaken.objects.filter(date__gte='2018-04-01', date__lte='2018-10-30',
+                                                          the_class=s.current_class, section=s.current_section).count()
+            print('total working days in term I = %i' % att_taken_t1)
+
+            att_taken_t2 = AttendanceTaken.objects.filter(date__gte='2018-11-01', date__lte='2019-03-15',
+                                                          the_class=s.current_class, section=s.current_section).count()
+            print('total working days in term II = %i' % att_taken_t2)
+            return
 
             c.setFont(font, 8)
             if the_class in higher_classes:
@@ -1205,7 +1223,8 @@ def prepare_results(request, school_id, the_class, section):
 
                 c.drawString(tab - 20, table3_top - 25, '')
                 c.drawString(left_margin, table3_top - 55, 'Place & Date:')
-                c.drawString(left_margin + 50, table3_top - 55, 'Gr. Noida (W)   13/10/2018')
+                place_date = '%s   %s' % (place, result_date)
+                c.drawString(left_margin + 50, table3_top - 55, place_date)
                 c.drawString(175, table3_top - 55, 'Signature of Class Teacher')
                 c.drawString(400, table3_top - 55, 'Signature of Principal')
             except Exception as e:
@@ -2187,11 +2206,11 @@ class ResultSheet(generics.ListCreateAPIView):
                                 col += 1
 
                             # write the total for all subjects for this student
-                            c1 = xl_rowcol_to_cell(row, 15)
-                            c2 = xl_rowcol_to_cell(row, 26)
-                            c3 = xl_rowcol_to_cell(row, 37)
-                            c4 = xl_rowcol_to_cell(row, 48)
-                            c5 = xl_rowcol_to_cell(row, 59)
+                            c1 = xl_rowcol_to_cell(row, 14)
+                            c2 = xl_rowcol_to_cell(row, 25)
+                            c3 = xl_rowcol_to_cell(row, 36)
+                            c4 = xl_rowcol_to_cell(row, 47)
+                            c5 = xl_rowcol_to_cell(row, 58)
                             formula = '=ROUND(SUM(%s, %s, %s, %s, %s), 1)' % (c1, c2, c3, c4, c5)
                             print('formula for grand total = %s' % formula)
                             result_sheet.write_formula(row, col, formula, cell_normal)
@@ -2203,7 +2222,7 @@ class ResultSheet(generics.ListCreateAPIView):
                             result_sheet.write_formula(row, col, formula, perc_format)
                             col += 1
 
-                            index = 'BJ%s*100' % str(row)
+                            index = 'BI%s*100' % str(row)
                             print ('index = %s' % index)
                             formula = '=IF(%s > 90, "A1", IF(%s > 80, "A2", IF(%s > 70, "B1", IF(%s > 60, "B2", ' \
                                         'IF(%s > 50, "C1", IF(%s > 40, "C2", IF(%s > 32, "D", "E")))))))' % \
