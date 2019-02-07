@@ -930,7 +930,7 @@ def prepare_results(request, school_id, the_class, section):
                         print('exception 20032017-X from exam views.py %s %s' % (e.message, type(e)))
                 except Exception as e:
                     print('failed to retrieve Co-scholastic grades for %s %s for ' % (s.fist_name, s.last_name))
-                    print('exception 07022018-B from exam views.py %s %s' % (e.message, type(e)))
+                    print('exception 07022018-Z from exam views.py %s %s' % (e.message, type(e)))
 
                 try:
                     data2.append(work_array)
