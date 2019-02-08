@@ -736,7 +736,8 @@ class AbsentTeacherPeriods (generics.ListAPIView):
                             # 24/01/2018 - a requirement from JPS that they should also be able to see the load
                             # of the teacher for today. A less loaded teacher should be given arrangements on priority
                             if a_teacher not in teacher_load:
-                                periods_count = TimeTable.objects.filter(teacher=a_teacher, day=day).count()
+                                #periods_count = TimeTable.objects.filter(teacher=a_teacher, day=day).count()
+                                periods_count = TeacherPeriods.objects.filter(teacher=a_teacher, day=day).count()
                                 teacher_load[a_teacher] = periods_count
                             else:
                                 periods_count = teacher_load[a_teacher]
