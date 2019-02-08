@@ -2,6 +2,7 @@ import json
 import xlrd
 import StringIO
 import xlsxwriter
+import time
 import datetime
 import calendar
 
@@ -601,6 +602,7 @@ class TheTeacherWingMapping (generics.ListCreateAPIView):
 class AbsentTeacherPeriods (generics.ListAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     def get(self, request, *args, **kwargs):
+        start_time = time.time()
         context_dict = {
 
         }
@@ -682,6 +684,9 @@ class AbsentTeacherPeriods (generics.ListAPIView):
             # get the list of available teachers from first to last period
             available_list = {}
             periods = Period.objects.all()
+            teacher_load = {
+
+            }
             for period in periods:
                 # now, find which teacher is free on this period
                 available = []
@@ -701,7 +706,13 @@ class AbsentTeacherPeriods (generics.ListAPIView):
                                    % (a_teacher.first_name, a_teacher.last_name, d, str(period.period)))
                             # 24/01/2018 - a requirement from JPS that they should also be able to see the load
                             # of the teacher for today. A less loaded teacher should be given arrangements on priority
-                            periods_count = TimeTable.objects.filter(teacher=a_teacher, day=day).count()
+                            if a_teacher not in teacher_load:
+                                periods_count = TimeTable.objects.filter(teacher=a_teacher, day=day).count()
+                                teacher_load[a_teacher] = periods_count
+                            else:
+                                periods_count = teacher_load[a_teacher]
+                            #periods_count = 2
+                            # print('%s %s has %i periods today' %
                             # print('%s %s has %i periods today' %
                             #       (a_teacher.first_name, a_teacher.last_name, periods_count))
                             available_teacher["login_id"] = str(a_teacher.email)
@@ -720,7 +731,10 @@ class AbsentTeacherPeriods (generics.ListAPIView):
             #     print (available_list[period.period])
             # print ('full availability list for all periods = ')
             # print (available_list)
+            print(teacher_load)
+            print(len(teacher_load))
             context_dict['available_teachers'] = available_list
+            print("---time taken %s seconds ---" % (time.time() - start_time))
 
             return render(request, 'classup/arrangements.html', context_dict)
             

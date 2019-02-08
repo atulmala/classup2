@@ -975,6 +975,7 @@ def prepare_results(request, school_id, the_class, section):
                     print('Looks like the scheme for class %s is not yet set' % the_class)
                     print('exception 10022018-A from exam views.py %s %s' % (e.message, type(e)))
                 if the_class in middle_classes:
+                    end_class = 'VIII'
                     data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', '',
                               'Term-2 (100 Marks)', '', '', '', '', ''],
                              ['Sub Name', 'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
@@ -982,6 +983,7 @@ def prepare_results(request, school_id, the_class, section):
                               'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
                               'Yearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
                 if the_class in ninth_tenth:
+                    end_class = 'IX'
                     data1 = [['Scholastic\nAreas', 'Term I (100 Marks)', '', '', '', '', ''],
                              ['Sub Name', 'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
                               'Annual\nExamination\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
@@ -998,7 +1000,7 @@ def prepare_results(request, school_id, the_class, section):
                             print ('failed to determine third lang for %s. Exception 061117-B from exam views.py %s %s'
                                    % (s.fist_name, e.message, type(e)))
                     sub_row = [sub.subject_name]
-                    terms = Exam.objects.filter(school=school, exam_type='term')
+                    terms = Exam.objects.filter(school=school, exam_type='term', end_class=end_class)
                     try:
                         for term in terms:
                             # for class IX, only the result of Term2, ie the final exam is to be shown
