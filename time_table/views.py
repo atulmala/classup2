@@ -259,6 +259,35 @@ class TheTimeTable(generics.ListCreateAPIView):
                                             ctt.save()
                                             print('assigned period %s on %s for teacher %s to subject %s, '
                                                   'class %s-%s' % (prd, d, teacher_name, sub, cls, sec))
+
+                                    # make entries in TeacherPeriod table
+                                    # part II - each teacher's period assignment for every day
+                                    try:
+                                        tp = TeacherPeriods.objects.get(teacher=teacher, day=day,
+                                                                        period=period)  # third
+                                        print ('period %s for %s %s is already set. This will be updated' %
+                                               (str(period), teacher.first_name, teacher.last_name))
+                                        tp.the_class = the_class
+                                        tp.section = section
+                                        tp.save()
+                                        print ('period %s for %s %s is updated' %
+                                               (str(period), teacher.first_name, teacher.last_name))
+                                    except Exception as e:
+                                        print ('Exception 171117-D from time_table views.py %s %s' % (
+                                            e.message, type(e)))
+                                        print ('period %s for %s %s is not yet set. This will be set now' %
+                                               (str(period), teacher.first_name, teacher.last_name))
+                                        tp = TeacherPeriods(school=school, teacher=teacher, day=day,
+                                                            period=period, the_class=the_class, section=section)
+                                        try:
+                                            tp.save()
+                                            print ('period %s for %s %s is now set.' %
+                                                   (str(period), teacher.first_name, teacher.last_name))
+                                        except Exception as e:
+                                            print ('exception 171117-E from time_table views.py %s %s' %
+                                                   (e.message, type(e)))
+                                            print ('failed to set period %s for %s %s ' %
+                                                   (str(period), teacher.first_name, teacher.last_name))
                             except Exception as e:
                                 print('something went wrong while retrieving objects associated with %s %s %s' %
                                       (cls, sec, sub))
@@ -731,8 +760,8 @@ class AbsentTeacherPeriods (generics.ListAPIView):
             #     print (available_list[period.period])
             # print ('full availability list for all periods = ')
             # print (available_list)
-            print(teacher_load)
-            print(len(teacher_load))
+            # print(teacher_load)
+            # print(len(teacher_load))
             context_dict['available_teachers'] = available_list
             print("---time taken %s seconds ---" % (time.time() - start_time))
 
