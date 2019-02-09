@@ -661,8 +661,8 @@ class AbsentTeacherPeriods (generics.ListAPIView):
             # all the teachers who are absent today, should also be part of excluded list
             for t in ta:
                 excluded_list.append(t.teacher.email)
-            #print ('excluded list including today absent teachers: ')
-            #print (excluded_list)
+            # print ('excluded list including today absent teachers: ')
+            # print (excluded_list)
             context_dict['excluded_list'] = excluded_list
 
             # for all the absent teachers today, we need to identify the periods which they take

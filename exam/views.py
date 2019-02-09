@@ -1503,15 +1503,15 @@ class ResultSheet(generics.ListCreateAPIView):
                             if sub != 'GK':
                                 if sub == 'Third Language':
                                     # 19/10/2018 - we are going to show the third language subject in vertical
-                                    result_sheet.set_column(col, col + 1, 5)
+                                    result_sheet.set_column(col, col + 1, 3)
                                     result_sheet.merge_range(row, col, row, col + 2, sub, cell_center)
                                     col += 3
                                 else:
-                                    result_sheet.set_column(col, col + 1, 5)
+                                    result_sheet.set_column(col, col + 1, 3)
                                     result_sheet.merge_range(row, col, row, col + 1, sub, cell_center)
                                     col += 2
                             else:
-                                result_sheet.set_column(col, col, 6)
+                                result_sheet.set_column(col, col, 4)
                                 result_sheet.write_string(row, col, sub, cell_center)
                                 col += 1
 
@@ -1613,6 +1613,8 @@ class ResultSheet(generics.ListCreateAPIView):
                         the_term = 'Term'
                         tot = 'Tot'
                         gr = 'Gr'
+
+                        comp_title_created = False
 
                         if the_class.standard in middle_classes:
                             print('%s is in middle_classes' % the_class.standard)
@@ -1731,6 +1733,11 @@ class ResultSheet(generics.ListCreateAPIView):
                                             term_marks = 'ABS'
 
                                         term_test_result = TermTestResult.objects.get(test_result=test_result)
+
+                                        if comp_title_created:
+                                            result_sheet.set_column(col, col, 0)
+                                        else:
+                                            comp_title_created = True
 
                                         result_sheet.write_string(row, col, pa, cell_component)
                                         col += 1
