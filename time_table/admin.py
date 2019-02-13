@@ -34,7 +34,7 @@ class TimeTableAdmin (admin.ModelAdmin):
 
     list_display = ('school', 'day', 'period', 'get_symbol', 'the_class', 'section', 'subject', 'teacher',)
     search_fields = ('teacher__first_name',)
-    list_filter = ('school',)
+    list_filter = ('school', 'day',)
 
 
 admin.site.register (TimeTable, TimeTableAdmin)
@@ -83,3 +83,12 @@ class ArrangementAdmin (admin.ModelAdmin):
 
 
 admin.site.register(Arrangements, ArrangementAdmin)
+
+
+class AvailableTeachersAdmin(admin.ModelAdmin):
+    list_filter = ('school', 'day', 'period',)
+    list_display = ('school', 'day', 'period', 'teacher',)
+    search_fields = ('teacher__first_name', 'teacher__last_name', 'period__period')
+
+
+admin.site.register(AvailableTeachers, AvailableTeachersAdmin)

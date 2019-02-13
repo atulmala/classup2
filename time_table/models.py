@@ -60,6 +60,10 @@ class TimeTable(models.Model):
     subject = models.ForeignKey(Subject, null=True)
     teacher = models.ForeignKey(Teacher)
 
+    def __unicode__(self):
+        return '%s %s %s %s %s %s %s ' % (self.school, self.day.day, self.the_class.standard, self.section.section,
+                                            self.period.period, self.subject.subject_name, self.teacher.email)
+
 
 class CTimeTable(models.Model):
     school = models.ForeignKey(School)
@@ -116,4 +120,11 @@ class ExcludedFromArrangements (models.Model):
 
 class ExcludedFromArrangements1 (models.Model):
     school = models.ForeignKey(School)
+    teacher = models.ForeignKey(Teacher)
+
+
+class AvailableTeachers(models.Model):
+    school = models.ForeignKey(School)
+    day = models.ForeignKey(DaysOfWeek)
+    period = models.ForeignKey(Period)
     teacher = models.ForeignKey(Teacher)
