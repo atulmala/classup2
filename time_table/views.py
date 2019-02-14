@@ -209,6 +209,22 @@ class TheTimeTable(generics.ListCreateAPIView):
                                         print('updated period %s on %s for teacher %s to '
                                               'subject %s, class %s-%s' %
                                               (prd, d, teacher_name, sub, cls, sec))
+
+                                        # 14/02/2019 - now that we are using a separate table to store available
+                                        # teachers, there are chances that this teacher could have been available
+                                        # earlier, but now is engaged. Hence, need to be removed from the available
+                                        # teacher table
+                                        try:
+                                            at = AvailableTeachers(school=school, day=day,
+                                                                   period=period, teacher=teacher)
+                                            print('%s was shown free for %s period %s' % (teacher, day, period))
+                                            print('need to be removed from Available Teachers list')
+                                            at.delete()
+                                            print('now removed')
+                                        except Exception as e:
+                                            print('exception 14022019-A from time_table views.py %s %s' %
+                                                  (e.message, type(e)))
+                                            print('%s was not shown free for %s period %s' % (teacher, day, period))
                                     except Exception as e:
                                         print('exception 07032018-B from time_table views.py %s %s' % (
                                             e.message, type(e)))
@@ -218,13 +234,28 @@ class TheTimeTable(generics.ListCreateAPIView):
                                         tt = TimeTable(school=school, day=day, period=period, teacher=teacher)
                                         # 02/02/2019 - save so that juhior classes teachers are engaged. Because in
                                         # junior classes (LKG, UKG) there is no subject
-                                        #tt.save()
                                         tt.the_class = the_class
                                         tt.section = section
                                         tt.subject = subject
                                         tt.save()
                                         print('assigned period %s on %s for teacher %s to subject %s, '
                                               'class %s-%s' % (prd, d, teacher_name, sub, cls, sec))
+                                        # 14/02/2019 - now that we are using a separate table to store available
+                                        # teachers, there are chances that this teacher could have been available
+                                        # earlier, but now is engaged. Hence, need to be removed from the available
+                                        # teacher table
+                                        try:
+                                            at = AvailableTeachers(school=school, day=day,
+                                                                   period=period, teacher=teacher)
+                                            print('%s was shown free for %s period %s' % (teacher, day, period))
+                                            print('need to be removed from Available Teachers list')
+                                            at.delete()
+                                            print('now removed')
+                                        except Exception as e:
+                                            print('exception 14022019-A from time_table views.py %s %s' %
+                                                  (e.message, type(e)))
+                                            print('%s was not shown free for %s period %s' % (teacher, day, period))
+
                                     # 07/04/2018 - also make same entries in the ClassTimeTable
                                     if len(the_sec) > 1:
                                         print('dealing with multiple sections here %s' % the_sec)
@@ -260,6 +291,7 @@ class TheTimeTable(generics.ListCreateAPIView):
                                             print('assigned period %s on %s for teacher %s to subject %s, '
                                                   'class %s-%s' % (prd, d, teacher_name, sub, cls, sec))
 
+
                                     # make entries in TeacherPeriod table
                                     # part II - each teacher's period assignment for every day
                                     try:
@@ -293,6 +325,7 @@ class TheTimeTable(generics.ListCreateAPIView):
                                         try:
                                             at = AvailableTeachers.objects.get(school=school,
                                                                                day=day, period=period, teacher=teacher)
+                                            print(at)
                                             print('%s is alreay added to the available list for %s period %s' %
                                                   (teacher_name, day.day, period.period))
 
@@ -673,14 +706,14 @@ class AbsentTeacherPeriods (generics.ListAPIView):
                 excluded_list.append(e.teacher.email)
                 print (excluded_list)
             ta = TeacherAttendance.objects.filter(school=school, date=today)
-            #print ('ta = ')
-            #print (ta)
+            print ('ta = ')
+            print (ta)
 
             # all the teachers who are absent today, should also be part of excluded list
             for t in ta:
                 excluded_list.append(t.teacher)
-            # print ('excluded list including today absent teachers: ')
-            # print (excluded_list)
+            print ('excluded list including today absent teachers: ')
+            print (excluded_list)
             context_dict['excluded_list'] = excluded_list
 
             # for all the absent teachers today, we need to identify the periods which they take
@@ -693,8 +726,8 @@ class AbsentTeacherPeriods (generics.ListAPIView):
                 try:
                     teacher_periods = TimeTable.objects.filter(teacher=absent_teacher,
                                                                day=day).order_by ('period__period')
-                    #print ('periods = ')
-                    #print (teacher_periods)
+                    print ('periods = ')
+                    print (teacher_periods)
                     for tp in teacher_periods:
                         arrangement_unit = {}
                         arrangement_unit['teacher'] = teacher_name
@@ -720,8 +753,8 @@ class AbsentTeacherPeriods (generics.ListAPIView):
                             arrangement_unit['substitute_teacher'] = 'Not Assigned'
 
                         arrangements_required.append(arrangement_unit)
-                        # print ('at this stage arrangements_required = ')
-                        # print (arrangements_required)
+                        print ('at this stage arrangements_required = ')
+                        print (arrangements_required)
                 except Exception as e:
                     print ('exception 211117-A from time_table views.py %s %s' % (e.message, type(e)))
                     print ('looks like %s %s had no periods today' % (absent_teacher.first_name,
@@ -759,52 +792,7 @@ class AbsentTeacherPeriods (generics.ListAPIView):
                 except Exception as e:
                     print('exception 13012019-B from time_table view.py %s %s' % (e.message, type(e)))
                     print('failed to retrieve list of availabl teacher for %s period %s' % (day, period))
-            #     all_teachers = Teacher.objects.filter(school=school, active_status=True).order_by('first_name')
-            #     for a_teacher in all_teachers:
-            #         if a_teacher.email not in excluded_list:
-            #             # print ('now checking %s %s availability for period # %s on %s' %
-            #             #        (a_teacher.first_name, a_teacher.last_name, period.period, d))
-            #             try:
-            #                 TimeTable.objects.get(teacher=a_teacher, day=day, period=period)
-            #                 print ('%s %s is not available on %s for period: %s' %
-            #                        (a_teacher.first_name, a_teacher.last_name, d, period.period))
-            #             except Exception as e:
-            #                 available_teacher = {}
-            #                 print ('exception 30122017-A from time_table views.py %s %s' % (e.message, type(e)))
-            #                 print ('%s %s is available on %s for period: %s. will be added to available list'
-            #                        % (a_teacher.first_name, a_teacher.last_name, d, str(period.period)))
-            #                 # 24/01/2018 - a requirement from JPS that they should also be able to see the load
-            #                 # of the teacher for today. A less loaded teacher should be given arrangements on priority
-            #                 if a_teacher not in teacher_load:
-            #                     #periods_count = TimeTable.objects.filter(teacher=a_teacher, day=day).count()
-            #                     periods_count = TeacherPeriods.objects.filter(teacher=a_teacher, day=day).count()
-            #                     teacher_load[a_teacher] = periods_count
-            #                 else:
-            #                     periods_count = teacher_load[a_teacher]
-            #                 #periods_count = 2
-            #                 # print('%s %s has %i periods today' %
-            #                 # print('%s %s has %i periods today' %
-            #                 #       (a_teacher.first_name, a_teacher.last_name, periods_count))
-            #                 available_teacher["login_id"] = str(a_teacher.email)
-            #                 available_teacher["name"] = a_teacher.first_name + ' ' + a_teacher.last_name + \
-            #                                             ' (' + str(periods_count) + ')'
-            #                 # print('available_teacher = ')
-            #                 # print(available_teacher)
-            #                 available.append(available_teacher)
-            #                 # print('available for period # %s till now = ' % period.period)
-            #                 # print(available)
-            #         else:
-            #             print ('%s %s is in excluded list. Hence not being considered for Arrangements'
-            #                    % (a_teacher.first_name, a_teacher.last_name))
-            #         available_list[str(period.period)] = available
-            #     print ('full availaibility list for period # %s ' % period.period)
-            #     print (available_list[period.period])
-            #     print('total number of teachers available for period %s: %i' % (period.period, len(available)))
-            #     break
-            # print ('full availability list for all periods = ')
-            # print (available_list)
-            # print(teacher_load)
-            # print(len(teacher_load))
+
             context_dict['available_teachers'] = available_list
             print("---time taken %s seconds ---" % (time.time() - start_time))
 
