@@ -545,19 +545,19 @@ def prepare_results(request, school_id, the_class, section):
                       ('TOPPADDING', (0, 0), (-1, -1), 1),
                       ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
                       ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                      ('ALIGN', (1, 0), (10, 0), 'CENTER'),
-                      ('ALIGN', (11, 0), (14, 0), 'CENTER'),
-                      ('SPAN', (1, 0), (10, 0)),
-                      ('SPAN', (11, 0), (14, 0)),
-                      ('SPAN', (3, 1), (5, 1)),
-                      ('SPAN', (8, 1), (10, 1)),
+                      ('ALIGN', (1, 0), (9, 0), 'CENTER'),
+                      ('ALIGN', (10, 0), (13, 0), 'CENTER'),
+                      ('SPAN', (1, 0), (9, 0)),
+                      ('SPAN', (10, 0), (13, 0)),
+                      ('SPAN', (4, 1), (6, 1)),
+                      ('SPAN', (7, 1), (9, 1)),
                       ('LINEABOVE', (0, 1), (0, 1), 1, colors.white),
                       ('LINEABOVE', (0, 2), (0, 2), 1, colors.white),
                       ('FONTSIZE', (0, 0), (-1, -1), 7),
-                      ('FONT', (0, 0), (14, 0), 'Times-Bold'),
-                      ('FONT', (0, 1), (14, 1), 'Times-Bold'),
-                      ('FONT', (0, 2), (14, 2), 'Times-Bold'),
-                      ('FONT', (0, 2), (14, 1), 'Times-Bold')
+                      ('FONT', (0, 0), (13, 0), 'Times-Bold'),
+                      ('FONT', (0, 1), (13, 1), 'Times-Bold'),
+                      ('FONT', (0, 2), (13, 2), 'Times-Bold'),
+                      ('FONT', (0, 2), (13, 1), 'Times-Bold')
                       ]
             style2 = style3 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
                                ('BOX', (0, 0), (-1, -1), 1, colors.black),
@@ -737,11 +737,10 @@ def prepare_results(request, school_id, the_class, section):
             if the_class in higher_classes:
                 print('result being prepared for class %s. This will be in school own format' % the_class)
 
-                data1 = [['', 'TERM RESULT', '', '', '', '', '', '', '', '', '', 'CUMULATIVE RESULT', '', '', ''],
-                         ['\nSUBJECT', 'UT-I', 'UT-II', 'Half Yearly\nExam', '', '',
-                          'UT-III', 'UT-IV', 'Final Exam', '', '', 'Unit\nTest', 'Half Yearly\nExam',
-                          'Final\nExam', 'Total'],
-                         ['', '25', '25', 'Th', 'Pr', 'Tot', '25', '25', 'Th', 'Pr', 'Tot', '25', '25', '50', '100']]
+                data1 = [['', 'TERM RESULT', '', '', '', '', '', '', '', '', 'CUMULATIVE RESULT', '', '', ''],
+                         ['\nSUBJECT', 'UT-I', 'UT-II', 'UT-III', 'Half Yearly\nExam', '', '',
+                           'Final Exam', '', '', 'Unit\nTest', 'Half Yearly\nExam', 'Final\nExam', 'Total'],
+                         ['', '25', '25', '25', 'Th', 'Pr', 'Tot', 'Th', 'Pr', 'Tot', '25', '25', '50', '100']]
                 print('class %s is a higher class. Subject list will come from the student/subject mapping' % the_class)
                 sequence = 0
                 mapping = HigherClassMapping.objects.filter(student=s)
@@ -782,9 +781,7 @@ def prepare_results(request, school_id, the_class, section):
 
                 # 25/02/2018 - currently hard coding the test list. Ideally it should come from database
 
-                #exam_list = ['UT I', 'UT II', 'Half Yearly', 'UT III', 'UT IV', 'Final Exam']
-                exam_list = Exam.objects.filter(school=school, start_class='XI')
-                #term_exams = ['Half Yearly', 'Final Exam']
+                unit_exams = Exam.objects.filter(school=school, start_class='XI', exam_type='unit')
                 term_exams = Exam.objects.filter(school=school, start_class='XI', exam_type='term')
                 try:
                     for sub in chosen_stream:
@@ -794,82 +791,79 @@ def prepare_results(request, school_id, the_class, section):
                         print('now retrieving all test marks for %s %s in %s' % (s.fist_name, s.last_name, sub))
                         subject = Subject.objects.get(school=school, subject_name=sub)
                         ut_total = 0.0
-                        for an_exam in exam_list:
+                        for a_unit_exam in unit_exams:
                             try:
-                                exam = Exam.objects.get(school=school, title=an_exam)
-                                try:
-                                    test = ClassTest.objects.get(subject=subject, the_class=standard, section=sec,
-                                                                 date_conducted__range=(exam.start_date, exam.end_date))
-                                    print('test was conducted for %s under exam: %s for class %s' %
-                                          (sub, an_exam, the_class))
-                                    print(test)
-                                    result = TestResults.objects.get(class_test=test, student=s)
-                                    marks = float(result.marks_obtained)
+                                test = ClassTest.objects.get(subject=subject, the_class=standard,
+                                                             section=sec, exam=a_unit_exam)
+                                print('test was conducted for %s under exam: %s for class %s' %
+                                      (sub, a_unit_exam, the_class))
+                                print(test)
+                                result = TestResults.objects.get(class_test=test, student=s)
+                                marks = float(result.marks_obtained)
+
+                                if float(test.max_marks) != 25.0:
+                                    print('max marks for %s in %s were %f. Conversion is required' %
+                                          (sub, a_unit_exam.title, float(test.max_marks)))
+                                    marks = round((25 * marks) / float(test.max_marks), 2)
                                     if marks < 0.0:
                                         marks = 'ABS'
-                                    if exam.title not in term_exams:
-                                        if float(test.max_marks) != 25.0:
-                                            print('max marks for %s in %s were %f. Conversion is required' %
-                                                  (sub, exam.title, float(test.max_marks)))
-                                            marks = round((25*marks)/float(test.max_marks), 2)
-                                            if marks < 0.0:
-                                                marks = 'ABS'
-                                        ut_total = ut_total + marks
-                                    sub_row.append(marks)
-                                    if exam.title in term_exams:
-                                        # this is a half yearly or annual exam. The possibility of practical marks...
-                                        try:
-                                            term_test_results = TermTestResult.objects.get(test_result=result)
-                                            if sub in prac_subjects:
-                                                print('%s has practical component' % (sub))
-                                                prac_marks = float(term_test_results.prac_marks)
-                                                if prac_marks < 0.0:
-                                                    prac_marks = ' '
-                                                    tot_marks = marks
-                                                else:
-                                                    # 26032018 - there is a possibility that student was absent
-                                                    # in theory but present in practical
-                                                    if marks != 'ABS':
-                                                        tot_marks = marks + prac_marks
-                                                    else:
-                                                        tot_marks = prac_marks
-                                            else:
-                                                print('%s does not have practical component' % (sub))
-                                                prac_marks = 'NA'
-                                                tot_marks = marks
-                                            sub_row.append(prac_marks)
-                                            sub_row.append(tot_marks)
-
-                                            if exam.title == term_exams[0]:
-                                                half_yearly_marks = tot_marks
-                                            if exam.title == term_exams[1]:
-                                                final_marks = tot_marks
-                                        except Exception as e:
-                                            print('subject %s has no practical component' % (sub))
-                                            print('exception 27022018-A from exam views.py %s %s'
-                                                  % (e.message, type(e)))
-                                except Exception as e:
-                                    print('no test has been created for %s for exam %s for class %s' %
-                                          (sub, exam.title, the_class))
-                                    print('exception 28022018-A from exam views.py %s %s' % (e.message, type(e)))
-                                    marks = 'ABS'
-                                    sub_row.append(marks)
-                                    # if it was a Half Yearly or Final exam we need to take care of prac & total marks
-                                    if exam.title in term_exams:
-                                        if sub in prac_subjects:
-                                            prac_marks = ' '
-                                        else:
-                                            prac_marks = 'NA'
-                                        sub_row.append(prac_marks)
-                                        sub_row.append(' ')
+                                    ut_total = ut_total + marks
+                                sub_row.append(marks)
                             except Exception as e:
-                                print('failed to retrieve any test for subject %s associated with exam %s for class %s' %
-                                            (sub, an_exam, the_class))
-                                print('exception 25022018-B from exam views.py %s %s' % (e.message, type(e)))
+                                print('exception 15022019-A from exam views.py %s %s' % (e.message, type(e)))
+                                print('unit test for %s not created for %s' % (a_unit_exam, subject))
+
+                        for a_term_exam in term_exams:
+                            index = 0
+                            try:
+                                test = ClassTest.objects.get(subject=subject, the_class=standard,
+                                                             section=sec, exam=a_term_exam)
+                                result = TestResults.objects.get(class_test=test, student=s)
+                                marks = float(result.marks_obtained)
+                                if marks < 0.0:
+                                    marks = 'ABS'
+
+                                term_test_results = TermTestResult.objects.get(test_result=result)
+
+                                # this is a half yearly or annual exam. The possibility of practical marks...
+                                if sub in prac_subjects:
+                                    print('%s has practical component' % (sub))
+                                    prac_marks = float(term_test_results.prac_marks)
+                                    if prac_marks < 0.0:
+                                        prac_marks = ' '
+                                        tot_marks = marks
+                                    else:
+                                        # 26032018 - there is a possibility that student was absent
+                                        # in theory but present in practical
+                                        if marks != 'ABS':
+                                            tot_marks = marks + prac_marks
+                                        else:
+                                            tot_marks = prac_marks
+                                else:
+                                    print('%s does not have practical component' % (sub))
+                                    prac_marks = 'NA'
+                                    tot_marks = marks
+                                sub_row.append(marks)
+                                sub_row.append(prac_marks)
+                                sub_row.append(tot_marks)
+
+                                if index == 0:
+                                    half_yearly_marks = tot_marks
+                                if index == 1:
+                                    final_marks = tot_marks
+                                index += 1
+                            except Exception as e:
+                                print('exception 15022019-B from exam views.py %s %s' % (e.message, type(e)))
+                                print('term test for %s not created for %s' % (a_term_exam, subject))
+                                for component in ['Th', 'Prac', 'Total']:
+                                    sub_row.append(' ')
+
+                                index += 1
+
                         # calculate the cumulative result for this subject. UTs & Half yearly weightage is 25% each
                         #  & final exam weightage is 50%
                         try:
-                            ut_cumul = round(ut_total/float(4), 2)
+                            ut_cumul = round(ut_total/float(3), 2)
                             sub_row.append(ut_cumul)
                             half_year_cumul = round(half_yearly_marks/float(4), 2)
                             sub_row.append(half_year_cumul)
@@ -886,6 +880,7 @@ def prepare_results(request, school_id, the_class, section):
                     table1 = Table(data1)
                     table1.setStyle(TableStyle(style1))
                     table1.wrapOn(c, left_margin, 0)
+                    print('everything was ok upto this point')
                     table1.drawOn(c, left_margin, table1_top)
                     print('table1 drawn for %s %s' % (s.fist_name, s.last_name))
                     theory_prac_split = 'Physics, Chemistry, Comp. Sc., Info. Prac., Biology, Phy. Edu., Eco, AccTB - '
@@ -2159,7 +2154,15 @@ class ResultSheet(generics.ListCreateAPIView):
                                         print(test)
                                         result = TestResults.objects.get(class_test=test, student=student)
                                         print(result)
-                                        result_sheet.write_number(row, col, float(result.marks_obtained), cell_normal)
+                                        if result.marks_obtained > -1000.0:
+                                            result_sheet.write_number(row, col,
+                                                                      float(result.marks_obtained), cell_normal)
+                                        else:
+                                            if result.marks_obtained == -1000.0 or result.marks_obtained == -1000.00:
+                                                result_sheet.write_string(row, col, 'ABS', cell_center)
+                                            if result.marks_obtained == -5000.0 or result.marks_obtained == -5000.00:
+                                                result_sheet.write_string(row, col, 'TBE', cell_center)
+
                                         col += 1
 
                                         if sub in prac_subjects:
@@ -2167,8 +2170,15 @@ class ResultSheet(generics.ListCreateAPIView):
                                                 term_test_results = TermTestResult.objects.get(test_result=result)
                                                 print('%s has practical component' % (sub))
                                                 prac_marks = float(term_test_results.prac_marks)
+
                                                 if prac_marks > -1000.00:
                                                     result_sheet.write_number(row, col, prac_marks, cell_normal)
+                                                else:
+                                                    if prac_marks == -1000.0 or prac_marks == -1000.00:
+                                                        result_sheet.write_string(row, col, 'ABS', cell_center)
+                                                    if prac_marks == -5000.0 or prac_marks == -5000.00:
+                                                        result_sheet.write_string(row, col, 'TBE', cell_center)
+
                                                 col += 1
                                             except Exception as e:
                                                 print('%s practical marks for %s could not be retrieved' %
