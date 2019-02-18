@@ -801,13 +801,15 @@ def prepare_results(request, school_id, the_class, section):
                                 result = TestResults.objects.get(class_test=test, student=s)
                                 marks = float(result.marks_obtained)
 
-                                if float(test.max_marks) != 25.0:
-                                    print('max marks for %s in %s were %f. Conversion is required' %
-                                          (sub, a_unit_exam.title, float(test.max_marks)))
-                                    marks = round((25 * marks) / float(test.max_marks), 2)
-                                    if marks < 0.0:
-                                        marks = 'ABS'
-                                    ut_total = ut_total + marks
+                                if marks < 0.0:
+                                    marks = 'ABS'
+                                else:
+                                    if float(test.max_marks) != 25.0:
+                                        print('max marks for %s in %s were %f. Conversion is required' %
+                                              (sub, a_unit_exam.title, float(test.max_marks)))
+                                        marks = round((25 * marks) / float(test.max_marks), 2)
+
+                                        ut_total = ut_total + marks
                                 sub_row.append(marks)
                             except Exception as e:
                                 print('exception 15022019-A from exam views.py %s %s' % (e.message, type(e)))
@@ -997,21 +999,23 @@ def prepare_results(request, school_id, the_class, section):
                     sub_row = [sub.subject_name]
                     terms = Exam.objects.filter(school=school, exam_type='term', end_class=end_class)
                     try:
-                        for term in terms:
+                        for idx, term in enumerate(terms):
                             # for class IX, only the result of Term2, ie the final exam is to be shown
                             #if term == 'Term1' and the_class in ninth_tenth:
                                 #continue
 
-                            exam = Exam.objects.get(school=school, title=term)
-                            print(exam)
+                            # exam =  Exam.objects.get(school=school, title=term)
+                            # print(exam)
                             try:
                                 if sub.subject_name != 'GK':
                                     test = ClassTest.objects.get(subject=sub, the_class=standard,
-                                                                 section=sec, exam=exam)
+                                                                 section=sec, exam=term)
                                     tr = TestResults.objects.get(class_test=test, student=s)
 
                                 if sub.subject_name == 'GK':
-                                    test = ClassTest.objects.get(subject=sub, the_class=standard, section=sec)
+                                    test = ClassTest.objects.filter(subject=sub,
+                                                                    the_class=standard, section=sec)[idx]
+
                                     tr = TestResults.objects.get(class_test=test, student=s)
                                     pa = 'NA'
                                     sub_enrich = 'NA'
@@ -1076,7 +1080,8 @@ def prepare_results(request, school_id, the_class, section):
                     art_array = []
                     health_array = []
                     dscpln_array = []
-                    for term in terms:
+
+                    for term in ['term1', 'term2']:
                         # for class IX, only the result of Term2, ie the final exam is to be shown
                         #if term == 'Term1' and the_class in ninth_tenth:
                             #continue

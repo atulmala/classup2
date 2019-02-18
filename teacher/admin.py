@@ -14,6 +14,13 @@ class TeacherAdmin(admin.ModelAdmin):
 admin.site.register(Teacher, TeacherAdmin)
 
 
+@admin.register(Staff)
+class StaffAdmin(admin.ModelAdmin):
+    search_fields = ['first_name', 'last_name']
+    list_display = ['first_name', 'last_name', 'staff_erp_id', 'email', 'school']
+    list_filter = ('school', )
+
+
 class TeacherAttendanceTakenAdmin(admin.ModelAdmin):
     list_display = ('school', 'date', 'taken_time',)
 

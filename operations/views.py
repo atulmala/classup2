@@ -21,7 +21,7 @@ from rest_framework import generics
 from authentication.views import JSONResponse, log_entry, LoginRecord
 from academics.models import Class, Section, Subject, ClassTest, TestResults, ClassTeacher
 from student.models import Student
-from teacher.models import Teacher, TeacherMessageRecord, MessageReceivers
+from teacher.models import Teacher, TeacherMessageRecord, MessageReceivers, Staff
 from attendance.models import Attendance, AttendanceTaken
 from parents.models import  ParentCommunication
 from setup.models import Configurations, School
@@ -882,8 +882,18 @@ def send_bulk_sms(request):
                         teacher_mobile = teacher.mobile
                         print(teacher_mobile)
                         sms.send_sms1(school, sender, teacher_mobile, message, message_type)
+                if st == 'staff' or st == 'Staff':
+                    for staff in Staff.objects.filter(school=school):
+                        staff_name = '%s %s' % (staff.first_name, staff.last_name)
+                        print(staff_name)
+                        message = 'Dear ' + staff_name + ', '
+                        message += message_body + ' Regards, ' + configuration.school_short_name
+                        print(message)
+                        staff_mobile = staff.mobile
+                        print(staff_mobile)
+                        sms.send_sms1(school, sender, staff_mobile, message, message_type)
 
-        # 23/10/2018 - there was a demand that if whole school is chosen then send to teachers as well
+        # 23/10/2018 - there was a demand that if whole school is chosen then send to teachers & staff (18/02/2019)as well
         try:
             if whole_school == 'true':
                 for teacher in Teacher.objects.filter(school=school):
@@ -896,6 +906,17 @@ def send_bulk_sms(request):
                     print(teacher_mobile)
                     sms.send_sms1(school, sender, teacher_mobile, message, message_type)
                 print('sent bulk sms message: %s : to all the teachers of %s' % (message, school.school_name))
+
+                for staff in Staff.objects.filter(school=school):
+                    staff_name = '%s %s' % (staff.first_name, staff.last_name)
+                    print(staff_name)
+                    message = 'Dear ' + staff_name + ', '
+                    message += message_body + ' Regards, ' + configuration.school_short_name
+                    print(message)
+                    staff_mobile = staff.mobile
+                    print(staff_mobile)
+                    sms.send_sms1(school, sender, staff_mobile, message, message_type)
+                print('sent bulk sms message: %s : to all the staff of %s' % (message, school.school_name))
         except Exception as e:
             print('exception 23102018-A from operations views.py %s %s' % (e.message, type(e)))
             print('trying to send bulk sms to teachers of %s but failed' % school.school_name)
