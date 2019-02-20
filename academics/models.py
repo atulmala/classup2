@@ -45,6 +45,8 @@ class Subject(models.Model):
     subject_sequence = models.SmallIntegerField(null=True)
     subject_type = models.CharField(max_length=40, default='Regular')
     subject_prac = models.BooleanField(default=False)
+    theory_marks = models.DecimalField(max_digits=6, decimal_places=2, default=70.00)
+    prac_marks = models.DecimalField(max_digits=6, decimal_places=2, default=30.00)
 
     def __unicode__(self):
         return self.subject_name

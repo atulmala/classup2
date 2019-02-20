@@ -731,7 +731,6 @@ def prepare_results(request, school_id, the_class, section):
             att_taken_t2 = AttendanceTaken.objects.filter(date__gte='2018-11-01', date__lte='2019-03-15',
                                                           the_class=s.current_class, section=s.current_section).count()
             print('total working days in term II = %i' % att_taken_t2)
-            #return
 
             c.setFont(font, 8)
             if the_class in higher_classes:
@@ -850,9 +849,16 @@ def prepare_results(request, school_id, the_class, section):
                                 sub_row.append(tot_marks)
 
                                 if index == 0:
-                                    half_yearly_marks = tot_marks
+                                    # 20/02/2019 only theory marks will be considered in the cumulative
+                                    if sub in prac_subjects:
+                                        half_yearly_marks = tot_marks - prac_marks
+                                    else:
+                                        half_yearly_marks = tot_marks
                                 if index == 1:
-                                    final_marks = tot_marks
+                                    if sub in prac_subjects:
+                                        final_marks = tot_marks - prac_marks
+                                    else:
+                                        final_marks = tot_marks
                                 index += 1
                             except Exception as e:
                                 print('exception 15022019-B from exam views.py %s %s' % (e.message, type(e)))
@@ -867,7 +873,13 @@ def prepare_results(request, school_id, the_class, section):
                         try:
                             ut_cumul = round(ut_total/float(3), 2)
                             sub_row.append(ut_cumul)
-                            half_year_cumul = round(half_yearly_marks/float(4), 2)
+
+                            # 20/02/2019 cumulative for half yearly to be calculated out of 70 if the subject
+                            # has practical component
+                            if sub in prac_subjects:
+                                half_year_cumul = round((half_yearly_marks*float(25))/float(subject.theory_marks), 2)
+                            else:
+                                half_year_cumul = round(half_yearly_marks/float(4), 2)
                             sub_row.append(half_year_cumul)
                             final_cumul = round(final_marks/float(2), 2)
                             sub_row.append(final_cumul)
@@ -2194,7 +2206,9 @@ class ResultSheet(generics.ListCreateAPIView):
                                         else:
                                             result_sheet.write_string(row, col, 'NA', cell_normal)
                                             col += 1
-                                        cell_range = xl_range(row, col-2, row, col-1)
+                                        # 20/02/2019 for cumulative only theory marks are to be taken into
+                                        # account for Half yearly and Annual Exams
+                                        cell_range = xl_range(row, col-2, row, col-2)
                                         formula = '=SUM(%s)' % cell_range
                                         result_sheet.write_formula(row, col, formula, cell_normal)
                                         col += 1
@@ -2213,7 +2227,10 @@ class ResultSheet(generics.ListCreateAPIView):
 
                                 # get the half yearly total cell
                                 cell = xl_rowcol_to_cell(row, col-5)
-                                formula = '=%s/4.0' % cell
+                                if subject.subject_prac:
+                                    formula = '=%s * 25/%f' % (cell, subject.theory_marks)
+                                else:
+                                    formula = '=%s/4.0' % cell
                                 result_sheet.write_formula(row, col, formula, cell_normal)
                                 col += 1
 
