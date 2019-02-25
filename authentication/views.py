@@ -166,6 +166,7 @@ def auth_login(request):
         log_entry(the_user, "User has been authenticated", "Normal", True)
         if user is not None:
             if user.is_active:
+                user_name = '%s %s' % (user.first_name, user.last_name)
                 log_entry(the_user, "User is an Active user", "Normal", True)
                 try:
                     login(request, user)
@@ -175,7 +176,10 @@ def auth_login(request):
                     request.session['user'] = the_user
                     request.session['school_name'] = school.school_name
                     request.session['school_id'] = school.id
+                    context_dict['user_name'] = user_name
+                    context_dict['school_id'] = school.id
                     context_dict['school_name'] = school.school_name
+
                     if school.subscription_active:
                         log_entry(the_user, "School subscription found to be Active", "Normal", True)
                         school_id = u.school.id
