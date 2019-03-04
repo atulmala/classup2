@@ -3,6 +3,9 @@ import xlrd
 
 from django.shortcuts import render
 from django.contrib import messages
+from django.http import HttpResponse
+from rest_framework.renderers import JSONRenderer
+from datetime import datetime
 
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework import generics
@@ -19,6 +22,17 @@ from student.models import Student, AdditionalDetails, House
 class CsrfExemptSessionAuthentication(SessionAuthentication):
     def enforce_csrf(self, request):
         return  # To not perform the csrf check previously happening
+
+
+class JSONResponse(HttpResponse):
+    """
+    an HttpResponse that renders its contents to JSON
+    """
+    def __init__(self, data, **kwargs):
+        print ('from JSONResponse...')
+        content = JSONRenderer().render(data)
+        kwargs['content_type'] = 'application/json'
+        super(JSONResponse, self).__init__(content, **kwargs)
 
 
 class SetupAddDetails(generics.ListCreateAPIView):
@@ -136,3 +150,31 @@ class SetupAddDetails(generics.ListCreateAPIView):
                 print ('exception 19032018-D from erp views.py %s %s ' % (e.message, type(e)))
                 form.errors['__all__'] = form.error_class([error])
                 return render(request, 'classup/setup_data.html', context_dict)
+
+
+class FeePayment(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def get(self, request, *args, **kwargs):
+        context_dict = {
+
+        }
+        school_id = self.kwargs['school_id']
+        student_id = self.kwargs['student_id']
+        try:
+            school = School.objects.get(pk=school_id)
+            student = Student.objects.get(school=school, student_erp_id=student_id)
+            currentDay = datetime.now().day
+            year = datetime.now().year
+            mydate = datetime.now()
+            month = mydate.strftime("%B")
+            print(month)
+            currentMonth = datetime.now().month
+            print(currentMonth)
+            print('processing fee payment for %s of %s as oh %i-%s-%i' %
+                  (student, school, currentDay, month, year))
+            return JSONResponse(context_dict, status=200)
+
+        except Exception as e:
+            print('exception 04032019-A from erp views.py %s %s' % (e.message, type(e)))
+            print('failed in determining details regarding fees payment')
