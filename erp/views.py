@@ -1,4 +1,8 @@
+import os
 import xlrd
+import xlsxwriter
+
+from google.cloud import storage
 
 
 from django.shortcuts import render
@@ -164,6 +168,11 @@ class FeePayment(generics.ListCreateAPIView):
         try:
             school = School.objects.get(pk=school_id)
             student = Student.objects.get(school=school, student_erp_id=student_id)
+            full_name = '%s %s' % (student.fist_name, student.last_name)
+            context_dict['full_name'] = full_name
+            current_class = student.current_class.standard
+            current_section = student.current_section.section
+            context_dict['current_class'] = '%s %s' % (current_class, current_section)
             currentDay = datetime.now().day
             year = datetime.now().year
             mydate = datetime.now()
@@ -171,8 +180,25 @@ class FeePayment(generics.ListCreateAPIView):
             print(month)
             currentMonth = datetime.now().month
             print(currentMonth)
-            print('processing fee payment for %s of %s as oh %i-%s-%i' %
-                  (student, school, currentDay, month, year))
+            print('processing fee payment for %s of %s of class %s as o %i-%s-%i' %
+                  (student, school, current_class, currentDay, month, year))
+            storage_client = storage.Client()
+            bucket = storage_client.get_bucket('classup')
+            print(bucket)
+            fee_file = '%s.xlsx' % str(school_id)
+            fee_file_path = 'classup2/Fee/%s/%s' % (str(school_id), fee_file)
+            blob = bucket.blob(fee_file_path)
+            local_path = 'erp/%s' % fee_file
+            blob.download_to_filename(local_path)
+            wb = xlrd.open_workbook(local_path)
+            sheet = wb.sheet_by_name(current_class)
+            for row in range(sheet.nrows):
+                if row == 0:
+                    continue
+
+            print(sheet)
+
+            os.remove(local_path)
             return JSONResponse(context_dict, status=200)
 
         except Exception as e:

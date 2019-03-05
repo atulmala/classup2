@@ -1,13 +1,13 @@
 import urllib2
 
-mobile = '7678660426'
+mobile = '9873011186'
 message = 'Greetings+from+the+Chako'
 url = 'http://login.smsturtle.com/app/smsapi/index.php?key=25C7CB19C80D51&campaign=0&routeid=50&type=text'
 url += '&contacts=%s' % mobile
 url += '&senderid=DEMO'
 url += '&msg=%s' % message
 print(url)
-for i in range(25):
+for i in range(5):
     response = urllib2.urlopen(url)
     print('response = ')
     message_id = response.read()
