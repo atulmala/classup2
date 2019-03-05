@@ -45,27 +45,14 @@ try:
                     print(url)
                     print ('Exception 23082018-A from operations teacher_sms_dlvry.py = %s (%s)' % (e.message, type(e)))
             else:
-                print ('message was sent using bulksmsleads api')
-                url = 'http://sms.bulksmsleads.com/index.php/deliveryapi/smsdelivery/'
-                url += '?username=classup&password=classup&smsid='
-                url += message_id
+                print ('message was sent using smsturtle api')
+                shoot_id = message_id[13:]
+                url = 'http://login.smsturtle.com/app/miscapi/25C7CB19C80D51/getDLR/'
+                url += shoot_id
                 print('url=%s' % url)
                 try:
                     response = urllib.urlopen(url)
-                    xml_text = response.read()
-                    print('xml = ' + xml_text)
-                    xml = ET.fromstring(xml_text)
-                    status = ''
-                    for table in xml.iter('Report'):
-                        for child in table:
-                            print child.tag, child.text
-                            status += child.tag
-                            status += ': '
-                            status += child.text
-                            status += '\n'
-                        if 'Invalid' in status:
-                            status = 'Not Available'
-                    outcome = status
+                    status = response.read()
                 except Exception as e:
                     print('unable to get the staus of sms delivery. The url was: ')
                     print(url)
