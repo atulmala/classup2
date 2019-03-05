@@ -1,7 +1,6 @@
 l__author__ = 'atulgupta'
 
 import urllib2
-import boto3
 
 
 from django.db.models import Q
@@ -10,7 +9,6 @@ from teacher.models import Teacher
 from student.models import Parent
 from .models import SMSRecord
 
-import classup2.settings as settings
 
 def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
     # 25/12/2016 - added field to check whether sms sending is enabled for this school. Check that first
@@ -51,22 +49,12 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
             url += '&msg=%s' % m3
 
         if vendor == 2:
-            print('vendor for sending this sms for %s is smsbharti' % school.school_name)
-            url = 'http://webmsg.smsbharti.com/app/smsapi/index.php?key=55BCFFE4C1F2BC&campaign=0&routeid=35'
-            url += '&type=text'
-            url += '&type=Text'
+            print('vendor for sending this sms for %s is turtle sms' % school.school_name)
+            url = 'http://login.smsturtle.com/app/smsapi/index.php?key=25C7CB19C80D51&campaign=0&routeid=50&type=text'
             url += '&contacts=%s' % mobile
-            url += '&senderid=%s' % 'SPANEL'
+            url += '&senderid=DEMO'
             url += '&msg=%s' % m3
-            print('url=%s' % url)
-
-        # 26/10/2018 - bulksmsvalue api also seems to be working. additionally send sms through their api as well
-        url2 = 'http://websms.bulksmsvalue.com/index.php/smsapi/httpapi/?uname=classup1&password=classup&sender=CLSSUP'
-        url2 += '&receiver=%s' % mobile
-        url2 += '&route=TA&msgtype=1'
-        url2 += '&sms=%s' % m3
-
-        print('url2 = %s' % url2)
+            print(url)
 
         # 06/12/2016 - we don't want to send sms to a dummy number
         if mobile == '1234567890' or len(str(mobile)) != 10:
@@ -87,44 +75,6 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                     print('response = ')
                     message_id = response.read()
                     print(message_id)
-
-                    # response2 = urllib2.urlopen(url2)
-                    # print('response2 = ')
-                    # print(response2)
-                    # message2_id = response2.read()
-                    # print('message2 id = %s' % message2_id)
-
-                    # 30/11/2018 - AS we have credits from AWS send the broadcast messages using their SNS service
-                    # if message_type == 'Bulk SMS (Device)':
-                    #     try:
-                    #         AWS_ACCESS_KEY_ID = settings.AWS_ACCESS_KEY_ID
-                    #         AWS_SECRET_ACCESS_KEY = settings.AWS_SECRET_ACCESS_KEY
-                    #
-                    #         # Create an SNS client
-                    #         client = boto3.client(
-                    #             "sns",
-                    #             aws_access_key_id = AWS_ACCESS_KEY_ID,
-                    #             aws_secret_access_key = AWS_SECRET_ACCESS_KEY,
-                    #             region_name = "us-east-1"
-                    #         )
-                    #
-                    #         client.set_sms_attributes(
-                    #             attributes = {
-                    #                 'DefaultSMSType': 'Transactional',
-                    #                 'DefaultSenderID': 'CLSSUP',
-                    #             }
-                    #         )
-                    #
-                    #         # Send your sms message.
-                    #         result = client.publish(
-                    #             PhoneNumber = '+91%s' % mobile,
-                    #             Message = message
-                    #         )
-                    #         print('being a broadcast, also sent this message using AWS SNS. Result = ')
-                    #         print(result)
-                    #     except Exception as e:
-                    #         print('exception 31102018-A from operations sms.py %s %s' % (e.message, type(e)))
-                    #         print('failed to send message to %s via AWS SNS' % mobile)
                 else:
                     print('message type was Bulk SMS (Web Interface). '
                           'Batch process to send those SMS will have to be run!')
