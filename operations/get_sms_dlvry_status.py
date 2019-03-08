@@ -1,22 +1,17 @@
 import MySQLdb
 import urllib
-import xml.etree.ElementTree as ET
-
+import json
 print('Starting to extract sms delivery status')
 # 30/04/2017 - values for softsms vendor
 key = '58fc1def26489'
 
 try:
-    # connect to the database
-    # db = MySQLdb.connect('classup-prod-1-aurora-cluster.cluster-ceglypsnyux3.us-west-2.rds.amazonaws.com',
-    #                      'classup', 'classup', 'classup2')
     db = MySQLdb.connect('35.194.43.14', 'classup', 'classup', 'classup2')
-    #db = MySQLdb.connect('localhost', 'root', 'kawasaki', 'prod_replica')
     cursor1 = db.cursor()
 
     # extract message_id of all the sms sent after 31/01/17 for which sms delivery status has not been extracted
     sql1 = "select outcome from operations_smsrecord where api_called = 1 and " \
-           "status_extracted = 0 and date > '2018-12-21' and date <= DATE_SUB(NOW(), INTERVAL 3 HOUR)"
+           "status_extracted = 0 and date > '2019-03-07' and date <= DATE_SUB(NOW(), INTERVAL 3 HOUR)"
     cursor1.execute(sql1)
 
     # now, try to extract delivery status of each sms by calling api of the bulk sms provider
@@ -45,14 +40,16 @@ try:
                 print(url)
                 print ('Exception2 from operations get_sms_dlvry_status.py = %s (%s)' % (e.message, type(e)))
         else:
-            print ('message was sent using smsturtle api')
-            shoot_id = message_id[13:]
-            url = 'http://login.smsturtle.com/app/miscapi/25C7CB19C80D51/getDLR/'
-            url += shoot_id
-            print('url=%s' % url)
+            print ('message was sent using SMSGatewayHub api')
+            url = 'https://www.smsgatewayhub.com/api/mt/GetDelivery?APIKey=6ZWRKLTUnEmMMQro3P30SQ&jobid=%s' % \
+                  message_id
+            print(url)
             try:
                 response = urllib.urlopen(url)
                 status = response.read()
+                j = json.loads(status)
+                status = j[0]['DeliveryReports']
+
             except Exception as e:
                 print('unable to get the staus of sms delivery. The url was: ')
                 print(url)
@@ -79,7 +76,7 @@ try:
     # that appears in the teacher message history
     cursor3 = db.cursor()
     sql3 = "select status from teacher_messagereceivers where " \
-           "status_extracted = 0 and date > '2018-08-21' and date <= DATE_SUB(NOW(), INTERVAL 3 HOUR)"
+           "status_extracted = 0 and date > '2019-03-07' and date <= DATE_SUB(NOW(), INTERVAL 3 HOUR)"
     cursor3.execute(sql3)
     row = cursor3.fetchone()
     print(row)
@@ -104,14 +101,15 @@ try:
                 print(url)
                 print ('Exception 22082018-C from operations get_sms_dlvry_status.py = %s (%s)' % (e.message, type(e)))
         else:
-            print ('message was sent using smsturtle api')
-            shoot_id = message_id[13:]
-            url = 'http://login.smsturtle.com/app/miscapi/25C7CB19C80D51/getDLR/'
-            url += shoot_id
-            print('url=%s' % url)
             try:
+                print ('message was sent using SMSGatewayHub api')
+                url = 'https://www.smsgatewayhub.com/api/mt/GetDelivery?APIKey=6ZWRKLTUnEmMMQro3P30SQ&jobid=%s' % \
+                      message_id
+                print(url)
                 response = urllib.urlopen(url)
                 status = response.read()
+                j = json.loads(status)
+                status = j[0]['DeliveryReports']
             except Exception as e:
                 print('unable to get the staus of sms delivery. The url was: ')
                 print(url)

@@ -1,6 +1,7 @@
 l__author__ = 'atulgupta'
 
 import urllib2
+import json
 
 
 from django.db.models import Q
@@ -49,12 +50,11 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
             url += '&msg=%s' % m3
 
         if vendor == 2:
-            print('vendor for sending this sms for %s is turtle sms' % school.school_name)
-            url = 'http://login.smsturtle.com/app/smsapi/index.php?key=25C7CB19C80D51&campaign=0&routeid=50&type=text'
-            url += '&contacts=%s' % mobile
-            url += '&senderid=DEMO'
-            url += '&msg=%s' % m3
-            print(url)
+            print('vendor for sending this sms for %s is SMSGateway Hub' % school.school_name)
+            api_key = '6ZWRKLTUnEmMMQro3P30SQ'
+            url = 'https://www.smsgatewayhub.com/api/mt/SendSMS?APIKey=%s' % api_key
+            senderid = 'SMSTST'
+            url += '&senderid=%s&channel=2&DCS=0&flashsms=0&number=%s&text=%s' % (senderid, mobile, m3)
 
         # 06/12/2016 - we don't want to send sms to a dummy number
         if mobile == '1234567890' or len(str(mobile)) != 10:
@@ -73,7 +73,13 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
 
                     response = urllib2.urlopen(url)
                     print('response = ')
-                    message_id = response.read()
+                    if vendor == 1:
+                        message_id = response.read()
+                    else:
+                        outcome = json.loads(response.read())
+                        print(outcome)
+                        message_id = (outcome['JobId'])
+                    print('job_id = ')
                     print(message_id)
                 else:
                     print('message type was Bulk SMS (Web Interface). '

@@ -1,5 +1,6 @@
 import MySQLdb
 import urllib
+import json
 
 print('Starting to extract sms delivery status')
 # 30/04/2017 - values for softsms vendor
@@ -45,14 +46,16 @@ try:
                     print(url)
                     print ('Exception 23082018-A from operations teacher_sms_dlvry.py = %s (%s)' % (e.message, type(e)))
             else:
-                print ('message was sent using smsturtle api')
-                shoot_id = message_id[13:]
-                url = 'http://login.smsturtle.com/app/miscapi/25C7CB19C80D51/getDLR/'
-                url += shoot_id
-                print('url=%s' % url)
+                print ('message was sent using SMSGatewayHub api')
+                url = 'https://www.smsgatewayhub.com/api/mt/GetDelivery?APIKey=6ZWRKLTUnEmMMQro3P30SQ&jobid=%s' % \
+                      message_id
+                print(url)
                 try:
                     response = urllib.urlopen(url)
                     status = response.read()
+                    j = json.loads(status)
+                    status = j[0]['DeliveryReports']
+                    outcome = status
                 except Exception as e:
                     print('unable to get the staus of sms delivery. The url was: ')
                     print(url)
