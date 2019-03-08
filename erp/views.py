@@ -170,18 +170,23 @@ class FeePayment(generics.ListCreateAPIView):
             student = Student.objects.get(school=school, student_erp_id=student_id)
             full_name = '%s %s' % (student.fist_name, student.last_name)
             context_dict['full_name'] = full_name
+            parent = student.parent.parent_name
+            context_dict['parent'] = parent
             current_class = student.current_class.standard
             current_section = student.current_section.section
             context_dict['current_class'] = '%s %s' % (current_class, current_section)
             currentDay = datetime.now().day
             year = datetime.now().year
+            month = datetime.now().month
             mydate = datetime.now()
-            month = mydate.strftime("%B")
+            #month = mydate.strftime("%B")
             print(month)
             currentMonth = datetime.now().month
             print(currentMonth)
-            print('processing fee payment for %s of %s of class %s as o %i-%s-%i' %
+            print('processing fee payment for %s of %s of class %s as o %i-%i-%i' %
                   (student, school, current_class, currentDay, month, year))
+            transaction_date = '%i/%i/%i' % (currentDay, month, year)
+            context_dict['transaction_date'] = transaction_date
             storage_client = storage.Client()
             bucket = storage_client.get_bucket('classup')
             print(bucket)
@@ -192,13 +197,50 @@ class FeePayment(generics.ListCreateAPIView):
             blob.download_to_filename(local_path)
             wb = xlrd.open_workbook(local_path)
             sheet = wb.sheet_by_name(current_class)
+            heads_array = []
+            total = 0.0
             for row in range(sheet.nrows):
                 if row == 0:
                     continue
-
-            print(sheet)
+                head = {}
+                h = sheet.cell(row, 0).value
+                head['head'] = h
+                amt = sheet.cell(row, 1).value
+                freq = sheet.cell(row, 2).value
+                if int(freq) == 0:
+                    amt = 0.0
+                    head['amount'] = amt
+                    heads_array.append(head)
+                    # this is one time fee (admission fee, security deposit/caution money etc. Logic to check whether
+                    # it has been paid or not to be added
+                    continue
+                if int(freq) == 12:
+                    if month == 3:
+                        print('fee %s %i to be charged in this payment' % (h, amt))
+                        head['amount'] = amt
+                    else:
+                        amt = 0
+                        head['amount'] = amt
+                else:
+                    head['amount'] = amt
+                head['frequency'] = freq
+                heads_array.append(head)
+                total += amt
+            head = {}
+            # get the previous balance, if any - this will come from db
+            head['head'] = 'Previous Balance'
+            amt = 0.0 # for the time being, actually it will be retrieved from db
+            total += amt
+            head['amount'] = 0.0
+            heads_array.append(head)
+            head = {}
+            head['head'] = 'total'
+            head['amount'] = total
+            heads_array.append(head)
+            context_dict['heads'] = heads_array
 
             os.remove(local_path)
+            print(context_dict)
             return JSONResponse(context_dict, status=200)
 
         except Exception as e:
