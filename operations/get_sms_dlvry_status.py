@@ -48,7 +48,7 @@ try:
                 response = urllib.urlopen(url)
                 status = response.read()
                 j = json.loads(status)
-                status = j[0]['DeliveryReports']
+                status = j['DeliveryReports'][0]
 
             except Exception as e:
                 print('unable to get the staus of sms delivery. The url was: ')
