@@ -49,7 +49,7 @@ try:
                 status = response.read()
                 j = json.loads(status)
                 print(j)
-                status = str(j['DeliveryReports'][0])
+                status = json.dumps(j['DeliveryReports'][0])
 
             except Exception as e:
                 print('unable to get the staus of sms delivery. The url was: ')
