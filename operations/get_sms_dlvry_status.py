@@ -48,6 +48,7 @@ try:
                 response = urllib.urlopen(url)
                 status = response.read()
                 j = json.loads(status)
+                print(j)
                 status = j['DeliveryReports'][0]
 
             except Exception as e:
