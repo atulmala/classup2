@@ -782,6 +782,8 @@ def prepare_results(request, school_id, the_class, section):
 
                 unit_exams = Exam.objects.filter(school=school, start_class='XI', exam_type='unit')
                 term_exams = Exam.objects.filter(school=school, start_class='XI', exam_type='term')
+
+
                 try:
                     for sub in chosen_stream:
                         sub_row = [sub]
@@ -813,9 +815,8 @@ def prepare_results(request, school_id, the_class, section):
                             except Exception as e:
                                 print('exception 15022019-A from exam views.py %s %s' % (e.message, type(e)))
                                 print('unit test for %s not created for %s' % (a_unit_exam, subject))
-
+                        index = 0
                         for a_term_exam in term_exams:
-                            index = 0
                             try:
                                 test = ClassTest.objects.get(subject=subject, the_class=standard,
                                                              section=sec, exam=a_term_exam)
@@ -848,25 +849,31 @@ def prepare_results(request, school_id, the_class, section):
                                 sub_row.append(prac_marks)
                                 sub_row.append(tot_marks)
 
-                                if index == 0:
+                                if index == 0: # we are dealing with half-yearly exam
+                                    print('dealing with half yearly exam')
                                     # 20/02/2019 only theory marks will be considered in the cumulative
                                     if sub in prac_subjects:
                                         half_yearly_marks = tot_marks - prac_marks
                                     else:
                                         half_yearly_marks = tot_marks
-                                if index == 1:
+                                    print('half yearly marks =')
+                                    print(half_yearly_marks)
+                                if index == 1: # we are dealing with final exam
+                                    print('dealing with final exam')
                                     if sub in prac_subjects:
                                         final_marks = tot_marks - prac_marks
                                     else:
                                         final_marks = tot_marks
-                                index += 1
+                                    print('final marks = ')
+                                    print(final_marks)
+                                #index += 1
                             except Exception as e:
                                 print('exception 15022019-B from exam views.py %s %s' % (e.message, type(e)))
                                 print('term test for %s not created for %s' % (a_term_exam, subject))
                                 for component in ['Th', 'Prac', 'Total']:
                                     sub_row.append(' ')
-
                                 index += 1
+                            index += 1
 
                         # calculate the cumulative result for this subject. UTs & Half yearly weightage is 25% each
                         #  & final exam weightage is 50%
@@ -876,10 +883,10 @@ def prepare_results(request, school_id, the_class, section):
 
                             # 20/02/2019 cumulative for half yearly to be calculated out of 70 if the subject
                             # has practical component
-                            if sub in prac_subjects:
-                                half_year_cumul = round((half_yearly_marks*float(25))/float(subject.theory_marks), 2)
-                            else:
-                                half_year_cumul = round(half_yearly_marks/float(4), 2)
+                            #if sub in prac_subjects:
+                            half_year_cumul = round((half_yearly_marks*float(25))/float(subject.theory_marks), 2)
+                            # else:
+                            #     half_year_cumul = round(half_yearly_marks/float(4), 2)
                             sub_row.append(half_year_cumul)
                             final_cumul = round(final_marks/float(2), 2)
                             sub_row.append(final_cumul)
