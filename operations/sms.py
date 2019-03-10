@@ -53,7 +53,7 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
             print('vendor for sending this sms for %s is SMSGateway Hub' % school.school_name)
             api_key = '6ZWRKLTUnEmMMQro3P30SQ'
             url = 'https://www.smsgatewayhub.com/api/mt/SendSMS?APIKey=%s' % api_key
-            senderid = 'SMSTST'
+            senderid = 'CLSSUP'
             url += '&senderid=%s&channel=2&DCS=0&flashsms=0&number=%s&text=%s' % (senderid, mobile, m3)
 
         # 06/12/2016 - we don't want to send sms to a dummy number

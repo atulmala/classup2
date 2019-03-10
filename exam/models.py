@@ -29,7 +29,7 @@ class NotPromoted(models.Model):
 
 class NPromoted(models.Model):
     student = models.ForeignKey(Student)
-    details = models.CharField(max_length=100, default='  ')
+    details = models.CharField(max_length=200, default='  ')
 
 
 class Marksheet(models.Model):
@@ -38,6 +38,7 @@ class Marksheet(models.Model):
     address_start = models.IntegerField(default=145)
     place = models.CharField(max_length=150, default='Place')
     result_date = models.CharField(max_length=10, default='20/03/2019')
+    show_attendance = models.BooleanField(default=False)
 
     def __unicode__(self):
         return self.school.school_name

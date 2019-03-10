@@ -993,7 +993,7 @@ def prepare_results(request, school_id, the_class, section):
                               'Yearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
                 if the_class in ninth_tenth:
                     end_class = 'IX'
-                    data1 = [['Scholastic\nAreas', 'Term I (100 Marks)', '', '', '', '', ''],
+                    data1 = [['Scholastic\nAreas', 'Academic Year (100 Marks)', '', '', '', '', ''],
                              ['Sub Name', 'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
                               'Annual\nExamination\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
                 for i in range(0, sub_count):
@@ -1160,17 +1160,18 @@ def prepare_results(request, school_id, the_class, section):
                 try:
                     c.drawString(left_margin, table3_top - 15, 'Class Teacher Remarks: ')
                     c.drawString(tab - 20, table3_top - 15, remark)
-                    c.drawString(left_margin, table3_top - 25, 'Attendance: ')
+                    if ms.show_attendance:
+                        c.drawString(left_margin, table3_top - 25, 'Attendance: ')
 
                     if the_class not in ninth_tenth:
-                        c.drawString(left_margin, table3_top - 35, 'Promoted to Class: N/A')
+                        c.drawString(left_margin, table3_top - 35, 'Promoted to Class: ')
 
                         # get the class to which this student is promoted. Only if he has passed the exam
                         try:
                             not_promoted = NPromoted.objects.get(student=s)
                             print('student %s %s has failed in class %s.' % (s.fist_name, s.last_name, the_class))
                             print(not_promoted)
-                            promoted_status = 'Not Promoted'
+                            promoted_status = 'Not Promoted. %s' % not_promoted.details
                         except Exception as e:
                             print('student %s %s has passed in class %s.' % (s.fist_name, s.last_name, the_class))
                             print('exception 02032018-A from exam views.py %s %s' % (e.message, type(e)))
@@ -1184,7 +1185,7 @@ def prepare_results(request, school_id, the_class, section):
                                 print('%s %s of class %s has passed. But failed to determine his next class' %
                                       (s.fist_name, s.last_name, the_class))
                                 print('exception 02032018-B from exam views.py %s %s' % (e.message, type(e)))
-                        #c.drawString(tab - 20, table3_top - 25, promoted_status)
+                        c.drawString(tab - 20, table3_top - 35, promoted_status)
 
                     c.drawString(left_margin, table3_top - 55, 'Place & Date:')
                     #c.drawString(left_margin + 50, table3_top - 55, 'Noida   26/03/2018')
@@ -1213,13 +1214,13 @@ def prepare_results(request, school_id, the_class, section):
                 if the_class in ninth_tenth:
                     c.drawString(left_margin, table3_top - 35, 'Result: N/A ')
                 else:
-                    c.drawString(left_margin, table3_top - 35, 'Promoted to Class: N/A')
+                    c.drawString(left_margin, table3_top - 35, 'Promoted to Class: ')
                     # get the class to which this student is promoted. Only if he has passed the exam
                     try:
                         not_promoted = NPromoted.objects.get(student=s)
                         print('student %s %s has failed in class %s.' % (s.fist_name, s.last_name, the_class))
                         print(not_promoted)
-                        promoted_status = 'Not Promoted'
+                        promoted_status = 'Not Promoted. %s' % not_promoted.details
                     except Exception as e:
                         print('student %s %s has passed in class %s.' % (s.fist_name, s.last_name, the_class))
                         print('exception 02032018-C from exam views.py %s %s' % (e.message, type(e)))
@@ -1233,7 +1234,7 @@ def prepare_results(request, school_id, the_class, section):
                             print('%s %s of class %s has passed. But failed to determine his next class' %
                                   (s.fist_name, s.last_name, the_class))
                             print('exception 02032018-D from exam views.py %s %s' % (e.message, type(e)))
-                    #c.drawString(tab - 20, table3_top - 25, promoted_status)
+                    c.drawString(tab - 20, table3_top - 35, promoted_status)
 
                 c.drawString(tab - 20, table3_top - 25, '')
                 c.drawString(left_margin, table3_top - 55, 'Place & Date:')
@@ -1462,6 +1463,8 @@ class ResultSheet(generics.ListCreateAPIView):
                               (the_class.standard, school_name))
 
                     terms = ['Term I', 'Term II']
+                    if the_class in ninth_tenth:
+                        terms = ['Academic Year']
                     term_comp = ['Tot', '%', 'Grade', 'Rank']
 
                     try:
