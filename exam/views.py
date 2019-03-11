@@ -1925,13 +1925,13 @@ class ResultSheet(generics.ListCreateAPIView):
                             result_sheet.merge_range(row, col, row + 5, col, discipline2, cell_grade)
                             col += 1
 
-                            teacher_remarks = cs_term1.teacher_remarks
+                            teacher_remarks = cs_term2.teacher_remarks
                             print('class teacher remarks for %s of %s-%s in %s: %s' %
                                   (student_name, the_class.standard, section.section, term, teacher_remarks))
                             result_sheet.merge_range(row, col, row + 5, col, teacher_remarks, cell_normal)
 
                             teacher_remarks = cs_term2.teacher_remarks
-                            result_sheet.write_string(row, 35, teacher_remarks, cell_normal)
+                            # result_sheet.write_string(row, 35, teacher_remarks, cell_normal)
                         except Exception as e:
                             print ('exception 21012018-A from exam views.py %s %s' % (e.message, type(e)))
                             print ('failed to retrieve Co-scholastics grade for %s' % student_name)
