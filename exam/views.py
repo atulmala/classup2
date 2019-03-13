@@ -884,7 +884,11 @@ def prepare_results(request, school_id, the_class, section):
                             # 20/02/2019 cumulative for half yearly to be calculated out of 70 if the subject
                             # has practical component
                             #if sub in prac_subjects:
-                            half_year_cumul = round((half_yearly_marks*float(25))/float(subject.theory_marks), 2)
+                            commerce_sub = ['Economics', 'Accountancy', 'Business Studies']
+                            if subject.subject_name not in commerce_sub:
+                                half_year_cumul = round((half_yearly_marks*float(25))/float(subject.theory_marks), 2)
+                            else:
+                                half_year_cumul = round((half_yearly_marks * float(25)) / 100.00, 2)
                             # else:
                             #     half_year_cumul = round(half_yearly_marks/float(4), 2)
                             sub_row.append(half_year_cumul)
@@ -2252,10 +2256,14 @@ class ResultSheet(generics.ListCreateAPIView):
                                 result_sheet.write_formula(row, col, formula, cell_normal)
                                 col += 1
 
+                                commerce_sub = ['Economics', 'Accountancy', 'Business Studies']
                                 # get the half yearly total cell
                                 cell = xl_rowcol_to_cell(row, col-5)
                                 # if subject.subject_prac:
-                                formula = '=%s * 25/%f' % (cell, subject.theory_marks)
+                                if subject.subject_name not in commerce_sub:
+                                    formula = '=%s * 25/%f' % (cell, subject.theory_marks)
+                                else:
+                                    formula = '=%s * 25/%f' % (cell, 100.00)
                                 # else:
                                 #     formula = '=%s/4.0' % cell
                                 result_sheet.write_formula(row, col, formula, cell_normal)
