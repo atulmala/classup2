@@ -838,7 +838,13 @@ def prepare_results(request, school_id, the_class, section):
                                         # 26032018 - there is a possibility that student was absent
                                         # in theory but present in practical
                                         if marks != 'ABS':
-                                            tot_marks = marks + prac_marks
+                                            if subject.subject_name not in commerce_sub:
+                                                tot_marks = marks + prac_marks
+                                            else:
+                                                if index == 0:
+                                                    tot_marks = marks
+                                                else:
+                                                    tot_marks = marks + prac_marks
                                         else:
                                             tot_marks = prac_marks
                                 else:
@@ -853,7 +859,11 @@ def prepare_results(request, school_id, the_class, section):
                                     print('dealing with half yearly exam')
                                     # 20/02/2019 only theory marks will be considered in the cumulative
                                     if sub in prac_subjects:
-                                        half_yearly_marks = tot_marks - prac_marks
+                                        if subject.subject_name not in commerce_sub:
+                                            #half_yearly_marks = tot_marks - prac_marks
+                                            half_yearly_marks = marks
+                                        else:
+                                            half_yearly_marks = tot_marks
                                     else:
                                         half_yearly_marks = tot_marks
                                     print('half yearly marks =')
