@@ -832,7 +832,10 @@ def prepare_results(request, school_id, the_class, section):
                                     print('%s has practical component' % (sub))
                                     prac_marks = float(term_test_results.prac_marks)
                                     if prac_marks < 0.0:
-                                        prac_marks = ' '
+                                        if index == 0 and subject.subject_name in commerce_sub:
+                                            prac_marks = 'NA'
+                                        else:
+                                            prac_marks = ' '
                                         tot_marks = marks
                                     else:
                                         # 26032018 - there is a possibility that student was absent
@@ -918,11 +921,14 @@ def prepare_results(request, school_id, the_class, section):
                     print('everything was ok upto this point')
                     table1.drawOn(c, left_margin, table1_top)
                     print('table1 drawn for %s %s' % (s.fist_name, s.last_name))
-                    theory_prac_split = 'Physics, Chemistry, Comp. Sc., Info. Prac., Biology, Phy. Edu., Eco, AccTB - '
-                    theory_prac_split += '  Max Marks: Theory-70, Practical-30'
+                    theory_prac_split = ms.theory_prac_split
+                    print('theory_prac_split = %s' % theory_prac_split)
+                    # theory_prac_split = 'Physics, Chemistry, Comp. Sc., Info. Prac., Biology, Phy. Edu., Eco, AccTB - '
+                    # theory_prac_split += '  Max Marks: Theory-70, Practical-30'
                     c.drawString(left_margin, table1_top - 20, theory_prac_split)
-                    theory_prac_split = 'English, Mathematics - Max Marks: Theory-100, Prac: Not Applicable (NA)'
-                    c.drawString(left_margin, table1_top-30, theory_prac_split)
+                    split_2 = ms.split_2
+                    # theory_prac_split = 'English, Mathematics - Max Marks: Theory-100, Prac: Not Applicable (NA)'
+                    c.drawString(left_margin, table1_top-30, split_2)
                 except Exception as e:
                     print('Error while preparing results for class: %s' % (the_class))
                     print ('Exception 25022018-A from exam views.py %s %s' % (e.message, type(e)))

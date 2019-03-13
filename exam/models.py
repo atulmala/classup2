@@ -39,6 +39,8 @@ class Marksheet(models.Model):
     place = models.CharField(max_length=150, default='Place')
     result_date = models.CharField(max_length=10, default='20/03/2019')
     show_attendance = models.BooleanField(default=False)
+    theory_prac_split = models.CharField(max_length='200', default=' ')
+    split_2 = models.CharField(max_length='200', default=' ')
 
     def __unicode__(self):
         return self.school.school_name
