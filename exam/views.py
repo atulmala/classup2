@@ -888,7 +888,7 @@ def prepare_results(request, school_id, the_class, section):
                             # else:
                             #     half_year_cumul = round(half_yearly_marks/float(4), 2)
                             sub_row.append(half_year_cumul)
-                            final_cumul = round(final_marks/float(2), 2)
+                            final_cumul = round(final_marks*float(50)/float(subject.theory_marks), 2)
                             sub_row.append(final_cumul)
                             grand_total = ut_cumul + half_year_cumul + final_cumul
                             sub_row.append(grand_total)
@@ -2263,7 +2263,7 @@ class ResultSheet(generics.ListCreateAPIView):
 
                                 # get the final exam total cell
                                 cell = xl_rowcol_to_cell(row, col - 3)
-                                formula = '=%s/2.0' % cell
+                                formula = '=%s * 50/%f' % (cell, subject.theory_marks)
                                 result_sheet.write_formula(row, col, formula, cell_normal)
                                 col += 1
 
@@ -2290,13 +2290,14 @@ class ResultSheet(generics.ListCreateAPIView):
                             result_sheet.write_formula(row, col, formula, perc_format)
                             col += 1
 
-                            index = 'BI%s*100' % str(row)
+                            index = 'BI%s*100' % str(row+1)
                             print ('index = %s' % index)
                             formula = '=IF(%s > 90, "A1", IF(%s > 80, "A2", IF(%s > 70, "B1", IF(%s > 60, "B2", ' \
                                         'IF(%s > 50, "C1", IF(%s > 40, "C2", IF(%s > 32, "D", "E")))))))' % \
                                         (index, index, index, index, index, index, index)
                             print ('formula for grade = %s' % formula)
                             result_sheet.write_formula(row, col, formula, cell_grade)
+
                             col += 1
                             # determine the rank
                             count = students.count()
