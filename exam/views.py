@@ -853,7 +853,7 @@ def prepare_results(request, school_id, the_class, section):
                                     print('dealing with half yearly exam')
                                     # 20/02/2019 only theory marks will be considered in the cumulative
                                     if sub in prac_subjects:
-                                        half_yearly_marks = tot_marks
+                                        half_yearly_marks = tot_marks - prac_marks
                                     else:
                                         half_yearly_marks = tot_marks
                                     print('half yearly marks =')
