@@ -833,7 +833,7 @@ def submit_marks(request, school_id):
                     # 27/12/2017 practical marks to be saved
                     if test.the_class.standard == 'XI' or test.the_class.standard == 'XII':
                         print ('term test for higher classes. May need to save the practical marks')
-                        if test.subject.subject_name in prac_subjects:
+                        if test.subject.subject_prac:
                             print ('need to save practical marks for %s' % test.subject.subject_name)
                             ttr.prac_marks = float(data[key]['prac_marks'])
                         else:
@@ -948,13 +948,13 @@ def submit_marks(request, school_id):
                     try:
                         if test.test_type == 'term':
                             ttr = TermTestResult.objects.get(test_result=tr)
-                            if the_class == 'XI' or the_class == 'XII':
-                                if sub.subject_name in prac_subjects:
+                            if the_class in higher_classes:
+                                if sub.subject_prac:
                                     message += ', Practical: ' + str(ttr.prac_marks)
-                                    total = float(marks) + float(ttr.prac_marks)
-                                    message += '. Total: %.2f/%s' % (total, '100')
+                                    # total = float(marks) + float(ttr.prac_marks)
+                                    # message += '. Total: %.2f/%s' % (total, '100')
                                 else:
-                                    message += '/100, Practical: NA'
+                                    message += ', Practical: NA'
                             else:
                                 message += ', Periodic Test: %.2f, ' % float(ttr.periodic_test_marks)
                                 message += 'Notebook Submission: %.2f, ' % float(ttr.note_book_marks)
