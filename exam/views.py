@@ -195,7 +195,7 @@ def setup_higher_class_subject_mapping(request):
                             student_name = '%s %s' % (student.fist_name, student.last_name)
 
                             stream = sheet.cell(row, 7).value
-                            
+
                             print('stream chosen by %s is %s' % (student_name, stream))
                             if stream == maths:
                                 print('going to set the chosen_stream to be %s' % stream)
@@ -305,7 +305,7 @@ def setup_third_lang(request):
 
                     # 31/10/2017 - get the third language
                     t_l = sheet.cell(row, 7).value
-                    print('third language specified for %s %s in the sheet is %s' % 
+                    print('third language specified for %s %s in the sheet is %s' %
                         (student.fist_name, student.last_name, t_l))
                     try:
                         third_lang = Subject.objects.get(school=school, subject_name=t_l)
@@ -315,14 +315,14 @@ def setup_third_lang(request):
 
                     try:
                         record = ThirdLang.objects.get(student=student)
-                        print('third language for %s %s is already set as %s. This will be updated' % 
+                        print('third language for %s %s is already set as %s. This will be updated' %
                             (student.fist_name, student.last_name, record.third_lang.subject_name))
                         print ('third language ' + student.fist_name + ' ' +
                                student.last_name + ' already exists. This will be updated')
                         try:
                             record.third_lang = third_lang
                             record.save()
-                            print('successfully updated third language for %s %s as %s' % 
+                            print('successfully updated third language for %s %s as %s' %
                                 (student.fist_name, student.last_name, t_l))
                             print ('successfully updated the third language for ' +
                                    student.fist_name, ' ' + student.last_name)
@@ -853,7 +853,7 @@ def prepare_results(request, school_id, the_class, section):
                                     print('dealing with half yearly exam')
                                     # 20/02/2019 only theory marks will be considered in the cumulative
                                     if sub in prac_subjects:
-                                        half_yearly_marks = tot_marks - prac_marks
+                                        half_yearly_marks = tot_marks
                                     else:
                                         half_yearly_marks = tot_marks
                                     print('half yearly marks =')
@@ -872,7 +872,7 @@ def prepare_results(request, school_id, the_class, section):
                                 print('term test for %s not created for %s' % (a_term_exam, subject))
                                 for component in ['Th', 'Prac', 'Total']:
                                     sub_row.append(' ')
-                                index += 1
+                                #index += 1
                             index += 1
 
                         # calculate the cumulative result for this subject. UTs & Half yearly weightage is 25% each
@@ -999,7 +999,7 @@ def prepare_results(request, school_id, the_class, section):
                               'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
                               'Yearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
                 if the_class in ninth_tenth:
-                    end_class = 'IX'
+                    end_class = 'X'
                     data1 = [['Scholastic\nAreas', 'Academic Year (100 Marks)', '', '', '', '', ''],
                              ['Sub Name', 'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
                               'Annual\nExamination\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
@@ -1094,13 +1094,16 @@ def prepare_results(request, school_id, the_class, section):
                         data2 = [['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale]', '',
                                 'Co-Scholastic Areas: Term-2[On a 3-point(A-C) grading scale]', '']]
                     if the_class in ninth_tenth:
-                        data2 = [['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale]', '']]
+                        data2 = [['Co-Scholastic Areas: Academic Year[On a 3-point(A-C) grading scale]', '']]
                     work_array = []
                     art_array = []
                     health_array = []
                     dscpln_array = []
 
-                    for term in ['term1', 'term2']:
+                    terms = ['term1', 'term2']
+                    if the_class in ninth_tenth:
+                        terms = ['term2']
+                    for term in terms:
                         # for class IX, only the result of Term2, ie the final exam is to be shown
                         #if term == 'Term1' and the_class in ninth_tenth:
                             #continue
@@ -1218,30 +1221,32 @@ def prepare_results(request, school_id, the_class, section):
                 table3_top = table2_top - 70
             c.line(left_margin, table3_top - 60, 6.75 * inch, table3_top - 60)
             try:
+                if ms.show_attendance:
+                    c.drawString(left_margin, table3_top - 25, 'Attendance: ')
                 if the_class in ninth_tenth:
-                    c.drawString(left_margin, table3_top - 35, 'Result: N/A ')
+                    c.drawString(left_margin, table3_top - 35, 'Promoted to Class: ')
                 else:
                     c.drawString(left_margin, table3_top - 35, 'Promoted to Class: ')
-                    # get the class to which this student is promoted. Only if he has passed the exam
+                # get the class to which this student is promoted. Only if he has passed the exam
+                try:
+                    not_promoted = NPromoted.objects.get(student=s)
+                    print('student %s %s has failed in class %s.' % (s.fist_name, s.last_name, the_class))
+                    print(not_promoted)
+                    promoted_status = 'Not Promoted. %s' % not_promoted.details
+                except Exception as e:
+                    print('student %s %s has passed in class %s.' % (s.fist_name, s.last_name, the_class))
+                    print('exception 02032018-C from exam views.py %s %s' % (e.message, type(e)))
                     try:
-                        not_promoted = NPromoted.objects.get(student=s)
-                        print('student %s %s has failed in class %s.' % (s.fist_name, s.last_name, the_class))
-                        print(not_promoted)
-                        promoted_status = 'Not Promoted. %s' % not_promoted.details
+                        current_class = Class.objects.get(school=school, standard=the_class)
+                        next_class_sequence = current_class.sequence + 1
+                        next_class = Class.objects.get(school=school, sequence=next_class_sequence)
+                        next_class_standard = next_class.standard
+                        promoted_status = next_class_standard
                     except Exception as e:
-                        print('student %s %s has passed in class %s.' % (s.fist_name, s.last_name, the_class))
-                        print('exception 02032018-C from exam views.py %s %s' % (e.message, type(e)))
-                        try:
-                            current_class = Class.objects.get(school=school, standard=the_class)
-                            next_class_sequence = current_class.sequence + 1
-                            next_class = Class.objects.get(school=school, sequence=next_class_sequence)
-                            next_class_standard = next_class.standard
-                            promoted_status = next_class_standard
-                        except Exception as e:
-                            print('%s %s of class %s has passed. But failed to determine his next class' %
-                                  (s.fist_name, s.last_name, the_class))
-                            print('exception 02032018-D from exam views.py %s %s' % (e.message, type(e)))
-                    c.drawString(tab - 20, table3_top - 35, promoted_status)
+                        print('%s %s of class %s has passed. But failed to determine his next class' %
+                                (s.fist_name, s.last_name, the_class))
+                        print('exception 02032018-D from exam views.py %s %s' % (e.message, type(e)))
+                c.drawString(tab - 20, table3_top - 35, promoted_status)
 
                 c.drawString(tab - 20, table3_top - 25, '')
                 c.drawString(left_margin, table3_top - 55, 'Place & Date:')
@@ -1410,6 +1415,7 @@ class ResultSheet(generics.ListCreateAPIView):
                     'text_wrap': True
                 })
 
+
                 school_name = school.school_name + ' ' + school.school_address
                 result_sheet.merge_range('A1:AI1', school_name, title)
 
@@ -1439,7 +1445,6 @@ class ResultSheet(generics.ListCreateAPIView):
                 else:
                     result_sheet.merge_range(row, col, row + 1, col, 'S No', cell_center)
                 col += 1
-
                 result_sheet.set_column(col, col, 3)
 
                 if the_class.standard in higher_classes:
@@ -1483,8 +1488,13 @@ class ResultSheet(generics.ListCreateAPIView):
                             total_marks = sub_count * 100
                         print('the scheme for this class %s consist of %i subjects. Hence total marks = %s' %
                               (the_class.standard, sub_count, str(total_marks)))
-                        term1_heading = 'Term I (%s)' % str(total_marks)
-                        term2_heading = 'Term II (%s)' % str(total_marks)
+                        if the_class.standard not in ninth_tenth:
+                            term1_heading = 'Term I (%s)' % str(total_marks)
+                            term2_heading = 'Term II (%s)' % str(total_marks)
+                        else:
+                            term1_heading = 'Academic Year (%s)' % str(total_marks)
+                            term2_heading = ''
+
                         print('Term I heading = %s, Term II heading = %s' % (term1_heading, term2_heading))
 
                         # 19/10/2018 - we have decided to show the components vertically to avoid horizontal scrolling
@@ -1549,8 +1559,12 @@ class ResultSheet(generics.ListCreateAPIView):
                     comp_row = row + 1
                     both_term_start_col = col
                     both_term_tot_marks = total_marks * 2
+                    if the_class.standard in ninth_tenth:
+                        both_term_tot_marks = total_marks
                     print('both_term_tot_marks = %i' % both_term_tot_marks )
                     both_term_tot = 'Both Term Total (%s)' % str(both_term_tot_marks)
+                    if the_class.standard in ninth_tenth:
+                        both_term_tot = 'Academic Year Total (%s)' % str(both_term_tot_marks)
                     result_sheet.merge_range(row, col, row, col + 3, both_term_tot, cell_center)
                     for tc in term_comp:
                         result_sheet.write_string(comp_row, col, tc, cell_center)
@@ -1884,6 +1898,8 @@ class ResultSheet(generics.ListCreateAPIView):
                         col += 1
 
                         perc_formula = '=%s/%s' % (cell, str(total_marks * 2))
+                        if the_class.standard in ninth_tenth:
+                            perc_formula = '=%s/%s' % (cell, str(total_marks))
                         result_sheet.merge_range(row, col, row + 5, col, perc_formula, cell_grade)
                         result_sheet.write_formula(row, col, perc_formula, perc_format)
                         col += 1
@@ -1939,6 +1955,11 @@ class ResultSheet(generics.ListCreateAPIView):
                         col = 0
                         row += 6
                         s_no = s_no + 1
+                if the_class.standard in ninth_tenth:
+                    print('hiding columns for class IX')
+                    #result_sheet.set_column('R:AK', None, None, {'hidden': True})
+                    for col in range(16, 37):
+                        result_sheet.set_column(col, col, options={'hidden': True})
 
                 if the_class.standard in higher_classes:
                     maths_stream = ['English', 'Mathematics', 'Physics', 'Chemistry', 'Elective']
