@@ -890,24 +890,35 @@ def prepare_results(request, school_id, the_class, section):
 
                         # calculate the cumulative result for this subject. UTs & Half yearly weightage is 25% each
                         #  & final exam weightage is 50%
+                        grand_total = 0.0
                         try:
                             ut_cumul = round(ut_total/float(3), 2)
+                            grand_total += ut_cumul
                             sub_row.append(ut_cumul)
 
                             # 20/02/2019 cumulative for half yearly to be calculated out of 70 if the subject
                             # has practical component
                             #if sub in prac_subjects:
                             commerce_sub = ['Economics', 'Accountancy', 'Business Studies']
-                            if subject.subject_name not in commerce_sub:
-                                half_year_cumul = round((half_yearly_marks*float(25))/float(subject.theory_marks), 2)
+                            if half_yearly_marks != 'ABS':
+                                if subject.subject_name not in commerce_sub:
+                                    half_year_cumul = round((half_yearly_marks*float(25))/float(subject.theory_marks), 2)
+                                else:
+                                    half_year_cumul = round((half_yearly_marks * float(25)) / 100.00, 2)
+                                grand_total += half_year_cumul
                             else:
-                                half_year_cumul = round((half_yearly_marks * float(25)) / 100.00, 2)
+                                half_year_cumul = 'ABS'
                             # else:
                             #     half_year_cumul = round(half_yearly_marks/float(4), 2)
                             sub_row.append(half_year_cumul)
-                            final_cumul = round(final_marks*float(50)/float(subject.theory_marks), 2)
+
+                            if final_marks != 'ABS':
+                                final_cumul = round(final_marks*float(50)/float(subject.theory_marks), 2)
+                                grand_total += final_cumul
+                            else:
+                                final_cumul = 'ABS'
                             sub_row.append(final_cumul)
-                            grand_total = ut_cumul + half_year_cumul + final_cumul
+                            #grand_total = ut_cumul + half_year_cumul + final_cumul
                             sub_row.append(grand_total)
                         except Exception as e:
                             print('failed to enter Cumulative Result. This may be because certain marks not entered')
