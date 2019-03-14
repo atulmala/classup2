@@ -1434,7 +1434,8 @@ class ResultSheet(generics.ListCreateAPIView):
                     'border': 1,
                     'text_wrap': True
                 })
-
+                fail_format = workbook.add_format()
+                fail_format.set_bg_color('yellow')
 
                 school_name = school.school_name + ' ' + school.school_address
                 result_sheet.merge_range('A1:AI1', school_name, title)
@@ -1975,6 +1976,14 @@ class ResultSheet(generics.ListCreateAPIView):
                                                                                  student.last_name, the_class))
                                 print(not_promoted)
                                 promoted_status = 'Not Promoted'
+
+                                # 14/03/2019 - we want to highlight the row of detained students. But xlxswriter
+                                # only allows to highlight a cell. If we are in this block of code, means that the =
+                                # student is Not Promoted. So, we chose to highlight all the cells in this row based on
+                                # criteria tha the cell is not blank which is true for every cell and hence the whole
+                                # row gets highlighted
+                                result_sheet.conditional_format(row, 0, row + 5, col + 1, {'type': 'no_blanks',
+                                                                                       'format': fail_format})
                             except Exception as e:
                                 print('student %s %s has passed in class %s.' % (student.fist_name, student.last_name,
                                                                                  the_class))
@@ -2087,6 +2096,8 @@ class ResultSheet(generics.ListCreateAPIView):
 
                                 col = col + 11
                             break
+                        result_sheet.set_column('BI:BI', 4.5)
+                        result_sheet.set_column('BJ:BO', 2.5)
                         g_col = 59
                         result_sheet.merge_range(row, g_col, row+2, g_col, 'Grand Total', vertical_text)
                         g_col += 1
@@ -2379,20 +2390,27 @@ class ResultSheet(generics.ListCreateAPIView):
                                                                                  student.last_name, the_class))
                                 print(not_promoted)
                                 promoted_status = 'Not Promoted'
+
+                                # 14/03/2019 - we want to highlight the row of detained students. But xlxswriter
+                                # only allows to highlight a cell. If we are in this block of code, means that the =
+                                # student is Not Promoted. So, we chose to highlight all the cells in this row based on
+                                # criteria tha the cell is not blank which is true for every cell and hence the whole
+                                # row gets highlighted
+                                result_sheet.conditional_format(row, 0, row, col + 1, {'type': 'no_blanks',
+                                                                                     'format': fail_format})
                             except Exception as e:
                                 print('student %s %s has passed in class %s.' % (student.fist_name, student.last_name,
                                                                                  the_class))
                                 print('exception 25032018-C from exam views.py %s %s' % (e.message, type(e)))
                                 promoted_status = 'Promoted'
-                            result_sheet.write_string(row, col, promoted_status, cell_grade)
-                            col += 1
-                            result_sheet.write_string(row, col, details, cell_grade)
+                            result_sheet.write_string(row, col, promoted_status, cell_normal)
 
+                            col += 1
+                            result_sheet.write_string(row, col, details, cell_normal)
                             # reset the chosen_stream to standard subjects
                             chosen_stream.pop()
                             row += 1
                             s_no += 1
-
                     except Exception as e:
                         print('failed to retrieve the list of students for class %s-%s' %
                               (the_class.standard, section.section))
