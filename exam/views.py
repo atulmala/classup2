@@ -1964,10 +1964,27 @@ class ResultSheet(generics.ListCreateAPIView):
                             teacher_remarks = cs_term2.teacher_remarks
                             print('class teacher remarks for %s of %s-%s in %s: %s' %
                                   (student_name, the_class.standard, section.section, term, teacher_remarks))
+                            result_sheet.set_column(col, col, 10)
                             result_sheet.merge_range(row, col, row + 5, col, teacher_remarks, cell_normal)
 
-                            teacher_remarks = cs_term2.teacher_remarks
-                            # result_sheet.write_string(row, 35, teacher_remarks, cell_normal)
+                            col += 1
+                            try:
+                                not_promoted = NPromoted.objects.get(student=student)
+                                details = not_promoted.details
+                                print('student %s %s has failed in class %s.' % (student.fist_name,
+                                                                                 student.last_name, the_class))
+                                print(not_promoted)
+                                promoted_status = 'Not Promoted'
+                            except Exception as e:
+                                print('student %s %s has passed in class %s.' % (student.fist_name, student.last_name,
+                                                                                 the_class))
+                                print('exception 14032019-A from exam views.py %s %s' % (e.message, type(e)))
+                                promoted_status = 'Promoted'
+                                details = ' '
+                            result_sheet.merge_range(row, col, row + 5, col, promoted_status, cell_normal)
+                            col += 1
+                            result_sheet.merge_range(row, col, row + 5, col, details, cell_normal)
+
                         except Exception as e:
                             print ('exception 21012018-A from exam views.py %s %s' % (e.message, type(e)))
                             print ('failed to retrieve Co-scholastics grade for %s' % student_name)
@@ -1977,7 +1994,6 @@ class ResultSheet(generics.ListCreateAPIView):
                         s_no = s_no + 1
                 if the_class.standard in ninth_tenth:
                     print('hiding columns for class IX')
-                    #result_sheet.set_column('R:AK', None, None, {'hidden': True})
                     for col in range(16, 37):
                         result_sheet.set_column(col, col, options={'hidden': True})
 
@@ -2352,6 +2368,7 @@ class ResultSheet(generics.ListCreateAPIView):
 
                             # show the result/remarks. In the beginning it will show Promoted,
                             #  but after the analysis is done, it will show the actual result
+                            print('now determining the promoted status for %s' % student)
                             result_sheet.set_column('BQ:BQ', 15)
                             result_sheet.set_column('BR:BR', 30)
                             details = ' '
