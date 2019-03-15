@@ -14,7 +14,7 @@ try:
     cursor3 = db.cursor()
     print ('cursor3=')
     print (cursor3)
-    sql3 = "select status from teacher_messagereceivers where status_extracted = 0 and date > '2018-12-21' and date < DATE_SUB(NOW(), INTERVAL 3 HOUR);"
+    sql3 = "select status from teacher_messagereceivers where status_extracted = 0 and date > '2019-03-13' and date < DATE_SUB(NOW(), INTERVAL 3 HOUR);"
     print ('sql3 = %s' % sql3)
     cursor3.execute(sql3)
     print ('cursor3 executed')

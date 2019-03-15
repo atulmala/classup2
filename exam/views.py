@@ -783,7 +783,6 @@ def prepare_results(request, school_id, the_class, section):
                 unit_exams = Exam.objects.filter(school=school, start_class='XI', exam_type='unit')
                 term_exams = Exam.objects.filter(school=school, start_class='XI', exam_type='term')
 
-
                 try:
                     for sub in chosen_stream:
                         sub_row = [sub]
@@ -1010,14 +1009,13 @@ def prepare_results(request, school_id, the_class, section):
                 # 02/11/2017 - get the scheme for this class. The scheme will provide the subjects of this class and
                 # the sequence. Subjects in the Marksheet would appear in the order of sequence
                 try:
-                    if the_class not in higher_classes:
-                        print('class %s is not a higher class. Hence subject list will be as per scheme' % the_class)
-                        scheme = Scheme.objects.filter(school=school, the_class=standard)
-                        sub_count = scheme.count()
-                        for sc in scheme:
-                            sub_dict[sc.sequence] = sc.subject
-                        print('sub_dict = ')
-                        print (sub_dict)
+                    print('class %s is not a higher class. Hence subject list will be as per scheme' % the_class)
+                    scheme = Scheme.objects.filter(school=school, the_class=standard)
+                    sub_count = scheme.count()
+                    for sc in scheme:
+                        sub_dict[sc.sequence] = sc.subject
+                    print('sub_dict = ')
+                    print (sub_dict)
                 except Exception as e:
                     print('Looks like the scheme for class %s is not yet set' % the_class)
                     print('exception 10022018-A from exam views.py %s %s' % (e.message, type(e)))
@@ -1056,6 +1054,8 @@ def prepare_results(request, school_id, the_class, section):
 
                             # exam =  Exam.objects.get(school=school, title=term)
                             # print(exam)
+                            # if idx == 0 and the_class in ninth_tenth and school_id == 20:
+                            #     continue
                             try:
                                 if sub.subject_name != 'GK':
                                     test = ClassTest.objects.get(subject=sub, the_class=standard,
@@ -1675,7 +1675,6 @@ class ResultSheet(generics.ListCreateAPIView):
                             print('exception 19102018-B from exam views.py %s %s' % (e.message, type(e)))
                             print('failed to retrieve the third language for %s %s of %s-%s' %
                                   (student.fist_name, student.last_name, the_class.standard, section.section))
-
                         pa = 'PA'
                         nb = 'NB'
                         se = 'SE'
@@ -1705,6 +1704,9 @@ class ResultSheet(generics.ListCreateAPIView):
                         both_term_tot_formula = '=sum('
 
                         for index, term in enumerate(term_exams):
+                            if term_exams.count() > 1:
+                                if the_class.standard in ninth_tenth and index == 0:
+                                    continue
                             # we will be using formulas to calculate total
                             term_total_formula = '=sum('
                             rank_range = '('
@@ -1724,7 +1726,6 @@ class ResultSheet(generics.ListCreateAPIView):
                                             print('GK grade secured by %s %s of %s-%s in %s: %s' %
                                                   (student.fist_name, student.last_name, the_class.standard,
                                                    section.section, term, gk_grade))
-
                                         gk_grade2 = ' '
                                         if index == 1:
                                             tr2 = TestResults.objects.get(class_test=gk_tests.last(), student=student)
@@ -1778,7 +1779,6 @@ class ResultSheet(generics.ListCreateAPIView):
                                             result_sheet.write_string(row, col, 'TBE', cell_grade)
                                             col += 1
                                         continue
-
                                     sub_total_formula = '=sum('
                                     try:
                                         print ('retrieving % s marks for %s' % (s, student_name))
@@ -1878,14 +1878,12 @@ class ResultSheet(generics.ListCreateAPIView):
                                         col += 1
                                         result_sheet.write_formula(row, col, grade_formula, cell_bold)
 
-
                                         # 19/10/2018 - for the next subject, row and columns need to be reset
                                         row -= 5
                                         col += 1
                                     except Exception as e:
                                         print ('exception 20012018-D from exam views.py %s %s' % (e.message, type(e)))
                                         print ('failed to retrieve %s marks for %s' % (s, student_name))
-
                             term_total_formula += ')'
                             print('term_total_formula = %s' % term_total_formula)
                             result_sheet.set_column(col, col, 4)

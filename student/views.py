@@ -197,7 +197,7 @@ class StudentListDownload (generics.ListAPIView):
             if form.is_valid():
                 the_class = form.cleaned_data['the_class']
                 section = form.cleaned_data['section']
-                print ('result sheet will be generated for %s-%s' % (the_class.standard, section.section))
+                print (' sheet will be generated for %s-%s' % (the_class.standard, section.section))
 
                 excel_file_name = '%s_Student_List_%s-%s.xlsx' % (str(school_name),
                                                                   str(the_class.standard), str(section.section))
@@ -235,7 +235,8 @@ class StudentListDownload (generics.ListAPIView):
                     'rotation': 90
                 })
                 vertical_text.set_border()
-
+                fail_format = workbook.add_format()
+                fail_format.set_bg_color('yellow')
 
                 row = 0
                 col = 0
@@ -244,8 +245,12 @@ class StudentListDownload (generics.ListAPIView):
                 sheet.set_column ('B:B', 16)
                 sheet.write_string (row, col, 'Admission No', title)
                 col = col + 1
-                sheet.set_column ('C:G', 20)
+                sheet.set_column ('C:I', 20)
                 sheet.write_string (row, col, 'Student Name', title)
+                col += 1
+                sheet.write_string(row, col, 'Parent Name', title)
+                col += 1
+                sheet.write_string(row, col, 'Parent Mobile', title)
 
                 # 06/03/2018 - coding to show the current class/sec and promoted class/sec will be required only during
                 # new session start, otherwise will be coded
@@ -254,13 +259,10 @@ class StudentListDownload (generics.ListAPIView):
                 col += 1
                 sheet.write_string(row, col, 'Current Section', title)
                 col += 1
-                sheet.write_string(row, col, 'Parent Name', title)
+
+                sheet.write_string(row, col, 'Promoted Class', title)
                 col += 1
-                sheet.write_string(row, col, 'Parent Mobile', title)
-                col += 1
-                # sheet.write_string(row, col, 'Promoted Class', title)
-                # col += 1
-                # sheet.write_string(row, col, 'Promoted Section', title)
+                sheet.write_string(row, col, 'Promoted Section', title)
 
                 try:
                     students = Student.objects.filter(school=school, current_class=the_class,
@@ -277,6 +279,14 @@ class StudentListDownload (generics.ListAPIView):
                         col += 1
                         student_name = '%s %s' % (student.fist_name, student.last_name)
                         sheet.write_string (row, col, student_name, cell_normal)
+                        col += 1
+
+                        # 05/06/2018 parent name and phone number
+                        parent = student.parent.parent_name
+                        sheet.write_string(row, col, parent, cell_normal)
+                        col += 1
+                        mobile = student.parent.parent_mobile1
+                        sheet.write_string(row, col, mobile, cell_normal)
 
                         # current class & section
                         col += 1
@@ -287,28 +297,36 @@ class StudentListDownload (generics.ListAPIView):
                         sheet.write_string(row, col, current_section, cell_normal)
                         col += 1
 
-                        # 05/06/2018 parent name and phone number
-                        parent = student.parent.parent_name
-                        sheet.write_string(row, col, parent, cell_normal)
-                        col += 1
-                        mobile = student.parent.parent_mobile1
-                        sheet.write_string(row, col, mobile, cell_normal)
-                        col += 1
-
                         # promoted class & section
                         current_class_seq = student.current_class.sequence
                         next_class_seq = current_class_seq + 1
+                        next = Class.objects.get(school=student.school, sequence=next_class_seq)
+
+                        # 15/03/2019 0 student will be promoted only if the name is NOT in NPromoted table
                         try:
-                            next = Class.objects.get(school=student.school, sequence=next_class_seq)
-                            next_class = next.standard
-                            print('determined the next class for %s: %s-%s' %
-                                  (student_name, next_class, current_section))
-                            #sheet.write_string(row, col, next_class, cell_normal)
+                            failed = NPromoted.objects.get(student=student)
+                            print('%s has failed in class %s. Hence not promoting' % (student, current_class))
+                            next_class = current_class
+                            sheet.write_string(row, col, next_class, cell_normal)
                             col += 1
-                            #sheet.write_string(row, col, current_section, cell_normal)
+                            sheet.write_string(row, col, current_section, cell_normal)
+                            sheet.conditional_format(row, 0, row, col + 1, {'type': 'no_blanks',
+                                                                                       'format': fail_format})
                         except Exception as e:
-                            print('failed to determine the next class for %s' % student_name)
-                            print('exception 06032018-A from student views.py %s %s' % (e.message, type(e)))
+                            print('exception 15030219-A from student views.py %s %s' % (e.message, type(e)))
+                            print('%s has passed in class %s. Hence, promoting to next class' %
+                                  (student, current_class))
+
+                            try:
+                                next_class = next.standard
+                                print('determined the next class for %s: %s-%s' %
+                                      (student_name, next_class, current_section))
+                                sheet.write_string(row, col, next_class, cell_normal)
+                                col += 1
+                                sheet.write_string(row, col, current_section, cell_normal)
+                            except Exception as e:
+                                print('failed to determine the next class for %s' % student_name)
+                                print('exception 06032018-A from student views.py %s %s' % (e.message, type(e)))
                         row = row + 1
                         s_no = s_no + 1
                         col = 0
@@ -317,7 +335,6 @@ class StudentListDownload (generics.ListAPIView):
                     response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
                     response.write(output.getvalue())
                     return response
-
                 except Exception as e:
                     print ('exception 21010218-A from student views.py %s %s' % (e.message, type(e)))
                     print ('failed to retrieve the list of students for %s-%s' % (the_class.standard, section.section))
