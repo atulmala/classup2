@@ -527,10 +527,11 @@ def forgot_password(request):
                 # confused and multiple sms are sent which impacts our profitability. Hence we will not reset pssword,
                 # if it has been reset in last 15 minutes
                 try:
-                    lpt = LastPasswordReset.objects.get(login_id=user)
+                    lpt = LastPasswordReset.objects.filter(login_id=user).last()
                     last_reset_time = lpt.last_reset_time
+                    naive = last_reset_time.replace(tzinfo=None)
                     current_time = datetime.datetime.now()
-                    time_difference = current_time - last_reset_time
+                    time_difference = current_time - naive
                     print('time_difference = ' + str(time_difference))
                     if time_difference > datetime.timedelta(minutes=15):
                         print('time difference between last password reset and current attempt is more than 15 min.')
