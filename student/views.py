@@ -77,6 +77,76 @@ class StudentListForTest(generics.ListCreateAPIView):
         return q2
 
 
+class ParentInquiry(generics.ListCreateAPIView):
+    def get(self, request, *args, **kwargs):
+        parents = Parent.objects.all()
+        students = Student.objects.all()
+        print('parents count = %i' % parents.count())
+        print('student count %i' % students.count())
+        print('extra parents = %i' % (parents.count() - students.count()))
+        extra_parent_count = parents.count()
+
+        # for s in students:
+        #     found = False
+        #     for p in parents:
+        #         if s.parent.pk == p.pk:
+        #             #print('%s is associated with %s' % (p, s))
+        #             extra_parent_count -= 1
+        #             found = True
+        #     if not found:
+        #         print('%s is not associated with any student' % p)
+        #
+
+
+        for p in parents:
+            found = False
+            for s in students:
+                if s.parent.pk == p.pk:
+                    extra_parent_count -= 1
+                    found = True
+                    break
+            if not found:
+                found = False
+                print('parent %s with mobile number %s is not associated with any student' %
+                        (p.parent_name, p.parent_mobile1))
+        print('total number of extra parents = %i' % extra_parent_count)
+
+        # print('inside get')
+        # loc = ("/Users/atul/classup/classup/operations/data/jps_parents.xlsx")
+        #
+        # wb = xlrd.open_workbook(loc)
+        # print(wb.sheet_names())
+        # print(wb.nsheets)
+        # try:
+        #     sheet = wb.sheet_by_index(0)
+        # except Exception as e:
+        #     print('exception %s %s' % (e.message, type(e)))
+        # print('got sheet')
+        # student_count = 0;
+        # for row in range(sheet.nrows):
+        #     if row == 0:
+        #         continue
+        #     print ('Processing a new row')
+        #     mob1 = int(sheet.cell(row, 0).value)
+        #     #print('looking for parent associated with %s' % mob1)
+        #     try:
+        #         the_parent = Parent.objects.get(parent_mobile1=mob1)
+        #         #print('found %s associated with %s' % (the_parent.parent_name, mob1))
+        #         q1 = Student.objects.filter(parent=the_parent, active_status=True).order_by('fist_name')
+        #         student_count += q1.count()
+        #         if q1.count() < 1:
+        #             print('no student is associated with parent %s ' % the_parent.parent_name)
+        #         else:
+        #             students = ''
+        #             for s in q1:
+        #                 students += ' %s (%s-%s),' % (s, s.current_class.standard, s.current_section.section)
+        #             print('%i students associated with %s : %s' % (q1.count(), the_parent.parent_name, students))
+        #     except Exception as e:
+        #         print('exception 17032019-A from student views.py %s %s' % (e.message, type(e)))
+        #         print('problems in finding parent associated with %s' % mob1)
+        # print('total number of student = %i' % student_count)
+
+
 class StudentListForParent(generics.ListAPIView):
     serializer_class = StudentSerializer
 

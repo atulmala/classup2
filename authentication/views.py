@@ -591,12 +591,17 @@ def forgot_password(request):
                         # a parent's mobile is their username
                         mobile = user
                         # we need to extract the school name this parent belong to. First get the parent
-                        p = Parent.objects.get(Q(parent_mobile1=mobile) | Q(parent_mobile2=mobile))
-                        # now get the children of this parent
-                        ward_list = Student.objects.filter(parent=p, active_status=True)
-                        # finally, get the school
-                        for student in ward_list:
-                            school = student.school
+                        try:
+                            p = Parent.objects.get(Q(parent_mobile1=mobile) | Q(parent_mobile2=mobile))
+                            # now get the children of this parent
+                            ward_list = Student.objects.filter(parent=p, active_status=True)
+                            # finally, get the school
+                            for student in ward_list:
+                                school = student.school
+                        except Exception as e:
+                            print('exception 17032019-A from setup views.py %s %s' % (e.message, type(e)))
+                            print('could not find the parent associated with %s' % str(mobile))
+                            school = 'Undetermined'
                     log_entry(user, "New Password SMS sending initiated", "Normal", True)
                     sms.send_sms1(school, user, mobile, message, message_type)
                     log_entry(user, "New Password SMS Sending completed", "Normal", True)

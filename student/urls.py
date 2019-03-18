@@ -20,4 +20,5 @@ urlpatterns = patterns('',
                         url(r'mid_term_admission/$', views.MidTermAdmission.as_view(), name='mid_term_admission'),
                         url(r'not_promoted/$', views.NotPromoted.as_view(), name='not_promoted'),
                         url(r'promote_students/$', views.StudentPromotion.as_view(), name='promote_students'),
+                        url(r'parent_inquiry/$', views.ParentInquiry.as_view(), name='parent_inquiry'),
                        )
