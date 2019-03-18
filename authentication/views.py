@@ -598,17 +598,20 @@ def forgot_password(request):
                             # finally, get the school
                             for student in ward_list:
                                 school = student.school
+                            log_entry(user, "New Password SMS sending initiated", "Normal", True)
+                            sms.send_sms1(school, user, mobile, message, message_type)
+                            log_entry(user, "New Password SMS Sending completed", "Normal", True)
+
+                            return_data["forgot_password"] = "successful"
+                            log_entry(user, "Forgot Password process completed", "Normal", True)
+                            return JSONResponse(return_data, status=200)
                         except Exception as e:
                             print('exception 17032019-A from setup views.py %s %s' % (e.message, type(e)))
                             print('could not find the parent associated with %s' % str(mobile))
-                            school = 'Undetermined'
-                    log_entry(user, "New Password SMS sending initiated", "Normal", True)
-                    sms.send_sms1(school, user, mobile, message, message_type)
-                    log_entry(user, "New Password SMS Sending completed", "Normal", True)
+                            return_data["forgot_password"] = "failed"
+                            log_entry(user, "Forgot Password process Failed", "Normal", True)
+                            return JSONResponse(return_data, status=201)
 
-                    return_data["forgot_password"] = "successful"
-                    log_entry(user, "Forgot Password process completed", "Normal", True)
-                    return JSONResponse(return_data, status=200)
         except Exception as e:
             print('unable to reset password for ' + user)
             print('Exception 6 from authentication views.py = %s (%s)' % (e.message, type(e)))

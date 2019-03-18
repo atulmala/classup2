@@ -11,6 +11,7 @@ from rest_framework.authentication import SessionAuthentication, BasicAuthentica
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.contrib import messages
+from django.contrib.auth.models import User
 from django.db.models import Max
 
 from setup.models import School
@@ -85,6 +86,7 @@ class ParentInquiry(generics.ListCreateAPIView):
         print('student count %i' % students.count())
         print('extra parents = %i' % (parents.count() - students.count()))
         extra_parent_count = parents.count()
+        deleted_count = 0
 
         for p in parents:
             found = False
@@ -97,9 +99,25 @@ class ParentInquiry(generics.ListCreateAPIView):
                 found = False
                 print('parent %s with mobile number %s is not associated with any student' %
                         (p.parent_name, p.parent_mobile1))
+                print('hence, this parent and associated user will be delted')
+
+                # delete the user & parent
+                try:
+                    user = User.objects.get(username=p.parent_mobile1)
+                    p.delete()
+                    print('parent deleted')
+                    user.delete()
+                    print('user deleted')
+
+                    deleted_count += 1
+                except Exception as e:
+                    print('failed to delete user/parent')
+                    print('exception 18032019-X from student views.py %s %s' % (e.message, type(e)))
+
         print('total number of extra parents = %i' % extra_parent_count)
         context_dict = {}
         context_dict['extra_parents'] = extra_parent_count
+        context_dict['deleted_count'] = deleted_count
         return JSONResponse(context_dict, status=200)
 
 
@@ -167,6 +185,7 @@ class ParentList(generics.ListAPIView):
 
         q = Parent.objects.filter(student__id=student_id)
         return q
+
 
 class PromoteStudents(generics.ListCreateAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
