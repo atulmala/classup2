@@ -144,97 +144,98 @@ def update_student(request):
             student_first_name = data['first_name']
             student_last_name = data['last_name']
             parent_name = data['parent_name']
-            parent_mobile1 = data['mobile1']
-            parent_mobile2 = data['mobile2']
-            if parent_mobile2 == '':
-                parent_mobile2 = '1234567890'
+            new_mob1 = data['mobile1']
+            new_mob2 = data['mobile2']
+            if new_mob2 == '':
+                new_mob2 = '1234567890'
             current_class = data['the_class']
             current_section = data['section']
             current_roll_no = data['roll_no']
             parent_email = 'dummy@testmail.com'
 
-            # check to see if the primary mobile of parent has been changed. If it is then we need to create a new
-            # user for parent and send them sms
-            try:
-                p = Parent.objects.get(parent_mobile1=parent_mobile1)
+            # 18/03/2019 - earlier we have been creating a new parent and user in case primary mobile number is changed
+            # This was resulting in stray parents and users. We should actually retrieve the parent of student, change
+            # the details and change the username of the user and send new user-name via sms
 
-                if p:
-                    print ('Parent ' + parent_name + ' already exist. This will be updated!')
-                    p.parent_name = parent_name
-                    p.parent_mobile1 = parent_mobile1
-                    p.parent_mobile2 = parent_mobile2
-                    p.parent_email = parent_email
-            except Exception as e:
-                print ('Exception 350 from setup views.py = %s (%s)' % (e.message, type(e)))
-                print ('Parent ' + parent_name + ' is a new entry. This will be created!')
-                p = Parent(parent_name=parent_name, parent_mobile1=parent_mobile1,
-                           parent_mobile2=parent_mobile2, parent_email=parent_email)
+            # retrieve the parent
+            changed = False
             try:
-                p.save()
-            except Exception as e:
-                print ('Exception 360 from setup views.py = %s (%s)' % (e.message, type(e)))
-                print('Unable to save the parent data for ' + parent_name + ' in Table Parent')
+                school = School.objects.get(pk=school_id)
+                student = Student.objects.get(school=school, pk=student_id)
+                print('%s from %s is going to be updated' % (student, school))
+                parent = student.parent
+                current_mob1 = str(parent.parent_mobile1)
 
-            # now, create a user for this parent (only if the primary mobile has changed)
-            whether_new_user = False
-            try:
-                if User.objects.filter(username=parent_mobile1).exists():
-                    print('user for parent ' + p.parent_name + ' already exists!')
-                    whether_new_user = False
-                else:
-                    whether_new_user = True
-                    # the user name would be the mobile, and password would be a random string
+                # check if the primary mobile number has changed. If yes, then the parent and associated user
+                # need to be updated.
+                if current_mob1 != new_mob1:
+                    changed = True
+                    print('%s parent 0f %s mobile is changed. User and parent will have to be updated' %
+                          (student, parent))
+                # first, update the parent
+                parent.parent_name = parent_name
+                parent.parent_mobile1 = new_mob1
+                parent.parent_mobile2 = new_mob2
+                parent.parent_email = parent_email
+                parent.save()
+
+                # parent is updated, now update the student
+                student.parent = parent
+                student.fist_name = student_first_name
+                student.last_name = student_last_name
+                the_class = Class.objects.get(school=school, standard=current_class)
+                student.current_class = the_class
+                the_section = Section.objects.get(school=school, section=current_section)
+                student.current_section = the_section
+                student.roll_number = current_roll_no
+                student.save()
+                context_dict['status'] = 'success'
+                context_dict['message'] = 'successfully updated student details'
+            except Exception as e:
+                print('exception 18032019-A from setup views.py %s %s' % (e.message, type(e)))
+                message = 'error while trying to update user associated with parent %s %s' % \
+                          (current_mob1, parent_name)
+                print(message)
+                context_dict['status'] = 'error'
+                context_dict['message'] = message
+
+            # if primary mobile number was changed then we need to change the user_name of associted user
+            # and communicate the parent their new user name and password
+            if changed:
+                try:
+                    user = User.objects.get(username=current_mob1)
+                    print('retrieved parent user associated with %s' % current_mob1)
+                    print(user)
+                    user.username = new_mob1
                     password = User.objects.make_random_password(length=5, allowed_chars='1234567890')
-
-                    print ('Initial password = ' + password)
-                    user = User.objects.create_user(parent_mobile1, parent_email, password)
+                    user.set_password(password)
                     user.first_name = parent_name
                     user.is_staff = False
                     user.save()
 
-                    print ('Successfully created user for ' + parent_name)
-            except Exception as e:
-                print ('Exception 370 from setup views.py = %s (%s)' % (e.message, type(e)))
-                print ('Unable to create user for ' + parent_name)
-
-            try:
-                conf = Configurations.objects.get(school=school)
-                if whether_new_user:
+                    # send message to parent with new id/password and linke to downlaod ClassUp
+                    conf = Configurations.objects.get(school=school)
                     android_link = conf.google_play_link
                     iOS_link = conf.app_store_link
-
-                    # send login id and password to parent via sms
-                    message = 'Dear ' + parent_name + ', Welcome to ClassUp. '
-                    message += 'Now you can track ' +  student_first_name +  "'s progress at " + school.school_name
-                    message += '. Your user id is: ' + str(parent_mobile1) + ', and password is: '
-                    message += str(password)
+                    message = 'Dear %s, your details for ClassUp app are updated. ' % parent_name
+                    message += 'New user id is %s & password is %s ' % (new_mob1, password)
                     message += '. Please install ClassUp from these links. Android: '
                     message += android_link
                     message += '. iPhone/iOS: '
                     message += iOS_link
-                    message += '. For support, email to: support@classup.in'
+                    message += ' For any help please send email to info@classup.in. Regards, ClassUp Support'
+                    print('message = %s' % message)
+                    message_type = 'Update Student/Parent'
+                    sms.send_sms1(school, sender, str(new_mob1), message, message_type)
+                    context_dict['status'] = 'success'
+                    context_dict['error_message'] = 'successfully updated student details'
+                except Exception as e:
+                    print('exception 18032019-B from setup views.py %s %s' % (e.message, type(e)))
+                    message = 'error while trying to update user associated with parent %s %s' % \
+                              (current_mob1, parent_name)
                     print(message)
-                    message_type = 'Welcome Parent'
-                    sms.send_sms1(school, sender, str(parent_mobile1), message, message_type)
-            except Exception as e:
-                print ('Exception 380 in setup view.py = %s (%s)' % (e.message, type(e)))
-                print ('Failed to send welcome sms to ' + parent_name)
-
-            # update the student
-            student = Student.objects.get(id=student_id)
-            student.parent = p
-            student.fist_name = student_first_name
-            student.last_name = student_last_name
-
-            the_class = Class.objects.get(school=school, standard=current_class)
-            student.current_class = the_class
-
-            the_section = Section.objects.get(school=school, section=current_section)
-            student.current_section= the_section
-
-            student.roll_number = current_roll_no
-            student.save()
-            context_dict['status'] = 'success'
+                    context_dict['status'] = 'error'
+                    context_dict['message'] = message
             return JSONResponse(context_dict, status=200)
         except Exception as e:
             print('Exception 390 in setup views.py = %s (%s)' % (e.message, type(e)))
@@ -242,6 +243,7 @@ def update_student(request):
                             + current_class + ' ' + current_section
             print(error_message)
             context_dict['status'] = 'error'
+            context_dict['message'] = error_message
             return JSONResponse(context_dict, status=201)
 
 
