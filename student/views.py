@@ -296,18 +296,20 @@ class StudentListDownload (generics.ListAPIView):
                 sheet.write_string(row, col, 'Parent Name', title)
                 col += 1
                 sheet.write_string(row, col, 'Parent Mobile', title)
+                col += 1
+                sheet.write_string(row, col, 'New Mobile', title)
 
                 # 06/03/2018 - coding to show the current class/sec and promoted class/sec will be required only during
                 # new session start, otherwise will be coded
-                col += 1
-                sheet.write_string(row, col, 'Current Class', title)
-                col += 1
-                sheet.write_string(row, col, 'Current Section', title)
-                col += 1
-
-                sheet.write_string(row, col, 'Promoted Class', title)
-                col += 1
-                sheet.write_string(row, col, 'Promoted Section', title)
+                # col += 1
+                # sheet.write_string(row, col, 'Current Class', title)
+                # col += 1
+                # sheet.write_string(row, col, 'Current Section', title)
+                # col += 1
+                #
+                # sheet.write_string(row, col, 'Promoted Class', title)
+                # col += 1
+                # sheet.write_string(row, col, 'Promoted Section', title)
 
                 try:
                     students = Student.objects.filter(school=school, current_class=the_class,
@@ -332,46 +334,46 @@ class StudentListDownload (generics.ListAPIView):
                         col += 1
                         mobile = student.parent.parent_mobile1
                         sheet.write_string(row, col, mobile, cell_normal)
-
-                        # current class & section
-                        col += 1
-                        current_class = student.current_class.standard
-                        sheet.write_string (row, col, current_class, cell_normal)
-                        col += 1
-                        current_section = student.current_section.section
-                        sheet.write_string(row, col, current_section, cell_normal)
-                        col += 1
-
-                        # promoted class & section
-                        current_class_seq = student.current_class.sequence
-                        next_class_seq = current_class_seq + 1
-                        next = Class.objects.get(school=student.school, sequence=next_class_seq)
-
-                        # 15/03/2019 0 student will be promoted only if the name is NOT in NPromoted table
-                        try:
-                            failed = NPromoted.objects.get(student=student)
-                            print('%s has failed in class %s. Hence not promoting' % (student, current_class))
-                            next_class = current_class
-                            sheet.write_string(row, col, next_class, cell_normal)
-                            col += 1
-                            sheet.write_string(row, col, current_section, cell_normal)
-                            sheet.conditional_format(row, 0, row, col + 1, {'type': 'no_blanks',
-                                                                                       'format': fail_format})
-                        except Exception as e:
-                            print('exception 15030219-A from student views.py %s %s' % (e.message, type(e)))
-                            print('%s has passed in class %s. Hence, promoting to next class' %
-                                  (student, current_class))
-
-                            try:
-                                next_class = next.standard
-                                print('determined the next class for %s: %s-%s' %
-                                      (student_name, next_class, current_section))
-                                sheet.write_string(row, col, next_class, cell_normal)
-                                col += 1
-                                sheet.write_string(row, col, current_section, cell_normal)
-                            except Exception as e:
-                                print('failed to determine the next class for %s' % student_name)
-                                print('exception 06032018-A from student views.py %s %s' % (e.message, type(e)))
+                        #
+                        # # current class & section
+                        # col += 1
+                        # current_class = student.current_class.standard
+                        # sheet.write_string (row, col, current_class, cell_normal)
+                        # col += 1
+                        # current_section = student.current_section.section
+                        # sheet.write_string(row, col, current_section, cell_normal)
+                        # col += 1
+                        #
+                        # # promoted class & section
+                        # current_class_seq = student.current_class.sequence
+                        # next_class_seq = current_class_seq + 1
+                        # next = Class.objects.get(school=student.school, sequence=next_class_seq)
+                        #
+                        # # 15/03/2019 0 student will be promoted only if the name is NOT in NPromoted table
+                        # try:
+                        #     failed = NPromoted.objects.get(student=student)
+                        #     print('%s has failed in class %s. Hence not promoting' % (student, current_class))
+                        #     next_class = current_class
+                        #     sheet.write_string(row, col, next_class, cell_normal)
+                        #     col += 1
+                        #     sheet.write_string(row, col, current_section, cell_normal)
+                        #     sheet.conditional_format(row, 0, row, col + 1, {'type': 'no_blanks',
+                        #                                                                'format': fail_format})
+                        # except Exception as e:
+                        #     print('exception 15030219-A from student views.py %s %s' % (e.message, type(e)))
+                        #     print('%s has passed in class %s. Hence, promoting to next class' %
+                        #           (student, current_class))
+                        #
+                        #     try:
+                        #         next_class = next.standard
+                        #         print('determined the next class for %s: %s-%s' %
+                        #               (student_name, next_class, current_section))
+                        #         sheet.write_string(row, col, next_class, cell_normal)
+                        #         col += 1
+                        #         sheet.write_string(row, col, current_section, cell_normal)
+                        #     except Exception as e:
+                        #         print('failed to determine the next class for %s' % student_name)
+                        #         print('exception 06032018-A from student views.py %s %s' % (e.message, type(e)))
                         row = row + 1
                         s_no = s_no + 1
                         col = 0
