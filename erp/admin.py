@@ -1,5 +1,6 @@
 from django.contrib import admin
 from student.models import AdditionalDetails, House
+from .models import CollectAdmFee
 
 # Register your models here.
 
@@ -20,6 +21,15 @@ class AdditionalDetailsAdmin(admin.ModelAdmin):
 
 
 admin.site.register(AdditionalDetails, AdditionalDetailsAdmin)
+
+
+class CollectAdmFeeAdmin(admin.ModelAdmin):
+    list_display = ('school', 'student',)
+    search_fields = ('school', 'student')
+    list_filter = ('school',)
+
+
+admin.site.register(CollectAdmFee, CollectAdmFeeAdmin)
 
 
 

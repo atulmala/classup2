@@ -3,6 +3,7 @@ __author__ = 'atulgupta'
 
 from rest_framework import serializers
 
+from erp.models import CollectAdmFee
 from .models import Student, Parent
 
 
@@ -16,7 +17,7 @@ class StudentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Student
         fields = ('id', 'student_erp_id', 'fist_name', 'last_name',
-                  'roll_number', 'current_class', 'current_section', 'parent',)
+                  'roll_number', 'current_class', 'current_section', 'parent')
 
 
 class ParentSerializer(serializers.ModelSerializer):

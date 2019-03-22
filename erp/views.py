@@ -1,6 +1,5 @@
 import os
 import xlrd
-import xlsxwriter
 
 from google.cloud import storage
 
@@ -19,6 +18,7 @@ from setup.views import validate_excel_extension
 
 from setup.models import School
 from student.models import Student, AdditionalDetails, House
+from .models import CollectAdmFee, FeePaymentHistory, PreviousBalance
 
 # Create your views here.
 
@@ -165,9 +165,14 @@ class FeePayment(generics.ListCreateAPIView):
         }
         school_id = self.kwargs['school_id']
         student_id = self.kwargs['student_id']
+        q1 = [4, 5, 6]
+        q2 = [7, 8, 9]
+        q3 = [10, 11, 12]
+        q4 = [1, 2, 3]
         try:
             school = School.objects.get(pk=school_id)
             student = Student.objects.get(school=school, student_erp_id=student_id)
+            context_dict['reg_no'] = student.student_erp_id
             full_name = '%s %s' % (student.fist_name, student.last_name)
             context_dict['full_name'] = full_name
             parent = student.parent.parent_name
@@ -178,8 +183,6 @@ class FeePayment(generics.ListCreateAPIView):
             currentDay = datetime.now().day
             year = datetime.now().year
             month = datetime.now().month
-            mydate = datetime.now()
-            #month = mydate.strftime("%B")
             print(month)
             currentMonth = datetime.now().month
             print(currentMonth)
@@ -198,51 +201,135 @@ class FeePayment(generics.ListCreateAPIView):
             wb = xlrd.open_workbook(local_path)
             sheet = wb.sheet_by_name(current_class)
             heads_array = []
-            total = 0.0
+
+            due_this_term = 0.0
             for row in range(sheet.nrows):
                 if row == 0:
+                    fee_frequency = sheet.cell(row, 1).value
+                    d_date = sheet.cell(row, 3).value
+                    continue
+                if row == 1:
                     continue
                 head = {}
                 h = sheet.cell(row, 0).value
-                head['head'] = h
                 amt = sheet.cell(row, 1).value
                 freq = sheet.cell(row, 2).value
                 if int(freq) == 0:
-                    amt = 0.0
-                    head['amount'] = amt
-                    heads_array.append(head)
-                    # this is one time fee (admission fee, security deposit/caution money etc. Logic to check whether
-                    # it has been paid or not to be added
-                    continue
+                    # this is one time fee (admission/caution). check if this fee to be charged for this student
+                    print('%s is one time fees. checking whether it has been paid or not' % h)
+                    try:
+                        if CollectAdmFee.objects.get(student=student).exists():
+                            print('%s has NOT paid one time fees %s' % (student, h))
+                            due_this_term += amt
+                    except Exception as e:
+                        print('exception 21032019-A from erp views.py %s %s' % (e.message, type(e)))
+                        print('%s has paid one time fees %s' % (student, h))
+                        amt = 'N/A'
+
                 if int(freq) == 12:
-                    if month == 3:
-                        print('fee %s %i to be charged in this payment' % (h, amt))
+                    # this is once in a year fee like annual fee, exam fee etc. this is to be charge in April
+                    print('%s is annual fees' % h)
+                    if month == 'April':
                         head['amount'] = amt
+                        due_this_term += amt
                     else:
-                        amt = 0
-                        head['amount'] = amt
-                else:
-                    head['amount'] = amt
-                head['frequency'] = freq
+                        amt = 'N/A'
+                if int(freq) == 1:
+                    # this fees is charged monthly
+                    print('%s is monthly fees' % h)
+                    due_this_term += amt
+
+                if int(freq) == 3:
+                    # this fee is charged quarterly
+                    print('%s is quarterly fees' % h)
+                    due_this_term += amt
+                head[h] = amt
                 heads_array.append(head)
-                total += amt
             head = {}
-            # get the previous balance, if any - this will come from db
-            head['head'] = 'Previous Balance'
-            amt = 0.0 # for the time being, actually it will be retrieved from db
-            total += amt
-            head['amount'] = 0.0
+            head['Due This term'] = due_this_term
             heads_array.append(head)
             head = {}
-            head['head'] = 'total'
-            head['amount'] = total
+
+            # get the previous outstanding, if any
+            due_amount = 0.0
+            try:
+                outstanding = PreviousBalance.objects.get(student=student)
+                if outstanding.negative:
+                    due_amount = outstanding.due_amount
+                    print('%s has negative outstanding of %f' % (student, due_amount))
+                    head['negative_outstanding'] = True
+                else:
+                    # advance payment is done
+                    due_amount = 0.0 - outstanding.due_amount
+                    print('%s has positive outstanding of %f' % (student, due_amount))
+                    head['negative_outstanding'] = False
+
+            except Exception as e:
+                print('exception 21032019-C from erp views.py %s %s' % (e.message, type(e)))
+                print('No Previous outstanding on %s' % student)
+            head['Previous Outstanding'] = due_amount
             heads_array.append(head)
+            head = {}
+
+            # calculate how much has been paid till date
+            payment_history = []
+            entry = {}
+            paid_till_date = 0.0
+            try:
+                payments = FeePaymentHistory.objects.filter(student=student)
+                for payment in payments:
+                    entry['date'] = payment.date
+                    entry['amount'] = payment.amount
+                    paid_till_date += payment.amount
+                    entry['mode'] = payment.mode
+                    entry['comments'] = payment.comment
+                    payment_history.append(entry)
+                    entry = {}
+            except Exception as e:
+                print('exception 21032019-B from erp views.py %s %s' % (e.message, type(e)))
+                print('no payment history could be retrieved for %s of %s %s' %
+                      (student, current_class, school))
+            context_dict['payment_history'] = payment_history
+            head['Paid Till date'] = paid_till_date
+
+            heads_array.append(head)
+
+            # check if there is a delay in paying fee
+            if fee_frequency == 1:
+                # monthly fees system. due date should be this month
+                due_date = datetime(year=year, month=currentMonth, day=int(d_date))
+            if fee_frequency == 3:
+                if currentMonth in q1:
+                    due_date = datetime(year=year, month=4, day=int(d_date))
+                if currentMonth in q2:
+                    due_date = datetime(year=year, month=7, day=int(d_date))
+                if currentMonth in q3:
+                    due_date = datetime(year=year, month=10, day=int(d_date))
+                if currentMonth in q4:
+                    due_date = datetime(year=year, month=1, day=int(d_date))
+
+                print('due_date = ')
+                print(due_date)
+            # delay in days
+            today = datetime.now()
+            difference = (today - due_date).days
+            print('delay by %i days' % difference)
+            head = {}
+            head['Days Delay'] = difference
+            heads_array.append(head)
+
+            # delay in weeks
+            head = {}
+            weeks = round(float(difference)/7.0, 1)
+            print('delay by %.1f weeks' % weeks)
+            head['Weeks Delay'] = weeks
+            heads_array.append(head)
+
             context_dict['heads'] = heads_array
 
             os.remove(local_path)
             print(context_dict)
             return JSONResponse(context_dict, status=200)
-
         except Exception as e:
             print('exception 04032019-A from erp views.py %s %s' % (e.message, type(e)))
             print('failed in determining details regarding fees payment')

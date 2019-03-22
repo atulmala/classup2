@@ -81,7 +81,6 @@ class StudentList(generics.ListAPIView):
                           (first_name, the_class))
 
 
-
 class StudentListForTest(generics.ListCreateAPIView):
     serializer_class = StudentSerializer
 
