@@ -493,6 +493,7 @@ def prepare_results(request, school_id, the_class, section):
 
         c = canvas.Canvas(response, pagesize=A4, bottomup=1)
 
+
         font = 'Times-Bold'
         c.setFont(font, 14)
         font = 'Times-Bold'
@@ -526,17 +527,10 @@ def prepare_results(request, school_id, the_class, section):
             school_logo = Image.open('exam/%s.png' % short_name)
 
             print('cbse logo downloaded')
-            # logo_url = 'https://s3-us-west-2.amazonaws.com/classup2/media/dev/school_logos/%s/%s.png' % \
-            #            (short_name, short_name)
+
             logo_url = 'https://storage.googleapis.com/classup/classup2/media/dev/school_logos/%s/%s.png' % \
                        (short_name, short_name)
             print('logo_url = %s' % logo_url)
-            resp = requests.get(logo_url)
-            #school_logo = Image.open(StringIO.StringIO(resp.content))
-
-            cbse_logo_url = 'https://s3-us-west-2.amazonaws.com/classup2/media/dev/cbse_logo/Logo/cbse-logo.png'
-            resp = requests.get(cbse_logo_url)
-            #cbse_logo = Image.open(StringIO.StringIO(resp.content))
         except Exception as e:
             print('failed to insert logo in the marksheet')
             print('exception 04022018-B from exam views.py %s %s' % (e.message, type(e)))

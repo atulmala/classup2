@@ -884,7 +884,6 @@ def submit_marks(request, school_id):
         threshold = 50
         initial = 0
         for key in data:
-
             # 11/21 - there seems to be some issue when we use threading with uwsgi in production. This loop can
             # execute for long thus sending same sms several times to the same parent. Hence we are implementing
             # threshold, which if exceeds, the function will return
