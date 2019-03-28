@@ -144,18 +144,32 @@ def auth_login(request):
     }
 
     if request.method == 'POST':
-        #login_form = ClassUpLoginForm(request.POST)
-        #context_dict['form'] = login_form
-        #user_name = request.POST['username']
-        data = json.loads(request.body)
-        the_user = data['user']
-        log_entry(the_user, "Login from device initiated", "Normal", True)
-        password = data['password']
+        # login from django login form
+        try:
+            login_form = ClassUpLoginForm(request.POST)
+            #context_dict['form'] = login_form
+            the_user = request.POST['username']
+            password = request.POST['password']
+            login_from = 'django'
+        except Exception as e:
+            print('exception 28032019-A from authentication views.py %s %s' % (e.message, type(e)))
+            print('looks like login is NOT initiated from traditional django form. It is from vuejs')
+
+        # login from vuejs
+        try:
+            data = json.loads(request.body)
+            the_user = data['user']
+            password = data['password']
+            login_from = 'vuejs'
+        except Exception as e:
+            print('exception 28032019-B from authentication views.py %s %s' % (e.message, type(e)))
+            print('looks like is NOT initiated from vuejs. It is from traditional django form')
+        print('login initiated from = %s' % login_from)
         l.login_id = the_user
         l.password = password
         log_entry(the_user, "Login attempt from web (vuejs)", "Normal", True)
         l.login_id = the_user
-        #password = request.POST['password']
+
         l.password = password
 
         user = authenticate(username=the_user, password=password)
@@ -187,9 +201,11 @@ def auth_login(request):
                         print(error)
                         context_dict['message'] = error
                         context_dict['outcome'] = 'failed'
-                        return JSONResponse(context_dict)
-                        #login_form.errors['__all__'] = login_form.error_class([error])
-                        return render(request, 'classup/auth_login.html', context_dict)
+                        if login_from =='vuejs':
+                            return JSONResponse(context_dict)
+                        else:
+                            login_form.errors['__all__'] = login_form.error_class([error])
+                            return render(request, 'classup/auth_login.html', context_dict)
                 except Exception as e:
                     print ('unable to retrieve schoo_id for ' + user.username)
                     print('Exception 8 from authentication views.py = %s (%s)' % (e.message, type(e)))
@@ -207,19 +223,24 @@ def auth_login(request):
                 log_entry(the_user, "Login Successful", "Normal", True)
                 context_dict['message'] = 'Login Successful'
                 context_dict['outcome'] = 'success'
-                return JSONResponse(context_dict)
-                return render(request, 'classup/setup_index.html', context_dict)
+                if login_from == 'vuejs':
+                    return JSONResponse(context_dict)
+                else:
+                    return render(request, 'classup/setup_index.html', context_dict)
             else:
                 log_entry(the_user, "User is an Inactive user", "Normal", True)
                 error = 'User: ' + the_user + ' is disabled. Please contact your administrator'
                 l.comments = error
                 l.save()
-                #login_form.errors['__all__'] = login_form.error_class([error])
+
                 print (error)
                 context_dict['message'] = error
                 context_dict['outcome'] = 'failed'
-                return JSONResponse(context_dict)
-                return render(request, 'classup/auth_login.html', context_dict)
+                if login_from == 'vuejs':
+                    return JSONResponse(context_dict)
+                else:
+                    login_form.errors['__all__'] = login_form.error_class([error])
+                    return render(request, 'classup/auth_login.html', context_dict)
         else:
             error = 'Invalid username/password or blank entry. Please try again.'
             context_dict['message'] = error
@@ -228,8 +249,10 @@ def auth_login(request):
             l.save()
             #login_form.errors['__all__'] = login_form.error_class([error])
             print (error)
-            return JSONResponse(context_dict)
-            return render(request, 'classup/auth_login.html', context_dict)
+            if login_from == 'vuejs':
+                return JSONResponse(context_dict)
+            else:
+                return render(request, 'classup/auth_login.html', context_dict)
     else:
         print('get request')
         login_form = ClassUpLoginForm()

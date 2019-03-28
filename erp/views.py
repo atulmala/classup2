@@ -88,8 +88,6 @@ class ProcessFee(generics.ListCreateAPIView):
                 r.start_receipt = receipt_no + 1
                 r.save()
             except Exception as e:
-                print('exception 26032019-A from erp views.py %s %s' % (e.message, type(e)))
-                print('failed to generate receipt number')
                 receipt_no = 99999
 
             fee = FeePaymentHistory(school=school, student=student, amount=actual_paid, fine=fine,
