@@ -29,8 +29,7 @@ class AttendanceRegisterForm(forms.Form):
         school_id = kwargs.pop('school_id')
         super(AttendanceRegisterForm, self).__init__(*args, **kwargs)
         school = School.objects.get(id=school_id)
-        self.fields['the_class'] = forms.ModelChoiceField(queryset=Class.objects.filter(school=school).
-                                                          order_by('sequence'), label='Class')
+        self.fields['the_class'] = forms.ModelChoiceField(queryset=Class.objects.filter(school=school).order_by('sequence'), label='Class')
         self.fields['section'] = forms.ModelChoiceField(queryset=Section.objects.filter(school=school).
                                                         order_by('section'), label='Section')
         self.fields['subject'] = forms.ModelChoiceField(queryset=Subject.objects.filter(school=school).

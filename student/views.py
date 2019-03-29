@@ -50,10 +50,36 @@ class StudentList(generics.ListAPIView):
         the_class = self.kwargs['the_class']
         section = self.kwargs['section']
 
-        q1 = Student.objects.filter(school=school, current_section__section=section,
-                                    current_class__standard=the_class, active_status=True)
-        q2 = q1.order_by('fist_name')
-        return q2
+        if the_class != 'in_params':
+            q1 = Student.objects.filter(school=school, current_section__section=section,
+                                        current_class__standard=the_class, active_status=True)
+            q2 = q1.order_by('fist_name')
+            return q2
+        else:
+            print('getting the student list for %s for fees payment' % school)
+            reg_no = self.request.GET.get('reg_no')
+            print(reg_no)
+            if reg_no != '':
+                try:
+                    q1 = Student.objects.filter(school=school, student_erp_id=reg_no)
+                    return q1
+                except Exception as e:
+                    print('exception 02032019-A from student views.py %s %s' % (e.message, type(e)))
+                    print('failed to retrieve student with reg_no: %s' % reg_no)
+            else:
+                first_name = self.request.GET.get('first_name')
+                the_class = self.request.GET.get('the_class')
+                current_class = Class.objects.get(school=school, standard=the_class)
+
+                try:
+                    q1 = Student.objects.filter(school=school, fist_name__icontains=first_name,
+                                                current_class=current_class)
+                    q2 = q1.order_by('fist_name')
+                    return q2
+                except Exception as e:
+                    print('exception 02032019-B from student views.py %s %s' % (e.message, type(e)))
+                    print('failed to retrieve student list for matching name %s of class %s ' %
+                          (first_name, the_class))
 
 
 class StudentListForTest(generics.ListCreateAPIView):

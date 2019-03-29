@@ -1,5 +1,6 @@
 from django.contrib import admin
 from student.models import AdditionalDetails, House
+from .models import CollectAdmFee, FeePaymentHistory, PreviousBalance, ReceiptNumber
 
 # Register your models here.
 
@@ -22,5 +23,39 @@ class AdditionalDetailsAdmin(admin.ModelAdmin):
 admin.site.register(AdditionalDetails, AdditionalDetailsAdmin)
 
 
+class CollectAdmFeeAdmin(admin.ModelAdmin):
+    list_display = ('school', 'student',)
+    search_fields = ('school', 'student')
+    list_filter = ('school',)
+
+
+admin.site.register(CollectAdmFee, CollectAdmFeeAdmin)
+
+
+class FeePaymentAdmin(admin.ModelAdmin):
+    list_display = ('date', 'school', 'student', 'amount', 'fine', 'discount',
+                    'receipt_number', 'cheque_number', 'bank',)
+    search_fields = ('student', 'receipt_number',)
+    list_filter = ('school',)
+
+
+admin.site.register(FeePaymentHistory, FeePaymentAdmin)
+
+
+class PreviousBalanceAdmin(admin.ModelAdmin):
+    list_display = ('school', 'student', 'due_amount', 'negative',)
+    search_fields = ('student',)
+    list_filter = ('school',)
+
+
+admin.site.register(PreviousBalance, PreviousBalanceAdmin)
+
+
+class ReceiptAdmin(admin.ModelAdmin):
+    list_display = ('school', 'start_receipt')
+    list_filter = ('school',)
+
+
+admin.site.register(ReceiptNumber, ReceiptAdmin)
 
 

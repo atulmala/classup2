@@ -139,6 +139,7 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
         for key in data:
             student_id = data[key]
             student = Student.objects.get(id=student_id)
+            student_name = '%s %s' % (student.fist_name, student.last_name)
 
             # check to see if absence for this student for this date, class, section and subject has already
             #  been marked
@@ -283,6 +284,8 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                                             log_entry(teacher, action, "Normal", True)
                     else:
                         print('this attendance is more than 7 days old. Hence not sending SMS')
+                else:
+                    print('absence for %s for %s in %s has already been marked.' % (student_name, the_date, subject))
             except Exception as e:
                 print ('Exception6 from attendance views.py = %s (%s)' % (e.message, type(e)))
                 log_entry(teacher, "Absence was already marked. Exception 6 from attendance views.py", "Normal", True)
