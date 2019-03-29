@@ -7,7 +7,7 @@ from student.models import Student
 
 class ReceiptNumber(models.Model):
     school = models.ForeignKey(School)
-    start_receipt = models.IntegerField(default=1000, max_length=6)
+    start_receipt = models.IntegerField(default=1000)
 
 
 class CollectAdmFee(models.Model):
@@ -32,10 +32,22 @@ class FeePaymentHistory(models.Model):
     bank = models.CharField(max_length=20, default='N/A')
     receipt_number = models.IntegerField()
 
+    def __unicode__(self):
+        return str(self.receipt_number)
+
 
 class PreviousBalance(models.Model):
     school = models.ForeignKey(School)
     student = models.ForeignKey(Student)
     due_amount = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
     negative = models.BooleanField(default=True)
+
+
+class HeadWiseFee(models.Model):
+    date = models.DateField(auto_now_add=True)
+    PaymentHistory = models.ForeignKey(FeePaymentHistory)
+    school = models.ForeignKey(School)
+    student = models.ForeignKey(Student)
+    head = models.CharField(max_length=20)
+    amount = models.DecimalField(decimal_places=2, max_digits=7)
 

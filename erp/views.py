@@ -25,7 +25,7 @@ from setup.views import validate_excel_extension
 
 from setup.models import School
 from student.models import Student, AdditionalDetails, House
-from .models import CollectAdmFee, FeePaymentHistory, PreviousBalance, ReceiptNumber
+from .models import CollectAdmFee, FeePaymentHistory, PreviousBalance, ReceiptNumber, HeadWiseFee
 
 # Create your views here.
 
@@ -94,6 +94,26 @@ class ProcessFee(generics.ListCreateAPIView):
                                     discount=discount, mode=mode, cheque_number=cheque_no,
                                     bank=bank, comments='No comments', receipt_number=receipt_no)
             fee.save()
+
+            # save head-wise fee
+            for head in heads:
+                h = head['head']
+                amount = head['amount']
+                if amount != 'N/A':
+                    entry = HeadWiseFee(PaymentHistory=fee, school=school,
+                                        student=student, head=h, amount=float(amount))
+                    entry.save()
+
+            # also save late fee and discount as heads. Only if they are actually charged or provided
+            if fine > 0.0:
+                late_fee = HeadWiseFee(PaymentHistory=fee, school=school,
+                                        student=student, head='Fine', amount=float(fine))
+                late_fee.save()
+
+            if discount > 0.0:
+                waiver = HeadWiseFee(PaymentHistory=fee, school=school,
+                                        student=student, head='Discount', amount=float(discount))
+                waiver.save()
 
             # adjust the balance
             try:
