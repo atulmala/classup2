@@ -2,6 +2,8 @@ import os
 import xlrd
 import json
 import inflect
+import StringIO
+import xlsxwriter
 
 from google.cloud import storage
 from reportlab.pdfgen import canvas
@@ -10,10 +12,10 @@ from reportlab.lib.units import inch, cm
 from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
 
-
 from django.shortcuts import render
 from django.contrib import messages
 from django.http import HttpResponse
+from django.db.models import QuerySet
 from rest_framework.renderers import JSONRenderer
 from datetime import datetime
 
@@ -24,8 +26,9 @@ from setup.forms import ExcelFileUploadForm
 from setup.views import validate_excel_extension
 
 from setup.models import School
-from student.models import Student, AdditionalDetails, House
+from student.models import Student, AdditionalDetails, House, Parent
 from .models import CollectAdmFee, FeePaymentHistory, PreviousBalance, ReceiptNumber, HeadWiseFee
+
 
 # Create your views here.
 
@@ -39,11 +42,141 @@ class JSONResponse(HttpResponse):
     """
     an HttpResponse that renders its contents to JSON
     """
+
     def __init__(self, data, **kwargs):
         print ('from JSONResponse...')
         content = JSONRenderer().render(data)
         kwargs['content_type'] = 'application/json'
         super(JSONResponse, self).__init__(content, **kwargs)
+
+
+class DefaulterReport(generics.ListCreateAPIView):
+    def get(self, request, *args, **kwargs):
+        school_id = self.kwargs['school_id']
+        school = School.objects.get(id=school_id)
+        excel_file_name = 'Fee_Defaulter_List.xlsx'
+        print (excel_file_name)
+        output = StringIO.StringIO(excel_file_name)
+        workbook = xlsxwriter.Workbook(output)
+        sheet = workbook.add_worksheet('Defaulters')
+        # sheet.freeze_panes(2, 4)
+
+        header = workbook.add_format({
+            'bold': True,
+            'bg_color': '#F7F7F7',
+            'color': 'black',
+            'align': 'center',
+            'valign': 'top',
+            'border': 1
+        })
+        title = workbook.add_format({
+            'bold': True,
+            'font_size': 14,
+            'align': 'center',
+            'valign': 'vcenter'
+        })
+
+        money = workbook.add_format({
+            'num_format':'#,##0.00',
+            'border': 1
+        })
+        money.set_border()
+
+        cell_normal = workbook.add_format({
+            'align': 'left',
+            'valign': 'top',
+            'text_wrap': True
+        })
+        cell_normal.set_border()
+        fail_format = workbook.add_format()
+        fail_format.set_bg_color('yellow')
+
+        row = 0
+        col = 0
+        currentDay = datetime.now().day
+        year = datetime.now().year
+        month = datetime.now().month
+        date = '%i/%i/%i' % (currentDay, month, year)
+        sheet.merge_range(row, col, row, col + 6, 'Defaulter list as on %s' % date, title)
+
+        sheet.set_column('B:D', 20)
+        sheet.set_column('E:H', 12)
+        row += 1
+        col = 0
+        sheet.write_string(row, col, 'S No.', header)
+        col += 1
+        sheet.write_string(row, col, 'Parent', header)
+        col += 1
+        sheet.write_string(row, col, 'Mobile No', header)
+        col += 1
+        sheet.write_string(row, col, 'Student', header)
+        col += 1
+        sheet.write_string(row, col, 'Class', header)
+        col += 1
+        sheet.write_string(row, col, 'Amount Due', header)
+        col += 1
+        sheet.write_string(row, col, 'Family Due', header)
+
+        row += 1
+        col = 0
+        try:
+            parents = PreviousBalance.objects.filter(school=school).order_by('parent').values('parent').distinct()
+            print(parents)
+            index = 1
+            grand_total = 0.00
+            for parent in parents:
+                pk = parent['parent']
+                the_parent = Parent.objects.get(pk=pk)
+                print(the_parent)
+                entry = PreviousBalance.objects.filter(school=school, parent=the_parent)
+                print(entry)
+                family_total = 0.0
+                for e in entry:
+                    sheet.write_number(row, col, index, cell_normal)
+                    index += 1
+                    col += 1
+                    sheet.write_string(row, col, e.parent.parent_name, cell_normal)
+                    col += 1
+                    sheet.write_string(row, col, e.parent.parent_mobile1, cell_normal)
+                    col += 1
+                    sheet.write_string(row, col, '%s %s' % (e.student.fist_name, e.student.last_name), cell_normal)
+                    col += 1
+                    sheet.write_string(row, col, '%s %s' %
+                                       (e.student.current_class.standard,
+                                        e.student.current_section.section), cell_normal)
+                    col += 1
+                    sheet.write_number(row, col, e.due_amount, money)
+                    grand_total += float(e.due_amount)
+                    col += 1
+                    family_total += float(e.due_amount)
+                    print('family total = %.2f' % family_total)
+                    sheet.write_number(row, col, family_total, money)
+                    row += 1
+                    col = 0
+                # check if this parent has multiple kids
+                if entry.count() > 1:
+                    f_row = row - entry.count()
+                    sheet.conditional_format(f_row, 0, row - 1, col + 6, {'type': 'no_blanks', 'format': fail_format})
+                    sheet.merge_range(f_row, col + 6, row - 1, col + 6, str(family_total), money)
+            sheet.write_string(row, col + 5, 'Grand Total', title)
+            sheet.write_number(row, col + 6, grand_total, money)
+
+
+            print('about to close the workbook')
+            workbook.close()
+            print('workbook closed')
+            response = HttpResponse(content_type='application/vnd.ms-excel')
+            response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
+            response.write(output.getvalue())
+            return response
+
+        except Exception as e:
+            print('exception 30032109-A from erp views.py %s %s' % (e.message, type(e)))
+            print('failed to execute query')
+            context_dict = {}
+            context_dict['status'] = 'failed'
+            context_dict['message'] = 'Failed to create defaulter list. Please contact ClassUp Support'
+            return JSONResponse(context_dict, status=201)
 
 
 class ProcessFee(generics.ListCreateAPIView):
@@ -107,12 +240,12 @@ class ProcessFee(generics.ListCreateAPIView):
             # also save late fee and discount as heads. Only if they are actually charged or provided
             if fine > 0.0:
                 late_fee = HeadWiseFee(PaymentHistory=fee, school=school,
-                                        student=student, head='Fine', amount=float(fine))
+                                       student=student, head='Fine', amount=float(fine))
                 late_fee.save()
 
             if discount > 0.0:
                 waiver = HeadWiseFee(PaymentHistory=fee, school=school,
-                                        student=student, head='Discount', amount=float(discount))
+                                     student=student, head='Discount', amount=float(discount))
                 waiver.save()
 
             # adjust the balance
@@ -121,6 +254,8 @@ class ProcessFee(generics.ListCreateAPIView):
                 if pending.due_amount != 0.0:
                     pending.due_amount = balance
                     pending.save()
+                if pending.due_amount == 0.0:
+                    pending.delete()
             except Exception as e:
                 print('exception 24032019-B from erp views.py %s %s' % (e.message, type(e)))
                 print('%s of %s has no previous balance.' % (student, school))
@@ -230,7 +365,7 @@ class ProcessFee(generics.ListCreateAPIView):
             top_position -= 15
             text = 'B. Previous Dues: '
             c.drawString(r1_border, top_position, text)
-            c.drawString(r2_border,top_position, text)
+            c.drawString(r2_border, top_position, text)
             c.drawString(amt_pos1, top_position, str(previous_dues))
             c.drawString(amt_pos2, top_position, str(previous_dues))
 
@@ -415,7 +550,7 @@ class FeeDetails(generics.ListCreateAPIView):
                 head['amount'] = amt
                 heads_array.append(head)
             head = {}
-            context_dict['Due this term'] =due_this_term
+            context_dict['Due this term'] = due_this_term
 
             # get the previous outstanding, if any
             due_amount = 0.0
@@ -480,7 +615,7 @@ class FeeDetails(generics.ListCreateAPIView):
             head = {}
             context_dict['Days Delay'] = difference
             # delay in weeks
-            weeks = round(float(difference)/7.0, 1)
+            weeks = round(float(difference) / 7.0, 1)
             print('delay by %.1f weeks' % weeks)
             context_dict['Weeks Delay'] = weeks
 
@@ -492,7 +627,6 @@ class FeeDetails(generics.ListCreateAPIView):
         except Exception as e:
             print('exception 04032019-A from erp views.py %s %s' % (e.message, type(e)))
             print('failed in determining details regarding fees payment')
-
 
 
 class SetupAddDetails(generics.ListCreateAPIView):
@@ -576,7 +710,7 @@ class SetupAddDetails(generics.ListCreateAPIView):
                             print('exception 19032018-A from erp views.py %s %s' % (e.message, type(e)))
                             print('additional details for %s with erp_id %s were not set. Setting now...' %
                                   (student_name, erp_id))
-                            ad = AdditionalDetails(student=student, mother_name=mother_name, address= address)
+                            ad = AdditionalDetails(student=student, mother_name=mother_name, address=address)
                             ad.save()
                             print('successfully created additional details for %s with erp_id %s' %
                                   (student_name, erp_id))
@@ -610,5 +744,3 @@ class SetupAddDetails(generics.ListCreateAPIView):
                 print ('exception 19032018-D from erp views.py %s %s ' % (e.message, type(e)))
                 form.errors['__all__'] = form.error_class([error])
                 return render(request, 'classup/setup_data.html', context_dict)
-
-

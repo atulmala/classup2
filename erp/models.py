@@ -1,6 +1,6 @@
 from django.db import models
 from setup.models import School
-from student.models import Student
+from student.models import Student, Parent
 
 
 # Create your models here.
@@ -39,6 +39,24 @@ class FeePaymentHistory(models.Model):
 class PreviousBalance(models.Model):
     school = models.ForeignKey(School)
     student = models.ForeignKey(Student)
+    parent = models.ForeignKey(Parent, null=True)
+    due_amount = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
+    negative = models.BooleanField(default=True)
+
+    # we will extract parent from student
+    def save(self, *args, **kwargs):
+        p = self.student.parent
+        self.parent = p
+        super(PreviousBalance, self).save(*args, **kwargs)
+
+    def __unicode__(self):
+        return '%s %s' % (self.student.fist_name, self.student.last_name)
+
+
+class PrevBalStudent(models.Model):
+    school = models.ForeignKey(School)
+    student = models.ForeignKey(Student)
+    parent = models.ForeignKey(Parent, null=True)
     due_amount = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
     negative = models.BooleanField(default=True)
 

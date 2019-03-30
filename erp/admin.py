@@ -43,7 +43,7 @@ admin.site.register(FeePaymentHistory, FeePaymentAdmin)
 
 
 class PreviousBalanceAdmin(admin.ModelAdmin):
-    list_display = ('school', 'student', 'due_amount', 'negative',)
+    list_display = ('school', 'parent', 'student', 'due_amount', 'negative',)
     search_fields = ('student',)
     list_filter = ('school',)
 
