@@ -15,9 +15,10 @@ from reportlab.platypus import Table, TableStyle
 from django.shortcuts import render
 from django.contrib import messages
 from django.http import HttpResponse
-from django.db.models import QuerySet
+from django.db.models import Sum
 from rest_framework.renderers import JSONRenderer
 from datetime import datetime
+from dateutil import relativedelta
 
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework import generics
@@ -59,7 +60,8 @@ class DefaulterReport(generics.ListCreateAPIView):
         output = StringIO.StringIO(excel_file_name)
         workbook = xlsxwriter.Workbook(output)
         sheet = workbook.add_worksheet('Defaulters')
-        # sheet.freeze_panes(2, 4)
+        sheet.freeze_panes(0, 0)
+        #sheet.freeze_panes(2, 4)
 
         header = workbook.add_format({
             'bold': True,
@@ -77,7 +79,8 @@ class DefaulterReport(generics.ListCreateAPIView):
         })
 
         money = workbook.add_format({
-            'num_format':'#,##0.00',
+            'num_format':'#,##,##0.00',
+            'align': 'right',
             'border': 1
         })
         money.set_border()
@@ -227,6 +230,15 @@ class ProcessFee(generics.ListCreateAPIView):
                                     discount=discount, mode=mode, cheque_number=cheque_no,
                                     bank=bank, comments='No comments', receipt_number=receipt_no)
             fee.save()
+
+            # if one time fee such as admission fee was taken remove this student from CollectAdm fee table
+            try:
+                c = CollectAdmFee.objects.get(student=student)
+                c.delete()
+                print('%s of %s removed from CollectAdmFee table' % (student, school))
+            except Exception as e:
+                print('exception 31032019-B from erp views.py %s %s' % (e.message, type(e)))
+                print('One time fee was not charged from %s of %s' % (student, school))
 
             # save head-wise fee
             for head in heads:
@@ -466,23 +478,26 @@ class FeeDetails(generics.ListCreateAPIView):
         context_dict = {
 
         }
-        school_id = self.kwargs['school_id']
-        student_id = self.kwargs['student_id']
         q1 = [4, 5, 6]
         q2 = [7, 8, 9]
         q3 = [10, 11, 12]
         q4 = [1, 2, 3]
         try:
+            school_id = request.GET.get('school_id')
             school = School.objects.get(pk=school_id)
+
+            student_id = request.GET.get('student_id')
             student = Student.objects.get(school=school, student_erp_id=student_id)
             context_dict['reg_no'] = student.student_erp_id
             full_name = '%s %s' % (student.fist_name, student.last_name)
             context_dict['full_name'] = full_name
             parent = student.parent.parent_name
             context_dict['parent'] = parent
+
             current_class = student.current_class.standard
             current_section = student.current_section.section
             context_dict['current_class'] = '%s %s' % (current_class, current_section)
+
             currentDay = datetime.now().day
             year = datetime.now().year
             month = datetime.now().month
@@ -505,7 +520,13 @@ class FeeDetails(generics.ListCreateAPIView):
             sheet = wb.sheet_by_name(current_class)
             heads_array = []
 
+            first_april = datetime(2019, 4, 1)
+            today = datetime.today()
+            diff = relativedelta.relativedelta(today, first_april)
+            months_count = diff.months
+
             due_this_term = 0.0
+            due_till_now = 0.0
             for row in range(sheet.nrows):
                 if row == 0:
                     fee_frequency = sheet.cell(row, 1).value
@@ -517,19 +538,22 @@ class FeeDetails(generics.ListCreateAPIView):
                 h = sheet.cell(row, 0).value
                 amt = sheet.cell(row, 1).value
                 freq = sheet.cell(row, 2).value
+
                 if int(freq) == 0:
                     # this is one time fee (admission/caution). check if this fee to be charged for this student
                     print('%s is one time fees. checking whether it has been paid or not' % h)
                     try:
-                        if CollectAdmFee.objects.get(student=student).exists():
-                            print('%s has NOT paid one time fees %s' % (student, h))
-                            due_this_term += amt
+                        c = CollectAdmFee.objects.get(student=student)
+                        print('%s has NOT paid one time fees %s' % (student, h))
+                        due_this_term += amt
+                        due_till_now += amt
                     except Exception as e:
                         print('exception 21032019-A from erp views.py %s %s' % (e.message, type(e)))
                         print('%s has paid one time fees %s' % (student, h))
                         amt = 'N/A'
 
                 if int(freq) == 12:
+                    due_till_now += amt
                     # this is once in a year fee like annual fee, exam fee etc. this is to be charge in April
                     print('%s is annual fees' % h)
                     if month == 'April':
@@ -537,20 +561,28 @@ class FeeDetails(generics.ListCreateAPIView):
                         due_this_term += amt
                     else:
                         amt = 'N/A'
+
                 if int(freq) == 1:
                     # this fees is charged monthly
                     print('%s is monthly fees' % h)
                     due_this_term += amt
 
+                    # how much of this fee is accumulated till now
+                    due_till_now += amt * months_count
+
                 if int(freq) == 3:
                     # this fee is charged quarterly
                     print('%s is quarterly fees' % h)
                     due_this_term += amt
+
+                    # how much of this fee is accumulated till now
+                    till_now += amt * (months_count/3)
                 head['head'] = h
                 head['amount'] = amt
                 heads_array.append(head)
             head = {}
             context_dict['Due this term'] = due_this_term
+            context_dict['Due till now'] = due_till_now
 
             # get the previous outstanding, if any
             due_amount = 0.0
@@ -580,9 +612,9 @@ class FeeDetails(generics.ListCreateAPIView):
                 for payment in payments:
                     entry['date'] = payment.date
                     entry['amount'] = payment.amount
-                    paid_till_date += payment.amount
+                    paid_till_date += float(payment.amount)
                     entry['mode'] = payment.mode
-                    entry['comments'] = payment.comment
+                    entry['comments'] = payment.comments
                     payment_history.append(entry)
                     entry = {}
             except Exception as e:
@@ -591,6 +623,7 @@ class FeeDetails(generics.ListCreateAPIView):
                       (student, current_class, school))
             context_dict['payment_history'] = payment_history
             context_dict['Paid till date'] = paid_till_date
+            print(context_dict)
 
             # check if there is a delay in paying fee
             if fee_frequency == 1:

@@ -19,6 +19,7 @@ from setup.models import School, UserSchoolMapping
 from academics.models import Class, Section, Subject, TestResults, ClassTeacher, Exam, TeacherSubjects
 from teacher.models import Teacher
 from student.models import Student, Parent, DOB
+from erp.models import CollectAdmFee
 from .models import Configurations
 
 from .serializers import ConfigurationSerializer
@@ -377,6 +378,18 @@ def add_student(request):
                                     roll_number=current_roll_no, parent=p)
                     s.save()
                 print ('saving successful!')
+
+                # 31/03/2019 - as this is a new admission, fee such as admissoin fee and other one time fee
+                # such as caution money have to be collected at the time of accepting the first fee
+                try:
+                    entry = CollectAdmFee.objects.get(school=school, student=s)
+                    print('%s has been already marked for collecting admission fee' % s)
+                except Exception as e:
+                    print('exception 31032019-A from setup views.py %s %s' % (e.message, type(e)))
+                    print('%s will be now marked for collecting admission fee' % s)
+                    entry = CollectAdmFee(school=school, student=s)
+                    entry.save()
+
 
                 # this student should appear in all the pending test for this class & section
                 # print ('creating an entry for this student in all pending test for this class/section')
