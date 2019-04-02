@@ -60,8 +60,6 @@ class DefaulterReport(generics.ListCreateAPIView):
         output = StringIO.StringIO(excel_file_name)
         workbook = xlsxwriter.Workbook(output)
         sheet = workbook.add_worksheet('Defaulters')
-        sheet.freeze_panes(0, 0)
-        #sheet.freeze_panes(2, 4)
 
         header = workbook.add_format({
             'bold': True,
@@ -87,7 +85,7 @@ class DefaulterReport(generics.ListCreateAPIView):
 
         cell_normal = workbook.add_format({
             'align': 'left',
-            'valign': 'top',
+            'valign': 'vcenter',
             'text_wrap': True
         })
         cell_normal.set_border()
@@ -96,6 +94,7 @@ class DefaulterReport(generics.ListCreateAPIView):
 
         row = 0
         col = 0
+
         currentDay = datetime.now().day
         year = datetime.now().year
         month = datetime.now().month
@@ -123,6 +122,10 @@ class DefaulterReport(generics.ListCreateAPIView):
         row += 1
         col = 0
         try:
+            students = Student.objects.filter(school=school)
+            for student in students:
+                parent = student.parent
+                print(parent)
             parents = PreviousBalance.objects.filter(school=school).order_by('parent').values('parent').distinct()
             print(parents)
             index = 1
@@ -271,9 +274,10 @@ class ProcessFee(generics.ListCreateAPIView):
             except Exception as e:
                 print('exception 24032019-B from erp views.py %s %s' % (e.message, type(e)))
                 print('%s of %s has no previous balance.' % (student, school))
-                pending = PreviousBalance(student=student, school=school)
-                pending.due_amount = balance
-                pending.save()
+                if balance != 0.0 or balance != 0.00:
+                    pending = PreviousBalance(student=student, school=school)
+                    pending.due_amount = balance
+                    pending.save()
             print('%s of %s has now a new balance of %.2f' % (student, school, balance))
 
             # prepare the receipt in pdf
@@ -520,7 +524,7 @@ class FeeDetails(generics.ListCreateAPIView):
             sheet = wb.sheet_by_name(current_class)
             heads_array = []
 
-            first_april = datetime(2019, 4, 1)
+            first_april = datetime(2019, 1, 1)
             today = datetime.today()
             diff = relativedelta.relativedelta(today, first_april)
             months_count = diff.months
@@ -555,8 +559,9 @@ class FeeDetails(generics.ListCreateAPIView):
                 if int(freq) == 12:
                     due_till_now += amt
                     # this is once in a year fee like annual fee, exam fee etc. this is to be charge in April
-                    print('%s is annual fees' % h)
-                    if month == 'April':
+                    print('%s is annual fees to be charged in the month of april' % h)
+                    print('and the month is %s' % month)
+                    if month == 4:
                         head['amount'] = amt
                         due_this_term += amt
                     else:
@@ -576,7 +581,7 @@ class FeeDetails(generics.ListCreateAPIView):
                     due_this_term += amt
 
                     # how much of this fee is accumulated till now
-                    till_now += amt * (months_count/3)
+                    due_till_now += amt * (months_count/3)
                 head['head'] = h
                 head['amount'] = amt
                 heads_array.append(head)
@@ -645,13 +650,17 @@ class FeeDetails(generics.ListCreateAPIView):
             today = datetime.now()
             difference = (today - due_date).days
             print('delay by %i days' % difference)
-            head = {}
-            context_dict['Days Delay'] = difference
+
             # delay in weeks
             weeks = round(float(difference) / 7.0, 1)
             print('delay by %.1f weeks' % weeks)
-            context_dict['Weeks Delay'] = weeks
 
+            if difference > 1:
+                context_dict['Days Delay'] = difference
+                context_dict['Weeks Delay'] = weeks
+            else:
+                context_dict['Days Delay'] = 'No Delay'
+                context_dict['Weeks Delay'] = 'No Delay'
             context_dict['heads'] = heads_array
 
             os.remove(local_path)

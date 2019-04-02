@@ -21,6 +21,7 @@ class CollectAdmFee(models.Model):
 class FeePaymentHistory(models.Model):
     school = models.ForeignKey(School)
     student = models.ForeignKey(Student)
+    parent = models.ForeignKey(Parent, null=True)
     date = models.DateField(auto_now_add=True)
     previous_due = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
     amount = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
@@ -31,6 +32,12 @@ class FeePaymentHistory(models.Model):
     cheque_number = models.CharField(max_length=6, default='N/A')
     bank = models.CharField(max_length=20, default='N/A')
     receipt_number = models.IntegerField()
+
+    # we will extract parent from student
+    def save(self, *args, **kwargs):
+        p = self.student.parent
+        self.parent = p
+        super(FeePaymentHistory, self).save(*args, **kwargs)
 
     def __unicode__(self):
         return str(self.receipt_number)
