@@ -55,6 +55,19 @@ class DefaulterReport(generics.ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         school_id = self.kwargs['school_id']
         school = School.objects.get(id=school_id)
+
+        # get the fee detail excel sheet
+        storage_client = storage.Client()
+        bucket = storage_client.get_bucket('classup')
+        print(bucket)
+        fee_file = '%s.xlsx' % str(school_id)
+        fee_file_path = 'classup2/Fee/%s/%s' % (str(school_id), fee_file)
+        blob = bucket.blob(fee_file_path)
+        local_path = 'erp/%s' % fee_file
+        blob.download_to_filename(local_path)
+        wb = xlrd.open_workbook(local_path)
+
+
         excel_file_name = 'Fee_Defaulter_List.xlsx'
         print (excel_file_name)
         output = StringIO.StringIO(excel_file_name)
@@ -79,6 +92,7 @@ class DefaulterReport(generics.ListCreateAPIView):
         money = workbook.add_format({
             'num_format':'#,##,##0.00',
             'align': 'right',
+            'valign': 'vcenter',
             'border': 1
         })
         money.set_border()
@@ -121,12 +135,17 @@ class DefaulterReport(generics.ListCreateAPIView):
 
         row += 1
         col = 0
+        parents = Student.objects.filter(school=school).order_by('parent').values('parent').distinct()
+        print(parents)
+
         try:
-            students = Student.objects.filter(school=school)
-            for student in students:
-                parent = student.parent
-                print(parent)
-            parents = PreviousBalance.objects.filter(school=school).order_by('parent').values('parent').distinct()
+            # how many months have passed since the sessio start
+            first_april = datetime(2019, 1, 1)
+            today = datetime.today()
+            diff = relativedelta.relativedelta(today, first_april)
+            months_count = diff.months
+
+            parents = Student.objects.filter(school=school).order_by('parent').values('parent').distinct()
             print(parents)
             index = 1
             grand_total = 0.00
@@ -134,29 +153,116 @@ class DefaulterReport(generics.ListCreateAPIView):
                 pk = parent['parent']
                 the_parent = Parent.objects.get(pk=pk)
                 print(the_parent)
-                entry = PreviousBalance.objects.filter(school=school, parent=the_parent)
+                entry = Student.objects.filter(school=school, parent=the_parent)
                 print(entry)
                 family_total = 0.0
-                for e in entry:
+                for student in entry:
+                    print('now dealing with %s ward of %s' % (student, the_parent))
+                    due_this_term = 0.0
+                    due_till_now = 0.0
                     sheet.write_number(row, col, index, cell_normal)
                     index += 1
                     col += 1
-                    sheet.write_string(row, col, e.parent.parent_name, cell_normal)
+                    sheet.write_string(row, col, student.parent.parent_name, cell_normal)
                     col += 1
-                    sheet.write_string(row, col, e.parent.parent_mobile1, cell_normal)
+                    sheet.write_string(row, col, student.parent.parent_mobile1, cell_normal)
                     col += 1
-                    sheet.write_string(row, col, '%s %s' % (e.student.fist_name, e.student.last_name), cell_normal)
+                    sheet.write_string(row, col, '%s %s' % (student.fist_name, student.last_name), cell_normal)
                     col += 1
                     sheet.write_string(row, col, '%s %s' %
-                                       (e.student.current_class.standard,
-                                        e.student.current_section.section), cell_normal)
+                                       (student.current_class.standard,
+                                        student.current_section.section), cell_normal)
                     col += 1
-                    sheet.write_number(row, col, e.due_amount, money)
-                    grand_total += float(e.due_amount)
+
+                    # 02/04/2019 - the outstanding will be calcualted as follows: we will determine the fee due till date
+                    # for example if today is 7th of Jul and fee payment is monthly we will calculate the fee
+                    # due by addidng monthly fee for april, may, june and july.
+                    # then we will add any outstanding (means and shortfall in fee paid last time)
+                    # we then calculate how much has been paid for this student till now
+                    # due on student = fee due till date + outstanding - fee paid till date
+
+                    input_sheet = wb.sheet_by_name(student.current_class.standard)
+                    for sheet_row in range(input_sheet.nrows):
+                        if sheet_row == 0:
+                            fee_frequency = input_sheet.cell(sheet_row, 1).value
+                            d_date = input_sheet.cell(sheet_row, 3).value
+                            continue
+                        if sheet_row == 1:
+                            continue
+                        head = {}
+                        h = input_sheet.cell(sheet_row, 0).value
+                        amt = input_sheet.cell(sheet_row, 1).value
+                        freq = input_sheet.cell(sheet_row, 2).value
+
+                        if int(freq) == 0:
+                            # this is one time fee (admission/caution). check if this fee to be charged for this student
+                            print('%s is one time fees. checking whether it has been paid or not' % h)
+                            try:
+                                c = CollectAdmFee.objects.get(student=student)
+                                print('%s has NOT paid one time fees %s' % (student, h))
+                                due_this_term += amt
+                                due_till_now += amt
+                            except Exception as e:
+                                print('exception 21032019-A from erp views.py %s %s' % (e.message, type(e)))
+                                print('%s has paid one time fees %s' % (student, h))
+                                amt = 'N/A'
+
+                        if int(freq) == 12:
+                            due_till_now += amt
+                            # this is once in a year fee like annual fee, exam fee etc. this is to be charge in April
+                            print('%s is annual fees to be charged in the month of april' % h)
+                            print('and the month is %s' % month)
+                            if month == 4:
+                                head['amount'] = amt
+                                due_this_term += amt
+                            else:
+                                amt = 'N/A'
+
+                        if int(freq) == 1:
+                            # this fees is charged monthly
+                            print('%s is monthly fees' % h)
+                            due_this_term += amt
+
+                            # how much of this fee is accumulated till now
+                            due_till_now += amt * months_count
+
+                        if int(freq) == 3:
+                            # this fee is charged quarterly
+                            print('%s is quarterly fees' % h)
+                            due_this_term += amt
+
+                            # how much of this fee is accumulated till now
+                            due_till_now += amt * (months_count / 3)
+                    # get the outstanding on this student
+                    outstanding = 0.0
+                    try:
+                        pb = PreviousBalance.objects.get(school=school, student=student)
+                        outstanding = pb.due_amount
+                    except Exception as e:
+                        print('exception 02042019-A from erp views.py %s %s' % (e.message, type(e)))
+                        print('%s has no previous outstanding' % student)
+
+                    # check how much has been paid till date
+                    history = FeePaymentHistory.objects.filter(student=student).aggregate(Sum('amount'))
+                    paid_till_date = history['amount__sum']
+                    if paid_till_date == None:
+                        paid_till_date = 0.0
+
+                    # now the net due
+                    print('due_till_now = %.2f' % due_till_now)
+                    print('due_this_term = %.2f' % due_this_term)
+                    print('outstanding = %.2f' %  outstanding)
+                    print('paid_till_date = %.2f' % paid_till_date)
+                    net_due = float(due_till_now) + float(due_this_term) + float(outstanding) - float(paid_till_date)
+                    print('net due = %.2f' % net_due)
+
+                    sheet.write_number(row, col, net_due, money)
+                    grand_total += float(net_due)
                     col += 1
-                    family_total += float(e.due_amount)
+                    family_total += float(net_due)
                     print('family total = %.2f' % family_total)
                     sheet.write_number(row, col, family_total, money)
+
                     row += 1
                     col = 0
                 # check if this parent has multiple kids
@@ -164,13 +270,20 @@ class DefaulterReport(generics.ListCreateAPIView):
                     f_row = row - entry.count()
                     sheet.conditional_format(f_row, 0, row - 1, col + 6, {'type': 'no_blanks', 'format': fail_format})
                     sheet.merge_range(f_row, col + 6, row - 1, col + 6, str(family_total), money)
+                    sheet.merge_range(f_row, col + 1, row - 1, col + 1, the_parent.parent_name, cell_normal)
+                    sheet.merge_range(f_row, col + 2, row - 1, col + 2, the_parent.parent_mobile1, cell_normal)
+
             sheet.write_string(row, col + 5, 'Grand Total', title)
             sheet.write_number(row, col + 6, grand_total, money)
 
-
+            # close the workbook
             print('about to close the workbook')
             workbook.close()
             print('workbook closed')
+
+            # remove the fee detail sheet from local storage
+            os.remove(local_path)
+
             response = HttpResponse(content_type='application/vnd.ms-excel')
             response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
             response.write(output.getvalue())

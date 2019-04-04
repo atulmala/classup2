@@ -15,7 +15,7 @@ from django.contrib.auth.models import User
 from django.db.models import Max
 
 from setup.models import School
-from academics.models import ClassTest, TestResults, TermTestResult, ThirdLang, Class, Section
+from academics.models import ClassTest, TestResults, TermTestResult, ThirdLang, Class, Section, CoScholastics
 from exam.models import HigherClassMapping, NPromoted
 from exam.forms import ResultSheetForm
 from .models import Student, Parent
@@ -658,6 +658,21 @@ class MidTermAdmission (generics.ListCreateAPIView):
                                         print('exception 23012018-E from student views.py %s %s' % (e.message, type(e)))
                                         print('failed to save test results of subject %s for %s' %
                                               (subject.subject_name, student_name))
+                    # now create co-scholastic grades entry
+                    terms = ['term1', 'term2']
+                    for term in terms:
+                        try:
+                            coscholastic = CoScholastics.objects.get(term=term, the_class=the_class,
+                                                         section=section, student=student)
+                            print('coscholastic for %s already exist for %s. Hence not creating' % (term, student))
+                        except Exception as e:
+                            print('exception 04042019-A from student views.py %s %s' % (e.message, type(e)))
+                            print('coscholastic for %s does not exist for %s. Hence crating...' % (term, student))
+                            coscholastic = CoScholastics(term=term, the_class=the_class,
+                                                         section=section, student=student)
+                            coscholastic.save()
+                            print('coscholastic for %s for %s successfully created mid term admission' % (term, student))
+
                     messages.success(request._request, 'successfully created tests for %s' % student_name)
                     return render(request, 'classup/mid_term_admission.html', context_dict)
                 except Exception as e:
