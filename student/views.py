@@ -322,24 +322,24 @@ class StudentListDownload (generics.ListAPIView):
                 sheet.write_string(row, col, 'Parent Name', title)
                 col += 1
                 sheet.write_string(row, col, 'Parent Mobile', title)
-                col += 1
-                sheet.write_string(row, col, 'New Mobile', title)
+                # col += 1
+                # sheet.write_string(row, col, 'New Mobile', title)
 
                 # 06/03/2018 - coding to show the current class/sec and promoted class/sec will be required only during
                 # new session start, otherwise will be coded
-                # col += 1
-                # sheet.write_string(row, col, 'Current Class', title)
-                # col += 1
-                # sheet.write_string(row, col, 'Current Section', title)
-                # col += 1
-                #
-                # sheet.write_string(row, col, 'Promoted Class', title)
-                # col += 1
-                # sheet.write_string(row, col, 'Promoted Section', title)
+                col += 1
+                sheet.write_string(row, col, 'Current Class', title)
+                col += 1
+                sheet.write_string(row, col, 'Current Section', title)
+                col += 1
+
+                sheet.write_string(row, col, 'Promoted Class', title)
+                col += 1
+                sheet.write_string(row, col, 'Promoted Section', title)
 
                 try:
                     students = Student.objects.filter(school=school, current_class=the_class,
-                                                      current_section=section, active_status=True).order_by('fist_name')
+                                                      active_status=True).order_by('current_section', 'fist_name')
                     print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
                     print (students)
                     row = row + 1
@@ -360,45 +360,45 @@ class StudentListDownload (generics.ListAPIView):
                         col += 1
                         mobile = student.parent.parent_mobile1
                         sheet.write_string(row, col, mobile, cell_normal)
-                        #
-                        # # current class & section
-                        # col += 1
-                        # current_class = student.current_class.standard
-                        # sheet.write_string (row, col, current_class, cell_normal)
-                        # col += 1
-                        # current_section = student.current_section.section
-                        # sheet.write_string(row, col, current_section, cell_normal)
-                        # col += 1
-                        #
-                        # # promoted class & section
-                        # current_class_seq = student.current_class.sequence
-                        # next_class_seq = current_class_seq + 1
-                        # next = Class.objects.get(school=student.school, sequence=next_class_seq)
-                        #
-                        # # 15/03/2019 0 student will be promoted only if the name is NOT in NPromoted table
-                        # try:
-                        #     failed = NPromoted.objects.get(student=student)
-                        #     print('%s has failed in class %s. Hence not promoting' % (student, current_class))
-                        #     next_class = current_class
-                        #     sheet.write_string(row, col, next_class, cell_normal)
-                        #     col += 1
-                        #     sheet.write_string(row, col, current_section, cell_normal)
-                        #     sheet.conditional_format(row, 0, row, col + 1, {'type': 'no_blanks',
-                        #                                                                'format': fail_format})
-                        # except Exception as e:
-                        #     print('exception 15030219-A from student views.py %s %s' % (e.message, type(e)))
-                        #     print('%s has passed in class %s. Hence, promoting to next class' %
-                        #           (student, current_class))
-                        #
-                        #     try:
-                        #         next_class = next.standard
-                        #         print('determined the next class for %s: %s-%s' %
-                        #               (student_name, next_class, current_section))
-                        #         sheet.write_string(row, col, next_class, cell_normal)
-                        #         col += 1
-                        #         sheet.write_string(row, col, current_section, cell_normal)
-                        #     except Exception as e:
-                        #         print('failed to determine the next class for %s' % student_name)
+
+                        # current class & section
+                        col += 1
+                        current_class = student.current_class.standard
+                        sheet.write_string (row, col, current_class, cell_normal)
+                        col += 1
+                        current_section = student.current_section.section
+                        sheet.write_string(row, col, current_section, cell_normal)
+                        col += 1
+
+                        # promoted class & section
+                        current_class_seq = student.current_class.sequence
+                        next_class_seq = current_class_seq + 1
+                        next = Class.objects.get(school=student.school, sequence=next_class_seq)
+
+                        # 15/03/2019 0 student will be promoted only if the name is NOT in NPromoted table
+                        try:
+                            failed = NPromoted.objects.get(student=student)
+                            print('%s has failed in class %s. Hence not promoting' % (student, current_class))
+                            next_class = current_class
+                            sheet.write_string(row, col, next_class, cell_normal)
+                            col += 1
+                            sheet.write_string(row, col, current_section, cell_normal)
+                            sheet.conditional_format(row, 0, row, col + 1, {'type': 'no_blanks',
+                                                                                       'format': fail_format})
+                        except Exception as e:
+                            print('exception 15030219-A from student views.py %s %s' % (e.message, type(e)))
+                            print('%s has passed in class %s. Hence, promoting to next class' %
+                                  (student, current_class))
+
+                            try:
+                                next_class = next.standard
+                                print('determined the next class for %s: %s-%s' %
+                                      (student_name, next_class, current_section))
+                                sheet.write_string(row, col, next_class, cell_normal)
+                                col += 1
+                                sheet.write_string(row, col, current_section, cell_normal)
+                            except Exception as e:
+                                print('failed to determine the next class for %s' % student_name)
                         #         print('exception 06032018-A from student views.py %s %s' % (e.message, type(e)))
                         row = row + 1
                         s_no = s_no + 1
@@ -701,63 +701,63 @@ class StudentPromotion(generics.ListCreateAPIView):
         school_id = request.session['school_id']
         print(school_id)
         school = School.objects.get(id=school_id)
-        # highest_class_dict = Class.objects.filter(school=school).aggregate(Max('sequence'))
-        # print(highest_class_dict['sequence__max'])
-        # highest_class = Class.objects.get(school=school, sequence=highest_class_dict['sequence__max'])
-        # print(highest_class)
-        # try:
-        #     students = Student.objects.filter(school=school, current_class=highest_class)
-        #     if students.count() > 0:
-        #         print(students)
-        #         print('Student promotion for %s has already been done. Hence not doing again' % school.school_name)
-        #         error = 'Student promotion has already been done'
-        #         messages.error(request._request, 'Promotion has already been carried out.')
-        #         print (error)
-        #         return render(request, 'classup/setup_index.html', context_dict)
-        #     else:
-        #         print('Student promotion for %s has not been done. Will do now...' % school.school_name)
-        #         classes = Class.objects.filter(school=school).order_by('-sequence')
-        #         print('retrieved classes for %s' % school.school_name)
-        #         sections = Section.objects.filter(school=school).order_by('section')
-        #         print(sections)
-        #         print(classes)
-        #
-        #         for a_class in classes:
-        #             if a_class.sequence == highest_class_dict['sequence__max']:
-        #                 continue
-        #             for a_section in sections:
-        #                 students = Student.objects.filter(current_class=a_class, current_section=a_section)
-        #                 for student in students:
-        #                     try:
-        #                         student_name = '%s %s' % (student.fist_name, student.last_name)
-        #                         try:
-        #                             # the student should not be in the not promoted list.
-        #                             #  Only then he/she will be promoted
-        #                             entry = NPromoted.objects.get(student=student)
-        #                             print('%s is  in the not_promoted. Hence not promoting...' % (student_name))
-        #                             print(entry)
-        #                         except Exception as e:
-        #                             print('exception 04042018-B from student views.py %s %s' % (e.message, type(e)))
-        #                             print('%s was not in not_promoted. Promoting now...' % (student_name))
-        #                             promoted_to_class = Class.objects.get(school=school, sequence=a_class.sequence + 1)
-        #                             print('%s is going to be promoted to %s-%s' %
-        #                                   (student_name, promoted_to_class.standard, a_section.section))
-        #                             print('%s current class is %s-%s' %
-        #                                   (student_name, student.current_class.standard,
-        #                                    student.current_section.section))
-        #                             student.current_class = promoted_to_class
-        #                             student.save()
-        #                             print('%s now promoted to %s-%s' %
-        #                                   (student_name, promoted_to_class.standard, a_section.section))
-        #                     except Exception as e:
-        #                         print('failed to promote student %s' % student.fist_name)
-        #                         print('exception 04042018-A from student views.py %s %s' % (e.message, type(e)))
-        #         messages.success(request._request, 'students promoted.')
-        #         return render(request, 'classup/setup_index.html', context_dict)
-        # except Exception as e:
-        #     print('exception 04042018-C from student views.py %s %s' % (e.message, type(e)))
-        #
-        # return render(request, 'classup/setup_index.html', context_dict)
+        highest_class_dict = Class.objects.filter(school=school).aggregate(Max('sequence'))
+        print(highest_class_dict['sequence__max'])
+        highest_class = Class.objects.get(school=school, sequence=highest_class_dict['sequence__max'])
+        print(highest_class)
+        try:
+            students = Student.objects.filter(school=school, current_class=highest_class)
+            if students.count() > 0:
+                print(students)
+                print('Student promotion for %s has already been done. Hence not doing again' % school.school_name)
+                error = 'Student promotion has already been done'
+                messages.error(request._request, 'Promotion has already been carried out.')
+                print (error)
+                return render(request, 'classup/setup_index.html', context_dict)
+            else:
+                print('Student promotion for %s has not been done. Will do now...' % school.school_name)
+                classes = Class.objects.filter(school=school).order_by('-sequence')
+                print('retrieved classes for %s' % school.school_name)
+                sections = Section.objects.filter(school=school).order_by('section')
+                print(sections)
+                print(classes)
+
+                for a_class in classes:
+                    if a_class.sequence == highest_class_dict['sequence__max']:
+                        continue
+                    for a_section in sections:
+                        students = Student.objects.filter(current_class=a_class, current_section=a_section)
+                        for student in students:
+                            try:
+                                student_name = '%s %s' % (student.fist_name, student.last_name)
+                                try:
+                                    # the student should not be in the not promoted list.
+                                    #  Only then he/she will be promoted
+                                    entry = NPromoted.objects.get(student=student)
+                                    print('%s is  in the not_promoted. Hence not promoting...' % (student_name))
+                                    print(entry)
+                                except Exception as e:
+                                    print('exception 04042018-B from student views.py %s %s' % (e.message, type(e)))
+                                    print('%s was not in not_promoted. Promoting now...' % (student_name))
+                                    promoted_to_class = Class.objects.get(school=school, sequence=a_class.sequence + 1)
+                                    print('%s is going to be promoted to %s-%s' %
+                                          (student_name, promoted_to_class.standard, a_section.section))
+                                    print('%s current class is %s-%s' %
+                                          (student_name, student.current_class.standard,
+                                           student.current_section.section))
+                                    student.current_class = promoted_to_class
+                                    student.save()
+                                    print('%s now promoted to %s-%s' %
+                                          (student_name, promoted_to_class.standard, a_section.section))
+                            except Exception as e:
+                                print('failed to promote student %s' % student.fist_name)
+                                print('exception 04042018-A from student views.py %s %s' % (e.message, type(e)))
+                messages.success(request._request, 'students promoted.')
+                return render(request, 'classup/setup_index.html', context_dict)
+        except Exception as e:
+            print('exception 04042018-C from student views.py %s %s' % (e.message, type(e)))
+
+        return render(request, 'classup/setup_index.html', context_dict)
 
 
         form = ExcelFileUploadForm()
@@ -928,7 +928,10 @@ class NotPromoted(generics.ListCreateAPIView):
                               (erp_id, student_name, student.current_class.standard, student.current_section.section))
                         try:
                             entry = NPromoted.objects.get(student=student)
-                            print('%s is already in the not_promoted. Not adding...' % (student_name))
+                            print('%s is already in the not_promoted. Not adding only changing details...' %
+                                  (student_name))
+                            entry.details = details
+                            entry.save()
                             print(entry)
                         except Exception as e:
                             print('%s was not in not_promoted. Adding now...' % (student_name))
