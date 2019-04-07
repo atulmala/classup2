@@ -140,7 +140,7 @@ class DefaulterReport(generics.ListCreateAPIView):
 
         try:
             # how many months have passed since the sessio start
-            first_april = datetime(2019, 1, 1)
+            first_april = datetime(2019, 4, 1)
             today = datetime.today()
             diff = relativedelta.relativedelta(today, first_april)
             months_count = diff.months
@@ -320,6 +320,9 @@ class ProcessFee(generics.ListCreateAPIView):
             actual_paid = data['actual_paid']
             previous_dues = data['previous_due']
             print('previous dues = %.2f' % previous_dues)
+            one_time = data['one_time']
+            print('one_time = %.2f' % float(one_time))
+
             fine = data['fine']
             print('late fee = %.2f' % float(fine))
             discount = data['discount']
@@ -343,7 +346,7 @@ class ProcessFee(generics.ListCreateAPIView):
                 receipt_no = 99999
 
             fee = FeePaymentHistory(school=school, student=student, amount=actual_paid, fine=fine,
-                                    discount=discount, mode=mode, cheque_number=cheque_no,
+                                    one_time=one_time, discount=discount, mode=mode, cheque_number=cheque_no,
                                     bank=bank, comments='No comments', receipt_number=receipt_no)
             fee.save()
 
@@ -365,7 +368,7 @@ class ProcessFee(generics.ListCreateAPIView):
                                         student=student, head=h, amount=float(amount))
                     entry.save()
 
-            # also save late fee and discount as heads. Only if they are actually charged or provided
+            # also save late fee, one_time and discount as heads. Only if they are actually charged or provided
             if fine > 0.0:
                 late_fee = HeadWiseFee(PaymentHistory=fee, school=school,
                                        student=student, head='Fine', amount=float(fine))
@@ -375,6 +378,11 @@ class ProcessFee(generics.ListCreateAPIView):
                 waiver = HeadWiseFee(PaymentHistory=fee, school=school,
                                      student=student, head='Discount', amount=float(discount))
                 waiver.save()
+
+            if one_time > 0.0:
+                ot = HeadWiseFee(PaymentHistory=fee, school=school, student=student, head='One Time',
+                                 amount=float(one_time))
+                ot.save()
 
             # adjust the balance
             try:
@@ -506,14 +514,21 @@ class ProcessFee(generics.ListCreateAPIView):
             c.drawString(amt_pos2, top_position, str(fine))
 
             top_position -= 15
-            text = 'D. Discount/Waiver: '
+            text = 'D. One time Charges: '
+            c.drawString(r1_border, top_position, text)
+            c.drawString(r2_border, top_position, text)
+            c.drawString(amt_pos1, top_position, str(one_time))
+            c.drawString(amt_pos2, top_position, str(one_time))
+
+            top_position -= 15
+            text = 'E. Discount/Waiver: '
             c.drawString(r1_border, top_position, text)
             c.drawString(r2_border, top_position, text)
             c.drawString(amt_pos1, top_position, str(discount))
             c.drawString(amt_pos2, top_position, str(discount))
 
             top_position -= 15
-            text = 'E. Net Payable (A + B + C - D): '
+            text = 'F. Net Payable (A + B + C + D - E): '
             c.drawString(r1_border, top_position, text)
             c.drawString(r2_border, top_position, text)
             c.drawString(amt_pos1, top_position, str(net_payable))
@@ -521,7 +536,7 @@ class ProcessFee(generics.ListCreateAPIView):
 
             top_position -= 20
             c.setFont('Times-Bold', 14)
-            text = 'F. Actual Paid: '
+            text = 'G. Actual Paid: '
             c.drawString(r1_border, top_position, text)
             c.drawString(r2_border, top_position, text)
             c.drawString(amt_pos1, top_position, str(actual_paid))
@@ -529,7 +544,7 @@ class ProcessFee(generics.ListCreateAPIView):
 
             top_position -= 20
             c.setFont(font, 10)
-            text = 'G. Balance (F - E): '
+            text = 'H. Balance (F - G): '
             c.drawString(r1_border, top_position, text)
             c.drawString(r2_border, top_position, text)
             c.drawString(amt_pos1, top_position, str(balance))
@@ -637,9 +652,10 @@ class FeeDetails(generics.ListCreateAPIView):
             sheet = wb.sheet_by_name(current_class)
             heads_array = []
 
-            first_april = datetime(2019, 1, 1)
+            session_begins = 4
+            start_date = datetime(2019, session_begins, 1)
             today = datetime.today()
-            diff = relativedelta.relativedelta(today, first_april)
+            diff = relativedelta.relativedelta(today, start_date)
             months_count = diff.months
 
             due_this_term = 0.0
@@ -647,7 +663,7 @@ class FeeDetails(generics.ListCreateAPIView):
             for row in range(sheet.nrows):
                 if row == 0:
                     fee_frequency = sheet.cell(row, 1).value
-                    d_date = sheet.cell(row, 3).value
+                    d_date = int(sheet.cell(row, 3).value)
                     continue
                 if row == 1:
                     continue
@@ -663,21 +679,20 @@ class FeeDetails(generics.ListCreateAPIView):
                         c = CollectAdmFee.objects.get(student=student)
                         print('%s has NOT paid one time fees %s' % (student, h))
                         due_this_term += amt
-                        due_till_now += amt
+                        #due_till_now += amt
                     except Exception as e:
                         print('exception 21032019-A from erp views.py %s %s' % (e.message, type(e)))
                         print('%s has paid one time fees %s' % (student, h))
                         amt = 'N/A'
 
                 if int(freq) == 12:
-                    due_till_now += amt
                     # this is once in a year fee like annual fee, exam fee etc. this is to be charge in April
                     print('%s is annual fees to be charged in the month of april' % h)
                     print('and the month is %s' % month)
-                    if month == 4:
-                        head['amount'] = amt
+                    if month == session_begins:
                         due_this_term += amt
                     else:
+                        due_till_now += amt
                         amt = 'N/A'
 
                 if int(freq) == 1:

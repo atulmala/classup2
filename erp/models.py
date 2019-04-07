@@ -26,6 +26,7 @@ class FeePaymentHistory(models.Model):
     previous_due = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
     amount = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
     fine = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
+    one_time = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
     discount = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
     mode = models.CharField(max_length=50)
     comments = models.CharField(max_length=100)
