@@ -76,7 +76,9 @@ class Configurations(models.Model):
     teacher_sms_epilog = models.CharField(max_length=200, default=' ', null=True)
     google_play_link = models.CharField(max_length=100,
                                         default='https://play.google.com/store/apps/details?id=com.classup', null=True)
-    app_store_link = models.CharField(max_length=100, default='http://onelink.to/ajfj3j', null=True)
+    app_store_link = models.CharField(max_length=100,
+                                      default='https://itunes.apple.com/us/app/classup/id1100776259?mt=8&uo=4',
+                                      null=True)
 
     def __unicode__(self):
         return self.school.school_name
@@ -91,4 +93,7 @@ class UserSchoolMapping(models.Model):
 
     def __unicode__(self):
         return self.user.username + ' ' + self.school.school_name
+
+    class Meta:
+        ordering = ['user']
 
