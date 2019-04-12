@@ -30,6 +30,8 @@ from setup.models import School
 from student.models import Student, AdditionalDetails, House, Parent
 from .models import CollectAdmFee, FeePaymentHistory, PreviousBalance, ReceiptNumber, HeadWiseFee
 
+from .serializers import FeeHistorySerialzer
+
 
 # Create your views here.
 
@@ -49,6 +51,33 @@ class JSONResponse(HttpResponse):
         content = JSONRenderer().render(data)
         kwargs['content_type'] = 'application/json'
         super(JSONResponse, self).__init__(content, **kwargs)
+
+
+class FeeHistory(generics.ListAPIView):
+    serializer_class = FeeHistorySerialzer
+
+    def get_queryset(self):
+        context_dict = {
+
+        }
+        try:
+            school_id = self.request.GET.get('school_id')
+            school = School.objects.get(id=school_id)
+            print('school = %s' % school)
+            reg_no = self.request.GET.get('reg_no')
+            print('reg_no/erp_id = %s' % reg_no)
+            student = Student.objects.get(school=school, student_erp_id=reg_no)
+            print('getting fee history for %s of %s' % (student, school))
+
+            q = FeePaymentHistory.objects.filter(student=student)
+            print(q)
+            return q
+        except Exception as e:
+            print('exception 11042019-A from erp views.py %s %s' % (e.message, type(e)))
+            print('error while fetching fee payment history')
+            context_dict['message'] = 'error'
+            print(context_dict)
+            return JSONResponse(context_dict, status=201)
 
 
 class DefaulterReport(generics.ListCreateAPIView):
