@@ -651,6 +651,17 @@ def setup_students(request):
 
                             # 25/07/2017 - it might be possible that the student was deleted (de-activated) earlier
                             s.active_status = True
+
+                            # 31/03/2019 - as this is a new admission, fee such as admissoin fee and other one time fee
+                            # such as caution money have to be collected at the time of accepting the first fee
+                            try:
+                                entry = CollectAdmFee.objects.get(school=school, student=s)
+                                print('%s has been already marked for collecting admission fee' % s)
+                            except Exception as e:
+                                print('exception 31032019-A from setup views.py %s %s' % (e.message, type(e)))
+                                print('%s will be now marked for collecting admission fee' % s)
+                                entry = CollectAdmFee(school=school, student=s)
+                                entry.save()
                     except Exception as e:
                         print ('Exception7 from setup views.py = %s (%s)' % (e.message, type(e)))
                         print ('Student with ID:  ' + student_id + ' Name: '
