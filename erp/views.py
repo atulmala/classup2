@@ -751,9 +751,12 @@ class FeeDetails(generics.ListCreateAPIView):
             try:
                 outstanding = PreviousBalance.objects.get(student=student)
                 if outstanding.negative:
-                    due_amount = outstanding.due_amount
-                    print('%s has negative outstanding of %f' % (student, due_amount))
-                    head['negative_outstanding'] = True
+                    if months_count > 0:
+                        due_amount = outstanding.due_amount
+                        print('%s has negative outstanding of %f' % (student, due_amount))
+                        head['negative_outstanding'] = True
+                    else:
+                        due_amount = 0.0
                 else:
                     # advance payment is done
                     due_amount = 0.0 - outstanding.due_amount

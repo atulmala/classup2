@@ -629,6 +629,9 @@ def forgot_password(request):
                         teacher = Teacher.objects.get(email=u.email)
                         mobile = teacher.mobile
                         school = teacher.school
+                        log_entry(user, "New Password SMS sending initiated", "Normal", True)
+                        sms.send_sms1(school, user, mobile, message, message_type)
+                        log_entry(user, "New Password SMS Sending completed", "Normal", True)
                     else:
                         # a parent's mobile is their username
                         mobile = user

@@ -33,7 +33,7 @@ admin.site.register(CollectAdmFee, CollectAdmFeeAdmin)
 
 
 class FeePaymentAdmin(admin.ModelAdmin):
-    list_display = ('date', 'school', 'parent', 'student', 'amount', 'fine', 'discount',
+    list_display = ('date', 'school', 'parent', 'student', 'amount', 'fine', 'one_time', 'discount',
                     'receipt_number', 'mode', 'cheque_number', 'bank',)
     search_fields = ('student', 'receipt_number',)
     list_filter = ('school',)
