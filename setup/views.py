@@ -478,9 +478,14 @@ def setup_students(request):
                     student_first_name = student_first_name_raw.title()
                     col += 1
 
-                    student_last_name_raw = sheet.cell(row, col).value
-                    print('last name = %s'% student_last_name_raw)
-                    student_last_name = student_last_name_raw.title()
+                    student_last_name_raw1 = sheet.cell(row, col).value
+                    col += 1
+
+                    # 21/04/2019 - students names sometimes consist of three words. It takes a lot of
+                    # efforts in excel to deal with those. hence we split and read one more column
+                    student_last_name_raw2 = sheet.cell(row, col).value
+                    student_last_name = '%s %s' % (student_last_name_raw1.title(), student_last_name_raw2.title())
+                    print('last name = %s' % student_last_name)
                     col += 1
 
                     current_class = sheet.cell(row, col).value
