@@ -502,6 +502,7 @@ class ProcessFee(generics.ListCreateAPIView):
             c.drawString(230, top_position, student.parent.parent_mobile1)
             c.drawString(630, top_position, 'Mob: ')
             c.drawString(660, top_position, student.parent.parent_mobile1)
+            print('top position before drawing fee head table = %i' % top_position)
 
             # show fee heads inside table
             data1 = [['Fee Head                                                            ', 'Amount       ']]
@@ -511,7 +512,8 @@ class ProcessFee(generics.ListCreateAPIView):
             for head in heads:
                 amount = head['amount']
                 data1.append([head['head'], amount])
-            top_position -= 110
+            head_count = len(heads)
+            top_position -= 22 * head_count
             table = Table(data1)
             table.setStyle(TableStyle(style4))
 

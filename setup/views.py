@@ -944,6 +944,7 @@ def setup_teachers(request):
                     print ('Processing a new row')
                     # we need to explicitly cast employee id to string. Else update will not function properly
                     employee_id = str(sheet.cell(row, 0).value)
+                    print('employee id = %s' % employee_id)
                     f_name = sheet.cell(row, 1).value
 
                     l_name = sheet.cell(row, 2).value
