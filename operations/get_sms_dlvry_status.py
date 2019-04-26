@@ -77,7 +77,7 @@ try:
     # that appears in the teacher message history
     cursor3 = db.cursor()
     sql3 = "select status from teacher_messagereceivers where " \
-           "status_extracted = 0 and date > '2019-03-13' and date <= DATE_SUB(NOW(), INTERVAL 3 HOUR)"
+           "status_extracted = 0 and date > '2019-04-25' and date <= DATE_SUB(NOW(), INTERVAL 3 HOUR)"
     cursor3.execute(sql3)
     row = cursor3.fetchone()
     print(row)
