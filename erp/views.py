@@ -513,7 +513,7 @@ class ProcessFee(generics.ListCreateAPIView):
                 amount = head['amount']
                 data1.append([head['head'], amount])
             head_count = len(heads)
-            top_position -= 22 * head_count
+            top_position -= 22 * head_count -40
             table = Table(data1)
             table.setStyle(TableStyle(style4))
 

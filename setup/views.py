@@ -2,6 +2,7 @@ import os
 import datetime
 import xlrd
 import json
+import random
 
 
 from rest_framework import generics
@@ -523,6 +524,14 @@ def setup_students(request):
                     parent_mobile1_raw = sheet.cell(row, col).value
                     print('mobile 1 = ', parent_mobile1_raw)
                     print parent_mobile1_raw
+
+                    # 29/04/2019 - sometimes we get cases that not even primary mobile number
+                    # is mentioned (mostly for rural schools). In that case generate a random
+                    if parent_mobile1_raw == '':
+                        print('%s parent of %s %s class %s-%s primary mobile number not mentioned. Hence random generated' %
+                              (parent_name, student_first_name, student_last_name, current_class, current_section))
+                        parent_mobile1_raw = random.choice(range(10000, 50000))
+                        print('randome primary mobile = %i' % parent_mobile1_raw)
                     col += 1
                     parent_mobile2_raw = sheet.cell(row, col).value
                     print('mobile 2= ', parent_mobile2_raw )
