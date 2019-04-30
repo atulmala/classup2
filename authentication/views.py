@@ -576,7 +576,7 @@ def forgot_password(request):
                     current_time = datetime.datetime.now()
                     time_difference = current_time - naive
                     print('time_difference = ' + str(time_difference))
-                    if time_difference > datetime.timedelta(minutes=330):
+                    if time_difference > datetime.timedelta(minutes=345):
                         print('time difference between last password reset and current attempt is more than 15 min.')
                         should_reset = True
                         lpt.last_reset_time = datetime.datetime.now()
