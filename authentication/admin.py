@@ -6,7 +6,7 @@ from .models import LoginRecord, LastPasswordReset, user_device_mapping, log_boo
 # Register your models here.
 
 class MyUserAdmin(UserAdmin):
-    ordering = ('date_joined',)
+    ordering = ('-date_joined',)
     list_display = ('username', 'date_joined', 'first_name', 'last_name',)
     list_filter = ('date_joined',)
 
