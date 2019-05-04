@@ -17,6 +17,9 @@ class Parent(models.Model):
     def get_name(self):
         return self.parent_name
 
+    class Meta:
+        ordering = ('parent_name', )
+
 
 class Student(models.Model):
     student_erp_id = models.CharField(max_length=30, null=True,
