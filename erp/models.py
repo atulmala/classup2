@@ -23,6 +23,7 @@ class FeePaymentHistory(models.Model):
     student = models.ForeignKey(Student)
     parent = models.ForeignKey(Parent, null=True)
     date = models.DateField(auto_now_add=True)
+    data = models.TextField(null=True, blank=True)
     previous_due = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
     amount = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
     fine = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)

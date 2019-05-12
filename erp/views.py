@@ -343,6 +343,10 @@ class ProcessFee(generics.ListCreateAPIView):
             student = Student.objects.get(school=school, student_erp_id=student_id)
             print('processing fee for %s of %s' % (student, school))
             heads = data['heads']
+            h = json.dumps(heads)
+            print('type h = %s' % type(h))
+            print('h = %s' % h)
+            print('heads type = %s' % type(heads))
             print('heads = ')
             print(heads)
             due_this_term = data['due_this_term']
@@ -377,6 +381,12 @@ class ProcessFee(generics.ListCreateAPIView):
             fee = FeePaymentHistory(school=school, student=student, amount=actual_paid, fine=fine,
                                     one_time=one_time, discount=discount, mode=mode, cheque_number=cheque_no,
                                     bank=bank, comments='No comments', receipt_number=receipt_no)
+            try:
+                fee.data = str(h)
+                fee.save()
+            except Exception as e:
+                print('exception 11052019-A from erp views.py %s %s' % (e.message, type(e)))
+                print('failed to save heads')
             fee.save()
 
             # if one time fee such as admission fee was taken remove this student from CollectAdm fee table
@@ -513,7 +523,7 @@ class ProcessFee(generics.ListCreateAPIView):
                 amount = head['amount']
                 data1.append([head['head'], amount])
             head_count = len(heads)
-            top_position -= 22 * head_count -40
+            top_position -= 22 * head_count -20
             table = Table(data1)
             table.setStyle(TableStyle(style4))
 

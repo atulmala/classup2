@@ -797,7 +797,6 @@ class AbsentTeacherPeriods (generics.ListAPIView):
             print("---time taken %s seconds ---" % (time.time() - start_time))
 
             return render(request, 'classup/arrangements.html', context_dict)
-            
         except Exception as e:
             print ('exception 31122017-A from time_table views.py %s %s' % (e.message, type(e)))
             response = HttpResponse(status=201)

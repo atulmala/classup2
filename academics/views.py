@@ -10,7 +10,6 @@ from decimal import Decimal
 
 from django.core.files.base import ContentFile
 from wsgiref.util import FileWrapper
-#from django.core.servers.basehttp import FileWrapper
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
 from django.test import RequestFactory
