@@ -45,6 +45,16 @@ class FeePaymentHistory(models.Model):
         return str(self.receipt_number)
 
 
+class FeeCorrection(models.Model):
+    date = models.DateField(auto_now_add=True)
+    school = models.ForeignKey(School)
+    receipt_number = models.IntegerField()
+    amount = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
+    fine = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
+    one_time = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
+    discount = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
+
+
 class PreviousBalance(models.Model):
     school = models.ForeignKey(School)
     student = models.ForeignKey(Student)

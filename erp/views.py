@@ -28,7 +28,7 @@ from setup.views import validate_excel_extension
 
 from setup.models import School
 from student.models import Student, AdditionalDetails, House, Parent
-from .models import CollectAdmFee, FeePaymentHistory, PreviousBalance, ReceiptNumber, HeadWiseFee
+from .models import CollectAdmFee, FeePaymentHistory, PreviousBalance, ReceiptNumber, HeadWiseFee, FeeCorrection
 
 from .serializers import FeeHistorySerialzer
 
@@ -324,6 +324,53 @@ class DefaulterReport(generics.ListCreateAPIView):
             context_dict = {}
             context_dict['status'] = 'failed'
             context_dict['message'] = 'Failed to create defaulter list. Please contact ClassUp Support'
+            return JSONResponse(context_dict, status=201)
+
+
+class CorrectFee(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def post(self, request, *args, **kwargs):
+        context_dict = {
+
+        }
+        try:
+            data = json.loads(request.body)
+            print(data)
+            school_id = self.kwargs['school_id']
+            school = School.objects.get(pk=school_id)
+            receipt_corrected = data['receipt_corrected']
+            penalty = data['penalty']
+            one_time = data['one_time']
+            discount = data['discount']
+            amount_paid = data['amount_paid']
+
+            try:
+                # first, carry out the correction in Fee payment history
+                correction = FeePaymentHistory.objects.get(school=school, receipt_number = receipt_corrected)
+                correction.fine = penalty
+                correction.one_time = one_time
+                correction.discount = discount
+                correction.amount = amount_paid
+                correction.save()
+                print('correction successfully carried out for receipt # %i of %s' % (receipt_corrected, school))
+
+                # then, save in the correction table (for the purpose of audit trail
+                correction2 = FeeCorrection(school=school, receipt_number=receipt_corrected, amount=amount_paid,
+                                            fine=penalty, discount=discount)
+                correction2.save()
+
+                context_dict['outcome'] = 'success'
+                return JSONResponse(context_dict, status=200)
+            except Exception as e:
+                print('failed to carry out fee correction for receipt no %i of %s' % (receipt_corrected, school))
+                print('exception 190519-A from erp views.py %s %s' % (e.message, type(e)))
+                context_dict['outcome'] = 'failure'
+                return JSONResponse(context_dict, status=201)
+        except Exception as e:
+            print('failed to carry out fee correction')
+            print('exception 190519-B from erp views.py %s %s' % (e.message, type(e)))
+            context_dict['outcome'] = 'failure'
             return JSONResponse(context_dict, status=201)
 
 

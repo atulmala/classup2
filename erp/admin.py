@@ -1,6 +1,6 @@
 from django.contrib import admin
 from student.models import AdditionalDetails, House
-from .models import CollectAdmFee, FeePaymentHistory, PreviousBalance, ReceiptNumber, HeadWiseFee
+from .models import CollectAdmFee, FeePaymentHistory, PreviousBalance, ReceiptNumber, HeadWiseFee, FeeCorrection
 
 # Register your models here.
 
@@ -67,4 +67,12 @@ class FeeHeadsAdmin(admin.ModelAdmin):
 
 admin.site.register(HeadWiseFee, FeeHeadsAdmin)
 
+
+class FeeCorrectionAdmin(admin.ModelAdmin):
+    list_display = ('date', 'school', 'receipt_number', 'amount', 'fine', 'one_time', 'discount',)
+    search_fields = ('receipt_number',)
+    list_filter = ('school',)
+
+
+admin.site.register(FeeCorrection, FeeCorrectionAdmin)
 
