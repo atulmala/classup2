@@ -60,9 +60,9 @@ class TimeTable(models.Model):
     subject = models.ForeignKey(Subject, null=True)
     teacher = models.ForeignKey(Teacher)
 
-    def __unicode__(self):
-        return '%s %s %s %s %s %s %s ' % (self.school, self.day.day, self.the_class.standard, self.section.section,
-                                            self.period.period, self.subject.subject_name, self.teacher.email)
+    # def __unicode__(self):
+    #     return '%s %s %s %s %s %s %s ' % (self.school, self.day.day, self.the_class.standard, self.section.section,
+    #                                         self.period.period, self.subject.subject_name, self.teacher.email)
 
 
 class CTimeTable(models.Model):
@@ -74,10 +74,10 @@ class CTimeTable(models.Model):
     subject = models.ForeignKey(Subject, null=True)
     teacher = models.ForeignKey(Teacher)
 
-    def __unicode__(self):
-        details = '%s-%s subject: %s %s' % (self.the_class.standard, self.section.section,
-                                            self.subject.subject_name, self.teacher.email)
-        return details
+    # def __unicode__(self):
+    #     details = '%s-%s subject: %s %s' % (self.the_class.standard, self.section.section,
+    #                                         self.subject.subject_name, self.teacher.email)
+    #     return details
 
 
 class ClassTimeTable(models.Model):
@@ -98,9 +98,9 @@ class TeacherPeriods (models.Model):
     the_class = models.ForeignKey(Class)
     section = models.ForeignKey(Section)
 
-    def __unicode__(self):
-        return self.teacher.first_name + ' ' + self.teacher.last_name + ' ' + self.day.day + ' ' + \
-               self.period.period + ' ' + self.the_class.standard + '-' + self.section.section
+    # def __unicode__(self):
+    #     return self.teacher.first_name + ' ' + self.teacher.last_name + ' ' + self.day.day + ' ' + \
+    #            self.period.period + ' ' + self.the_class.standard + '-' + self.section.section
 
 
 class Arrangements (models.Model):
