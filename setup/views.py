@@ -474,7 +474,8 @@ def setup_students(request):
 
                     # 26/05/2019 - some schools have just numbers as Reg/SR Number. xlrd treats those as
                     # float and append '.0' at the end. We need to get rid of trailing decimal and zero
-                    if student_id.find('.'):
+                    decimal = '.'
+                    if decimal in student_id:
                         print('student id contains a decimal followed by zero. This has to be removed')
                         student_id = student_id[:-2]
                         print('decimal and following zero removed. Now student_id = %s' % student_id)
