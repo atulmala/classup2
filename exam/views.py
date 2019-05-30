@@ -304,7 +304,7 @@ def setup_third_lang(request):
                         continue
 
                     # 31/10/2017 - get the third language
-                    t_l = sheet.cell(row, 3).value
+                    t_l = sheet.cell(row, 5).value
                     print('third language specified for %s %s in the sheet is %s' %
                         (student.fist_name, student.last_name, t_l))
                     try:
