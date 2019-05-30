@@ -1323,8 +1323,13 @@ def setup_dob(request):
                     if row == 0:
                         continue
                     print ('Processing a new row')
-                    erp_id = sheet.cell(row, 0).value
+                    erp_id = str(sheet.cell(row, 0).value)
                     print(erp_id)
+                    decimal = '.'
+                    if decimal in erp_id:
+                        print('student id contains a decimal followed by zero. This has to be removed')
+                        erp_id = erp_id[:-2]
+                        print('decimal and following zero removed. Now student_id = %s' % erp_id)
                     try:
                         student = Student.objects.get(school=school, student_erp_id=erp_id)
                         print ('now dealing with %s %s' % (student.fist_name, student.last_name))
