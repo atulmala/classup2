@@ -194,7 +194,7 @@ def setup_higher_class_subject_mapping(request):
                             student = Student.objects.get(school=school, student_erp_id=erp)
                             student_name = '%s %s' % (student.fist_name, student.last_name)
 
-                            stream = sheet.cell(row, 7).value
+                            stream = sheet.cell(row, 3).value
 
                             print('stream chosen by %s is %s' % (student_name, stream))
                             if stream == maths:
@@ -210,7 +210,7 @@ def setup_higher_class_subject_mapping(request):
                                 chosen_stream = list(commerce_stream)
                                 print('chosen_stream = Commerce')
 
-                            elective = sheet.cell(row, 8).value
+                            elective = sheet.cell(row, 4).value
                             print('elective chosen by %s is %s' % (student_name, elective))
 
                             try:
@@ -304,7 +304,7 @@ def setup_third_lang(request):
                         continue
 
                     # 31/10/2017 - get the third language
-                    t_l = sheet.cell(row, 5).value
+                    t_l = sheet.cell(row, 3).value
                     print('third language specified for %s %s in the sheet is %s' %
                         (student.fist_name, student.last_name, t_l))
                     try:
