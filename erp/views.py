@@ -946,7 +946,7 @@ class SetupAddDetails(generics.ListCreateAPIView):
                         continue
                     print ('Processing a new row')
                     try:
-                        erp_id = sheet.cell(row, 1).value
+                        erp_id = str(sheet.cell(row, 1).value)
                         decimal = '.'
                         if decimal in erp_id:
                             print('student id contains a decimal followed by zero. This has to be removed')
