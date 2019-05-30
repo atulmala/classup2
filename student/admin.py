@@ -39,9 +39,9 @@ class DOBAdmin(admin.ModelAdmin):
 admin.site.register(DOB, DOBAdmin)
 
 
-class AdditionalDetailsAdmin(admin.ModelAdmin):
-    list_display = ('student', 'mother_name')
-    search_fields = ('student__fist_name', 'student__last_name')
-    list_filter = ('student__school',)
-
-admin.site.register(AdditionalDetails, AdditionalDetailsAdmin)
+# class AdditionalDetailsAdmin(admin.ModelAdmin):
+#     list_display = ('student', 'mother_name')
+#     search_fields = ('student__fist_name', 'student__last_name')
+#     list_filter = ('student__school',)
+#
+# admin.site.register(AdditionalDetails, AdditionalDetailsAdmin)

@@ -947,9 +947,9 @@ class SetupAddDetails(generics.ListCreateAPIView):
                     print ('Processing a new row')
                     try:
                         erp_id = sheet.cell(row, 1).value
-                        mother_name = (sheet.cell(row, 4).value).title()
+                        mother_name = sheet.cell(row, 4).value
                         address = sheet.cell(row, 5).value
-                        house = (sheet.cell(row, 7).value).title()
+                        house = sheet.cell(row, 7).value
                     except Exception as e:
                         print('exception 19032018-E from erp views. %s %s' % (e.message, type(e)))
 
