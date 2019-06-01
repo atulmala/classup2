@@ -263,6 +263,8 @@ class TheTimeTable(generics.ListCreateAPIView):
                                     print('sec_list = ')
                                     print(sec_list)
                                     for sec in sec_list:
+                                        if sec == '/':
+                                            continue
                                         section = Section.objects.get(school=school, section=sec)
                                         try:
                                             ctt = CTimeTable.objects.get(school=school, day=day, period=period,
