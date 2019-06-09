@@ -283,7 +283,7 @@ def setup_higher_class_subject_mapping(request):
                                         print ('exception 141117-D from exam views.py %s %s' % (e.message, type(e)))
                                         print ('failed to create %s subject mapping for %s' % (sub, student_name))
                         except Exception as e:
-                            print ('failed to create %s subject mapping for %s ' % (sub, student_name))
+                            print ('failed to create subject mapping')
                             print ('exception 141117-A from exam views.py %s %s' % (e.message, type(e)))
             except Exception as e:
                 error = 'invalid excel file uploaded.'

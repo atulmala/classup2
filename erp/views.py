@@ -28,6 +28,7 @@ from setup.views import validate_excel_extension
 
 from setup.models import School
 from student.models import Student, AdditionalDetails, House, Parent
+from exam.models import StreamMapping
 from .models import CollectAdmFee, FeePaymentHistory, PreviousBalance, ReceiptNumber, HeadWiseFee, FeeCorrection
 
 from .serializers import FeeHistorySerialzer
@@ -735,6 +736,17 @@ class FeeDetails(generics.ListCreateAPIView):
             storage_client = storage.Client()
             bucket = storage_client.get_bucket('classup')
             print(bucket)
+
+            if current_class in higher_classes:
+                print('%s is in higher class. Fee will be calculated as per chosen stream' % student)
+                try:
+                    mapping = StreamMapping.objects.get(student=student)
+                    stream = mapping.stream.stream
+                    print('stream chosen by %s is %s' % (student, stream))
+                    current_class = '%s-%s' % (current_class, stream)
+                except Exception as e:
+                    print('failed to determine stream for %s' % student)
+                    print('exception 09062019-A from erp views.py %s %s' % (e.message, type(e)))
             fee_file = '%s.xlsx' % str(school_id)
             fee_file_path = 'classup2/Fee/%s/%s' % (str(school_id), fee_file)
             blob = bucket.blob(fee_file_path)
