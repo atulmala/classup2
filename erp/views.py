@@ -570,7 +570,8 @@ class ProcessFee(generics.ListCreateAPIView):
                 amount = head['amount']
                 data1.append([head['head'], amount])
             head_count = len(heads)
-            top_position -= 22 * head_count -20
+            top_position -= 18 * head_count + 15
+            print('top  position = %i' % top_position)
             table = Table(data1)
             table.setStyle(TableStyle(style4))
 
@@ -702,6 +703,9 @@ class FeeDetails(generics.ListCreateAPIView):
         q2 = [7, 8, 9]
         q3 = [10, 11, 12]
         q4 = [1, 2, 3]
+
+        higher_classes = ['XI', 'XII']
+
         try:
             school_id = request.GET.get('school_id')
             school = School.objects.get(pk=school_id)

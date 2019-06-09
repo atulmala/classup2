@@ -34,7 +34,7 @@ from academics.models import Class, Section, Subject, ThirdLang, ClassTest, \
     Exam, TermTestResult, TestResults, CoScholastics, ClassTeacher
 from attendance.models import Attendance, AttendanceTaken
 
-from .models import Scheme, HigherClassMapping, NPromoted, Marksheet
+from .models import Scheme, HigherClassMapping, NPromoted, Marksheet, Stream, StreamMapping
 from .forms import TermResultForm, ResultSheetForm
 
 
@@ -151,10 +151,11 @@ def setup_higher_class_subject_mapping(request):
     maths_stream = ['English', 'Mathematics', 'Physics', 'Chemistry']
     biology_stream = ['English', 'Biology', 'Physics', 'Chemistry']
     commerce_stream = ['English', 'Economics', 'Accountancy', 'Business Studies']
+    humanities_stream = ['English']
     maths = 'Mathematics'
     bio = 'Biology'
     commerce = 'Commerce'
-
+    humanities = 'Humanities'
 
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
@@ -201,14 +202,57 @@ def setup_higher_class_subject_mapping(request):
                                 print('going to set the chosen_stream to be %s' % stream)
                                 chosen_stream = list(maths_stream)
                                 print('chosen_stream = Mathematics')
+                                try:
+                                    m_stream = Stream.objects.get(stream='Mathematics')
+                                    stream_mapping = StreamMapping.objects.get_or_create(student=student,
+                                                                                         stream = m_stream)
+                                    print('set Mathematics for %s' % student)
+                                    print(stream_mapping)
+                                except Exception as e:
+                                    print('failed to create %s stream mapping for %s' % (stream, student))
+                                    print('exception 08062019-A from exam views.py %s %s' % (e.message, type(e)))
+
                             if stream == bio:
                                 print('going to set the chosen_stream to be %s' % stream)
                                 chosen_stream = list(biology_stream)
                                 print('chosen_stream = Biology')
+                                try:
+                                    b_stream = Stream.objects.get(stream='Biology')
+                                    stream_mapping = StreamMapping.objects.get_or_create(student=student,
+                                                                                         stream = b_stream)
+                                    print('set biology for %s' % student)
+                                    print(stream_mapping)
+                                except Exception as e:
+                                    print('failed to create %s stream mapping for %s' % (stream, student))
+                                    print('exception 08062019-B from exam views.py %s %s' % (e.message, type(e)))
+
                             if stream == commerce:
                                 print('going to set the chosen_stream to be %s' % stream)
                                 chosen_stream = list(commerce_stream)
                                 print('chosen_stream = Commerce')
+                                try:
+                                    c_stream = Stream.objects.get(stream='Commerce')
+                                    stream_mapping = StreamMapping.objects.get_or_create(student=student,
+                                                                                         stream = c_stream)
+                                    print('set Commerce for %s' % student)
+                                    print(stream_mapping)
+                                except Exception as e:
+                                    print('failed to create %s stream mapping for %s' % (stream, student))
+                                    print('exception 08062019-C from exam views.py %s %s' % (e.message, type(e)))
+
+                            if stream == humanities:
+                                print('going to set the chosen_stream to be %s' % stream)
+                                chosen_stream = list(commerce_stream)
+                                print('chosen_stream = Commerce')
+                                try:
+                                    h_stream = Stream.objects.get(stream='Humanities')
+                                    stream_mapping = StreamMapping.objects.get_or_create(student=student,
+                                                                                         stream = h_stream)
+                                    print('set Humanities for %s' % student)
+                                    print(stream_mapping)
+                                except Exception as e:
+                                    print('failed to create %s stream mapping for %s' % (stream, student))
+                                    print('exception 08062019-D from exam views.py %s %s' % (e.message, type(e)))
 
                             elective = (sheet.cell(row, 6).value).title()
                             print('elective chosen by %s is %s' % (student_name, elective))

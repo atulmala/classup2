@@ -23,6 +23,18 @@ class HigherClassMapping(models.Model):
         return self.subject.subject_name
 
 
+class Stream(models.Model):
+    stream = models.CharField(max_length=100)
+
+    def __unicode__(self):
+        return self.stream
+
+
+class StreamMapping(models.Model):
+    student = models.ForeignKey(Student)
+    stream = models.ForeignKey(Stream)
+
+
 class NotPromoted(models.Model):
     student = models.ForeignKey(Student)
 

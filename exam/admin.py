@@ -1,9 +1,29 @@
 from django.contrib import admin
 
 from academics.models import ThirdLang
-from .models import Scheme, HigherClassMapping, NPromoted, Marksheet
+from .models import Scheme, HigherClassMapping, NPromoted, Marksheet, Stream, StreamMapping
 
 # Register your models here.
+
+
+class StreamAdmin(admin.ModelAdmin):
+    list_display = ('stream',)
+
+
+admin.site.register(Stream, StreamAdmin)
+
+
+class StreamMappingAdmin(admin.ModelAdmin):
+    def get_school_name(self, obj):
+        return obj.student.school
+
+    get_school_name.short_description = 'School'
+    search_fields = ('student',)
+    list_display = ('get_school_name', 'student', 'stream',)
+    list_filter = ('stream', 'student__school',)
+
+
+admin.site.register(StreamMapping, StreamMappingAdmin)
 
 
 class ThirdLangAdmin(admin.ModelAdmin):
