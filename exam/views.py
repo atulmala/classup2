@@ -192,7 +192,7 @@ def setup_higher_class_subject_mapping(request):
                         erp = str(sheet.cell(row, 1).value)
                         print(erp)
                         try:
-                            student = Student.objects.get(school=school, student_erp_id=str(erp))
+                            student = Student.objects.get(school=school, student_erp_id=erp)
                             student_name = '%s %s' % (student.fist_name, student.last_name)
 
                             stream = (sheet.cell(row, 5).value).title()
