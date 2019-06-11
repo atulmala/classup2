@@ -85,7 +85,9 @@ class DefaulterReport(generics.ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         school_id = self.kwargs['school_id']
         school = School.objects.get(id=school_id)
+        school_name = school.school_name
 
+        higher_classes = ['XI', 'XII']
         # get the fee detail excel sheet
         storage_client = storage.Client()
         bucket = storage_client.get_bucket('classup')
@@ -143,7 +145,7 @@ class DefaulterReport(generics.ListCreateAPIView):
         year = datetime.now().year
         month = datetime.now().month
         date = '%i/%i/%i' % (currentDay, month, year)
-        sheet.merge_range(row, col, row, col + 6, 'Defaulter list as on %s' % date, title)
+        sheet.merge_range(row, col, row, col + 7, '%s - Defaulter list as on %s' % (school_name, date), title)
 
         sheet.set_column('B:D', 20)
         sheet.set_column('E:H', 12)
@@ -156,6 +158,8 @@ class DefaulterReport(generics.ListCreateAPIView):
         sheet.write_string(row, col, 'Mobile No', header)
         col += 1
         sheet.write_string(row, col, 'Student', header)
+        col += 1
+        sheet.write_string(row, col, 'Adm. No', header)
         col += 1
         sheet.write_string(row, col, 'Class', header)
         col += 1
@@ -199,7 +203,9 @@ class DefaulterReport(generics.ListCreateAPIView):
                     col += 1
                     sheet.write_string(row, col, '%s %s' % (student.fist_name, student.last_name), cell_normal)
                     col += 1
-                    sheet.write_string(row, col, '%s %s' %
+                    sheet.write_string(row, col, '%s' % student.student_erp_id, cell_normal)
+                    col += 1
+                    sheet.write_string(row, col, '%s-%s' %
                                        (student.current_class.standard,
                                         student.current_section.section), cell_normal)
                     col += 1
@@ -210,8 +216,20 @@ class DefaulterReport(generics.ListCreateAPIView):
                     # then we will add any outstanding (means and shortfall in fee paid last time)
                     # we then calculate how much has been paid for this student till now
                     # due on student = fee due till date + outstanding - fee paid till date
-
-                    input_sheet = wb.sheet_by_name(student.current_class.standard)
+                    if student.current_class.standard in higher_classes:
+                        print('%s is in higher class %s. Fee will be calculated as per chosen stream' %
+                              (student, student.current_class.standard))
+                        try:
+                            mapping = StreamMapping.objects.get(student=student)
+                            stream = mapping.stream.stream
+                            print('stream chosen by %s is %s' % (student, stream))
+                            current_class = '%s-%s' % (student.current_class.standard, stream)
+                        except Exception as e:
+                            print('failed to determine stream for %s' % student)
+                            print('exception 10062019-A from erp views.py %s %s' % (e.message, type(e)))
+                    else:
+                        current_class = student.current_class.standard
+                    input_sheet = wb.sheet_by_name(current_class)
                     for sheet_row in range(input_sheet.nrows):
                         if sheet_row == 0:
                             fee_frequency = input_sheet.cell(sheet_row, 1).value
@@ -298,8 +316,8 @@ class DefaulterReport(generics.ListCreateAPIView):
                 # check if this parent has multiple kids
                 if entry.count() > 1:
                     f_row = row - entry.count()
-                    sheet.conditional_format(f_row, 0, row - 1, col + 6, {'type': 'no_blanks', 'format': fail_format})
-                    sheet.merge_range(f_row, col + 6, row - 1, col + 6, str(family_total), money)
+                    sheet.conditional_format(f_row, 0, row - 1, col + 7, {'type': 'no_blanks', 'format': fail_format})
+                    sheet.merge_range(f_row, col + 7, row - 1, col + 7, str(family_total), money)
                     sheet.merge_range(f_row, col + 1, row - 1, col + 1, the_parent.parent_name, cell_normal)
                     sheet.merge_range(f_row, col + 2, row - 1, col + 2, the_parent.parent_mobile1, cell_normal)
 
@@ -406,8 +424,8 @@ class ProcessFee(generics.ListCreateAPIView):
 
             fine = data['fine']
             print('late fee = %.2f' % float(fine))
-            discount = data['discount']
-            print('discount = %.2f' % float(discount))
+            waiver = data['waiver']
+            print('waiver = %.2f' % float(waiver))
             net_payable = data['net_payable']
             balance = data['balance']
             mode = data['mode']
@@ -427,7 +445,7 @@ class ProcessFee(generics.ListCreateAPIView):
                 receipt_no = 99999
 
             fee = FeePaymentHistory(school=school, student=student, amount=actual_paid, fine=fine,
-                                    one_time=one_time, discount=discount, mode=mode, cheque_number=cheque_no,
+                                    one_time=one_time, waiver=waiver, mode=mode, cheque_number=cheque_no,
                                     bank=bank, comments='No comments', receipt_number=receipt_no)
             try:
                 fee.data = str(h)
@@ -451,8 +469,9 @@ class ProcessFee(generics.ListCreateAPIView):
                 h = head['head']
                 amount = head['amount']
                 if amount != 'N/A':
+                    net_paid = head['net_payable']
                     entry = HeadWiseFee(PaymentHistory=fee, school=school,
-                                        student=student, head=h, amount=float(amount))
+                                        student=student, head=h, amount=float(net_paid))
                     entry.save()
 
             # also save late fee, one_time and discount as heads. Only if they are actually charged or provided
@@ -461,10 +480,10 @@ class ProcessFee(generics.ListCreateAPIView):
                                        student=student, head='Fine', amount=float(fine))
                 late_fee.save()
 
-            if discount > 0.0:
-                waiver = HeadWiseFee(PaymentHistory=fee, school=school,
-                                     student=student, head='Discount', amount=float(discount))
-                waiver.save()
+            if waiver > 0.0:
+                w = HeadWiseFee(PaymentHistory=fee, school=school,
+                                     student=student, head='Waiver', amount=float(waiver))
+                w.save()
 
             if one_time > 0.0:
                 ot = HeadWiseFee(PaymentHistory=fee, school=school, student=student, head='One Time',
@@ -563,13 +582,21 @@ class ProcessFee(generics.ListCreateAPIView):
             print('top position before drawing fee head table = %i' % top_position)
 
             # show fee heads inside table
-            data1 = [['Fee Head                                                            ', 'Amount       ']]
+            data1 = [['Fee Head                       ', 'Amount  ', 'Disc. (%)', 'Disc. Amt', 'Net Payable']]
             style4 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black), ('TOPPADDING', (0, 0), (-1, -1), 1),
-                      ('BOTTOMPADDING', (0, 0), (-1, -1), 1), ('FONT', (0, 0), (1, 0), 'Times-Bold'),
+                      ('BOTTOMPADDING', (0, 0), (-1, -1), 1), ('FONT', (0, 0), (4, 0), 'Times-Bold'),
                       ('FONTSIZE', (0, 0), (-1, -1), 10)]
+            total_discount = 0.0
             for head in heads:
                 amount = head['amount']
-                data1.append([head['head'], amount])
+                discount_perc = '%s %%' % str(head['discount_perc'])
+                discount_amt = head['discount_amt']
+                total_discount += discount_amt
+                net_paid = head['net_payable']
+                data1.append([head['head'], amount, discount_perc, discount_amt, net_paid])
+            fee.discount = total_discount
+            fee.save()
+
             head_count = len(heads)
             top_position -= 18 * head_count + 15
             print('top  position = %i' % top_position)
@@ -611,11 +638,11 @@ class ProcessFee(generics.ListCreateAPIView):
             c.drawString(amt_pos2, top_position, str(one_time))
 
             top_position -= 15
-            text = 'E. Discount/Waiver: '
+            text = 'E. Waiver: '
             c.drawString(r1_border, top_position, text)
             c.drawString(r2_border, top_position, text)
-            c.drawString(amt_pos1, top_position, str(discount))
-            c.drawString(amt_pos2, top_position, str(discount))
+            c.drawString(amt_pos1, top_position, str(waiver))
+            c.drawString(amt_pos2, top_position, str(waiver))
 
             top_position -= 15
             text = 'F. Net Payable (A + B + C + D - E): '

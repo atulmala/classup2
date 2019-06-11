@@ -460,7 +460,6 @@ def create_test1(request, school_id, the_class, section, subject,
     middle_classes = ['IV', 'V', 'VI', 'VII', 'VIII']
     junior_classes = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III']
 
-
     # all of the above except date are foreign key in Attendance model. Hence we need to get the actual object
     school = School.objects.get(id=school_id)
     c = Class.objects.get(school=school, standard=the_class)

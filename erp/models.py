@@ -29,6 +29,7 @@ class FeePaymentHistory(models.Model):
     fine = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
     one_time = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
     discount = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
+    waiver = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
     mode = models.CharField(max_length=50)
     comments = models.CharField(max_length=100)
     cheque_number = models.CharField(max_length=6, default='N/A')

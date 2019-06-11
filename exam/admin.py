@@ -18,7 +18,7 @@ class StreamMappingAdmin(admin.ModelAdmin):
         return obj.student.school
 
     get_school_name.short_description = 'School'
-    search_fields = ('student',)
+    search_fields = ('student__fist_name',)
     list_display = ('get_school_name', 'student', 'stream',)
     list_filter = ('stream', 'student__school',)
 
