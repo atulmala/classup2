@@ -13,6 +13,7 @@ class ReceiptNumber(models.Model):
 class CollectAdmFee(models.Model):
     school = models.ForeignKey(School)
     student = models.ForeignKey(Student)
+    whether_paid = models.BooleanField(default=False)
 
     def __unicode__(self):
         return '%s %s' % (self.school, self.student)

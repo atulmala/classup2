@@ -367,6 +367,10 @@ class CorrectFee(generics.ListCreateAPIView):
             try:
                 # first, carry out the correction in Fee payment history
                 correction = FeePaymentHistory.objects.get(school=school, receipt_number = receipt_corrected)
+                data = correction.data
+                print('json data in string = %s' % data)
+                the_json = json.loads(data)
+                the_json['']
                 correction.fine = penalty
                 correction.one_time = one_time
                 correction.discount = discount
@@ -458,8 +462,8 @@ class ProcessFee(generics.ListCreateAPIView):
             # if one time fee such as admission fee was taken remove this student from CollectAdm fee table
             try:
                 c = CollectAdmFee.objects.get(student=student)
-                c.delete()
-                print('%s of %s removed from CollectAdmFee table' % (student, school))
+                c.whehter_paid = True
+                print('%s of %s has paid admission fee' % (student, school))
             except Exception as e:
                 print('exception 31032019-B from erp views.py %s %s' % (e.message, type(e)))
                 print('One time fee was not charged from %s of %s' % (student, school))
@@ -808,9 +812,12 @@ class FeeDetails(generics.ListCreateAPIView):
                     print('%s is one time fees. checking whether it has been paid or not' % h)
                     try:
                         c = CollectAdmFee.objects.get(student=student)
-                        print('%s has NOT paid one time fees %s' % (student, h))
-                        due_this_term += amt
-                        #due_till_now += amt
+                        if not c.whehter_paid:
+                            print('%s has NOT paid one time fees %s' % (student, h))
+                            due_this_term += amt
+                            #due_till_now += amt
+                        else:
+                            print('%s has already paid one time fees %s' % (student, h))
                     except Exception as e:
                         print('exception 21032019-A from erp views.py %s %s' % (e.message, type(e)))
                         print('%s has paid one time fees %s' % (student, h))
