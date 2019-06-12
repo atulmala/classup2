@@ -494,21 +494,25 @@ class ProcessFee(generics.ListCreateAPIView):
                                  amount=float(one_time))
                 ot.save()
 
-            # adjust the balance
+            # adjust the balance. We will be storing only the balance which is to be collected in future. Sometimes
+            # parents pay excess fee. That is not to be stored as it will be the amount_paid and automatically take
+            # care of itself at the time of next fee deposit
             try:
                 pending = PreviousBalance.objects.get(student=student)
                 if pending.due_amount != 0.0:
-                    pending.due_amount = balance
-                    pending.save()
+                    if balance > 0.0:
+                        pending.due_amount = balance
+                        pending.save()
                 if pending.due_amount == 0.0:
                     pending.delete()
             except Exception as e:
                 print('exception 24032019-B from erp views.py %s %s' % (e.message, type(e)))
                 print('%s of %s has no previous balance.' % (student, school))
                 if balance != 0.0 or balance != 0.00:
-                    pending = PreviousBalance(student=student, school=school)
-                    pending.due_amount = balance
-                    pending.save()
+                    if balance > 0.0:
+                        pending = PreviousBalance(student=student, school=school)
+                        pending.due_amount = balance
+                        pending.save()
             print('%s of %s has now a new balance of %.2f' % (student, school, balance))
 
             # prepare the receipt in pdf
