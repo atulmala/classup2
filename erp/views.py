@@ -672,8 +672,13 @@ class ProcessFee(generics.ListCreateAPIView):
             text = 'H. Balance (F - G): '
             c.drawString(r1_border, top_position, text)
             c.drawString(r2_border, top_position, text)
-            c.drawString(amt_pos1, top_position, str(balance))
-            c.drawString(amt_pos2, top_position, str(balance))
+            if balance < 0.0:
+                balance = abs(balance)
+                c.drawString(amt_pos1, top_position, '%s (Positive)' % str(balance))
+                c.drawString(amt_pos2, top_position, '%s (Positive)' % str(balance))
+            else:
+                c.drawString(amt_pos1, top_position, str(balance))
+                c.drawString(amt_pos2, top_position, str(balance))
 
             top_position -= 20
             text = 'Mode: '
@@ -822,6 +827,7 @@ class FeeDetails(generics.ListCreateAPIView):
                             #due_till_now += amt
                         else:
                             print('%s has already paid one time fees %s' % (student, h))
+                            due_till_now += amt
                     except Exception as e:
                         print('exception 21032019-A from erp views.py %s %s' % (e.message, type(e)))
                         print('%s has paid one time fees %s' % (student, h))
