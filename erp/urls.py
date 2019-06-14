@@ -1,6 +1,6 @@
 from django.conf.urls import url, patterns
 
-from .views import SetupAddDetails, FeeDetails, ProcessFee, DefaulterReport, FeeHistory, CorrectFee
+from .views import SetupAddDetails, FeeDetails, ProcessFee, DefaulterReport, FeeHistory, CorrectFee, UploadFee
 
 urlpatterns = patterns(
     '',
@@ -10,4 +10,5 @@ urlpatterns = patterns(
     url(r'^defaulter_list/(?P<school_id>\w+)/$', DefaulterReport.as_view(), name='defaulter_list'),
     url(r'^get_fee_history/$', FeeHistory.as_view(), name='fee_history'),
     url(r'^correct_fee/(?P<school_id>\w+)/$', CorrectFee.as_view(), name='correct_fee'),
+    url(r'^upload_bulk_fee/$', UploadFee.as_view(), name='upload_bulk_fee'),
 )

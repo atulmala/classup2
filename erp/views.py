@@ -430,6 +430,7 @@ class ProcessFee(generics.ListCreateAPIView):
             print('late fee = %.2f' % float(fine))
             waiver = data['waiver']
             print('waiver = %.2f' % float(waiver))
+            discount = data['discount']
             net_payable = data['net_payable']
             balance = data['balance']
             mode = data['mode']
@@ -449,8 +450,9 @@ class ProcessFee(generics.ListCreateAPIView):
                 receipt_no = 99999
 
             fee = FeePaymentHistory(school=school, student=student, amount=actual_paid, fine=fine,
-                                    one_time=one_time, waiver=waiver, mode=mode, cheque_number=cheque_no,
-                                    bank=bank, comments='No comments', receipt_number=receipt_no)
+                                    one_time=one_time, discount=discount, waiver=waiver, mode=mode,
+                                    cheque_number=cheque_no, bank=bank, comments='No comments',
+                                    receipt_number=receipt_no)
             try:
                 fee.data = str(h)
                 fee.save()
@@ -459,7 +461,7 @@ class ProcessFee(generics.ListCreateAPIView):
                 print('failed to save heads')
             fee.save()
 
-            # if one time fee such as admission fee was taken remove this student from CollectAdm fee table
+            # if one time fee such as admission fee was taken set whether_paid to true
             try:
                 c = CollectAdmFee.objects.get(student=student)
                 c.whehter_paid = True
@@ -488,6 +490,11 @@ class ProcessFee(generics.ListCreateAPIView):
                 w = HeadWiseFee(PaymentHistory=fee, school=school,
                                      student=student, head='Waiver', amount=float(waiver))
                 w.save()
+
+            if discount > 0.0:
+                disc = HeadWiseFee(FeePaymentHistory=fee, school=school,
+                                   student=student, head='Discount', amount=float(discount))
+                disc.save()
 
             if one_time > 0.0:
                 ot = HeadWiseFee(PaymentHistory=fee, school=school, student=student, head='One Time',
@@ -948,6 +955,115 @@ class FeeDetails(generics.ListCreateAPIView):
         except Exception as e:
             print('exception 04032019-A from erp views.py %s %s' % (e.message, type(e)))
             print('failed in determining details regarding fees payment')
+
+
+from rest_framework.decorators import parser_classes
+from rest_framework.parsers import MultiPartParser
+@parser_classes((MultiPartParser, ))
+class UploadFee(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def post(self, request, format=None):
+        print('resuest = ')
+        print(request.FILES)
+        context_dict = {
+
+        }
+
+        try:
+            print ('now starting to process the uploaded file for fee upload...')
+            fileToProcess_handle = request.FILES['fee_deposit_detail.xlsx']
+
+            # check that the file uploaded should be a valid excel
+            # file with .xls or .xlsx
+
+
+            # if this is a valid excel file - start processing it
+            fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
+            sheet = fileToProcess.sheet_by_index(0)
+            if sheet:
+                print ('Successfully got hold of sheet!')
+            for row in range(sheet.nrows):
+                # first two rows are header rows
+                if row == 0:
+                    school_id = sheet.cell(row, 0).value
+                    school = School.objects.get(pk=school_id)
+                    print('school = %s' % school)
+                    continue
+                print ('Processing a new row')
+                try:
+                    erp_id = str(sheet.cell(row, 1).value)
+                    decimal = '.'
+                    if decimal in erp_id:
+                        print('student id contains a decimal followed by zero. This has to be removed')
+                        erp_id = erp_id[:-2]
+                        print('decimal and following zero removed. Now student_id = %s' % erp_id)
+                except Exception as e:
+                    print('exception 13062019-A from erp views. %s %s' % (e.message, type(e)))
+
+                try:
+                    student = Student.objects.get(school=school, student_erp_id=erp_id)
+
+                    print('updating the fee paid by %s with erp_id %s' % (student, erp_id))
+                    data = {
+
+                    }
+                    try:
+                        tuition_fee = sheet.cell(row, 3).value
+                        data['Tuiton Fee'] = tuition_fee
+                        transport_fee = sheet.cell(row, 4).value
+                        data['Transport Fee'] = transport_fee
+                        admission_fee = sheet.cell(row, 5).value
+                        data['Admission Fee'] = admission_fee
+                        excess_payment = sheet.cell(row, 6).value
+                        data['Excess Payment'] = excess_payment
+                        amount_paid = sheet.cell(row, 7).value
+                        receipt_no = sheet.cell(row, 8).value
+
+                        fee_history = FeePaymentHistory(school=school, student=student, data=data,
+                                                        amount=amount_paid, mode='cash', receipt_number=receipt_no)
+                        fee_history.save()
+                        print('updated fee details for student %s with erp id %s'
+                              % (erp_id, student))
+                    except Exception as e:
+                        print('exception 13062019-B from erp views.py %s %s' % (e.message, type(e)))
+                        print('failed to update fee details for %s with erp_id %s' %
+                              (student, erp_id))
+
+                    # if one time fee such as admission fee was taken set whether_paid to true
+                    if excess_payment > 0.0:
+                        try:
+                            c = CollectAdmFee(student=student, whether_paid=True)
+                            c.save()
+                            print('%s of %s has paid admission fee' % (student, school))
+                        except Exception as e:
+                            print('exception 13062019-DB from erp views.py %s %s' % (e.message, type(e)))
+                            print('failed to enter one time Collectadmin fee from %s of %s' % (student, school))
+
+                    # save head-wise fee
+                    print('now store head wise fee for %s with erp_id %s' % (student, erp_id))
+                    for head, amount in data.items():
+                        print('head = %s, amount = %f' % (head, amount))
+                        if amount > 0.0:
+                            try:
+                                entry = HeadWiseFee(PaymentHistory=fee_history, school=school,
+                                                    student=student, head=head, amount=float(amount))
+                                entry.save()
+                            except Exception as e:
+                                print('exception 13062019-E from erp views.py %sw %s' % (e.message, type(e)))
+                                print('failed to save a head component for %s' % student)
+                except Exception as e:
+                    print('exception 13062019-F from erp views.py %s %s' % (e.message, type(e)))
+                    print('no student associated with erp_id %s' % erp_id)
+                row += 1
+                # file upload and saving to db was successful. Hence go back to the main menu
+            messages.success(request._request, 'Additional Details Successfully uploaded')
+            return render(request, 'classup/setup_index.html', context_dict)
+        except Exception as e:
+            error = 'invalid excel file uploaded.'
+            print (error)
+            print ('exception 19032018-D from erp views.py %s %s ' % (e.message, type(e)))
+            return render(request, 'classup/setup_data.html', context_dict)
 
 
 class SetupAddDetails(generics.ListCreateAPIView):
