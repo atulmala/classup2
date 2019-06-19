@@ -138,6 +138,9 @@ class DefaulterReport(generics.ListCreateAPIView):
         fail_format = workbook.add_format()
         fail_format.set_bg_color('yellow')
 
+        excess_format = workbook.add_format()
+        excess_format.set_bg_color('green')
+
         row = 0
         col = 0
 
@@ -163,7 +166,11 @@ class DefaulterReport(generics.ListCreateAPIView):
         col += 1
         sheet.write_string(row, col, 'Class', header)
         col += 1
-        sheet.write_string(row, col, 'Amount Due', header)
+        sheet.write_string(row, col, 'Amount Due till date', header)
+        col += 1
+        sheet.write_string(row, col, 'Paid till date', header)
+        col += 1
+        sheet.write_string(row, col, 'Net Amount Due', header)
         col += 1
         sheet.write_string(row, col, 'Family Due', header)
 
@@ -194,21 +201,7 @@ class DefaulterReport(generics.ListCreateAPIView):
                     print('now dealing with %s ward of %s' % (student, the_parent))
                     due_this_term = 0.0
                     due_till_now = 0.0
-                    sheet.write_number(row, col, index, cell_normal)
-                    index += 1
-                    col += 1
-                    sheet.write_string(row, col, student.parent.parent_name, cell_normal)
-                    col += 1
-                    sheet.write_string(row, col, student.parent.parent_mobile1, cell_normal)
-                    col += 1
-                    sheet.write_string(row, col, '%s %s' % (student.fist_name, student.last_name), cell_normal)
-                    col += 1
-                    sheet.write_string(row, col, '%s' % student.student_erp_id, cell_normal)
-                    col += 1
-                    sheet.write_string(row, col, '%s-%s' %
-                                       (student.current_class.standard,
-                                        student.current_section.section), cell_normal)
-                    col += 1
+
 
                     # 02/04/2019 - the outstanding will be calcualted as follows: we will determine the fee due till date
                     # for example if today is 7th of Jul and fee payment is monthly we will calculate the fee
@@ -300,26 +293,51 @@ class DefaulterReport(generics.ListCreateAPIView):
                     print('due_till_now = %.2f' % due_till_now)
                     print('due_this_term = %.2f' % due_this_term)
                     print('outstanding = %.2f' %  outstanding)
+
+
                     print('paid_till_date = %.2f' % paid_till_date)
+
                     net_due = float(due_till_now) + float(due_this_term) + float(outstanding) - float(paid_till_date)
                     print('net due = %.2f' % net_due)
-
-                    sheet.write_number(row, col, net_due, money)
-                    grand_total += float(net_due)
-                    col += 1
-                    family_total += float(net_due)
-                    print('family total = %.2f' % family_total)
-                    sheet.write_number(row, col, family_total, money)
+                    if net_due > 0.0:
+                        sheet.write_number(row, col, index, cell_normal)
+                        index += 1
+                        col += 1
+                        sheet.write_string(row, col, student.parent.parent_name, cell_normal)
+                        col += 1
+                        sheet.write_string(row, col, student.parent.parent_mobile1, cell_normal)
+                        col += 1
+                        sheet.write_string(row, col, '%s %s' % (student.fist_name, student.last_name), cell_normal)
+                        col += 1
+                        sheet.write_string(row, col, '%s' % student.student_erp_id, cell_normal)
+                        col += 1
+                        sheet.write_string(row, col, '%s-%s' %
+                                           (student.current_class.standard,
+                                            student.current_section.section), cell_normal)
+                        col += 1
+                        sheet.write_number(row, col, due_till_now + due_this_term + outstanding, money)
+                        col += 1
+                        sheet.write_number(row, col, paid_till_date, money)
+                        col += 1
+                        sheet.write_number(row, col, net_due, money)
+                        grand_total += float(net_due)
+                        col += 1
+                        family_total += float(net_due)
+                        print('family total = %.2f' % family_total)
+                        sheet.write_number(row, col, family_total, money)
 
                     row += 1
                     col = 0
                 # check if this parent has multiple kids
                 if entry.count() > 1:
-                    f_row = row - entry.count()
-                    sheet.conditional_format(f_row, 0, row - 1, col + 7, {'type': 'no_blanks', 'format': fail_format})
-                    sheet.merge_range(f_row, col + 7, row - 1, col + 7, str(family_total), money)
-                    sheet.merge_range(f_row, col + 1, row - 1, col + 1, the_parent.parent_name, cell_normal)
-                    sheet.merge_range(f_row, col + 2, row - 1, col + 2, the_parent.parent_mobile1, cell_normal)
+                    if net_due > 0.0:
+                        f_row = row - entry.count()
+                        sheet.conditional_format(f_row, 0, row - 1, col + 9, {'type': 'no_blanks', 'format': fail_format})
+                        sheet.merge_range(f_row, col + 9, row - 1, col + 9, str(family_total), money)
+                        sheet.merge_range(f_row, col + 1, row - 1, col + 1, the_parent.parent_name, cell_normal)
+                        sheet.merge_range(f_row, col + 2, row - 1, col + 2, the_parent.parent_mobile1, cell_normal)
+                    else:
+                        row -= entry.count()
 
             sheet.write_string(row, col + 5, 'Grand Total', title)
             sheet.write_number(row, col + 6, grand_total, money)
@@ -1012,7 +1030,7 @@ class UploadFee(generics.ListCreateAPIView):
                         tuition_fee = sheet.cell(row, 3).value
                         data['Tuiton Fee'] = tuition_fee
                         transport_fee = sheet.cell(row, 4).value
-                        data['Transport Fee'] = transport_fee
+                        data['Transportation Fee'] = transport_fee
                         admission_fee = sheet.cell(row, 5).value
                         data['Admission Fee'] = admission_fee
                         excess_payment = sheet.cell(row, 6).value
@@ -1033,7 +1051,7 @@ class UploadFee(generics.ListCreateAPIView):
                     # if one time fee such as admission fee was taken set whether_paid to true
                     if excess_payment > 0.0:
                         try:
-                            c = CollectAdmFee(student=student, whether_paid=True)
+                            c = CollectAdmFee(school=school, student=student, whether_paid=True)
                             c.save()
                             print('%s of %s has paid admission fee' % (student, school))
                         except Exception as e:

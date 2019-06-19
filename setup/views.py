@@ -643,7 +643,6 @@ def setup_students(request):
                         print (error)
                         # todo - we should skip this student but report this and move on to the next student <provide code>
                         continue
-
                     try:
                         the_section = Section.objects.get(school=school, section=current_section)
                     except Exception as e:

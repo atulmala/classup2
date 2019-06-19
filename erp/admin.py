@@ -24,9 +24,9 @@ admin.site.register(AdditionalDetails, AdditionalDetailsAdmin)
 
 
 class CollectAdmFeeAdmin(admin.ModelAdmin):
-    list_display = ('school', 'student',)
+    list_display = ('school', 'student', 'whether_paid',)
     search_fields = ('school', 'student')
-    list_filter = ('school',)
+    list_filter = ('school', 'whether_paid',)
 
 
 admin.site.register(CollectAdmFee, CollectAdmFeeAdmin)
