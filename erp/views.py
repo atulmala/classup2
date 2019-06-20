@@ -1028,7 +1028,7 @@ class UploadFee(generics.ListCreateAPIView):
                     }
                     try:
                         tuition_fee = sheet.cell(row, 3).value
-                        data['Tuiton Fee'] = tuition_fee
+                        data['Tuition Fee'] = tuition_fee
                         transport_fee = sheet.cell(row, 4).value
                         data['Transportation Fee'] = transport_fee
                         admission_fee = sheet.cell(row, 5).value
