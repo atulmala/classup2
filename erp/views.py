@@ -995,7 +995,6 @@ class UploadFee(generics.ListCreateAPIView):
             # check that the file uploaded should be a valid excel
             # file with .xls or .xlsx
 
-
             # if this is a valid excel file - start processing it
             fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
             sheet = fileToProcess.sheet_by_index(0)

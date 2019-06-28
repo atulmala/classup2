@@ -79,30 +79,36 @@ class ActivityMembersManager (generics.ListCreateAPIView):
                             print (error)
                             form.errors['__all__'] = form.error_class([error])
                             return render(request, 'classup/setup_data.html', context_dict)
-
-                    print ('Processing a new row')
-                    erp_id = sheet.cell(row, 1).value
-                    print ('erp_id = %s. Will now try to add to Activity Group %s' % (erp_id, group_name))
-                    try:
-                        student = Student.objects.get (school=school, student_erp_id=erp_id)
+                    else:
+                        print ('Processing a new row')
+                        erp_id = str(sheet.cell(row, 1).value)
+                        print(erp_id)
+                        decimal = '.'
+                        if decimal in erp_id:
+                            print('student id contains a decimal followed by zero. This has to be removed')
+                            erp_id = erp_id[:-2]
+                            print('decimal and following zero removed. Now student_id = %s' % erp_id)
+                        print ('erp_id = %s. Will now try to add to Activity Group %s' % (erp_id, group_name))
                         try:
-                            entry, created = ActivityMembers.objects.get_or_create(
-                                group=activity_group,
-                                student=student
-                            )
-                            if entry:
-                                print ('student %s %s is already a member of %s group' %
-                                       (student.fist_name, student.last_name, group_name))
-                            if created:
-                                print ('made student %s %s a member of %s group' %
-                                       (student.fist_name, student.last_name, group_name))
-                        except Exception as e:
-                            print ('exception 241117-C from activity_group views.py %s %s' % (e.message, type(e)))
-                            print ('could not create an Activity Group entry for student with erp_id %s in %s' %
-                                   (erp_id, activity_group))
-                    except Student.DoesNotExist as e:
-                        print ('no student is associated with erp_id %s' % erp_id)
-                        print ('exception 241117-B from activity_group views.py %s %s' % (e.message, type(e)))
+                            student = Student.objects.get (school=school, student_erp_id=erp_id)
+                            try:
+                                entry, created = ActivityMembers.objects.get_or_create(
+                                    group=activity_group,
+                                    student=student
+                                )
+                                if entry:
+                                    print ('student %s %s is already a member of %s group' %
+                                           (student.fist_name, student.last_name, group_name))
+                                if created:
+                                    print ('made student %s %s a member of %s group' %
+                                           (student.fist_name, student.last_name, group_name))
+                            except Exception as e:
+                                print ('exception 241117-C from activity_group views.py %s %s' % (e.message, type(e)))
+                                print ('could not create an Activity Group entry for student with erp_id %s in %s' %
+                                       (erp_id, activity_group))
+                        except Student.DoesNotExist as e:
+                            print ('no student is associated with erp_id %s' % erp_id)
+                            print ('exception 241117-B from activity_group views.py %s %s' % (e.message, type(e)))
                 # file upload and saving to db was successful. Hence go back to the main menu
                 messages.success(request._request, 'Activity Group entries created.')
                 return render(request, 'classup/setup_index.html', context_dict)
