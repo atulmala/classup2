@@ -44,6 +44,7 @@ class BusRoutAdmin(admin.ModelAdmin):
         return school.school_name
     get_school_name.short_description = 'School'
     list_display = ('get_school_name', 'bus_root', )
+    list_filter = ('school',)
     search_fields = ('school__school_name',)
 
 admin.site.register(Bus_Rout, BusRoutAdmin)
@@ -76,6 +77,7 @@ class BusStopAdmin(admin.ModelAdmin):
         return school.school_name
     get_school_name.short_description = 'School'
     list_display = ('get_school_name', 'bus_rout', 'stop_name')
+    list_filter = ('bus_rout__school',)
     search_fields = ('stop_name', 'bus_rout__bus_root')
 
 admin.site.register(BusStop, BusStopAdmin)

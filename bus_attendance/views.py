@@ -22,7 +22,7 @@ from .serializers import BusRoutSerializer, BusAttendanceSerializer, BusStopSeri
 from operations import sms
 
 
-server_ip = 'http://52.32.99.184/'
+#server_ip = 'http://52.32.99.184/'
 
 
 # function to validate the extension of uploaded excel file - should be either .xls or .xlsx
@@ -252,10 +252,17 @@ def student_bus_rout(request):
                     # first, capture student data
                     # we need to explicitly cast student id to string. Else update will not function properly
                     student_id = str(sheet.cell(row, 0).value)
+                    decimal = '.'
+                    if decimal in student_id:
+                        print('student id contains a decimal followed by zero. This has to be removed')
+                        student_id = student_id[:-2]
+                        print('decimal and following zero removed. Now student_id = %s' % student_id)
                     student_first_name = sheet.cell(row, 1).value
                     student_last_name = sheet.cell(row, 2).value
                     bus_rout = sheet.cell(row, 3).value
+                    print('bus_rout = %s' % bus_rout)
                     stop_name = sheet.cell(row, 4).value
+                    print('bus stop = %s' % stop_name)
 
                     # start assigning student to bus routs. Both bus_rout and student are foreign objects
 
