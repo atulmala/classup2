@@ -148,7 +148,8 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
 
                 # make an entry to database only it is a fresh entry
                 if q.count() == 0:
-                    action = 'Absence marked for ' + student.fist_name + ' ' + student.last_name
+                    action = 'Absence marked for %s %s' % (student.fist_name, student.last_name)
+                    print(action)
 
                     attendance = Attendance(date=the_date)
                     attendance.the_class = c

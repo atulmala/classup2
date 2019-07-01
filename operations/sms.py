@@ -40,6 +40,11 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
         # 26/10/2018 - after getting the issues of non delivery of sms from some schools, we will now be using
         # services of at least two vendors and depending upon school category their sms will be sent through a
         # specific vendor
+
+        # 01/07/2019 we use different vendors for bulk sms
+        if message_type == 'Bulk SMS (Device)':
+            print('this is bulk sms from device. Switching to vendor specific for bulk sms')
+            vendor = vendor_bulk_sms
         if vendor == 1:
             print('vendor for sending this sms for %s is softsms' % school.school_name)
             url = 'http://softsms.in/app/smsapi/index.php?'
@@ -55,6 +60,13 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
             url = 'https://www.smsgatewayhub.com/api/mt/SendSMS?APIKey=%s' % api_key
             senderid = 'CLSSUP'
             url += '&senderid=%s&channel=2&DCS=0&flashsms=0&number=%s&text=%s' % (senderid, mobile, m3)
+
+        if vendor == 3:
+            print('vendor for sending this sms for %s is DealSMS' % school.school_name)
+            url = 'http://5.9.0.178:8000/Sendsms?user=classup&password=56tr43we&sender=CLSSUP'
+            url += '&dest=%s' % mobile
+            url += '&dcs=0&apid=56114&text=%s' % m3
+            print(url)
 
         # 06/12/2016 - we don't want to send sms to a dummy number
         if mobile == '1234567890' or len(str(mobile)) != 10:
@@ -72,14 +84,15 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                     print ('sending to ' + mobile)
 
                     response = urllib2.urlopen(url)
-                    print('response = ')
                     if vendor == 1:
                         message_id = response.read()
-                    else:
+                    if vendor == 2:
                         outcome = json.loads(response.read())
                         print(outcome)
                         message_id = (outcome['JobId'])
-                    print('job_id = ')
+                    if vendor == 3:
+                        message_id = response.read()
+                    print('job_id = %s' % message_id)
                     print(message_id)
                 else:
                     print('message type was Bulk SMS (Web Interface). '
