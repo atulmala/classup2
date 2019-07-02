@@ -147,7 +147,9 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                 q = Attendance.objects.filter(date=the_date, the_class=c, section=s, subject=sub, student=student)
 
                 # make an entry to database only it is a fresh entry
-                if q.count() == 0:
+                #if q.count() == 0:
+                if not Attendance.objects.filter(date=the_date, the_class=c,
+                                                 section=s, subject=sub, student=student).exists():
                     action = 'Absence marked for %s %s' % (student.fist_name, student.last_name)
                     print(action)
 
