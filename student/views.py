@@ -18,7 +18,8 @@ from setup.models import School
 from academics.models import ClassTest, TestResults, TermTestResult, ThirdLang, Class, Section, CoScholastics
 from exam.models import HigherClassMapping, NPromoted
 from exam.forms import ResultSheetForm
-from .models import Student, Parent
+from bus_attendance.models import Student_Rout
+from .models import Student, Parent, DOB, AdditionalDetails, House
 
 from setup.forms import ExcelFileUploadForm
 from .forms import MidTermAdmissionForm
@@ -313,35 +314,49 @@ class StudentListDownload (generics.ListAPIView):
                 col = 0
                 sheet.write_string (row, col, 'S No', title)
                 col = col + 1
-                sheet.set_column ('B:B', 16)
+                sheet.set_column ('B:B', 8)
                 sheet.write_string (row, col, 'Admission No', title)
                 col = col + 1
-                sheet.set_column ('C:I', 20)
-                sheet.write_string (row, col, 'Student Name', title)
+                sheet.set_column ('C:D', 12)
+                sheet.write_string (row, col, 'First Name', title)
                 col += 1
-                sheet.write_string(row, col, 'Parent Name', title)
+                sheet.write_string (row, col, 'SurName', title)
+                col +=1
+                sheet.set_column('E:F', 8)
+                sheet.write_string(row, col, 'Class', title)
                 col += 1
-                sheet.write_string(row, col, 'Parent Mobile', title)
-                # col += 1
-                # sheet.write_string(row, col, 'New Mobile', title)
-
-                # 06/03/2018 - coding to show the current class/sec and promoted class/sec will be required only during
-                # new session start, otherwise will be coded
+                sheet.write_string(row, col, 'Section', title)
                 col += 1
-                sheet.write_string(row, col, 'Current Class', title)
+                sheet.set_column('G:G', 10)
+                sheet.write_string(row, col, 'DOB(dd/mm/yy)', title)
                 col += 1
-                sheet.write_string(row, col, 'Current Section', title)
+                sheet.set_column('H:K', 15)
+                sheet.write_string(row, col, 'Father Name', title)
                 col += 1
-
-                sheet.write_string(row, col, 'Promoted Class', title)
+                sheet.write_string(row, col, 'Father Mobile', title)
                 col += 1
-                sheet.write_string(row, col, 'Promoted Section', title)
+                sheet.write_string(row, col, 'Mother Name', title)
+                col += 1
+                sheet.write_string(row, col, 'Mother Mobile', title)
+                col += 1
+                sheet.set_column('L:L', 45)
+                sheet.write_string(row, col, 'Address', title)
+                col += 1
+                sheet.write_string(row, col, 'House', title)
+                col += 1
+                sheet.set_column('N:N', 10)
+                sheet.write_string(row, col, 'Bus Rout', title)
+                col += 1
+                sheet.set_column('O:O', 16)
+                sheet.write_string(row, col, 'Bus Stop', title)
+                col += 1
 
                 try:
-                    students = Student.objects.filter(school=school, current_class=the_class,
-                                                      active_status=True).order_by('current_section', 'fist_name')
+                    students = Student.objects.filter(school=school,
+                                                      active_status=True).order_by('current_class__sequence',
+                                                                                   'current_section', 'fist_name')
                     print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
-                    print (students)
+                    print (students.count())
                     row = row + 1
                     col = 0
                     s_no = 1
@@ -350,55 +365,111 @@ class StudentListDownload (generics.ListAPIView):
                         col += 1
                         sheet.write_string (row, col, student.student_erp_id, cell_normal)
                         col += 1
-                        student_name = '%s %s' % (student.fist_name, student.last_name)
-                        sheet.write_string (row, col, student_name, cell_normal)
+                        sheet.write_string (row, col, student.fist_name, cell_normal)
                         col += 1
-
-                        # 05/06/2018 parent name and phone number
+                        sheet.write_string(row, col, student.last_name, cell_normal)
+                        col += 1
+                        current_class = student.current_class.standard
+                        sheet.write_string(row, col, current_class, cell_normal)
+                        col += 1
+                        current_section = student.current_section.section
+                        sheet.write_string(row, col, current_section, cell_normal)
+                        col += 1
+                        try:
+                            d = DOB.objects.get(student=student)
+                            dob = d.dob
+                            sheet.write_string(row, col, dob.strftime('%d/%m/%Y'), cell_normal)
+                        except Exception as e:
+                            print('exception 03072019-A from student views.py %s %s' % (e.message, type(e)))
+                            print('dob for %s not entered' % student)
+                            sheet.write_string(row, col, 'Not Entered', cell_normal)
+                        col += 1
                         parent = student.parent.parent_name
                         sheet.write_string(row, col, parent, cell_normal)
                         col += 1
                         mobile = student.parent.parent_mobile1
                         sheet.write_string(row, col, mobile, cell_normal)
+                        col += 1
+                        try:
+                            a = AdditionalDetails.objects.get(student=student)
+                            mother_name = a.mother_name
+                            sheet.write_string(row, col, mother_name, cell_normal)
+                        except Exception as e:
+                            print('exception 03072019-B from student views.py %s %s' % (e.message, type(e)))
+                            print('mother name not entered for %s' % student)
+                            sheet.write_string(row, col, 'Not Entered', cell_normal)
+                        col += 1
+                        mobile2 = student.parent.parent_mobile2
+                        if mobile2 == '1234567890':
+                            mobile2 = 'Not Entered'
+                        sheet.write_string(row, col, mobile2, cell_normal)
+                        col += 1
+                        try:
+                            a = AdditionalDetails.objects.get(student=student)
+                            address = a.address
+                            sheet.write_string(row, col, address, cell_normal)
+                        except Exception as e:
+                            print('exception 03072019-C from student views.py %s %s' % (e.message, type(e)))
+                            print('address name not entered for %s' % student)
+                            sheet.write_string(row, col, 'Not Entered', cell_normal)
+                        col += 1
+                        try:
+                            h = House.objects.get(student=student)
+                            house = h.house
+                            sheet.write_string(row, col, house, cell_normal)
+                        except Exception as e:
+                            print('exception 03072019-D from student views.py %s %s' % (e.message, type(e)))
+                            print('house not entered for %s' % student)
+                            sheet.write_string(row, col, 'Not Entered', cell_normal)
+                        col += 1
+                        try:
+                            sr = Student_Rout.objects.get(student=student)
+                            bus_rout = sr.bus_root.bus_root
+                            sheet.write_string(row, col, bus_rout, cell_normal)
+                            col += 1
+                            bus_stop = sr.bus_stop.stop_name
+                            sheet.write_string(row, col, bus_stop, cell_normal)
+                            col += 1
+                        except Exception as e:
+                            print('exception 03072019-E from student views.py %s %s' % (e.message, type(e)))
+                            print('bus rout or bus stop not entered for %s' % student)
+                            sheet.write_string(row, col, 'Not Entered', cell_normal)
+                            col += 1
+                            sheet.write_string(row, col, 'Not Entered', cell_normal)
+
 
                         # current class & section
-                        col += 1
-                        current_class = student.current_class.standard
-                        sheet.write_string (row, col, current_class, cell_normal)
-                        col += 1
-                        current_section = student.current_section.section
-                        sheet.write_string(row, col, current_section, cell_normal)
-                        col += 1
+
 
                         # promoted class & section
-                        current_class_seq = student.current_class.sequence
-                        next_class_seq = current_class_seq + 1
-                        next = Class.objects.get(school=student.school, sequence=next_class_seq)
+                        # current_class_seq = student.current_class.sequence
+                        # next_class_seq = current_class_seq + 1
+                        # next = Class.objects.get(school=student.school, sequence=next_class_seq)
 
                         # 15/03/2019 0 student will be promoted only if the name is NOT in NPromoted table
-                        try:
-                            failed = NPromoted.objects.get(student=student)
-                            print('%s has failed in class %s. Hence not promoting' % (student, current_class))
-                            next_class = current_class
-                            sheet.write_string(row, col, next_class, cell_normal)
-                            col += 1
-                            sheet.write_string(row, col, current_section, cell_normal)
-                            sheet.conditional_format(row, 0, row, col + 1, {'type': 'no_blanks',
-                                                                                       'format': fail_format})
-                        except Exception as e:
-                            print('exception 15030219-A from student views.py %s %s' % (e.message, type(e)))
-                            print('%s has passed in class %s. Hence, promoting to next class' %
-                                  (student, current_class))
-
-                            try:
-                                next_class = next.standard
-                                print('determined the next class for %s: %s-%s' %
-                                      (student_name, next_class, current_section))
-                                sheet.write_string(row, col, next_class, cell_normal)
-                                col += 1
-                                sheet.write_string(row, col, current_section, cell_normal)
-                            except Exception as e:
-                                print('failed to determine the next class for %s' % student_name)
+                        # try:
+                        #     failed = NPromoted.objects.get(student=student)
+                        #     print('%s has failed in class %s. Hence not promoting' % (student, current_class))
+                        #     next_class = current_class
+                        #     sheet.write_string(row, col, next_class, cell_normal)
+                        #     col += 1
+                        #     sheet.write_string(row, col, current_section, cell_normal)
+                        #     sheet.conditional_format(row, 0, row, col + 1, {'type': 'no_blanks',
+                        #                                                                'format': fail_format})
+                        # except Exception as e:
+                        #     print('exception 15030219-A from student views.py %s %s' % (e.message, type(e)))
+                        #     print('%s has passed in class %s. Hence, promoting to next class' %
+                        #           (student, current_class))
+                        #
+                        #     try:
+                        #         next_class = next.standard
+                        #         print('determined the next class for %s: %s-%s' %
+                        #               (student_name, next_class, current_section))
+                        #         sheet.write_string(row, col, next_class, cell_normal)
+                        #         col += 1
+                        #         sheet.write_string(row, col, current_section, cell_normal)
+                        #     except Exception as e:
+                        #         print('failed to determine the next class for %s' % student_name)
                         #         print('exception 06032018-A from student views.py %s %s' % (e.message, type(e)))
                         row = row + 1
                         s_no = s_no + 1

@@ -1,24 +1,9 @@
-import os
 import xlrd
-import json
-import inflect
-import StringIO
-import xlsxwriter
-
-from google.cloud import storage
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import A4, landscape
-from reportlab.lib.units import inch, cm
-from reportlab.lib import colors
-from reportlab.platypus import Table, TableStyle
 
 from django.shortcuts import render
 from django.contrib import messages
 from django.http import HttpResponse
-from django.db.models import Sum
 from rest_framework.renderers import JSONRenderer
-from datetime import datetime
-from dateutil import relativedelta
 
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework import generics
@@ -28,11 +13,6 @@ from setup.views import validate_excel_extension
 
 from setup.models import School
 from student.models import Student, AdditionalDetails, House, Parent
-from exam.models import StreamMapping
-from .models import CollectAdmFee, FeePaymentHistory, PreviousBalance, ReceiptNumber, HeadWiseFee, FeeCorrection
-
-from .serializers import FeeHistorySerialzer
-
 
 # Create your views here.
 

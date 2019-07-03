@@ -32,6 +32,7 @@ class StudentRoutAdmin(admin.ModelAdmin):
         return school.school_name
     get_school_name.short_description = 'School'
     list_display = ('student', 'get_school_name', 'bus_root', 'bus_stop', )
+    list_filter = ('student__school',)
     search_fields = ('student__fist_name',)
 
 admin.site.register(Student_Rout, StudentRoutAdmin)
