@@ -849,7 +849,6 @@ class FeeDetails(generics.ListCreateAPIView):
                         if not c.whehter_paid:
                             print('%s has NOT paid one time fees %s' % (student, h))
                             due_this_term += amt
-                            #due_till_now += amt
                         else:
                             print('%s has already paid one time fees %s' % (student, h))
                             due_till_now += amt
@@ -911,6 +910,19 @@ class FeeDetails(generics.ListCreateAPIView):
                 print('exception 21032019-C from erp views.py %s %s' % (e.message, type(e)))
                 print('No Previous outstanding on %s' % student)
             context_dict['Previous Outstanding'] = due_amount
+
+            # calculate how much discount has been offered till date
+            discount_given = 0.0
+            discounts = HeadWiseFee.objects.filter(student=student, head='Discount')
+            print(discounts)
+            for discount in discounts:
+                discount_given += float(discount.amount)
+            print('%s has been provided %f discount till date' % (student, discount_given))
+
+            # adjust the discount from the due amount
+            print('before adjusting discount, due till now = %f' % due_till_now)
+            due_till_now -= float(discount_given)
+            print('after adjusting discount, due till now = %f' % due_till_now)
 
             # calculate how much has been paid till date
             payment_history = []

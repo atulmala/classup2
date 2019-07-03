@@ -14,7 +14,7 @@ try:
     cursor3 = db.cursor()
     print ('cursor3=')
     print (cursor3)
-    sql3 = "select status from teacher_messagereceivers where status_extracted = 0 and date > '2019-05-05' and date < DATE_SUB(NOW(), INTERVAL 3 HOUR);"
+    sql3 = "select status, date from teacher_messagereceivers where status_extracted = 0 and date > '2019-05-05' and date < DATE_SUB(NOW(), INTERVAL 3 HOUR);"
     print ('sql3 = %s' % sql3)
     cursor3.execute(sql3)
     print ('cursor3 executed')
@@ -24,6 +24,9 @@ try:
     while row3 is not None:
         print ('reached point K2')
         message_id = row3[0]
+        date_sent = row3[1]
+
+        the_date = date_sent.strftime('%Y-%m-%d')
         print ('message_id = %s' % message_id)
         if message_id:
             print(message_id)
@@ -46,21 +49,19 @@ try:
                     print(url)
                     print ('Exception 23082018-A from operations teacher_sms_dlvry.py = %s (%s)' % (e.message, type(e)))
             else:
-                print ('message was sent using SMSGatewayHub api')
-                url = 'https://www.smsgatewayhub.com/api/mt/GetDelivery?APIKey=6ZWRKLTUnEmMMQro3P30SQ&jobid=%s' % \
-                      message_id
-                print(url)
+                print('message was sent using DealSMS API')
+                url = 'http://5.9.69.238/reports/getByMid.php?uname=classup&password=56tr43we'
+                url += '&sdate=%s' % the_date
+                url += '&mid=%s' % message_id
+
+                # now extract the delivery status
                 try:
                     response = urllib.urlopen(url)
                     status = response.read()
-                    j = json.loads(status)
-                    print(j)
-                    status = json.dumps(j['DeliveryReports'][0])
-                    outcome = status
+                    print('delivery status = %s' % status)
                 except Exception as e:
-                    print('unable to get the staus of sms delivery. The url was: ')
-                    print(url)
-                    print ('Exception 23082018-B from operations teacker_sms_dlvry.py = %s (%s)' % (e.message, type(e)))
+                    print('exception 02072019-B from get_sms_dlvry_status.py %s %s' % (e.message, type(e)))
+                    print('failed to extract he delivery status of message with id %s' % message_id)
             # update the smsrecord table that the delivery status of this sms has been extracted, hence no need
             # to extract its delivery status when this program runs the next time
             try:

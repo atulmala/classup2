@@ -25,7 +25,7 @@ class SMSRecord(models.Model):
     api_called = models.BooleanField(default=True)
     outcome = models.TextField(max_length=20, default='Delivered')
     status_extracted = models.BooleanField(default=False)
-    status = models.CharField(max_length=200, default='Not Available')
+    status = models.CharField(max_length=250, default='Not Available')
 
 
 class ClassUpAdmin(models.Model):

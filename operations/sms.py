@@ -91,7 +91,8 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                         print(outcome)
                         message_id = (outcome['JobId'])
                     if vendor == 3:
-                        message_id = response.read()
+                        m = response.read()
+                        message_id = m[17:56]
                     print('job_id = %s' % message_id)
                     print(message_id)
                 else:
