@@ -8,6 +8,13 @@ from teacher.models import Teacher
 # Create your models here.
 
 
+class SMSVendor(models.Model):
+    vendor = models.CharField(max_length=25, default='SoftSMS')
+
+    def __unicode__(self):
+        return self.vendor
+
+
 class SMSRecord(models.Model):
     school = models.ForeignKey(School, null=True)
     sender = models.ForeignKey(Teacher, null=True)
@@ -26,7 +33,11 @@ class SMSRecord(models.Model):
     outcome = models.TextField(max_length=20, default='Delivered')
     status_extracted = models.BooleanField(default=False)
     status = models.CharField(max_length=250, default='Not Available')
+    the_vendor = models.ForeignKey(SMSVendor, null=True, blank=True)
 
 
 class ClassUpAdmin(models.Model):
     admin_mobile = models.CharField(max_length=20, default='9873011186')
+
+
+

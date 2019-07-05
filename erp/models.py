@@ -1,3 +1,4 @@
+import datetime
 from django.db import models
 from setup.models import School
 from student.models import Student, Parent
@@ -23,7 +24,7 @@ class FeePaymentHistory(models.Model):
     school = models.ForeignKey(School)
     student = models.ForeignKey(Student)
     parent = models.ForeignKey(Parent, null=True)
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField()
     data = models.TextField(null=True, blank=True)
     previous_due = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
     amount = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
@@ -39,6 +40,8 @@ class FeePaymentHistory(models.Model):
 
     # we will extract parent from student
     def save(self, *args, **kwargs):
+        if self.date is None:
+            date = datetime.datetime.now()
         p = self.student.parent
         self.parent = p
         super(FeePaymentHistory, self).save(*args, **kwargs)

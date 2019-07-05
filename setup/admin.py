@@ -13,7 +13,7 @@ admin.site.register(School, SchoolAdmin)
 
 
 class ConfigurationsAdmin(admin.ModelAdmin):
-    list_display = ('school', 'vendor_sms', 'vendor_bulk_sms',)
+    list_display = ('school', 'send_sms', 'vendor_sms', 'vendor_bulk_sms',)
 
 
 admin.site.register(Configurations, ConfigurationsAdmin)

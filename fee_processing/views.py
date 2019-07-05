@@ -4,6 +4,7 @@ import json
 import inflect
 import StringIO
 import xlsxwriter
+import datetime
 
 from google.cloud import storage
 from reportlab.pdfgen import canvas
@@ -17,17 +18,14 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.db.models import Sum
 from rest_framework.renderers import JSONRenderer
-from datetime import datetime
+# from datetime import datetime
 from dateutil import relativedelta
 
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework import generics
 
-from setup.forms import ExcelFileUploadForm
-from setup.views import validate_excel_extension
-
 from setup.models import School
-from student.models import Student, AdditionalDetails, House, Parent
+from student.models import Student, Parent
 from exam.models import StreamMapping
 from erp.models import CollectAdmFee, FeePaymentHistory, PreviousBalance, ReceiptNumber, HeadWiseFee, FeeCorrection
 
@@ -144,9 +142,9 @@ class DefaulterReport(generics.ListCreateAPIView):
         row = 0
         col = 0
 
-        currentDay = datetime.now().day
-        year = datetime.now().year
-        month = datetime.now().month
+        currentDay = datetime.datetime.now().day
+        year = datetime.datetime.now().year
+        month = datetime.datetime.now().month
         date = '%i/%i/%i' % (currentDay, month, year)
         sheet.merge_range(row, col, row, col + 7, '%s - Defaulter list as on %s' % (school_name, date), title)
 
@@ -182,7 +180,7 @@ class DefaulterReport(generics.ListCreateAPIView):
         try:
             # how many months have passed since the sessio start
             first_april = datetime(2019, 4, 1)
-            today = datetime.today()
+            today = datetime.datetime.today()
             diff = relativedelta.relativedelta(today, first_april)
             months_count = diff.months
 
@@ -430,33 +428,39 @@ class ProcessFee(generics.ListCreateAPIView):
             student_id = data['reg_no']
             student = Student.objects.get(school=school, student_erp_id=student_id)
             print('processing fee for %s of %s' % (student, school))
-            heads = data['heads']
-            h = json.dumps(heads)
-            print('type h = %s' % type(h))
-            print('h = %s' % h)
-            print('heads type = %s' % type(heads))
-            print('heads = ')
-            print(heads)
-            due_this_term = data['due_this_term']
-            actual_paid = data['actual_paid']
-            previous_dues = data['previous_due']
-            print('previous dues = %.2f' % previous_dues)
-            one_time = data['one_time']
-            print('one_time = %.2f' % float(one_time))
+            try:
+                heads = data['heads']
+                h = json.dumps(heads)
+                print('type h = %s' % type(h))
+                print('h = %s' % h)
+                print('heads type = %s' % type(heads))
+                print('heads = ')
+                print(heads)
+                due_this_term = data['due_this_term']
+                actual_paid = data['actual_paid']
+                previous_dues = data['previous_due']
+                print('previous dues = %.2f' % previous_dues)
+                one_time = data['one_time']
+                print('one_time = %.2f' % float(one_time))
 
-            fine = data['fine']
-            print('late fee = %.2f' % float(fine))
-            waiver = data['waiver']
-            print('waiver = %.2f' % float(waiver))
-            discount = data['discount']
-            net_payable = data['net_payable']
-            balance = data['balance']
-            mode = data['mode']
-            print('payment_mode = %s' % mode)
-            cheque_no = data['cheque_no']
-            print('cheque no = %s' % cheque_no)
-            bank = data['bank']
-            print('bank = %s' % bank)
+                fine = data['fine']
+                print('late fee = %.2f' % float(fine))
+                waiver = data['waiver']
+                print('waiver = %.2f' % float(waiver))
+                discount = data['discount']
+                print('discount = %.2f' % float(discount))
+                net_payable = data['net_payable']
+                print('net_payable = %.2f' % float(net_payable))
+                balance = data['balance']
+                mode = data['mode']
+                print('payment_mode = %s' % mode)
+                cheque_no = data['cheque_no']
+                print('cheque no = %s' % cheque_no)
+                bank = data['bank']
+                print('bank = %s' % bank)
+            except Exception as e:
+                print('exception 04072019-B from fee_processing views.py %s %s' % (e.message, type(e)))
+                print('error occur during json handling')
 
             # generate receipt number
             try:
@@ -465,6 +469,8 @@ class ProcessFee(generics.ListCreateAPIView):
                 r.start_receipt = receipt_no + 1
                 r.save()
             except Exception as e:
+                print('exception 04072019-A from fee_processing views.py %s %s' % (e.message, type(e)))
+                print('start receipt number not set for %s. Using default 99999' % school.school_name)
                 receipt_no = 99999
 
             fee = FeePaymentHistory(school=school, student=student, amount=actual_paid, fine=fine,
@@ -494,6 +500,13 @@ class ProcessFee(generics.ListCreateAPIView):
                 amount = head['amount']
                 if amount != 'N/A':
                     net_paid = head['net_payable']
+
+                    # if the fee was not paid in full the balance is to be applied to Composit/Tuition fee
+                    if balance > 0.0:
+                        print('short fee case...')
+                        if h == 'Composit Fee' or h == 'Tuition Fee':
+                            net_paid -= balance
+                            print('shortfall of %f is applied to %s paid = %f' % (balance, h, net_paid))
                     entry = HeadWiseFee(PaymentHistory=fee, school=school,
                                         student=student, head=h, amount=float(net_paid))
                     entry.save()
@@ -570,9 +583,9 @@ class ProcessFee(generics.ListCreateAPIView):
             c.line(-30, line_top, 300, line_top)
             c.line(400, line_top, 730, line_top)
 
-            currentDay = datetime.now().day
-            year = datetime.now().year
-            month = datetime.now().month
+            currentDay = datetime.datetime.now().day
+            year = datetime.datetime.now().year
+            month = datetime.datetime.now().month
             transaction_date = '%i/%i/%i' % (currentDay, month, year)
             top_position = top - 40
             c.drawString(-30, top_position, 'Date: ')
@@ -788,11 +801,11 @@ class FeeDetails(generics.ListCreateAPIView):
             current_section = student.current_section.section
             context_dict['current_class'] = '%s %s' % (current_class, current_section)
 
-            currentDay = datetime.now().day
-            year = datetime.now().year
-            month = datetime.now().month
+            currentDay = datetime.datetime.now().day
+            year = datetime.datetime.now().year
+            month = datetime.datetime.now().month
             print(month)
-            currentMonth = datetime.now().month
+            currentMonth = datetime.datetime.now().month
             print(currentMonth)
             print('processing fee payment for %s of %s of class %s as o %i-%i-%i' %
                   (student, school, current_class, currentDay, month, year))
@@ -822,8 +835,8 @@ class FeeDetails(generics.ListCreateAPIView):
             heads_array = []
 
             session_begins = 4
-            start_date = datetime(2019, session_begins, 1)
-            today = datetime.today()
+            start_date = datetime.datetime(2019, session_begins, 1)
+            today = datetime.datetime.today()
             diff = relativedelta.relativedelta(today, start_date)
             months_count = diff.months
 
@@ -949,21 +962,21 @@ class FeeDetails(generics.ListCreateAPIView):
             # check if there is a delay in paying fee
             if fee_frequency == 1:
                 # monthly fees system. due date should be this month
-                due_date = datetime(year=year, month=currentMonth, day=int(d_date))
+                due_date = datetime.datetime(year=year, month=currentMonth, day=int(d_date))
             if fee_frequency == 3:
                 if currentMonth in q1:
-                    due_date = datetime(year=year, month=4, day=int(d_date))
+                    due_date = datetime.datetime(year=year, month=4, day=int(d_date))
                 if currentMonth in q2:
-                    due_date = datetime(year=year, month=7, day=int(d_date))
+                    due_date = datetime.datetime(year=year, month=7, day=int(d_date))
                 if currentMonth in q3:
-                    due_date = datetime(year=year, month=10, day=int(d_date))
+                    due_date = datetime.datetime(year=year, month=10, day=int(d_date))
                 if currentMonth in q4:
-                    due_date = datetime(year=year, month=1, day=int(d_date))
+                    due_date = datetime.datetime(year=year, month=1, day=int(d_date))
 
                 print('due_date = ')
                 print(due_date)
             # delay in days
-            today = datetime.now()
+            today = datetime.datetime.now()
             difference = (today - due_date).days
             print('delay by %i days' % difference)
 
@@ -1038,18 +1051,27 @@ class UploadFee(generics.ListCreateAPIView):
 
                     }
                     try:
-                        tuition_fee = sheet.cell(row, 3).value
-                        data['Tuition Fee'] = tuition_fee
-                        transport_fee = sheet.cell(row, 4).value
-                        data['Transportation Fee'] = transport_fee
-                        admission_fee = sheet.cell(row, 5).value
-                        data['Admission Fee'] = admission_fee
-                        excess_payment = sheet.cell(row, 6).value
-                        data['Excess Payment'] = excess_payment
-                        amount_paid = sheet.cell(row, 7).value
-                        receipt_no = sheet.cell(row, 8).value
+                        d = sheet.cell(row, 3).value
+                        try:
+                            date = datetime.datetime(*xlrd.xldate_as_tuple(d, fileToProcess.datemode))
+                            print ('date of birth is in acceptable format')
+                            print (date)
+                        except Exception as e:
+                            print ('problem with fee deposit date for %s' % student)
+                            print ('exception 04072019-X from fee_processing views.py %s %s ' % (e.message, type(e)))
+                            continue
+                        receipt_no = sheet.cell(row, 4).value
+                        composit_fee = sheet.cell(row, 5).value
+                        data['Composit Fee'] = composit_fee
+                        amount_paid = sheet.cell(row, 5).value
+                        # transport_fee = sheet.cell(row, 4).value
+                        # data['Transportation Fee'] = transport_fee
+                        # admission_fee = sheet.cell(row, 5).value
+                        # data['Admission Fee'] = admission_fee
+                        # excess_payment = sheet.cell(row, 6).value
+                        # data['Excess Payment'] = excess_payment
 
-                        fee_history = FeePaymentHistory(school=school, student=student, data=data,
+                        fee_history = FeePaymentHistory(school=school, student=student, data=data, date=date,
                                                         amount=amount_paid, mode='cash', receipt_number=receipt_no)
                         fee_history.save()
                         print('updated fee details for student %s with erp id %s'
@@ -1060,14 +1082,14 @@ class UploadFee(generics.ListCreateAPIView):
                               (student, erp_id))
 
                     # if one time fee such as admission fee was taken set whether_paid to true
-                    if excess_payment > 0.0:
-                        try:
-                            c = CollectAdmFee(school=school, student=student, whether_paid=True)
-                            c.save()
-                            print('%s of %s has paid admission fee' % (student, school))
-                        except Exception as e:
-                            print('exception 13062019-DB from erp views.py %s %s' % (e.message, type(e)))
-                            print('failed to enter one time Collectadmin fee from %s of %s' % (student, school))
+                    # if excess_payment > 0.0:
+                    #     try:
+                    #         c = CollectAdmFee(school=school, student=student, whether_paid=True)
+                    #         c.save()
+                    #         print('%s of %s has paid admission fee' % (student, school))
+                    #     except Exception as e:
+                    #         print('exception 13062019-DB from erp views.py %s %s' % (e.message, type(e)))
+                    #         print('failed to enter one time Collectadmin fee from %s of %s' % (student, school))
 
                     # save head-wise fee
                     print('now store head wise fee for %s with erp_id %s' % (student, erp_id))

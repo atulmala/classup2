@@ -276,7 +276,7 @@ class StudentListDownload (generics.ListAPIView):
                 output = StringIO.StringIO(excel_file_name)
                 workbook = xlsxwriter.Workbook(output)
                 sheet = workbook.add_worksheet('Student List %s-%s' % (str(the_class.standard), section.section))
-
+                sheet.freeze_panes(1, 0)
                 border = workbook.add_format()
                 border.set_border()
 

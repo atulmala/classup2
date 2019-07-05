@@ -209,9 +209,15 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                             message = 'Dear ' + parent_name + ', your ward ' + f_name
 
                         if type == 'Collage':
-                            message += ' were'
+                            if time_delta == 0:
+                                message += ' are'
+                            else:
+                                message += ' were'
                         else:
-                            message += ' was'
+                            if time_delta == 0:
+                                message += ' is'
+                            else:
+                                message += ' was'
 
                         # if subject is main then we need to tell that student was absent
                         if subject == 'Main' or subject == 'main' or subject == 'MAIN':
