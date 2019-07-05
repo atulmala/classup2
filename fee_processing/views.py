@@ -27,6 +27,7 @@ from rest_framework import generics
 from setup.models import School
 from student.models import Student, Parent
 from exam.models import StreamMapping
+from bus_attendance.models import Student_Rout
 from erp.models import CollectAdmFee, FeePaymentHistory, PreviousBalance, ReceiptNumber, HeadWiseFee, FeeCorrection
 
 from erp.serializers import FeeHistorySerialzer
@@ -815,6 +816,12 @@ class FeeDetails(generics.ListCreateAPIView):
             bucket = storage_client.get_bucket('classup')
             print(bucket)
 
+            # 05/07/2019 check if the student has availed transportations or not
+            transportation = False
+            if Student_Rout.objects.filter(student=student).exists():
+                print('%s uses school transport. Transportation fee will apply')
+                transportation = True
+
             if current_class in higher_classes:
                 print('%s is in higher class. Fee will be calculated as per chosen stream' % student)
                 try:
@@ -883,10 +890,26 @@ class FeeDetails(generics.ListCreateAPIView):
                 if int(freq) == 1:
                     # this fees is charged monthly
                     print('%s is monthly fees' % h)
-                    due_this_term += amt
+                    if h != 'Transportation Fee':
+                        due_this_term += amt
+                        # how much of this fee is accumulated till now
+                        due_till_now += amt * months_count
 
-                    # how much of this fee is accumulated till now
-                    due_till_now += amt * months_count
+                    # trasnportation fee will only be charged if the student has opted for it
+                    if h == 'Transportation Fee':
+                        if transportation is True:
+                            # not charged for june
+                            if currentMonth != 6:
+                                due_this_term += amt
+                            else:
+                                print('not charging transportation fee for June')
+
+                            # after june, it should be one month less
+                            if currentMonth > 6:
+                                print('calculstions past june. Reducing one month of June')
+                                due_till_now += amt * (months_count - 1)
+                            else:
+                                due_till_now += amt * (months_count)
 
                 if int(freq) == 3:
                     # this fee is charged quarterly

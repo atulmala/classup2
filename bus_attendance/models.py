@@ -53,3 +53,6 @@ class BusAttendanceTaken(models.Model):
     def __unicode__(self):
         return self.rout.bus_root + ' ' + self.type.route_type + ' ' + str(self.date)
 
+
+
+
