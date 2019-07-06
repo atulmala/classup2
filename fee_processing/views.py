@@ -73,7 +73,28 @@ class FeeHistory(generics.ListAPIView):
             print(q)
             return q
         except Exception as e:
-            print('exception 11042019-A from erp views.py %s %s' % (e.message, type(e)))
+            print('exception 11042019-A from fee_processing views.py %s %s' % (e.message, type(e)))
+            print('error while fetching fee payment history')
+            context_dict['message'] = 'error'
+            print(context_dict)
+            return JSONResponse(context_dict, status=201)
+
+    def get(self, request, *args, **kwargs):
+        context_dict = {
+
+        }
+        try:
+            school_id = self.request.GET.get('school_id')
+            school = School.objects.get(id=school_id)
+            print('school = %s' % school)
+            reg_no = self.request.GET.get('reg_no')
+            print('reg_no/erp_id = %s' % reg_no)
+            student = Student.objects.get(school=school, student_erp_id=reg_no)
+            print('getting fee history for %s of %s' % (student, school))
+            q = FeePaymentHistory.objects.filter(student=student)
+            print(q)
+        except Exception as e:
+            print('exception 05072019-A from fee_processing views.py %s %s' % (e.message, type(e)))
             print('error while fetching fee payment history')
             context_dict['message'] = 'error'
             print(context_dict)
@@ -218,7 +239,7 @@ class DefaulterReport(generics.ListCreateAPIView):
                             current_class = '%s-%s' % (student.current_class.standard, stream)
                         except Exception as e:
                             print('failed to determine stream for %s' % student)
-                            print('exception 10062019-A from erp views.py %s %s' % (e.message, type(e)))
+                            print('exception 10062019-A from fee_processing views.py %s %s' % (e.message, type(e)))
                     else:
                         current_class = student.current_class.standard
                     input_sheet = wb.sheet_by_name(current_class)
@@ -243,7 +264,7 @@ class DefaulterReport(generics.ListCreateAPIView):
                                 due_this_term += amt
                                 due_till_now += amt
                             except Exception as e:
-                                print('exception 21032019-A from erp views.py %s %s' % (e.message, type(e)))
+                                print('exception 21032019-A from fee_processing views.py %s %s' % (e.message, type(e)))
                                 print('%s has paid one time fees %s' % (student, h))
                                 amt = 'N/A'
 
@@ -279,7 +300,7 @@ class DefaulterReport(generics.ListCreateAPIView):
                         pb = PreviousBalance.objects.get(school=school, student=student)
                         outstanding = pb.due_amount
                     except Exception as e:
-                        print('exception 02042019-A from erp views.py %s %s' % (e.message, type(e)))
+                        print('exception 02042019-A from fee_processing views.py %s %s' % (e.message, type(e)))
                         print('%s has no previous outstanding' % student)
 
                     # check how much has been paid till date
@@ -355,7 +376,7 @@ class DefaulterReport(generics.ListCreateAPIView):
             return response
 
         except Exception as e:
-            print('exception 30032109-A from erp views.py %s %s' % (e.message, type(e)))
+            print('exception 30032109-A from fee_processing views.py %s %s' % (e.message, type(e)))
             print('failed to execute query')
             context_dict = {}
             context_dict['status'] = 'failed'
@@ -404,12 +425,12 @@ class CorrectFee(generics.ListCreateAPIView):
                 return JSONResponse(context_dict, status=200)
             except Exception as e:
                 print('failed to carry out fee correction for receipt no %i of %s' % (receipt_corrected, school))
-                print('exception 190519-A from erp views.py %s %s' % (e.message, type(e)))
+                print('exception 190519-A from fee_processing views.py %s %s' % (e.message, type(e)))
                 context_dict['outcome'] = 'failure'
                 return JSONResponse(context_dict, status=201)
         except Exception as e:
             print('failed to carry out fee correction')
-            print('exception 190519-B from erp views.py %s %s' % (e.message, type(e)))
+            print('exception 190519-B from fee_processing views.py %s %s' % (e.message, type(e)))
             context_dict['outcome'] = 'failure'
             return JSONResponse(context_dict, status=201)
 
@@ -482,7 +503,7 @@ class ProcessFee(generics.ListCreateAPIView):
                 fee.data = str(h)
                 fee.save()
             except Exception as e:
-                print('exception 11052019-A from erp views.py %s %s' % (e.message, type(e)))
+                print('exception 11052019-A from fee_processing views.py %s %s' % (e.message, type(e)))
                 print('failed to save heads')
             fee.save()
 
@@ -492,7 +513,7 @@ class ProcessFee(generics.ListCreateAPIView):
                 c.whehter_paid = True
                 print('%s of %s has paid admission fee' % (student, school))
             except Exception as e:
-                print('exception 31032019-B from erp views.py %s %s' % (e.message, type(e)))
+                print('exception 31032019-B from fee_processing views.py %s %s' % (e.message, type(e)))
                 print('One time fee was not charged from %s of %s' % (student, school))
 
             # save head-wise fee
@@ -545,7 +566,7 @@ class ProcessFee(generics.ListCreateAPIView):
                 if pending.due_amount == 0.0:
                     pending.delete()
             except Exception as e:
-                print('exception 24032019-B from erp views.py %s %s' % (e.message, type(e)))
+                print('exception 24032019-B from fee_processing views.py %s %s' % (e.message, type(e)))
                 print('%s of %s has no previous balance.' % (student, school))
                 if balance != 0.0 or balance != 0.00:
                     if balance > 0.0:
@@ -765,7 +786,7 @@ class ProcessFee(generics.ListCreateAPIView):
 
             return response
         except Exception as e:
-            print('exception 24032019-A from erp views.py %s %s ' % (e.message, type(e)))
+            print('exception 24032019-A from fee_processing views.py %s %s ' % (e.message, type(e)))
             print('error while processing fee')
             context_dict['status'] = 'error'
             context_dict['message'] = 'error while processing fee'
@@ -831,11 +852,11 @@ class FeeDetails(generics.ListCreateAPIView):
                     current_class = '%s-%s' % (current_class, stream)
                 except Exception as e:
                     print('failed to determine stream for %s' % student)
-                    print('exception 09062019-A from erp views.py %s %s' % (e.message, type(e)))
+                    print('exception 09062019-A from fee_processing views.py %s %s' % (e.message, type(e)))
             fee_file = '%s.xlsx' % str(school_id)
             fee_file_path = 'classup2/Fee/%s/%s' % (str(school_id), fee_file)
             blob = bucket.blob(fee_file_path)
-            local_path = 'erp/%s' % fee_file
+            local_path = 'fee_processing/%s' % fee_file
             blob.download_to_filename(local_path)
             wb = xlrd.open_workbook(local_path)
             sheet = wb.sheet_by_name(current_class)
@@ -873,7 +894,7 @@ class FeeDetails(generics.ListCreateAPIView):
                             print('%s has already paid one time fees %s' % (student, h))
                             due_till_now += amt
                     except Exception as e:
-                        print('exception 21032019-A from erp views.py %s %s' % (e.message, type(e)))
+                        print('exception 21032019-A from fee_processing views.py %s %s' % (e.message, type(e)))
                         print('%s has paid one time fees %s' % (student, h))
                         amt = 'N/A'
 
@@ -943,7 +964,7 @@ class FeeDetails(generics.ListCreateAPIView):
                     head['negative_outstanding'] = False
 
             except Exception as e:
-                print('exception 21032019-C from erp views.py %s %s' % (e.message, type(e)))
+                print('exception 21032019-C from fee_processing views.py %s %s' % (e.message, type(e)))
                 print('No Previous outstanding on %s' % student)
             context_dict['Previous Outstanding'] = due_amount
 
@@ -975,7 +996,7 @@ class FeeDetails(generics.ListCreateAPIView):
                     payment_history.append(entry)
                     entry = {}
             except Exception as e:
-                print('exception 21032019-B from erp views.py %s %s' % (e.message, type(e)))
+                print('exception 21032019-B from fee_processing views.py %s %s' % (e.message, type(e)))
                 print('no payment history could be retrieved for %s of %s %s' %
                       (student, current_class, school))
             context_dict['payment_history'] = payment_history
@@ -1019,7 +1040,7 @@ class FeeDetails(generics.ListCreateAPIView):
             print(context_dict)
             return JSONResponse(context_dict, status=200)
         except Exception as e:
-            print('exception 04032019-A from erp views.py %s %s' % (e.message, type(e)))
+            print('exception 04032019-A from fee_processing views.py %s %s' % (e.message, type(e)))
             print('failed in determining details regarding fees payment')
 
 
@@ -1064,7 +1085,7 @@ class UploadFee(generics.ListCreateAPIView):
                         erp_id = erp_id[:-2]
                         print('decimal and following zero removed. Now student_id = %s' % erp_id)
                 except Exception as e:
-                    print('exception 13062019-A from erp views. %s %s' % (e.message, type(e)))
+                    print('exception 13062019-A from fee_processing views. %s %s' % (e.message, type(e)))
 
                 try:
                     student = Student.objects.get(school=school, student_erp_id=erp_id)
@@ -1100,7 +1121,7 @@ class UploadFee(generics.ListCreateAPIView):
                         print('updated fee details for student %s with erp id %s'
                               % (erp_id, student))
                     except Exception as e:
-                        print('exception 13062019-B from erp views.py %s %s' % (e.message, type(e)))
+                        print('exception 13062019-B from fee_processing views.py %s %s' % (e.message, type(e)))
                         print('failed to update fee details for %s with erp_id %s' %
                               (student, erp_id))
 
@@ -1111,7 +1132,7 @@ class UploadFee(generics.ListCreateAPIView):
                     #         c.save()
                     #         print('%s of %s has paid admission fee' % (student, school))
                     #     except Exception as e:
-                    #         print('exception 13062019-DB from erp views.py %s %s' % (e.message, type(e)))
+                    #         print('exception 13062019-DB from fee_processing views.py %s %s' % (e.message, type(e)))
                     #         print('failed to enter one time Collectadmin fee from %s of %s' % (student, school))
 
                     # save head-wise fee
@@ -1124,10 +1145,10 @@ class UploadFee(generics.ListCreateAPIView):
                                                     student=student, head=head, amount=float(amount))
                                 entry.save()
                             except Exception as e:
-                                print('exception 13062019-E from erp views.py %sw %s' % (e.message, type(e)))
+                                print('exception 13062019-E from fee_processing views.py %sw %s' % (e.message, type(e)))
                                 print('failed to save a head component for %s' % student)
                 except Exception as e:
-                    print('exception 13062019-F from erp views.py %s %s' % (e.message, type(e)))
+                    print('exception 13062019-F from fee_processing views.py %s %s' % (e.message, type(e)))
                     print('no student associated with erp_id %s' % erp_id)
                 row += 1
                 # file upload and saving to db was successful. Hence go back to the main menu
@@ -1136,6 +1157,6 @@ class UploadFee(generics.ListCreateAPIView):
         except Exception as e:
             error = 'invalid excel file uploaded.'
             print (error)
-            print ('exception 19032018-D from erp views.py %s %s ' % (e.message, type(e)))
+            print ('exception 19032018-D from fee_processing views.py %s %s ' % (e.message, type(e)))
             return render(request, 'classup/setup_data.html', context_dict)
 

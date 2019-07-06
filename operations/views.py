@@ -1265,7 +1265,7 @@ def test_result(request):
             sub = test.subject.subject_name
             date_conducted = test.date_conducted
             d2 = date_conducted.strftime('%d-%m-%Y')
-            sub += ' (' + d2 + ')'
+            # sub += ' (' + d2 + ')'
             result_sheet.merge_range(2, col, 2, col+1, ugettext(sub), header)
             result_sheet.write(2+1, col, ugettext("MM"), header2)
             if not test.grade_based:
@@ -1279,7 +1279,7 @@ def test_result(request):
                     s_list.append(s)
 
                     result_sheet.write_number(row+2, 0, idx+1, cell_center)
-                    result_sheet.write_number(row+2, 1, s.roll_number, cell_center)
+                    result_sheet.write_number(row+2, 1, idx+1, cell_center)
                     result_sheet.write_string(row+2, 2, ugettext(s.fist_name + ' ' + s.last_name), cell_left)
 
                     marks_col = 3

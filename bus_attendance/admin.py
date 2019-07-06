@@ -3,7 +3,7 @@ from django.contrib import admin
 # Register your models here.
 
 from teacher.models import Teacher
-from .models import Bus_Attendance, Attedance_Type, Student_Rout, Bus_Rout, BusAttendanceTaken, BusStop
+from .models import Bus_Attendance, Attedance_Type, Student_Rout, Bus_Rout, BusAttendanceTaken, BusStop, BusFeeSlab
 
 
 class BusAttendanceAdmin(admin.ModelAdmin):
@@ -16,11 +16,13 @@ class BusAttendanceAdmin(admin.ModelAdmin):
     list_display = ('date', 'get_school_name', 'bus_rout', 'attendance_type', 'student',)
     search_fields = ('student__fist_name',)
 
+
 admin.site.register(Bus_Attendance, BusAttendanceAdmin)
 
 
 class AttendanceTypeAdmin(admin.ModelAdmin):
     pass
+
 
 admin.site.register(Attedance_Type, AttendanceTypeAdmin)
 
@@ -35,6 +37,7 @@ class StudentRoutAdmin(admin.ModelAdmin):
     list_filter = ('student__school',)
     search_fields = ('student__fist_name',)
 
+
 admin.site.register(Student_Rout, StudentRoutAdmin)
 
 
@@ -47,6 +50,7 @@ class BusRoutAdmin(admin.ModelAdmin):
     list_display = ('get_school_name', 'bus_root', )
     list_filter = ('school',)
     search_fields = ('school__school_name',)
+
 
 admin.site.register(Bus_Rout, BusRoutAdmin)
 
@@ -81,4 +85,13 @@ class BusStopAdmin(admin.ModelAdmin):
     list_filter = ('bus_rout__school',)
     search_fields = ('stop_name', 'bus_rout__bus_root')
 
+
 admin.site.register(BusStop, BusStopAdmin)
+
+
+class BusFeeAdmin(admin.ModelAdmin):
+    list_display = ('school', 'slab', 'bus_fee',)
+    list_filter = ('school', )
+
+
+admin.site.register(BusFeeSlab, BusFeeAdmin)

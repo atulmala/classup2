@@ -209,12 +209,12 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                             message = 'Dear ' + parent_name + ', your ward ' + f_name
 
                         if type == 'Collage':
-                            if time_delta == 0:
+                            if time_delta.days == 0:
                                 message += ' are'
                             else:
                                 message += ' were'
                         else:
-                            if time_delta == 0:
+                            if time_delta.days == 0:
                                 message += ' is'
                             else:
                                 message += ' was'

@@ -23,10 +23,20 @@ class BusStop(models.Model):
         return self.stop_name + ' / ' + self.bus_rout.bus_root
 
 
+class BusFeeSlab(models.Model):
+    school = models.ForeignKey(School, null=True)
+    slab = models.CharField(max_length=20)
+    bus_fee = models.DecimalField(default=0.0, decimal_places=2, max_digits=7)
+
+    def __unicode__(self):
+        return self.slab
+
+
 class Student_Rout(models.Model):
     bus_root = models.ForeignKey(Bus_Rout)
     bus_stop = models.ForeignKey(BusStop, null=True, blank=True)
     student = models.ForeignKey(Student)
+    slab = models.ForeignKey(BusFeeSlab, null=True)
 
 
 class Attedance_Type(models.Model):
@@ -52,7 +62,3 @@ class BusAttendanceTaken(models.Model):
 
     def __unicode__(self):
         return self.rout.bus_root + ' ' + self.type.route_type + ' ' + str(self.date)
-
-
-
-
