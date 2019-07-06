@@ -6,8 +6,8 @@ print('Starting to extract sms delivery status')
 key = '58fc1def26489'
 
 try:
-    #db = MySQLdb.connect('35.194.43.14', 'classup', 'classup', 'classup2')
-    db = MySQLdb.connect('127.0.0.1', 'classup', 'classup', 'classup2')
+    db = MySQLdb.connect('35.194.43.14', 'classup', 'classup', 'classup2')
+    #db = MySQLdb.connect('127.0.0.1', 'classup', 'classup', 'classup2')
     cursor1 = db.cursor()
 
     # extract message_id of all the sms sent after 31/01/17 for which sms delivery status has not been extracted
