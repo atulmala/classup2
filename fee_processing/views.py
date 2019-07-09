@@ -9,7 +9,7 @@ import datetime
 from google.cloud import storage
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4, landscape
-from reportlab.lib.units import inch, cm
+from reportlab.lib.units import inch
 from reportlab.lib import colors
 from reportlab.platypus import Table, TableStyle
 
@@ -18,22 +18,50 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.db.models import Sum
 from rest_framework.renderers import JSONRenderer
-# from datetime import datetime
 from dateutil import relativedelta
 
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework import generics
 
-from setup.models import School
+from setup.models import School, Configurations
 from student.models import Student, Parent
 from exam.models import StreamMapping
 from bus_attendance.models import Student_Rout
 from erp.models import CollectAdmFee, FeePaymentHistory, PreviousBalance, ReceiptNumber, HeadWiseFee, FeeCorrection
 
+from operations import sms
+
 from erp.serializers import FeeHistorySerialzer
 
 
 # Create your views here.
+
+header_format = {
+            'bold': True,
+            'bg_color': '#F7F7F7',
+            'color': 'black',
+            'align': 'center',
+            'valign': 'top',
+            'border': 1
+        }
+title_format = {
+            'bold': True,
+            'font_size': 14,
+            'align': 'center',
+            'valign': 'vcenter',
+            'num_format':'#,##,##0.00',
+        }
+money_format = {
+            'num_format':'#,##,##0.00',
+            'align': 'right',
+            'valign': 'vcenter',
+            'border': 1
+        }
+normal_format = {
+            'align': 'left',
+            'valign': 'vcenter',
+            'text_wrap': True
+        }
 
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
@@ -53,13 +81,93 @@ class JSONResponse(HttpResponse):
         super(JSONResponse, self).__init__(content, **kwargs)
 
 
+class FeeHistoryDownload(generics.ListCreateAPIView):
+    def get(self, request, *args, **kwargs):
+        try:
+            school_id = self.request.GET.get('school_id')
+            school = School.objects.get(id=school_id)
+            print('school = %s' % school)
+            reg_no = self.request.GET.get('reg_no')
+            print('reg_no/erp_id = %s' % reg_no)
+            student = Student.objects.get(school=school, student_erp_id=reg_no)
+            print('getting fee history for %s of %s' % (student, school))
+
+            excel_file_name = '%s_fee_history.xlsx' % student
+            print (excel_file_name)
+            output = StringIO.StringIO(excel_file_name)
+            workbook = xlsxwriter.Workbook(output)
+            sheet = workbook.add_worksheet('%s Fee History' % student)
+            header = workbook.add_format(header_format)
+            title = workbook.add_format(title_format)
+            money = workbook.add_format(money_format)
+            money.set_border()
+
+            money = workbook.add_format(money_format)
+            money.set_border()
+
+            cell_normal = workbook.add_format(normal_format)
+            cell_normal.set_border()
+
+            row = 0
+            col = 0
+
+            currentDay = datetime.datetime.now().day
+            year = datetime.datetime.now().year
+            month = datetime.datetime.now().month
+            date = '%i/%i/%i' % (currentDay, month, year)
+            sheet.merge_range(row, col, row, col + 3, '%s - Payment history as on %s' % (student, date), title)
+            sheet.set_column('A:A', 4)
+            row += 2
+            sheet.write_string(row, col, 'S No.', header)
+            col += 1
+            sheet.set_column('B:B', 12)
+            sheet.write_string(row, col, 'Date', header)
+            col +=1
+            sheet.set_column('C:C', 40)
+            sheet.write_string(row, col, 'Details', header)
+            col += 1
+            sheet.set_column('D:D', 12)
+            sheet.write_string(row, col, 'Amount Paid', header)
+
+            row += 1
+            col = 0
+            idx = 1
+            transactions = FeePaymentHistory.objects.filter(student=student)
+            total = 0.0
+            for transaction in transactions:
+                sheet.write_number(row, col, idx, cell_normal)
+                idx += 1
+                col += 1
+                date = transaction.date
+                sheet.write_string(row, col, date.strftime('%d/%m/%Y'), cell_normal)
+                col += 1
+                details = transaction.data
+                sheet.write_string(row, col, details, cell_normal)
+                col += 1
+                amount = transaction.amount
+                total += float(amount)
+                sheet.write_number(row, col, amount, money)
+                row += 1
+                col = 0
+            col = 2
+            sheet.write_string(row, col, 'Total', title)
+            col += 1
+            sheet.write_number(row, col, total, title)
+
+            workbook.close()
+            response = HttpResponse(content_type='application/vnd.ms-excel')
+            response['Content-Disposition'] = 'attachment; filename=%s' % excel_file_name
+            response.write(output.getvalue())
+            return response
+        except Exception as e:
+            print('exception 07072019-A from fee_processing views.py %s %s' % (e.message, type(e)))
+            print('failed to retrieve the payment history')
+
+
 class FeeHistory(generics.ListAPIView):
     serializer_class = FeeHistorySerialzer
 
     def get_queryset(self):
-        context_dict = {
-
-        }
         try:
             school_id = self.request.GET.get('school_id')
             school = School.objects.get(id=school_id)
@@ -75,30 +183,6 @@ class FeeHistory(generics.ListAPIView):
         except Exception as e:
             print('exception 11042019-A from fee_processing views.py %s %s' % (e.message, type(e)))
             print('error while fetching fee payment history')
-            context_dict['message'] = 'error'
-            print(context_dict)
-            return JSONResponse(context_dict, status=201)
-
-    def get(self, request, *args, **kwargs):
-        context_dict = {
-
-        }
-        try:
-            school_id = self.request.GET.get('school_id')
-            school = School.objects.get(id=school_id)
-            print('school = %s' % school)
-            reg_no = self.request.GET.get('reg_no')
-            print('reg_no/erp_id = %s' % reg_no)
-            student = Student.objects.get(school=school, student_erp_id=reg_no)
-            print('getting fee history for %s of %s' % (student, school))
-            q = FeePaymentHistory.objects.filter(student=student)
-            print(q)
-        except Exception as e:
-            print('exception 05072019-A from fee_processing views.py %s %s' % (e.message, type(e)))
-            print('error while fetching fee payment history')
-            context_dict['message'] = 'error'
-            print(context_dict)
-            return JSONResponse(context_dict, status=201)
 
 
 class DefaulterReport(generics.ListCreateAPIView):
@@ -119,41 +203,19 @@ class DefaulterReport(generics.ListCreateAPIView):
         blob.download_to_filename(local_path)
         wb = xlrd.open_workbook(local_path)
 
-
         excel_file_name = 'Fee_Defaulter_List.xlsx'
         print (excel_file_name)
         output = StringIO.StringIO(excel_file_name)
         workbook = xlsxwriter.Workbook(output)
         sheet = workbook.add_worksheet('Defaulters')
 
-        header = workbook.add_format({
-            'bold': True,
-            'bg_color': '#F7F7F7',
-            'color': 'black',
-            'align': 'center',
-            'valign': 'top',
-            'border': 1
-        })
-        title = workbook.add_format({
-            'bold': True,
-            'font_size': 14,
-            'align': 'center',
-            'valign': 'vcenter'
-        })
+        header = workbook.add_format(header_format)
+        title = workbook.add_format(title_format)
 
-        money = workbook.add_format({
-            'num_format':'#,##,##0.00',
-            'align': 'right',
-            'valign': 'vcenter',
-            'border': 1
-        })
+        money = workbook.add_format(money_format)
         money.set_border()
 
-        cell_normal = workbook.add_format({
-            'align': 'left',
-            'valign': 'vcenter',
-            'text_wrap': True
-        })
+        cell_normal = workbook.add_format(normal_format)
         cell_normal.set_border()
         fail_format = workbook.add_format()
         fail_format.set_bg_color('yellow')
@@ -500,8 +562,19 @@ class ProcessFee(generics.ListCreateAPIView):
                                     cheque_number=cheque_no, bank=bank, comments='No comments',
                                     receipt_number=receipt_no)
             try:
-                fee.data = str(h)
+                print('now about to save the payment history h = %s' % h)
+                fee.data = h
                 fee.save()
+
+                # send message to parent
+                conf = Configurations.objects.get(school=school)
+
+                message = 'Dear %s, we have received an amount of Rs %.2f mode %s via Receipt # %i.' % (
+                    student.parent.parent_name, float(actual_paid), mode, receipt_no)
+                if mode == 'cheque':
+                    message += ' Subject to realisation of cheque.'
+                message += ' Regards %s' % conf.school_short_name
+                print(message)
             except Exception as e:
                 print('exception 11052019-A from fee_processing views.py %s %s' % (e.message, type(e)))
                 print('failed to save heads')

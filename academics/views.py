@@ -47,6 +47,7 @@ class ClassList(generics.ListCreateAPIView):
         school_id = self.kwargs['school_id']
         school = School.objects.get(id=school_id)
         q = Class.objects.filter(school=school).order_by('sequence')
+
         return q
 
 
@@ -57,6 +58,7 @@ class SectionList(generics.ListCreateAPIView):
         school_id = self.kwargs['school_id']
         school = School.objects.get(id=school_id)
         q = Section.objects.filter(school=school)
+        print(q)
         return q
 
 

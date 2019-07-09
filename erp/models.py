@@ -41,7 +41,7 @@ class FeePaymentHistory(models.Model):
     # we will extract parent from student
     def save(self, *args, **kwargs):
         if self.date is None:
-            date = datetime.datetime.now()
+            self.date = datetime.datetime.now()
         p = self.student.parent
         self.parent = p
         super(FeePaymentHistory, self).save(*args, **kwargs)
