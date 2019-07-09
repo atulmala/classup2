@@ -23,7 +23,7 @@ class DeDup(generics.ListCreateAPIView):
         context_dict = {
 
         }
-        unique_fields = ['date', 'the_class', 'section', 'subject', 'taken_by']
+        unique_fields = ['date', 'the_class', 'section', 'subject', 'student', 'taken_by']
         print('try to identify duplicate entries')
         try:
             duplicates = (
