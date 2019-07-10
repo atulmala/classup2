@@ -65,9 +65,10 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
 
         }
         time_threshold = datetime.now() - timedelta(hours=2.5)
+        last_date = datetime(2019, 7, 8)
         print(time_threshold)
         records = SMSRecord.objects.filter(api_called=True, status_extracted=False,
-                                           date__lt=time_threshold)
+                                           date__lt=time_threshold, date__gt=last_date)
         print('total %i messages delivery status to be extracted' % records.count())
         context_dict['message_count'] = records.count()
 
