@@ -1,9 +1,15 @@
+import urllib
+
+
 from django.db.models import Count, Max
 from django.http import HttpResponse
 from rest_framework.renderers import JSONRenderer
 from rest_framework import generics
 
+from datetime import datetime, timedelta
+
 from attendance.models import Attendance
+from operations.models import SMSRecord
 
 
 class JSONResponse(HttpResponse):
@@ -33,6 +39,8 @@ class DeDup(generics.ListCreateAPIView):
                     .filter(count_id__gt=1)
             )
 
+            print('total %i duplicates found' % len(duplicates))
+
             for duplicate in duplicates:
                 print(duplicate)
                 (
@@ -48,4 +56,40 @@ class DeDup(generics.ListCreateAPIView):
             print('failed in removing duplicate records from Attendance Table')
             context_dict['outcome'] = 'failed'
             return JSONResponse
+
+
+class SMSDeliveryStatus(generics.ListCreateAPIView):
+    def post(self, request, *args, **kwargs):
+        context_dict = {
+
+        }
+        time_threshold = datetime.now() - timedelta(hours=2.5)
+        records = SMSRecord.objects.filter(api_called=False, status_extracted=False,
+                                           date__lt=time_threshold)
+        print('total %i messages delivery status to be extracted' % records.count())
+        context_dict['message_count'] = records.count()
+
+        for record in records:
+            delivery_id = record.outcome
+            print('extracting the delivery status of message with delivery id %s' % delivery_id)
+            if 'api' in delivery_id:
+                print('this message has been sent using SoftSMS API')
+                try:
+                    url = 'http://softsms.in/app/miscapi/'
+                    key = '58fc1def26489'
+                    url += key
+                    url += '/getDLR/'
+                    url += delivery_id
+                    print('url=%s' % url)
+
+                    response = urllib.urlopen(url)
+                    status = response.read()
+                    print('status = ' + str(status))
+                except Exception as e:
+                    print('unable to get the staus of sms delivery. The url was: ')
+                    print(url)
+                    print ('Exception2 from operations get_sms_dlvry_status.py = %s (%s)' % (e.message, type(e)))
+
+        return JSONResponse(context_dict, status=200)
+
 
