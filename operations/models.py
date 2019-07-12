@@ -28,7 +28,7 @@ class SMSRecord(models.Model):
     recipient_type = models.CharField(max_length=20, default='Not Available')
     message = models.TextField()
     message_type = models.CharField(max_length=30, default='Not Available')
-    vendor = models.CharField(max_length=3, default='1')
+    vendor = models.CharField(max_length=30, default='1')
     api_called = models.BooleanField(default=True)
     outcome = models.TextField(max_length=20, default='Delivered')
     status_extracted = models.BooleanField(default=False)

@@ -8,7 +8,7 @@ from django.db.models import Q
 from setup.models import Configurations
 from teacher.models import Teacher
 from student.models import Parent
-from .models import SMSRecord
+from .models import SMSRecord, SMSVendor
 
 
 def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
@@ -42,11 +42,20 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
         # specific vendor
 
         # 01/07/2019 we use different vendors for bulk sms
+        vendor_name = 'Undetermined !'
+        vendor_retrieved = False
         if message_type == 'Bulk SMS (Device)':
             print('this is bulk sms from device. Switching to vendor specific for bulk sms')
             vendor = vendor_bulk_sms
         if vendor == 1:
             print('vendor for sending this sms for %s is softsms' % school.school_name)
+            vendor_name = 'SoftSMS'
+            try:
+                v = SMSVendor.objects.get(vendor=vendor_name)
+                vendor_retrieved = True
+            except Exception as e:
+                print('exception 12072019-A from sms.py %s %s'% (e.message, type(e)))
+                print('could not retrieve the vendor object associated with %s' % vendor_name)
             url = 'http://softsms.in/app/smsapi/index.php?'
             url += 'key=%s' % key
             url += '&type=Text'
@@ -56,6 +65,13 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
 
         if vendor == 2:
             print('vendor for sending this sms for %s is SMSGateway Hub' % school.school_name)
+            vendor_name = 'SMSGatewayHub'
+            try:
+                v = SMSVendor.objects.get(vendor=vendor_name)
+                vendor_retrieved = True
+            except Exception as e:
+                print('exception 12072019-B from sms.py %s %s'% (e.message, type(e)))
+                print('could not retrieve the vendor object associated with %s' % vendor_name)
             api_key = '6ZWRKLTUnEmMMQro3P30SQ'
             url = 'https://www.smsgatewayhub.com/api/mt/SendSMS?APIKey=%s' % api_key
             senderid = 'CLSSUP'
@@ -63,6 +79,13 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
 
         if vendor == 3:
             print('vendor for sending this sms for %s is DealSMS' % school.school_name)
+            vendor_name = 'DealSMS'
+            try:
+                v = SMSVendor.objects.get(vendor=vendor_name)
+                vendor_retrieved = True
+            except Exception as e:
+                print('exception 12072019-C from sms.py %s %s'% (e.message, type(e)))
+                print('could not retrieve the vendor object associated with %s' % vendor_name)
             url = 'http://5.9.0.178:8000/Sendsms?user=classup&password=56tr43we&sender=CLSSUP'
             url += '&dest=%s' % mobile
             url += '&dcs=0&apid=56114&text=%s' % m3
@@ -198,10 +221,16 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                 # finally, store everything into the database
                 print ('going to store this sms details into the database')
                 try:
-                    sr = SMSRecord(school=school, sender1=sender_name, sender_type=sender_type, sender_code=sender_id,
-                                    recipient_name=recepient_name, recipient_type=recepient_type,
-                                   recipient_number=mobile, message=message, message_type=message_type,
-                                    outcome=message_id)
+                    if vendor_retrieved:
+                        sr = SMSRecord(school=school, sender1=sender_name, sender_type=sender_type,
+                                       sender_code=sender_id, recipient_name=recepient_name,
+                                       recipient_type=recepient_type, recipient_number=mobile, message=message,
+                                       message_type=message_type, vendor=vendor_name, the_vendor=v, outcome=message_id)
+                    else:
+                        sr = SMSRecord(school=school, sender1=sender_name, sender_type=sender_type,
+                                       sender_code=sender_id, recipient_name=recepient_name,
+                                       recipient_type=recepient_type, recipient_number=mobile, message=message,
+                                       message_type=message_type, vendor=vendor_name, outcome=message_id)
                     # 09/04/17 when bulk sms are sent from device, they are fired instantly. The batch job need not to be run
                     #if message_type == 'Bulk SMS (Web Interface)' or message_type == 'Bulk SMS (Device)':
                     if message_type == 'Bulk SMS (Web Interface)':
