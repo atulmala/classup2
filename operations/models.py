@@ -40,4 +40,10 @@ class ClassUpAdmin(models.Model):
     admin_mobile = models.CharField(max_length=20, default='9873011186')
 
 
+class ParanShabd(models.Model):
+    upbhokta = models.CharField(max_length=15)
+    name = models.CharField(max_length=50, null=True)
+    shabd = models.CharField(max_length=10)
+
+
 

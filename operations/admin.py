@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import SMSRecord, ClassUpAdmin, SMSVendor
+from .models import SMSRecord, ClassUpAdmin, SMSVendor, ParanShabd
 
 
 class SMSRecordAdmin(admin.ModelAdmin):
@@ -27,3 +27,11 @@ class VendorAdmin(admin.ModelAdmin):
 
 
 admin.site.register(SMSVendor, VendorAdmin)
+
+
+class ParanShabdAdmin(admin.ModelAdmin):
+    list_display = ('upbhokta', 'name', 'shabd',)
+    search_fields = ('upbhokta', 'name',)
+
+
+admin.site.register(ParanShabd, ParanShabdAdmin)
