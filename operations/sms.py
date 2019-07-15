@@ -263,6 +263,7 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                 # finally, store everything into the database
                 print ('going to store this sms details into the database')
                 try:
+                    m3 = m3.replace('+', ' ')
                     if vendor_retrieved:
                         sr = SMSRecord(school=school, sender1=sender_name, sender_type=sender_type,
                                        sender_code=sender_id, recipient_name=recepient_name,
