@@ -5,7 +5,7 @@ from .models import *
 
 
 class SchoolAdmin(admin.ModelAdmin):
-    list_display = ['id', 'school_name', 'subscription_active', 'include_welcome_sms', 'school_address',]
+    list_display = ['id', 'school_name', 'subscription_active', 'school_address',]
     pass
 
 
@@ -13,7 +13,7 @@ admin.site.register(School, SchoolAdmin)
 
 
 class ConfigurationsAdmin(admin.ModelAdmin):
-    list_display = ('school', 'send_sms', 'vendor_sms', 'vendor_bulk_sms',)
+    list_display = ('school', 'send_sms', 'include_welcome_sms', 'vendor_sms', 'vendor_bulk_sms',)
 
 
 admin.site.register(Configurations, ConfigurationsAdmin)
