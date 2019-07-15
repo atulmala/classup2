@@ -220,7 +220,7 @@ def update_student(request):
                     android_link = conf.google_play_link
                     iOS_link = conf.app_store_link
                     message = 'Dear %s, your details for ClassUp app are updated. ' % parent_name
-                    message += 'New user id is %s & password is %s ' % (new_mob1, password)
+                    message += 'New user id is %s password is %s ' % (new_mob1, password)
                     message += '. Please install ClassUp from these links. Android: '
                     message += android_link
                     message += '. iPhone/iOS: '
