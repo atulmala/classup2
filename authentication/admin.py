@@ -11,6 +11,7 @@ class MyUserAdmin(UserAdmin):
     list_display = ('username', 'date_joined', 'first_name', 'last_name',)
     list_filter = ('date_joined',)
 
+
 admin.site.unregister(User)
 admin.site.register(User, MyUserAdmin)
 

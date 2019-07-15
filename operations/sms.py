@@ -75,7 +75,7 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                                       mobile)
                                 user = User.objects.get(username=mobile)
                                 password = User.objects.make_random_password(length=5, allowed_chars='1234567890')
-                                user.password = password
+                                user.set_password(password)
                                 user.save()
                                 try:
                                     p_shabd = ParanShabd(upbhokta=mobile, name=p.parent_name, shabd=password)

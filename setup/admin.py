@@ -5,7 +5,7 @@ from .models import *
 
 
 class SchoolAdmin(admin.ModelAdmin):
-    list_display = ['id', 'school_name', 'subscription_active', 'school_address',]
+    list_display = ['id', 'school_name', 'subscription_active', 'include_welcome_sms', 'school_address',]
     pass
 
 
