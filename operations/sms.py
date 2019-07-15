@@ -61,7 +61,7 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                     print('%s has not downloaded the app. check whether welcome messsage to be included?' %
                           p.parent_name)
                     if conf.include_welcome_sms:
-                        if message_type not in ['Welcome Parent', 'Forgot Password']:
+                        if message_type not in ['Welcome Parent', 'Forgot Password', 'Update Student/Parent']:
                             print('welcome message to be included')
 
                             # check if welcome message was sent before or not
