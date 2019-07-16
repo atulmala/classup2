@@ -33,3 +33,14 @@ class AttendanceUpdated(models.Model):
     update_date_time = models.DateTimeField(default=datetime.now, blank=True)
 
 
+class DailyAttendanceSummary(models.Model):
+    date = models.DateField()
+    the_class = models.ForeignKey(Class)
+    section = models.ForeignKey(Section)
+    subject = models.ForeignKey(Subject)
+    total = models.IntegerField()
+    present = models.IntegerField()
+    absent = models.IntegerField()
+    percentage = models.DecimalField(decimal_places=2, max_digits=6)
+
+

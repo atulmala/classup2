@@ -30,7 +30,7 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
         print('message received in sms.py=' + message)
         m1 = message.replace(" ", "+")
         print(m1)
-        m2 = m1.replace("&", "%26")
+        m2 = m1.replace("&", "and")
         m0 = m2.replace("\n", "+")
         m00 = m0.replace("\r", "+")
 
