@@ -12,7 +12,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import Attendance, AttendanceTaken, AttendanceUpdated
+from .models import Attendance, AttendanceTaken, AttendanceUpdated, DailyAttendanceSummary
 from academics.models import Section, Class, Subject
 from student.models import Student
 from teacher.models import Teacher
@@ -136,10 +136,13 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
 
         data = json.loads(request.body)
         print (data)
+        absent = 0
         for key in data:
             student_id = data[key]
             student = Student.objects.get(id=student_id)
             student_name = '%s %s' % (student.fist_name, student.last_name)
+
+            absent += 1
 
             # check to see if absence for this student for this date, class, section and subject has already
             #  been marked
@@ -187,7 +190,7 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                     school_short_name = configuration.school_short_name
 
                     # 14/04/2018 - for collage students, SMS will be sent to students
-                    type = configuration.type
+                    institute_type = configuration.type
 
                     try:
                         parent_name = student.parent.parent_name
@@ -203,12 +206,12 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                             (f_name, l_name) = the_name.split(' ')
                         else:
                             f_name = the_name
-                        if type == 'Collage':
+                        if institute_type == 'Collage':
                             message = 'Dear %s, you' % the_name
                         else:
                             message = 'Dear ' + parent_name + ', your ward ' + f_name
 
-                        if type == 'Collage':
+                        if institute_type == 'Collage':
                             if time_delta.days == 0:
                                 message += ' are'
                             else:
@@ -298,6 +301,40 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
             except Exception as e:
                 print ('Exception6 from attendance views.py = %s (%s)' % (e.message, type(e)))
                 log_entry(teacher, "Absence was already marked. Exception 6 from attendance views.py", "Normal", True)
+
+        # 16/07/2019 we are implementing table to store daily attendance summaries.
+        # So that download attendance summary is fast
+        print('now storing the attendance summary for')
+        try:
+            total = Student.objects.filter(current_class=c, current_section=s).count()
+            print('total students in %s-%s of %s  = %i' % (the_class, section, school, total))
+            present = total - absent
+            percentage = int(round((float(present) / float(total)) * 100, 0))
+            print(percentage)
+            print('students present on %s = %i' % (the_date, percentage))
+            try:
+                summary = DailyAttendanceSummary.objects.get(date=the_date, the_class=c,
+                                                             section=s, subject=sub)
+                summary.total = total
+                summary.present = present
+                summary.absent = absent
+                summary.percentage = percentage
+                summary.save()
+                print('attendance summary for class %s-%s of %s date %s is updated' %
+                      (the_class, section, school, the_date))
+            except Exception as ex:
+                print('exception 16072019-X from attendance views.py %s %s' % (ex.message, type(ex)))
+                summary = DailyAttendanceSummary(date=the_date, the_class=c, section=s, subject=sub)
+                summary.total = total
+                summary.present = present
+                summary.absent = absent
+                summary.percentage = percentage
+                summary.save()
+                print('attendance summary for class %s-%s of %s date %s is stored' %
+                      (the_class, section, school, the_date))
+        except Exception as ex:
+            print('exception 16072019-B from attendance views.py %s (%s)' % (ex.message, type(ex)))
+            print('failed in storing the attendance summary for %s-%s of %s' % (the_class, section, school))
     response_data['status'] = 'success'
     log_entry(teacher, "Attendance Processing Complete", "Normal", True)
     return JSONResponse(response_data, status=200)
