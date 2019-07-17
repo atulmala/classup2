@@ -8,7 +8,7 @@ from rest_framework import generics
 
 from datetime import datetime, timedelta
 
-from attendance.models import Attendance
+from attendance.models import Attendance, DailyAttendanceSummary
 from operations.models import SMSRecord
 from teacher.models import MessageReceivers
 
@@ -30,9 +30,10 @@ class DeDup(generics.ListCreateAPIView):
         context_dict = {
 
         }
-        unique_fields = ['date', 'the_class', 'section', 'subject', 'student', 'taken_by']
-        print('try to identify duplicate entries')
+
         try:
+            unique_fields = ['date', 'the_class', 'section', 'subject', 'student', 'taken_by']
+            print('try to identify duplicate entries for attendances')
             duplicates = (
                 Attendance.objects.values(*unique_fields)
                     .order_by()
@@ -50,7 +51,30 @@ class DeDup(generics.ListCreateAPIView):
                         .exclude(id=duplicate['max_id'])
                         .delete()
                 )
-            context_dict['outcome'] = 'success'
+            context_dict['remove_dup_attendance'] = 'success'
+
+            # 17/07/2019 - now remove duplicate attendance summaries
+            unique_fields = ['date', 'the_class', 'section', 'subject', 'total', 'present', 'absent', 'percentage']
+            print('try to identify duplicate entries for attendance summaries')
+            duplicates = (
+                DailyAttendanceSummary.objects.values(*unique_fields)
+                    .order_by()
+                    .annotate(max_id=Max('id'), count_id=Count('id'))
+                    .filter(count_id__gt=1)
+            )
+
+            print('total %i duplicates found' % len(duplicates))
+
+            for duplicate in duplicates:
+                print(duplicate)
+                (
+                    DailyAttendanceSummary.objects
+                        .filter(**{x: duplicate[x] for x in unique_fields})
+                        .exclude(id=duplicate['max_id'])
+                        .delete()
+                )
+            context_dict['remove_dup_attendance summaries'] = 'success'
+
             return JSONResponse(context_dict, status=200)
         except Exception as e:
             print('exception 09072019-A from maintenance views.py %s %s' % (e.message, type(e)))

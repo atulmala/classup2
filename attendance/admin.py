@@ -50,7 +50,7 @@ class DailyAttendanceSummaryAdmin(admin.ModelAdmin):
 
     list_display = ('get_school_name', 'date', 'the_class', 'section', 'subject', 'total',
                     'present', 'absent', 'percentage',)
-    list_filter = ('date',)
+    list_filter = ('date', 'the_class__school',)
 
 
 admin.site.register(DailyAttendanceSummary, DailyAttendanceSummaryAdmin)

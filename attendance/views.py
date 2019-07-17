@@ -304,9 +304,9 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
 
         # 16/07/2019 we are implementing table to store daily attendance summaries.
         # So that download attendance summary is fast
-        print('now storing the attendance summary for')
+        print('now storing the attendance summary for %s-%s of %s date %s' % (the_class, section, school, the_date))
         try:
-            total = Student.objects.filter(current_class=c, current_section=s).count()
+            total = Student.objects.filter(current_class=c, current_section=s, active_status=True).count()
             print('total students in %s-%s of %s  = %i' % (the_class, section, school, total))
             present = total - absent
             percentage = int(round((float(present) / float(total)) * 100, 0))

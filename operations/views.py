@@ -22,7 +22,7 @@ from authentication.views import JSONResponse, log_entry, LoginRecord
 from academics.models import Class, Section, Subject, ClassTest, TestResults, ClassTeacher
 from student.models import Student
 from teacher.models import Teacher, TeacherMessageRecord, MessageReceivers, Staff
-from attendance.models import Attendance, AttendanceTaken
+from attendance.models import Attendance, AttendanceTaken, DailyAttendanceSummary
 from parents.models import  ParentCommunication
 from setup.models import Configurations, School
 
@@ -75,6 +75,7 @@ def att_summary_school_device(request):
         dt = request.GET.get('date')
         mn = request.GET.get('month')
         yr = request.GET.get('year')
+        the_date = date(int(yr), int(mn), int(dt))
 
         main = Subject.objects.get(school=school, subject_name='Main')
 
@@ -101,18 +102,36 @@ def att_summary_school_device(request):
 
                     # attendance has been taken for this class/section
                     dict_attendance_summary['class'] = c.standard + ' ' + s.section
-                    absent = Attendance.objects.filter(date__day=dt, date__month=mn, date__year=yr,
-                                                       the_class=c, section=s, subject=main).count()
-                    present = total - absent
-                    dict_attendance_summary['attendance'] = str(present) + '/' + str(total)
 
-                    perc_present = int(round((float(present) / float(total)) * 100, 0))
-                    dict_attendance_summary['percentage'] = str(perc_present) + '%'
-                    d = dict(dict_attendance_summary)
-                    response_array.append(d)
+                    # 17/07/2019 - as we have implemented table to store attendance calculations to speed
+                    # up the download, first check if the data exists in the table
+                    try:
+                        print('first try to retrieve attendance summary for %s on %s from AttendanceSummary Table' %
+                              (school, the_date))
+                        summary = DailyAttendanceSummary.objects.get(date__day=dt, date__month=mn, date__year=yr,
+                                                       the_class=c, section=s, subject=main)
+                        total = summary.total
+                        present = summary.present
+                        dict_attendance_summary['attendance'] = '%i/%i' % (present, total)
+                        percentage = summary.percentage
+                        dict_attendance_summary['percentage'] = str(percentage) + '%'
 
-                    p_total += present
-                    a_total += absent
+                        p_total += present
+                    except Exception as e:
+                        print('exception 17072019-A from operations views.py %s %s' % (e.message, type(e)))
+                        print('attendance summary for %s for %s is to be fetched the old way' % (school, the_date))
+                        absent = Attendance.objects.filter(date__day=dt, date__month=mn, date__year=yr,
+                                                           the_class=c, section=s, subject=main).count()
+                        present = total - absent
+                        dict_attendance_summary['attendance'] = str(present) + '/' + str(total)
+
+                        perc_present = int(round((float(present) / float(total)) * 100, 0))
+                        dict_attendance_summary['percentage'] = str(perc_present) + '%'
+                        d = dict(dict_attendance_summary)
+                        response_array.append(d)
+
+                        p_total += present
+                        a_total += absent
 
         dict_attendance_summary['class'] = 'Total'
         dict_attendance_summary['attendance'] = str(p_total) + '/' + str(grand_total)
