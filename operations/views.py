@@ -108,13 +108,17 @@ def att_summary_school_device(request):
                     try:
                         print('first try to retrieve attendance summary for %s on %s from AttendanceSummary Table' %
                               (school, the_date))
-                        summary = DailyAttendanceSummary.objects.get(date__day=dt, date__month=mn, date__year=yr,
+                        summary = DailyAttendanceSummary.objects.get(date=the_date,
                                                        the_class=c, section=s, subject=main)
+                        print('summary')
+                        print(summary)
                         total = summary.total
                         present = summary.present
                         dict_attendance_summary['attendance'] = '%i/%i' % (present, total)
                         percentage = summary.percentage
                         dict_attendance_summary['percentage'] = str(percentage) + '%'
+                        d = dict(dict_attendance_summary)
+                        response_array.append(d)
 
                         p_total += present
                     except Exception as e:
