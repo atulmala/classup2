@@ -108,10 +108,8 @@ def att_summary_school_device(request):
                     try:
                         print('first try to retrieve attendance summary for %s on %s from AttendanceSummary Table' %
                               (school, the_date))
-                        summary = DailyAttendanceSummary.objects.get(date=the_date,
-                                                       the_class=c, section=s, subject=main)
-                        print('summary')
-                        print(summary)
+                        summary = DailyAttendanceSummary.objects.get(date=the_date, the_class=c,
+                                                                     section=s, subject=main)
                         total = summary.total
                         present = summary.present
                         dict_attendance_summary['attendance'] = '%i/%i' % (present, total)
@@ -136,7 +134,6 @@ def att_summary_school_device(request):
 
                         p_total += present
                         a_total += absent
-
         dict_attendance_summary['class'] = 'Total'
         dict_attendance_summary['attendance'] = str(p_total) + '/' + str(grand_total)
         if p_total == 0:
@@ -227,7 +224,6 @@ def att_summary_school(request):
         })
         title_text = u"{0} {1}".format(ugettext("Attendance Summary for "), str(dmy_date))
         summary_sheet.merge_range('A1:H1', title_text, title)
-
         summary_sheet.write(2, 0, ugettext("S No."), header)
         summary_sheet.write(2, 1, ugettext("Class"), header)
         summary_sheet.write(2, 2, ugettext("Section"), header)

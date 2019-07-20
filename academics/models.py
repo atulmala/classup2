@@ -226,10 +226,3 @@ class HW(models.Model):
 
     image_tag.short_description = 'Image'
     image_tag.allow_tags = True
-
-
-
-
-
-
-

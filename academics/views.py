@@ -369,7 +369,6 @@ def get_hw_image(request, hw_id):
             response = HttpResponse(status=201)
             return response
 
-
 @csrf_exempt
 def create_hw(request):
     context_dict = {
@@ -401,7 +400,6 @@ def create_hw(request):
             d = data['d']
             m = data['m']
             y = data['y']
-
 
             the_date = date(int(y), int(m), int(d))
             print (the_date)

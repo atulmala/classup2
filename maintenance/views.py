@@ -41,7 +41,8 @@ class DeDup(generics.ListCreateAPIView):
                     .filter(count_id__gt=1)
             )
 
-            print('total %i duplicates found' % len(duplicates))
+            print('total %i duplicates attendances found' % len(duplicates))
+            context_dict['dupicate attendances count'] = len(duplicates)
 
             for duplicate in duplicates:
                 print(duplicate)
@@ -63,7 +64,8 @@ class DeDup(generics.ListCreateAPIView):
                     .filter(count_id__gt=1)
             )
 
-            print('total %i duplicates found' % len(duplicates))
+            print('total %i duplicates attendance summaries found' % len(duplicates))
+            context_dict['dupicate attendances summaries count'] = len(duplicates)
 
             for duplicate in duplicates:
                 print(duplicate)
