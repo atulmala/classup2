@@ -12,6 +12,8 @@ from attendance.models import Attendance, DailyAttendanceSummary
 from operations.models import SMSRecord
 from teacher.models import MessageReceivers
 
+from .models import SMSDelStats
+
 
 class JSONResponse(HttpResponse):
     """
@@ -100,6 +102,8 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
         print('total %i messages delivery status to be extracted' % records.count())
         context_dict['message_count'] = records.count()
 
+        soft_sms_count = 0
+        deal_sms_count = 0
         for record in records:
             print(record.date)
             delivery_id = record.outcome
@@ -108,6 +112,7 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
             if delivery_id != '':
                 if 'api' in delivery_id:
                     print('this message has been sent using SoftSMS API')
+                    soft_sms_count += 1
                     try:
                         url = 'http://softsms.in/app/miscapi/'
                         key = '58fc1def26489'
@@ -125,6 +130,7 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
                         print ('Exception 10072019-A from operations maintenance views.py = %s (%s)' % (e.message, type(e)))
                 else:
                     print('message was sent using DealSMS API')
+                    deal_sms_count += 1
                     url = 'http://5.9.69.238/reports/getByMid.php?uname=classup&password=56tr43we'
                     the_date = record.date.strftime('%Y-%m-%d')
                     url += '&sdate=%s' % the_date
@@ -162,4 +168,16 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
         context_dict['end_time'] = '%s' % t2
         time_taken = t2 - t1
         context_dict['time_taken'] = time_taken
+        context_dict['Soft SMS count'] = soft_sms_count
+        context_dict['Deal SMS Count'] = deal_sms_count
+
+        try:
+            stats = SMSDelStats(start_time=t1, end_time=t2, time_taken=float(time_taken.seconds),
+                                messages_count=records.count())
+            stats.save()
+            print('saved the stats for this execution')
+        except Exception as e:
+            print('exception 22072019 from maintenance views.py %s %s' % (e.message, type(e)))
+            print('failed to store sms delivery stats into database')
+
         return JSONResponse(context_dict, status=200)
