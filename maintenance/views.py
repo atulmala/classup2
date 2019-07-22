@@ -42,7 +42,7 @@ class DeDup(generics.ListCreateAPIView):
             )
 
             print('total %i duplicates attendances found' % len(duplicates))
-            context_dict['dupicate attendances count'] = len(duplicates)
+            context_dict['duplicate attendances count'] = len(duplicates)
 
             for duplicate in duplicates:
                 print(duplicate)
@@ -65,7 +65,7 @@ class DeDup(generics.ListCreateAPIView):
             )
 
             print('total %i duplicates attendance summaries found' % len(duplicates))
-            context_dict['dupicate attendances summaries count'] = len(duplicates)
+            context_dict['duplicate attendances summaries count'] = len(duplicates)
 
             for duplicate in duplicates:
                 print(duplicate)
@@ -87,9 +87,11 @@ class DeDup(generics.ListCreateAPIView):
 
 class SMSDeliveryStatus(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
+        t1 = datetime.now()
         context_dict = {
 
         }
+        context_dict['start_time'] = '%s' % t1
         time_threshold = datetime.now() - timedelta(hours=2.5)
         last_date = datetime(2019, 7, 8)
         print(time_threshold)
@@ -156,4 +158,8 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
                 except Exception as e:
                     print('exception 10072019-D from maintenance views.py %s %s' % (e.message, type(e)))
                     print('failed to update Teacher Message Receiver with message id = %s' % delivery_id)
+        t2 = datetime.now()
+        context_dict['end_time'] = '%s' % t2
+        time_taken = t2 - t1
+        context_dict['time_taken'] = time_taken
         return JSONResponse(context_dict, status=200)
