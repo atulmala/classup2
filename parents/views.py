@@ -100,28 +100,31 @@ def submit_parents_communication(request):
                     except Exception as e:
                         print('Class Teacher not set for ' + the_class.standard + '-' + section.section)
                         print ('Exception 1 from parents views.py = %s (%s)' % (e.message, type(e)))
-                    try:
-                        principal_mobile = configuration.principal_mobile
-                        sms.send_sms1(school, parent_name, principal_mobile, message, message_type)
-                    except Exception as e:
-                        print('unable to send Parent communication to Principal')
-                        print ('Exception 502-A from parents views.py %s %s' % (e.message, type(e)))
 
-                    # 21/09/2017 - added so that apart from Principal, some other responsible staff can also receive
-                    # the message
-                    try:
-                        admin1_mobile = configuration.admin1_mobile
-                        sms.send_sms1(school, parent_name, admin1_mobile, message, message_type)
-                    except Exception as e:
-                        print('unable to send Parent communication to Admin 1')
-                        print ('Exception 502-B from parents views.py %s %s' % (e.message, type(e)))
-                    try:
-                        parent_mobile = student.parent.parent_mobile1
-                        action = 'Parent Communication SMS sent to Principal'
-                        log_entry(parent_mobile, action, 'Normal', True)
-                    except Exception as e:
-                        print('unable to create logbook entry')
-                        print ('Exception 502 from parents views.py %s %s' % (e.message, type(e)))
+                    # 23/07/2019 leave applications need not be sent to principal
+                    if cat != 'Leave Application':
+                        try:
+                            principal_mobile = configuration.principal_mobile
+                            sms.send_sms1(school, parent_name, principal_mobile, message, message_type)
+                        except Exception as e:
+                            print('unable to send Parent communication to Principal')
+                            print ('Exception 502-A from parents views.py %s %s' % (e.message, type(e)))
+
+                        # 21/09/2017 - added so that apart from Principal, some other responsible staff can also receive
+                        # the message
+                        try:
+                            admin1_mobile = configuration.admin1_mobile
+                            # sms.send_sms1(school, parent_name, admin1_mobile, message, message_type)
+                        except Exception as e:
+                            print('unable to send Parent communication to Admin 1')
+                            print ('Exception 502-B from parents views.py %s %s' % (e.message, type(e)))
+                        try:
+                            parent_mobile = student.parent.parent_mobile1
+                            action = 'Parent Communication SMS sent to Principal'
+                            log_entry(parent_mobile, action, 'Normal', True)
+                        except Exception as e:
+                            print('unable to create logbook entry')
+                            print ('Exception 502 from parents views.py %s %s' % (e.message, type(e)))
                 except Exception as e:
                     print ('failed to send message ' + communication_text + ' to Class Teacher of class ' +
                            the_class.standard + '-' + section.section)

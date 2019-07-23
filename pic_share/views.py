@@ -29,30 +29,29 @@ class ImageVideoList(generics.ListCreateAPIView):
 
         try:
             teacher = Teacher.objects.get(email=user)
-            print('will now try to retrieve the HWs created by %s' % teacher)
+            print('will now try to retrieve the Images Video created by %s' % teacher)
             q = ImageVideo.objects.filter(teacher=teacher).order_by('due_date')
-            print('query retrieved successfully for HW list of %s = ' % teacher)
+            print('query retrieved successfully for Image Video list of %s = ' % teacher)
             print(q)
 
             try:
-                action = 'Retrieving HW list for %s' % teacher
+                action = 'Retrieving Image Video list for %s' % teacher
                 log_entry(teacher.email, action, 'Normal', True)
             except Exception as e:
                 print('unable to crete logbook entry')
                 print ('Exception 504 from academics views.py %s %s' % (e.message, type(e)))
-            print('now returning the query retrieved successfully for HW list of %s ' % t)
+            print('now returning the query retrieved successfully for HW list of %s ' % teacher)
             return q
         except Exception as e:
             print('Exception 350 from academics view.py %s %s' % (e.message, type(e)))
             print('We need to retrieve the HW list for student')
             try:
                 student = Student.objects.get(pk=user)
-                school = student.school
                 the_class = student.current_class
                 section = student.current_section
                 q = ImageVideo.objects.filter(the_class=the_class.standard, section=section.section)
                 try:
-                    action = 'Retrieving HW list for ' + student.fist_name + ' ' + student.last_name
+                    action = 'Retrieving Image Video list for ' + student.fist_name + ' ' + student.last_name
                     parent_mobile = student.parent.parent_mobile1
                     log_entry(parent_mobile, action, 'Normal', True)
                 except Exception as e:
@@ -62,5 +61,3 @@ class ImageVideoList(generics.ListCreateAPIView):
             except Exception as e:
                 print ('Exception 360 from academics views.py %s %s' % (e.message, type(e)))
                 print('could not retrieve student with id %s' % user)
-
-
