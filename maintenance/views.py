@@ -171,13 +171,17 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
         context_dict['Soft SMS count'] = soft_sms_count
         context_dict['Deal SMS Count'] = deal_sms_count
 
-        try:
-            stats = SMSDelStats(start_time=t1, end_time=t2, time_taken=float(time_taken.seconds),
-                                messages_count=records.count())
-            stats.save()
-            print('saved the stats for this execution')
-        except Exception as e:
-            print('exception 22072019 from maintenance views.py %s %s' % (e.message, type(e)))
-            print('failed to store sms delivery stats into database')
+        if records.count() > 0:
+            try:
+
+                stats = SMSDelStats(start_time=t1, end_time=t2, time_taken=float(time_taken.seconds),
+                                    messages_count=records.count())
+                stats.save()
+                print('saved the stats for this execution')
+            except Exception as e:
+                print('exception 22072019 from maintenance views.py %s %s' % (e.message, type(e)))
+                print('failed to store sms delivery stats into database')
+        else:
+            print('no message to retrieve status. Nothing stored in the db')
 
         return JSONResponse(context_dict, status=200)
