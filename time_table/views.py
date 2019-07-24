@@ -850,7 +850,7 @@ class GenerateEntrySheet (generics.ListAPIView):
         row = row + 1
         col = 0
         sr_no = 1
-        teacher_list = Teacher.objects.filter(school=school).order_by ('first_name')
+        teacher_list = Teacher.objects.filter(school=school, active_status=True).order_by ('first_name')
         for teacher in teacher_list:
             sheet.write_string(row, col, str(sr_no))
             col = col + 1
