@@ -919,6 +919,9 @@ def submit_marks(request, school_id):
                 else:
                     f_name = the_name
                 message += f_name + ' in '
+
+                # 26/07/2019 include the exam name in message
+                message += ' %s ' %  test.exam.title
                 message += sub.subject_name + ' test on ' + dmy_date + ': '
                 if grade_based:
                     if data[key]['marks'] == '-1000.00' or data[key]['marks'] == '-1000':
