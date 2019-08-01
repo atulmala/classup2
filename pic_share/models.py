@@ -2,6 +2,7 @@ from django.db import models
 
 from teacher.models import Teacher
 from academics.models import Class, Section
+from student.models import Student
 
 # Create your models here.
 
@@ -14,5 +15,13 @@ class ImageVideo(models.Model):
     type = models.CharField(max_length=10, default='image')
     descrition = models.CharField(max_length=200)
     location = models.ImageField(upload_to='image_video/')
+
+
+class ShareWithStudents(models.Model):
+    image_video = models.ForeignKey(ImageVideo)
+    student = models.ForeignKey(Student)
+    the_class = models.ForeignKey(Class)
+    section = models.ForeignKey(Section)
+
 
 

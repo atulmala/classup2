@@ -156,7 +156,6 @@ class PendingTestList(generics.ListCreateAPIView):
         q = ClassTest.objects.filter(teacher=the_teacher, exam=exam, is_completed=False).order_by('the_class__sequence',
                                                                                       'section__section',
                                                                                       'date_conducted')
-
         try:
             action = 'Retrieving pending test list for ' + the_teacher.first_name + ' ' + the_teacher.last_name
             log_entry(t, action, 'Normal', True)
@@ -899,7 +898,7 @@ def submit_marks(request, school_id):
 
             try:
                 sub = test.subject
-                action = 'Preapring to draft test result SMS for ' + student.parent.parent_name
+                action = 'Preparing to draft test result SMS for ' + student.parent.parent_name
                 try:
                     log_entry(sender, action, 'Normal', True)
                 except Exception as e:
