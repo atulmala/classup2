@@ -202,9 +202,10 @@ class HWAdmin(admin.ModelAdmin):
 
     list_display = ('school', 'teacher', 'the_class', 'section', 'subject',
                     'due_date', 'creation_date', 'uploaded_at', 'location',)
+    list_filter = ('school',)
 
-    fields = ('image_tag',)
-    readonly_fields = ('image_tag',)
+    # fields = ('image_tag',)
+    # readonly_fields = ('image_tag',)
 
 
 admin.site.register(HW, HWAdmin)

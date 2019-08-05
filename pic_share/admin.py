@@ -4,6 +4,7 @@ from .models import ImageVideo, ShareWithStudents
 
 # Register your models here.
 
+
 class ImageVideoAdmin(admin.ModelAdmin):
     list_display = ('teacher', 'the_class', 'section', 'type',
                     'creation_date', 'descrition', 'location',)
