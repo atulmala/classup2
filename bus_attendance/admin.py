@@ -3,7 +3,7 @@ from django.contrib import admin
 # Register your models here.
 
 from teacher.models import Teacher
-from .models import Bus_Attendance, Attedance_Type, Student_Rout, Bus_Rout, BusAttendanceTaken, BusStop, BusFeeSlab
+from .models import *
 
 
 class BusAttendanceAdmin(admin.ModelAdmin):
@@ -95,3 +95,10 @@ class BusFeeAdmin(admin.ModelAdmin):
 
 
 admin.site.register(BusFeeSlab, BusFeeAdmin)
+
+
+class BusUserAdmin(admin.ModelAdmin):
+    pass
+
+
+admin.site.register(BusUser, BusUserAdmin)
