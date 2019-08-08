@@ -4,6 +4,8 @@
 import StringIO
 import xlsxwriter
 import xlrd
+import json
+import datetime
 
 
 from rest_framework import generics
@@ -14,11 +16,11 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.db.models import Max
 
-from setup.models import School
+from setup.models import School, Configurations
 from academics.models import ClassTest, TestResults, TermTestResult, ThirdLang, Class, Section, CoScholastics
 from exam.models import HigherClassMapping, NPromoted
 from exam.forms import ResultSheetForm
-from bus_attendance.models import Student_Rout
+from bus_attendance.models import Student_Rout, BusUser
 from .models import Student, Parent, DOB, AdditionalDetails, House
 
 from setup.forms import ExcelFileUploadForm
@@ -29,6 +31,7 @@ from setup.views import validate_excel_extension
 from .serializers import StudentSerializer, ParentSerializer
 
 from authentication.views import JSONResponse
+from operations import sms
 
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
@@ -54,7 +57,7 @@ class StudentList(generics.ListAPIView):
         if the_class != 'in_params':
             q1 = Student.objects.filter(school=school, current_section__section=section,
                                         current_class__standard=the_class, active_status=True)
-            q2 = q1.order_by('fist_name')
+            q2 = q1.order_by('fist_name', 'last_name')
             return q2
         else:
             print('getting the student list for %s for fees payment' % school)
@@ -101,7 +104,7 @@ class StudentListForTest(generics.ListCreateAPIView):
 
         q1 = Student.objects.filter(current_section__section=section,
                                     current_class__standard=the_class, active_status=True)
-        q2 = q1.order_by('fist_name')
+        q2 = q1.order_by('fist_name', 'last_name')
         return q2
 
 
@@ -1027,3 +1030,157 @@ class NotPromoted(generics.ListCreateAPIView):
                 print ('exception 04032018-G from student views.py %s %s ' % (e.message, type(e)))
                 form.errors['__all__'] = form.error_class([error])
                 return render(request, 'classup/setup_data.html', context_dict)
+
+
+class AddStudent(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def post(self, request, *args, **kwargs):
+        context_dict = {
+
+        }
+        context_dict['header'] = 'Student Addition Web'
+        try:
+            data = json.loads(request.body)
+            print(data)
+
+            print('Student Addition from web - process started')
+            school_id = data['school_id']
+            try:
+                school = School.objects.get(pk=school_id)
+                print('new student to be added to %s' % school)
+            except Exception as e:
+                print('exception 07082019-A from student views.py %s %s' % (e.message, type(e)))
+                print('failed to determine school')
+                context_dict['status'] = 'fail'
+                context_dict['message'] = 'failed to determine school'
+                return JSONResponse(context_dict, status=201)
+            sender = data['sender']
+            reg_no = data['reg_no']
+            # ensure that the registration number is unique
+            try:
+                already = Student.objects.get(school=school, student_erp_id=reg_no)
+                the_class = already.current_class.standard
+                section = already.current_section.section
+                print('reg no %s is already associated with %s of %s-%s' % (reg_no, already, the_class, section))
+                context_dict['status'] = 'fail'
+                context_dict['message'] = 'duplicate Reg NO'
+                return JSONResponse(context_dict, status=201)
+            except Exception as e:
+                print('exception 07082019-B from student views.py %s %s' % (e.message, type(e)))
+                print('Reg no %s is available')
+            first_name = data['first_name']
+            last_name = data['last_name']
+            cls = data['the_class']
+            the_class = Class.objects.get(school=school, standard=cls)
+            sec = data['section']
+            section = Section.objects.get(school=school, section=sec)
+            father_name = data['father_name']
+            father_mobile = data['father_mobile']
+            mother_mobile = data['mother_mobile']
+            email = data['email']
+
+            # check if this parent already exist
+            try:
+                parent = Parent.objects.get(parent_mobile1=father_mobile)
+                print('parent %s already exist. Hence will not be created' % parent)
+            except Exception as e:
+                print('exception 07082019-C from student views.py %s %s' % (e.message, type(e)))
+                print('parent %s does not exist. Hence parent and user object to be created' % father_name)
+                parent = Parent(parent_name=father_name, parent_mobile1=father_mobile,
+                                parent_mobile2=mother_mobile, email=email)
+                parent.save()
+                print('created parent for %s. Now creating user' % father_name)
+                if User.objects.filter(username=father_mobile).exists():
+                    print('user for parent %s with mobile %s already exist.' % (father_name, father_mobile))
+                else:
+                    # the user name would be the mobile, and password would be a random string
+                    password = User.objects.make_random_password(length=5, allowed_chars='1234567890')
+
+                    print ('Initial password = %s' % password)
+                    if email == '':
+                        email = 'dummy@classup.in'
+                    user = User.objects.create_user(father_mobile, email, password)
+                    user.first_name = father_name
+                    user.is_staff = False
+                    user.save()
+                    print('user created for parent %s with mobile %s.' % (father_name, father_mobile))
+            # create student basic record
+            try:
+                student = Student(school=school, student_erp_id=reg_no, first_name=first_name,
+                                  last_name=last_name, parent=parent, current_class=the_class, current_section=section)
+                student.save()
+                print('created basic record for %s %s. Will send welcome message to parent now' %
+                      (first_name, last_name))
+            except Exception as e:
+                print('exception 07082019-D from student view.py %s %s' % (e.message, type(e)))
+                print('failed in creating basic student record')
+            conf = Configurations.objects.get(school=school)
+            android_link = conf.google_play_link
+            iOS_link = conf.app_store_link
+            message = 'Dear %s, Welcome to ClassUp. ' % father_name
+            message += "Now you can track your child's progress at %s ." % school.school_name
+            message += 'Your user id is: %s, and password is %s' % (str(father_mobile), str(password))
+            message += '. Please install ClassUp from these links. Android: %s, iOS: %s' % (android_link, iOS_link)
+            message += '. For support, email to: support@classup.in'
+            print(message)
+            message_type = 'Welcome Parent (Web Interface)'
+
+            sms.send_sms1(school, sender, str(father_mobile), message, message_type)
+
+            # create additional details
+            date_of_birth = data['dob']
+            try:
+                date = datetime.datetime.strptime(date_of_birth, '%Y-%m-%d')
+                dob = DOB(student=student, dob=date)
+                dob.save()
+                print('dob set for %s as %s' % (student, date_of_birth))
+            except Exception as e:
+                print('exception 07082019-E from student views.py %s %s' % (e.message, type(e)))
+                print('failed in setting up date of birth for %s of %s' % (student, school))
+
+            gender = data['gender']
+            mother_name = data['mother_name']
+            adhar = data['adhar']
+            blood_group = data['blood_group']
+            house = data['house']
+            father_occupation = data['father_occupation']
+            mother_occupation = data['mother_occupation']
+            address = data['address']
+            try:
+                additional_details = AdditionalDetails(student=student, gender=gender,
+                                                      mother_name=mother_name, adhar=adhar, blood_group=blood_group,
+                                                      house=house, father_occupation=father_occupation,
+                                                      mother_occupation=mother_occupation, address=address)
+                additional_details.save()
+                print('saved additional details for %s' % student)
+            except Exception as e:
+                print('exception 07082019-F from student views.py %s %s' % (e.message, type(e)))
+                print('failed to save additional details for %s' % student)
+
+            # finally, the bus user data
+            transport = data['transport']
+            if transport == 'bus_user':
+                bus_user = BusUser(student=student)
+                bus_user.save()
+                print('%s is bus user' % student)
+
+            print('all for student %s added' % student)
+            context_dict['status'] = 'success'
+            context_dict['message'] = 'student %s successfully added' % student
+            return JSONResponse(context_dict, status=200)
+        except Exception as e:
+            print('exception 07082019-F from student views.py %s %s' % (e.message, type(e)))
+            print('probably json decoding error while adding student')
+            context_dict['status'] = 'fail'
+            context_dict['message'] = 'failed to add student'
+            return JSONResponse(context_dict, status=201)
+
+
+
+
+
+
+
+
+

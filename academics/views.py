@@ -535,7 +535,8 @@ def create_test1(request, school_id, the_class, section, subject,
     # of the class associated with this test
 
     student_list = Student.objects.filter(school=school, current_section__section=section,
-                                          current_class__standard=the_class, active_status=True)
+                                          current_class__standard=the_class, active_status=True).\
+        order_by('fist_name', 'last_name')
     for student in student_list:
         # 15/11/2017 - for higher classes (XI & XII) we need to look into the student subject mapping
         if the_class in higher_classes:

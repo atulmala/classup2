@@ -7,6 +7,10 @@ from teacher.models import Teacher
 # Create your models here.
 
 
+class BusUser(models.Model):
+    student = models.ForeignKey(Student)
+
+
 class Bus_Rout(models.Model):
     school = models.ForeignKey(School, null=True)
     bus_root = models.CharField(max_length=50)
