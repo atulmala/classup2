@@ -139,7 +139,6 @@ class UploadImage(generics.ListCreateAPIView):
                 context_dict['status'] = 'failed'
                 context_dict['message'] = 'error while trying to save the image/video uploaded'
                 return JSONResponse(context_dict, status=201)
-
         except Exception as e:
             print('failed to get the POST data for create hw')
             print('Exception 02082019-B from pic_share views.py = %s (%s)' % (e.message, type(e)))
