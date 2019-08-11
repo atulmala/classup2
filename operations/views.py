@@ -950,10 +950,11 @@ def send_bulk_sms(request):
             ca = ClassUpAdmin.objects.get(pk=1)
             admin_mobile = ca.admin_mobile
             print(admin_mobile)
-            message = school.school_name + ' has initiated bulk sms process. Run the batch'
-            print(message)
+            message1 = '%s has initiated bulk sms process. Run the batch. Message was: "%s"' % (school, message)
+            #message = school.school_name + ' has initiated bulk sms process. Run the batch'
+            print(message1)
             message_type = 'Run Batch'
-            sms.send_sms1(school, sender, admin_mobile, message, message_type)
+            sms.send_sms1(school, sender, admin_mobile, message1, message_type)
         except Exception as e:
             print('Failed to retrieve the mobile number of ClassUp Admin. '
                   'Cannot send sms for running the batch process for sending bulk sms')
