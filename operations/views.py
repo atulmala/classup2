@@ -950,8 +950,8 @@ def send_bulk_sms(request):
             ca = ClassUpAdmin.objects.get(pk=1)
             admin_mobile = ca.admin_mobile
             print(admin_mobile)
-            message1 = '%s has initiated bulk sms process. Run the batch. Message was: "%s"' % (school, message)
-            #message = school.school_name + ' has initiated bulk sms process. Run the batch'
+            message1 = '%s has initiated bulk sms process. Run the batch. Message was: "%s"' % \
+                       (school, message_body)
             print(message1)
             message_type = 'Run Batch'
             sms.send_sms1(school, sender, admin_mobile, message1, message_type)
