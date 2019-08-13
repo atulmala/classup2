@@ -146,6 +146,29 @@ class UploadImage(generics.ListCreateAPIView):
             context_dict['message'] = 'error while trying to save the image/video uploaded'
             return JSONResponse(context_dict, status=201)
 
+class DeleteMedia(generics.DestroyAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def delete(self, request, *args, **kwargs):
+        context_dict = {
+
+        }
+        image_id = self.kwargs["image_id"]
+        try:
+            media = ImageVideo.objects.get(id=image_id)
+            media.active_status = False
+            media.save()
+            print('media marked inactive')
+            context_dict['message'] = 'Media deleted'
+            context_dict['status'] = 'success'
+            return JSONResponse(context_dict, status=200)
+        except Exception as e:
+            print('exception 13082019-A from pic_share views.py %s %s' % (e.message, type(e)))
+            message = 'failed to delete media. Please try again.'
+            context_dict['message'] = message
+            context_dict['status'] = 'failed'
+            return JSONResponse(context_dict, status=201)
+
 
 class ImageVideoList(generics.ListCreateAPIView):
     serializer_class = ImageVideoSerializer
@@ -156,7 +179,7 @@ class ImageVideoList(generics.ListCreateAPIView):
         try:
             teacher = Teacher.objects.get(email=user)
             print('will now try to retrieve the Images Video created by %s' % teacher)
-            q = ImageVideo.objects.filter(teacher=teacher).order_by('due_date')
+            q = ImageVideo.objects.filter(teacher=teacher, active_status=True).order_by('creation_date')
             print('query retrieved successfully for Image Video list of %s = ' % teacher)
             print(q)
 
@@ -166,16 +189,17 @@ class ImageVideoList(generics.ListCreateAPIView):
             except Exception as e:
                 print('unable to crete logbook entry')
                 print ('Exception 504 from academics views.py %s %s' % (e.message, type(e)))
-            print('now returning the query retrieved successfully for HW list of %s ' % teacher)
+            print('now returning the query retrieved successfully for Image/Video list of %s ' % teacher)
             return q
         except Exception as e:
-            print('Exception 350 from academics view.py %s %s' % (e.message, type(e)))
-            print('We need to retrieve the HW list for student')
+            print('Exception 12082019-B from pic_share view.py %s %s' % (e.message, type(e)))
+            print('We need to retrieve the Image/Video list for student')
             try:
                 student = Student.objects.get(pk=user)
                 the_class = student.current_class
                 section = student.current_section
-                q = ImageVideo.objects.filter(the_class=the_class.standard, section=section.section)
+                q = ImageVideo.objects.filter(the_class=the_class.standard,
+                                              section=section.section, active_status=True).order_by('creation_date')
                 try:
                     action = 'Retrieving Image Video list for ' + student.fist_name + ' ' + student.last_name
                     parent_mobile = student.parent.parent_mobile1
@@ -185,6 +209,5 @@ class ImageVideoList(generics.ListCreateAPIView):
                     print ('Exception 505 from academics views.py %s %s' % (e.message, type(e)))
                 return q
             except Exception as e:
-                print ('Exception 360 from academics views.py %s %s' % (e.message, type(e)))
+                print ('Exception 12082019-A from pic_share views.py %s %s' % (e.message, type(e)))
                 print('could not retrieve student with id %s' % user)
-

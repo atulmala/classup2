@@ -15,6 +15,7 @@ class ImageVideo(models.Model):
     type = models.CharField(max_length=10, default='image')
     descrition = models.CharField(max_length=200)
     location = models.ImageField(upload_to='image_video/')
+    active_status = models.BooleanField(default=True)
 
 
 class ShareWithStudents(models.Model):

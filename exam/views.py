@@ -151,7 +151,7 @@ def setup_higher_class_subject_mapping(request):
     maths_stream = ['English', 'Mathematics', 'Physics', 'Chemistry']
     biology_stream = ['English', 'Biology', 'Physics', 'Chemistry']
     commerce_stream = ['English', 'Economics', 'Accountancy', 'Business Studies']
-    humanities_stream = ['English']
+    humanities_stream = ['English', 'Socialogy', 'History', 'Economics' ]
     maths = 'Mathematics'
     bio = 'Biology'
     commerce = 'Commerce'
@@ -242,8 +242,8 @@ def setup_higher_class_subject_mapping(request):
 
                             if stream == humanities:
                                 print('going to set the chosen_stream to be %s' % stream)
-                                chosen_stream = list(commerce_stream)
-                                print('chosen_stream = Commerce')
+                                chosen_stream = list(humanities_stream)
+                                print('chosen_stream = Humanities')
                                 try:
                                     h_stream = Stream.objects.get(stream='Humanities')
                                     stream_mapping = StreamMapping.objects.get_or_create(student=student,
