@@ -2,12 +2,14 @@ import os
 import json
 import base64
 import ast
+import urllib2
 
 from rest_framework import generics
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 
 from django.core.files.base import ContentFile
 
+from setup.models import GlobalConf
 from teacher.models import Teacher
 from student.models import Student
 from academics.models import Class, Section
@@ -79,8 +81,42 @@ class UploadImage(generics.ListCreateAPIView):
             image_video.the_class = c
             image_video.section = s
 
+            long_link = 'https://storage.cloud.google.com/classup/classup2/media/dev/image_video/%s' % \
+                        image_name.replace('@', '')
+            print('long_link = %s' % long_link)
+            short_link = long_link
+
+            # prepare short link
+            global_conf = GlobalConf.objects.get(pk=1)
+            key = global_conf.short_link_api
+            url = 'https://cutt.ly/api/api.php?'
+            url += 'key=%s&short=%s' % (key, long_link)
+            print('url for generating short link = %s' % url)
+            try:
+                response = urllib2.urlopen(url)
+                print('response for generating short link = %s' % response)
+                outcome = json.loads(response.read())
+                print('ouctome = ')
+                print(outcome)
+                status = outcome['url']['status']
+                print('status = %i' % status)
+                if status == 7:
+                    short_link = outcome['url']['shortLink']
+                    print('short_lint = %s' % short_link)
+                    image_video.short_link = short_link
+                    # image_video.short_link = short_link
+                    # image_video.save()
+                # else:
+                #     image_video.short_link = long_link
+                #     image_video.save()
+            except Exception as e:
+                print('exception 15082019-A from pic_share views.py %s %s' % (e.message, type(e)))
+                print('failed to generate short link  for the image/video uploaded by %s' % t)
+                image_video.short_link = 'not available'
+
             try:
                 image_video.save()
+                print('saved the image uploaded by %s' % t)
 
                 # now update with the SharedWith table
                 if whole_class == 'true':
@@ -91,12 +127,11 @@ class UploadImage(generics.ListCreateAPIView):
                             shared = ShareWithStudents(image_video=image_video,
                                                        student=student, the_class=c, section=s)
                             shared.save()
-
-                            link = 'https://storage.cloud.google.com/classup/classup2/media/dev/image_video/%s' % \
-                                   image_name.replace('@', '')
-                            # link = 'https://storage.cloud.google.com/classup/classup2/media/prod/image_video/%s' % \
-                            #        image_name.replace('@', '')
                             print('saved the SharedWithStudent for %s of %s-%s' % (student, the_class, section))
+                            parent = student.parent.parent_name
+                            message = 'Dear %s new pic uploaded. %s. Click %s' % (parent, description, short_link)
+                            print(message)
+                            sms.send_sms1(student.school, teacher, student.parent.parent_mobile1, message, 'Share Pic')
                         except Exception as e:
                             print('exception 01082019-A from pic_share views.py %s %s' % (e.message, type(e)))
                             print('failed to save SharedWithStudent object')
@@ -108,15 +143,10 @@ class UploadImage(generics.ListCreateAPIView):
                                                        student=student, the_class=c, section=s)
                             shared.save()
 
-                            link = 'https://storage.cloud.google.com/classup/classup2/media/dev/image_video/%s' % \
-                                   image_name.replace('@', '')
-                            print(link)
-                            # link = 'https://storage.cloud.google.com/classup/classup2/media/prod/image_video/%s' % \
-                            #        image_name.replace('@', '')
                             print('saved the SharedWithStudent for %s of %s-%s. Now sending sms' % (student, c, s))
 
                             parent = student.parent.parent_name
-                            message = 'Dear %s new pic uploaded. %s. Click %s' % (parent, description, link)
+                            message = 'Dear %s new pic uploaded. %s. Click %s' % (parent, description, short_link)
                             print(message)
                             sms.send_sms1(student.school, teacher, student.parent.parent_mobile1, message, 'Share Pic')
                         except Exception as e:
@@ -140,11 +170,12 @@ class UploadImage(generics.ListCreateAPIView):
                 context_dict['message'] = 'error while trying to save the image/video uploaded'
                 return JSONResponse(context_dict, status=201)
         except Exception as e:
-            print('failed to get the POST data for create hw')
+            print('failed to save image/video')
             print('Exception 02082019-B from pic_share views.py = %s (%s)' % (e.message, type(e)))
             context_dict['status'] = 'failed'
             context_dict['message'] = 'error while trying to save the image/video uploaded'
             return JSONResponse(context_dict, status=201)
+
 
 class DeleteMedia(generics.DestroyAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)

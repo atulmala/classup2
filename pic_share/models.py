@@ -15,6 +15,7 @@ class ImageVideo(models.Model):
     type = models.CharField(max_length=10, default='image')
     descrition = models.CharField(max_length=200)
     location = models.ImageField(upload_to='image_video/')
+    short_link = models.CharField(max_length=100, null=True)
     active_status = models.BooleanField(default=True)
 
 

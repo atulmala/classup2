@@ -32,6 +32,7 @@ class GlobalConf(models.Model):
     aws_access_key = models.CharField(max_length=40, default='AKIAJ6X32EHNR26CXSWA')
     aws_secret_key = models.CharField(max_length=50, default='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')
     aws_region = models.CharField(max_length=20, default='us-east-1')
+    short_link_api = models.CharField(max_length=100, default='4f79464452b3bbed98ae6b42d717ac399cbaa')
 
 
 class Configurations(models.Model):

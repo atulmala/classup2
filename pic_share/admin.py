@@ -7,7 +7,7 @@ from .models import ImageVideo, ShareWithStudents
 
 class ImageVideoAdmin(admin.ModelAdmin):
     list_display = ('teacher', 'the_class', 'section', 'type',
-                    'creation_date', 'descrition', 'location',)
+                    'creation_date', 'descrition', 'location', 'short_link',)
     search_fields = ('teacher',)
     list_filter = ('creation_date',)
 

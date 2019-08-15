@@ -9,4 +9,5 @@ class ImageVideoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ImageVideo
-        fields = ('id', 'type', 'teacher', 'the_class', 'section', 'creation_date', 'descrition', 'location',)
+        fields = ('id', 'type', 'teacher', 'the_class', 'section', 'creation_date',
+                  'descrition', 'location', 'short_link',)
