@@ -81,7 +81,9 @@ class UploadImage(generics.ListCreateAPIView):
             image_video.the_class = c
             image_video.section = s
 
-            long_link = 'https://storage.cloud.google.com/classup/classup2/media/dev/image_video/%s' % \
+            # long_link = 'https://storage.cloud.google.com/classup/classup2/media/dev/image_video/%s' % \
+            #             image_name.replace('@', '')
+            long_link = 'https://storage.cloud.google.com/classup/classup2/media/prod/image_video/%s' % \
                         image_name.replace('@', '')
             print('long_link = %s' % long_link)
             short_link = long_link
