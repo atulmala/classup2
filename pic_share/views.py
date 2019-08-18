@@ -144,7 +144,6 @@ class UploadImage(generics.ListCreateAPIView):
                             shared = ShareWithStudents(image_video=image_video,
                                                        student=student, the_class=c, section=s)
                             shared.save()
-
                             print('saved the SharedWithStudent for %s of %s-%s. Now sending sms' % (student, c, s))
 
                             parent = student.parent.parent_name

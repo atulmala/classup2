@@ -215,9 +215,12 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
             except Exception as e:
                 print('exception 12072019-C from sms.py %s %s' % (e.message, type(e)))
                 print('could not retrieve the vendor object associated with %s' % vendor_name)
-            url = 'http://5.9.0.178:8000/Sendsms?user=classup&password=56tr43we&sender=CLSSUP'
-            url += '&dest=%s' % mobile
-            url += '&dcs=0&apid=56114&text=%s' % m3
+            url = 'http://148.251.80.111:5665/api/SendSMS?api_id=API26025212584&api_password=123456789'
+            url += '&sms_type=T&encoding=T&sender_id=CLSSUP'
+            url += '&phonenumber=%s&textmessage=%s' % (mobile, m3)
+            # url = 'http://5.9.0.178:8000/Sendsms?user=classup&password=56tr43we&sender=CLSSUP'
+            # url += '&dest=%s' % mobile
+            # url += '&dcs=0&apid=56114&text=%s' % m3
         print('url = %s' % url)
         # 06/12/2016 - we don't want to send sms to a dummy number
         if mobile == '1234567890' or len(str(mobile)) != 10:
@@ -241,8 +244,11 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                         print(outcome)
                         message_id = (outcome['JobId'])
                     if vendor == 3:
-                        m = response.read()
-                        message_id = m[17:56]
+                        outcome = json.loads(response.read())
+                        print(outcome)
+                        message_id = (outcome['message_id'])
+                        # m = response.read()
+                        # message_id = m[17:56]
                     print('job_id = %s' % message_id)
                     print(message_id)
                 else:
