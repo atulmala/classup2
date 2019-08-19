@@ -15,7 +15,7 @@ from student.models import Student
 from academics.models import Class, Section
 from operations import sms
 from .models import ImageVideo, ShareWithStudents
-from .serializers import ImageVideoSerializer
+from .serializers import ImageVideoSerializer, SharedWithSerializer
 
 from authentication.views import JSONResponse, log_entry
 
@@ -81,8 +81,6 @@ class UploadImage(generics.ListCreateAPIView):
             image_video.the_class = c
             image_video.section = s
 
-            # long_link = 'https://storage.cloud.google.com/classup/classup2/media/dev/image_video/%s' % \
-            #             image_name.replace('@', '')
             long_link = 'https://storage.cloud.google.com/classup/classup2/media/prod/image_video/%s' % \
                         image_name.replace('@', '')
             print('long_link = %s' % long_link)
@@ -106,16 +104,10 @@ class UploadImage(generics.ListCreateAPIView):
                     short_link = outcome['url']['shortLink']
                     print('short_lint = %s' % short_link)
                     image_video.short_link = short_link
-                    # image_video.short_link = short_link
-                    # image_video.save()
-                # else:
-                #     image_video.short_link = long_link
-                #     image_video.save()
             except Exception as e:
                 print('exception 15082019-A from pic_share views.py %s %s' % (e.message, type(e)))
                 print('failed to generate short link  for the image/video uploaded by %s' % t)
                 image_video.short_link = 'not available'
-
             try:
                 image_video.save()
                 print('saved the image uploaded by %s' % t)
@@ -220,25 +212,18 @@ class ImageVideoList(generics.ListCreateAPIView):
                 log_entry(teacher.email, action, 'Normal', True)
             except Exception as e:
                 print('unable to crete logbook entry')
-                print ('Exception 504 from academics views.py %s %s' % (e.message, type(e)))
+                print ('Exception 504 from pic_share views.py %s %s' % (e.message, type(e)))
             print('now returning the query retrieved successfully for Image/Video list of %s ' % teacher)
             return q
         except Exception as e:
             print('Exception 12082019-B from pic_share view.py %s %s' % (e.message, type(e)))
             print('We need to retrieve the Image/Video list for student')
+            self.serializer_class = SharedWithSerializer
             try:
                 student = Student.objects.get(pk=user)
-                the_class = student.current_class
-                section = student.current_section
-                q = ImageVideo.objects.filter(the_class=the_class.standard,
-                                              section=section.section, active_status=True).order_by('creation_date')
-                try:
-                    action = 'Retrieving Image Video list for ' + student.fist_name + ' ' + student.last_name
-                    parent_mobile = student.parent.parent_mobile1
-                    log_entry(parent_mobile, action, 'Normal', True)
-                except Exception as e:
-                    print('unable to crete logbook entry')
-                    print ('Exception 505 from academics views.py %s %s' % (e.message, type(e)))
+
+                q = ShareWithStudents.objects.filter(student=student).order_by('image_video__creation_date')
+
                 return q
             except Exception as e:
                 print ('Exception 12082019-A from pic_share views.py %s %s' % (e.message, type(e)))
