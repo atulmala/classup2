@@ -8,7 +8,7 @@ from student.models import Student
 
 
 class ImageVideo(models.Model):
-    teacher = models.ForeignKey(Teacher)
+    teacher = models.ForeignKey(Teacher, null=True)
     the_class = models.ForeignKey(Class)
     section = models.ForeignKey(Section)
     creation_date = models.DateTimeField(null=True, auto_now_add=True)

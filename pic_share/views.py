@@ -39,8 +39,6 @@ class UploadImage(generics.ListCreateAPIView):
         context_dict['header'] = 'Share Image'
         try:
             data = json.loads(request.body)
-            print(data)
-
             print('Image sharing process started')
             teacher = data['teacher']
             t = Teacher.objects.get(email=teacher)

@@ -4,6 +4,8 @@ import time
 import calendar
 from calendar import monthrange
 import StringIO
+import base64
+import urllib2
 
 import json
 
@@ -15,6 +17,7 @@ from django.utils.translation import ugettext
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.contrib import messages
+from django.core.files.base import ContentFile
 
 from rest_framework import generics
 
@@ -24,7 +27,8 @@ from student.models import Student
 from teacher.models import Teacher, TeacherMessageRecord, MessageReceivers, Staff
 from attendance.models import Attendance, AttendanceTaken, DailyAttendanceSummary
 from parents.models import  ParentCommunication
-from setup.models import Configurations, School
+from setup.models import Configurations, School, GlobalConf
+from pic_share.models import ImageVideo, ShareWithStudents
 
 from .models import SMSRecord, ClassUpAdmin
 from .serializers import SMSDetailSerializer
@@ -771,7 +775,6 @@ def send_bulk_sms(request):
         # otherwise from web interface
         try:
             data = json.loads(request.body)
-            print(data)
             print('Bulk SMS process initiated from device')
             from_device = True
             message_type = 'Bulk SMS (Device)'
@@ -788,6 +791,38 @@ def send_bulk_sms(request):
                 print('trying to extract selected classes/teachers/staff...')
                 selected_classes = data['classes_array']
                 print(selected_classes)
+
+            image_included = data['image_included']
+            if image_included == 'yes':
+                image = data['image']
+                image_name = data['image_name']
+                image_file = ContentFile(base64.b64decode(image), name=image_name.replace('@', ''))
+                description = message_body
+                long_link = 'https://storage.cloud.google.com/classup/classup2/media/prod/image_video/%s' % \
+                            image_name.replace('@', '')
+                print('long_link = %s' % long_link)
+                short_link = long_link
+
+                # prepare short link
+                global_conf = GlobalConf.objects.get(pk=1)
+                key = global_conf.short_link_api
+                url = 'https://cutt.ly/api/api.php?'
+                url += 'key=%s&short=%s' % (key, long_link)
+                print('url for generating short link = %s' % url)
+                try:
+                    response = urllib2.urlopen(url)
+                    print('response for generating short link = %s' % response)
+                    outcome = json.loads(response.read())
+                    print('ouctome = ')
+                    print(outcome)
+                    status = outcome['url']['status']
+                    print('status = %i' % status)
+                    if status == 7:
+                        short_link = outcome['url']['shortLink']
+                        print('short_lint = %s' % short_link)
+                except Exception as e:
+                    print('exception 20082019-A from operations views.py %s %s' % (e.message, type(e)))
+                    print('failed to generate short link  for the image/video uploaded by %s' % t)
         except Exception as e:
             print('Exception 225 from operations views.py = %s (%s)' % (e.message, type(e)))
             print('Bulk SMS process initiated from web interface')
@@ -841,40 +876,57 @@ def send_bulk_sms(request):
         # send to parents
         try:
             configuration = Configurations.objects.get(school=school)
-            vendor_sms = configuration.vendor_sms
-            bulk_sms_delay = configuration.bulk_sms_delay
             for sc in selected_classes:
                 print('class = ' + str(sc))
                 if sc != 'Teachers' and sc != 'Staff':
                     the_class = Class.objects.get(school=school, standard=sc)
-                    student_list = Student.objects.filter(current_class=the_class, active_status=True)
-                    start_time = time.time()
-                    for student in student_list:
-                        student_name = '%s %s' % (student.fist_name, student.last_name)
-                        parent = student.parent
-                        if configuration.type == 'Collage':
-                            message = 'Dear %s, ' % student_name
-                        else:
-                            message = 'Dear %s, ' % parent.parent_name
-                        message += message_body + ' Regards, ' + configuration.school_short_name
-                        print(message)
-                        mobile = parent.parent_mobile1
-                        sms.send_sms1(school, sender, mobile, message, message_type)
+                    sections = Section.objects.filter(school=school)
+                    for section in sections:
+                        print('section = %s' % section)
+                        if image_included == 'yes':
+                            try:
+                                image_video = ImageVideo()
+                                image_video.location = image_file
+                                image_video.descrition = description
+                                image_video.the_class = the_class
+                                image_video.section = section
+                                image_video.short_link = short_link
+                                image_video.save()
+                            except Exception as e:
+                                print('exception 20082019-B from operations views.py %s %s' % (e.message, type(e)))
+                                print('error in saving image/video for admin broadcast')
+                        student_list = Student.objects.filter(current_class=the_class, current_section=section,
+                                                                  active_status=True)
+                        start_time = time.time()
+                        for student in student_list:
+                            student_name = '%s %s' % (student.fist_name, student.last_name)
+                            parent = student.parent
+                            if configuration.type == 'Collage':
+                                message = 'Dear %s, ' % student_name
+                            else:
+                                message = 'Dear %s, ' % parent.parent_name
 
-                        # for bulksmsleads vendor there need to be a delay between two api calls as their server is not
-                        # so robust :(
-                        if vendor_sms == 2:
-                            #print('sleeping for %i seconds' % bulk_sms_delay)
-                            #time.sleep(bulk_sms_delay)
-                            print('earlier there was a delay but now it has been removed')
-                        else:
-                            print('no need to go to sleep!')
-                        if configuration.send_absence_sms_both_to_parent:
-                            mobile = parent.parent_mobile2
-                            if mobile != '':
-                                sms.send_sms1(school, sender, mobile, message, message_type)
-                                if vendor_sms == 2:
-                                    time.sleep(bulk_sms_delay)
+                            if image_included == 'yes':
+                                try:
+                                    shared = ShareWithStudents(image_video=image_video,
+                                                                student=student, the_class=the_class, section=section)
+                                    shared.save()
+                                    message += '%s. link: %s. Regards, %s' % \
+                                                (message_body, short_link, configuration.school_short_name)
+                                except Exception as e:
+                                    print('exception 20082019-C from operations views.py %s %s' %
+                                              (e.message, type(e)))
+                                    print('failed to save SharedWithStudent object')
+                            else:
+                                message += message_body + ' Regards, ' + configuration.school_short_name
+                                print(message)
+                            mobile = parent.parent_mobile1
+                            sms.send_sms1(school, sender, mobile, message, message_type)
+
+                            if configuration.send_absence_sms_both_to_parent:
+                                mobile = parent.parent_mobile2
+                                if mobile != '':
+                                    sms.send_sms1(school, sender, mobile, message, message_type)
                 if sc == 'Teachers':
                     staff = ['teacher']
                 if sc == 'Staff':
@@ -896,7 +948,11 @@ def send_bulk_sms(request):
                         teacher_name = teacher.first_name + ' ' + teacher.last_name
                         print(teacher_name)
                         message = 'Dear ' + teacher_name + ', '
-                        message += message_body + ' Regards, ' + configuration.school_short_name
+                        if image_included == 'yes':
+                            message += '%s. link: %s. Regards, %s' % \
+                                       (message_body, short_link, configuration.school_short_name)
+                        else:
+                            message += message_body + ' Regards, ' + configuration.school_short_name
                         print(message)
                         teacher_mobile = teacher.mobile
                         print(teacher_mobile)
@@ -906,7 +962,11 @@ def send_bulk_sms(request):
                         staff_name = '%s %s' % (staff.first_name, staff.last_name)
                         print(staff_name)
                         message = 'Dear ' + staff_name + ', '
-                        message += message_body + ' Regards, ' + configuration.school_short_name
+                        if image_included == 'yes':
+                            message += '%s. link: %s. Regards, %s' % \
+                                       (message_body, short_link, configuration.school_short_name)
+                        else:
+                            message += message_body + ' Regards, ' + configuration.school_short_name
                         print(message)
                         staff_mobile = staff.mobile
                         print(staff_mobile)
@@ -919,7 +979,11 @@ def send_bulk_sms(request):
                     teacher_name = teacher.first_name + ' ' + teacher.last_name
                     print(teacher_name)
                     message = 'Dear ' + teacher_name + ', '
-                    message += message_body + ' Regards, ' + configuration.school_short_name
+                    if image_included == 'yes':
+                        message += '%s. link: %s. Regards, %s' % \
+                                   (message_body, short_link, configuration.school_short_name)
+                    else:
+                        message += message_body + ' Regards, ' + configuration.school_short_name
                     print(message)
                     teacher_mobile = teacher.mobile
                     print(teacher_mobile)
@@ -930,7 +994,11 @@ def send_bulk_sms(request):
                     staff_name = '%s %s' % (staff.first_name, staff.last_name)
                     print(staff_name)
                     message = 'Dear ' + staff_name + ', '
-                    message += message_body + ' Regards, ' + configuration.school_short_name
+                    if image_included == 'yes':
+                        message += '%s. link: %s. Regards, %s' % \
+                                   (message_body, short_link, configuration.school_short_name)
+                    else:
+                        message += message_body + ' Regards, ' + configuration.school_short_name
                     print(message)
                     staff_mobile = staff.mobile
                     print(staff_mobile)
