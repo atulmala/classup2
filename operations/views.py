@@ -792,7 +792,14 @@ def send_bulk_sms(request):
                 selected_classes = data['classes_array']
                 print(selected_classes)
 
-            image_included = data['image_included']
+            try:
+                image_included = data['image_included']
+                print('image_included = %s' % image_included)
+            except Exception as e:
+                print('exception 21082019-A from operations views.py %s %s' % (e.message, type(e)))
+                print('the user has not yet updated to the latest app version')
+                image_included = 'no'
+
             if image_included == 'yes':
                 image = data['image']
                 image_name = data['image_name']
