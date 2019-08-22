@@ -28,7 +28,7 @@ from teacher.models import Teacher, TeacherMessageRecord, MessageReceivers, Staf
 from attendance.models import Attendance, AttendanceTaken, DailyAttendanceSummary
 from parents.models import  ParentCommunication
 from setup.models import Configurations, School, GlobalConf
-from pic_share.models import ImageVideo, ShareWithStudents
+from pic_share.models import ImageVideo, ShareWithStudents, SharedWithTeacher
 
 from .models import SMSRecord, ClassUpAdmin
 from .serializers import SMSDetailSerializer
@@ -948,6 +948,16 @@ def send_bulk_sms(request):
         # send to teachers/staff
         print('now sending bulk sms to teacher & staff')
         if staff is not None:
+            if image_included == 'yes':
+                try:
+                    image_video = ImageVideo()
+                    image_video.location = image_file
+                    image_video.descrition = description
+                    image_video.short_link = short_link
+                    image_video.save()
+                except Exception as e:
+                    print('exception 22082019-B from operations views.py %s %s' % (e.message, type(e)))
+                    print('error in saving image/video for admin broadcast')
             for st in staff:
                 print('st = ' + str(st))
                 if st == 'teacher' or st == 'Teachers':
@@ -956,6 +966,12 @@ def send_bulk_sms(request):
                         print(teacher_name)
                         message = 'Dear ' + teacher_name + ', '
                         if image_included == 'yes':
+                            try:
+                                shared_with_teacher = SharedWithTeacher(image_video=image_video, teacher=teacher)
+                                shared_with_teacher.save()
+                            except Exception as e:
+                                print('exception 22082019-C from operations views.py %s %s' % (e.message, type(e)))
+                                print('error in saving image/video for admin broadcast')
                             message += '%s. link: %s. Regards, %s' % \
                                        (message_body, short_link, configuration.school_short_name)
                         else:
@@ -970,6 +986,12 @@ def send_bulk_sms(request):
                         print(staff_name)
                         message = 'Dear ' + staff_name + ', '
                         if image_included == 'yes':
+                            try:
+                                shared_with_teacher = SharedWithTeacher(image_video=image_video, staff=staff)
+                                shared_with_teacher.save()
+                            except Exception as e:
+                                print('exception 22082019-D from operations views.py %s %s' % (e.message, type(e)))
+                                print('error in saving image/video for admin broadcast')
                             message += '%s. link: %s. Regards, %s' % \
                                        (message_body, short_link, configuration.school_short_name)
                         else:
