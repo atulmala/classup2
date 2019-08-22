@@ -9,8 +9,8 @@ from student.models import Student
 
 class ImageVideo(models.Model):
     teacher = models.ForeignKey(Teacher, null=True)
-    the_class = models.ForeignKey(Class)
-    section = models.ForeignKey(Section)
+    the_class = models.ForeignKey(Class, null=True)
+    section = models.ForeignKey(Section, null=True)
     creation_date = models.DateTimeField(null=True, auto_now_add=True)
     type = models.CharField(max_length=10, default='image')
     descrition = models.CharField(max_length=200)
