@@ -918,7 +918,7 @@ def send_bulk_sms(request):
                                     shared = ShareWithStudents(image_video=image_video,
                                                                 student=student, the_class=the_class, section=section)
                                     shared.save()
-                                    message += '%s. link: %s. Regards, %s' % \
+                                    message += '%s. link: %s Regards, %s' % \
                                                 (message_body, short_link, configuration.school_short_name)
                                 except Exception as e:
                                     print('exception 20082019-C from operations views.py %s %s' %
@@ -992,7 +992,7 @@ def send_bulk_sms(request):
                             except Exception as e:
                                 print('exception 22082019-D from operations views.py %s %s' % (e.message, type(e)))
                                 print('error in saving image/video for admin broadcast')
-                            message += '%s. link: %s. Regards, %s' % \
+                            message += '%s. link: %s Regards, %s' % \
                                        (message_body, short_link, configuration.school_short_name)
                         else:
                             message += message_body + ' Regards, ' + configuration.school_short_name
@@ -1009,7 +1009,7 @@ def send_bulk_sms(request):
                     print(teacher_name)
                     message = 'Dear ' + teacher_name + ', '
                     if image_included == 'yes':
-                        message += '%s. link: %s. Regards, %s' % \
+                        message += '%s. link: %s Regards, %s' % \
                                    (message_body, short_link, configuration.school_short_name)
                     else:
                         message += message_body + ' Regards, ' + configuration.school_short_name
@@ -1024,7 +1024,7 @@ def send_bulk_sms(request):
                     print(staff_name)
                     message = 'Dear ' + staff_name + ', '
                     if image_included == 'yes':
-                        message += '%s. link: %s. Regards, %s' % \
+                        message += '%s. link: %s Regards, %s' % \
                                    (message_body, short_link, configuration.school_short_name)
                     else:
                         message += message_body + ' Regards, ' + configuration.school_short_name
