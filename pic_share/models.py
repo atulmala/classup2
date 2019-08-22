@@ -1,6 +1,6 @@
 from django.db import models
 
-from teacher.models import Teacher
+from teacher.models import Teacher, Staff
 from academics.models import Class, Section
 from student.models import Student
 
@@ -24,6 +24,12 @@ class ShareWithStudents(models.Model):
     student = models.ForeignKey(Student)
     the_class = models.ForeignKey(Class)
     section = models.ForeignKey(Section)
+
+
+class SharedWithTeacher(models.Model):
+    image_video = models.ForeignKey(ImageVideo)
+    teacher = models.ForeignKey(Teacher, null=True)
+    staff = models.ForeignKey(Staff, null=True)
 
 
 
