@@ -131,10 +131,9 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
                 else:
                     print('message was sent using DealSMS API')
                     deal_sms_count += 1
-                    url = 'http://5.9.69.238/reports/getByMid.php?uname=classup&password=56tr43we'
-                    the_date = record.date.strftime('%Y-%m-%d')
-                    url += '&sdate=%s' % the_date
-                    url += '&mid=%s' % delivery_id
+                    url = 'http://148.251.80.111:5665/api/GetDeliveryStatus?api_id=API26025212584&api_password=123456789'
+                    url += '&message_id=%s' % delivery_id
+
                     print('url = %s' % url)
 
                     # now extract the delivery status
