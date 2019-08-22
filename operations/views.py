@@ -972,7 +972,7 @@ def send_bulk_sms(request):
                             except Exception as e:
                                 print('exception 22082019-C from operations views.py %s %s' % (e.message, type(e)))
                                 print('error in saving image/video for admin broadcast')
-                            message += '%s. link: %s. Regards, %s' % \
+                            message += '%s. link: %s Regards, %s' % \
                                        (message_body, short_link, configuration.school_short_name)
                         else:
                             message += message_body + ' Regards, ' + configuration.school_short_name
