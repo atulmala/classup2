@@ -1,4 +1,5 @@
 import urllib
+import json
 
 
 from django.db.models import Count, Max
@@ -139,7 +140,10 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
                     # now extract the delivery status
                     try:
                         response = urllib.urlopen(url)
-                        status = response.read()
+                        json_status = json.loads(response.read())
+                        print(json_status)
+                        del json_status['SMSMessage']
+                        status = json.dumps(json_status)
                         print('delivery status = %s' % status)
                     except Exception as e:
                         print('exception 10072019-B from maintenance views.py %s %s' % (e.message, type(e)))
