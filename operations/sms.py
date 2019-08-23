@@ -218,9 +218,6 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
             url = 'http://148.251.80.111:5665/api/SendSMS?api_id=API26025212584&api_password=123456789'
             url += '&sms_type=T&encoding=T&sender_id=CLSSUP'
             url += '&phonenumber=%s&textmessage=%s' % (mobile, m3)
-            # url = 'http://5.9.0.178:8000/Sendsms?user=classup&password=56tr43we&sender=CLSSUP'
-            # url += '&dest=%s' % mobile
-            # url += '&dcs=0&apid=56114&text=%s' % m3
         print('url = %s' % url)
         # 06/12/2016 - we don't want to send sms to a dummy number
         if mobile == '1234567890' or len(str(mobile)) != 10:
@@ -228,7 +225,6 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
         else:
             print('sending to=' + mobile)
             print('sender=' + sender)
-
             try:
                 # 07/02/17 - we will be sending bulk sms through separate batch job as it is time consuming
                 message_id = 'Not Available'
@@ -255,16 +251,19 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                     print('message type was Bulk SMS (Web Interface). '
                           'Batch process to send those SMS will have to be run!')
 
-                    # 29/11/2017 - for teacher message history
-                    if message_type == 'Teacher Communication':
-                        try:
-                            print ('creating Recepient records for Teacher Message History')
-                            receiver = kwargs.get('receiver', None)
-                            receiver.status = message_id
-                            receiver.save()
-                        except Exception as e:
-                            print ('exception 29112017-X from sms.py %s %s' % (e.message, type(e)))
-                            print ('failed to store the status for Teacher Message History Recepient record')
+                # 29/11/2017 - for teacher message history
+                if message_type == 'Teacher Communication':
+                    try:
+                        print ('creating Recepient records for Teacher Message History')
+                        receiver = kwargs.get('receiver', None)
+                        print('message_receiver = ')
+                        print(receiver)
+                        receiver.status = message_id
+                        receiver.save()
+                        print('successfully saved message receiver object')
+                    except Exception as e:
+                        print ('exception 29112017-X from sms.py %s %s' % (e.message, type(e)))
+                        print ('failed to store the status for Teacher Message History Recepient record')
 
                 # finally, store everything into the database
                 print ('going to store this sms details into the database')
