@@ -59,8 +59,16 @@ class UploadImage(generics.ListCreateAPIView):
                 student_list = data['student_list']
                 print(student_list)
                 print(type(student_list))
-                students = ast.literal_eval(student_list)
-                print(students)
+
+                # 29/08/2019 - when comes from Android, the student id list comes as an array. So we need to break it
+                # into list. But from iOS, it comes as a proper list. So need not break it
+                try:
+                    students = ast.literal_eval(student_list)
+                    print(students)
+                except Exception as e:
+                    print('exception 29082019-A from pic_share views.py %s %s' % (e.message, type(e)))
+                    print('looks the request has come from iOS, hence no need for ast.literal_eval')
+                    students = student_list
 
             image_name = data['image_name']
             print(image_name)
