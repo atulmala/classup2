@@ -196,7 +196,7 @@ class GetMessageCount(generics.ListAPIView):
         context_dict = {
 
         }
-        yesterday = datetime.strftime(datetime.now() - timedelta(0), '%Y-%m-%d')
+        yesterday = datetime.strftime(datetime.now() - timedelta(1), '%Y-%m-%d')
         date = datetime.strptime(yesterday, '%Y-%m-%d')
         print('will now retrieve the count of messages for yesterday id %s' % yesterday)
 
