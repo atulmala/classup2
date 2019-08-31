@@ -2,7 +2,7 @@ import urllib
 import json
 
 
-from django.db.models import Count, Max
+from django.db.models import Count, Max, Sum
 from django.http import HttpResponse
 from rest_framework.renderers import JSONRenderer
 from rest_framework import generics
@@ -196,15 +196,45 @@ class GetMessageCount(generics.ListAPIView):
         context_dict = {
 
         }
-        yesterday = datetime.strftime(datetime.now() - timedelta(3), '%Y-%m-%d')
+        yesterday = datetime.strftime(datetime.now() - timedelta(0), '%Y-%m-%d')
         date = datetime.strptime(yesterday, '%Y-%m-%d')
         print('will now retrieve the count of messages for yesterday id %s' % yesterday)
 
         schools = School.objects.filter()
         for school in schools:
-            print('getting the count of messages sent by %s on %s...' % (school, yesterday))
-            message_count = SMSRecord.objects.filter(school=school, date__gte=date,
-                                                     date__lt=date+timedelta(days=1)).count()
-            print('count of messages sent by %s on %s = %i' % (school, yesterday, message_count))
+            try:
+                print('getting the count of messages sent by %s on %s...' % (school, yesterday))
+                message_count = SMSRecord.objects.filter(school=school, date__gte=date,
+                                                         date__lt=date+timedelta(days=1)).count()
+                print('count of messages sent by %s on %s = %i' % (school, yesterday, message_count))
+                sms_consumed = SMSRecord.objects.filter(school=school, date__gte=date,
+                                                         date__lt=date+timedelta(days=1)).aggregate(Sum('sms_consumed'))
+                print(sms_consumed)
+                print('count of messages sent by %s on %s = %i' % (school, yesterday, message_count))
+
+                # store into the db
+                try:
+                    record = DailyMessageCount.objects.filter(school=school, date=date).first()
+                    print('query for getting daily message count for %s on for date %s has been run before' %
+                          (school, yesterday))
+                    record.message_count = message_count
+
+                    if sms_consumed['sms_consumed__sum'] is not None:
+                        record.sms_count = sms_consumed['sms_consumed__sum']
+                    else:
+                        record.sms_count = 0
+                    record.save()
+                except Exception as e:
+                    print('exception 31082019-B from maintenance views.py %s %s' % (e.message, type(e)))
+                    print('query for getting daily message count for %s on for date %s has not been run before' %
+                          (school, yesterday))
+                    record = DailyMessageCount(school=school, date=date)
+                    record.message_count = message_count
+                    record.sms_count = sms_consumed['sms_consumed__sum']
+                    record.save()
+                print('saved the message count and sms consumption for %s on %s' % (school, yesterday))
+            except Exception as e:
+                print('exception 31082019-C from maintenance views.py %s %s' % (e.message, type(e)))
+                print('encountered an error while extracting the message and sms count')
         context_dict['status'] = 'success'
         return JSONResponse(context_dict, status=200)
