@@ -1,3 +1,5 @@
+import math
+
 from datetime import datetime
 from django.db import models
 
@@ -34,6 +36,16 @@ class SMSRecord(models.Model):
     status_extracted = models.BooleanField(default=False)
     status = models.CharField(max_length=350, default='Not Available')
     the_vendor = models.ForeignKey(SMSVendor, null=True, blank=True)
+    sms_consumed = models.IntegerField(default=0)
+
+    def save(self, *args, **kwargs):
+        try:
+            self.sms_consumed = math.ceil(float(len(self.message))/160.0)
+            print('%i sms credits consumed by this sms' % self.sms_consumed)
+            super(SMSRecord, self).save(*args, **kwargs)
+        except Exception as e:
+            print('exception 31082019-A from operations models.py %s %s' % (e.message, type(e)))
+            print('failed to determine the sms credits consumed by this sms')
 
 
 class ClassUpAdmin(models.Model):

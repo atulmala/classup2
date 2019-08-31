@@ -12,8 +12,9 @@ from datetime import datetime, timedelta
 from attendance.models import Attendance, DailyAttendanceSummary
 from operations.models import SMSRecord
 from teacher.models import MessageReceivers
+from setup.models import School
 
-from .models import SMSDelStats
+from .models import SMSDelStats, DailyMessageCount
 
 
 class JSONResponse(HttpResponse):
@@ -187,4 +188,23 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
         else:
             print('no message to retrieve status. Nothing stored in the db')
 
+        return JSONResponse(context_dict, status=200)
+
+
+class GetMessageCount(generics.ListAPIView):
+    def get(self, request, *args, **kwargs):
+        context_dict = {
+
+        }
+        yesterday = datetime.strftime(datetime.now() - timedelta(3), '%Y-%m-%d')
+        date = datetime.strptime(yesterday, '%Y-%m-%d')
+        print('will now retrieve the count of messages for yesterday id %s' % yesterday)
+
+        schools = School.objects.filter()
+        for school in schools:
+            print('getting the count of messages sent by %s on %s...' % (school, yesterday))
+            message_count = SMSRecord.objects.filter(school=school, date__gte=date,
+                                                     date__lt=date+timedelta(days=1)).count()
+            print('count of messages sent by %s on %s = %i' % (school, yesterday, message_count))
+        context_dict['status'] = 'success'
         return JSONResponse(context_dict, status=200)

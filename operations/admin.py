@@ -6,8 +6,8 @@ from .models import SMSRecord, ClassUpAdmin, SMSVendor, ParanShabd
 
 class SMSRecordAdmin(admin.ModelAdmin):
     list_display = ('school', 'sender1', 'sender_type', 'date',
-                    'recipient_name', 'recipient_number', 'recipient_type', 'message', 'message_type',
-                    'the_vendor', 'api_called', 'outcome', 'status_extracted', 'status',)
+                    'recipient_name', 'recipient_number', 'recipient_type', 'message', 'sms_consumed',
+                    'message_type', 'the_vendor', 'api_called', 'outcome', 'status_extracted', 'status',)
     list_filter = ('date', 'status_extracted', 'api_called', 'school',)
     search_fields = ('recipient_number', 'recipient_name', 'message', 'status', 'outcome',)
 

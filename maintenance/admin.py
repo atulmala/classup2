@@ -2,7 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 
-from .models import SMSDelStats
+from .models import SMSDelStats, DailyMessageCount
 
 
 class SMSDelAdmin(admin.ModelAdmin):
@@ -10,3 +10,12 @@ class SMSDelAdmin(admin.ModelAdmin):
 
 
 admin.site.register(SMSDelStats, SMSDelAdmin)
+
+
+class DailyMessageCountAdmin(admin.ModelAdmin):
+    list_display = ('date', 'school', 'message_count', 'sms_count',)
+    list_filter = ('date', 'school',)
+    search_fields = ('date',)
+
+
+admin.site.register(DailyMessageCount, DailyMessageCountAdmin)

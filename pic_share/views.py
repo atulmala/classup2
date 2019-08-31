@@ -209,7 +209,7 @@ class ImageVideoList(generics.ListCreateAPIView):
         try:
             teacher = Teacher.objects.get(email=user)
             print('will now try to retrieve the Images Video created by %s' % teacher)
-            q = ImageVideo.objects.filter(teacher=teacher, active_status=True).order_by('creation_date')
+            q = ImageVideo.objects.filter(teacher=teacher, active_status=True).order_by('-creation_date')
             print('query retrieved successfully for Image Video list of %s = ' % teacher)
             print(q)
 

@@ -9,7 +9,7 @@ class ImageVideoAdmin(admin.ModelAdmin):
     list_display = ('teacher', 'the_class', 'section', 'type',
                     'creation_date', 'descrition', 'location', 'short_link',)
     search_fields = ('teacher',)
-    list_filter = ('creation_date',)
+    list_filter = ('creation_date', 'teacher__school',)
 
 
 admin.site.register(ImageVideo, ImageVideoAdmin)
