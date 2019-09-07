@@ -1,10 +1,15 @@
 from django.db import models
+from oauth2client.contrib.django_util.models import CredentialsField
 
 from teacher.models import Teacher, Staff
 from academics.models import Class, Section
 from student.models import Student
 
 # Create your models here.
+
+
+class CredentialModel(models.Model):
+    credential = CredentialsField()
 
 
 class ImageVideo(models.Model):

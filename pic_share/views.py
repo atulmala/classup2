@@ -3,11 +3,42 @@ import json
 import base64
 import ast
 import urllib2
+import httplib
+import httplib2
+import hashlib
+import random
+import sys
+import time
+
+import google.oauth2.credentials
+from django.http import HttpResponseBadRequest
+import progressbar as pb
+from googleapiclient.http import MediaFileUpload
+import google.oauth2.credentials
+import google_auth_oauthlib.flow
+
+from apiclient.discovery import build
+from apiclient.errors import HttpError
+from apiclient.http import MediaFileUpload
+from django.views.decorators.csrf import csrf_exempt
+from oauth2client import client
+from oauth2client.client import flow_from_clientsecrets, OAuth2WebServerFlow
+from oauth2client.contrib import xsrfutil
+from oauth2client.file import Storage
+from oauth2client.contrib.django_util.storage import DjangoORMStorage
+
+from googleapiclient.errors import HttpError, ResumableUploadError
 
 from rest_framework import generics
+from rest_framework.parsers import FileUploadParser
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 
 from django.core.files.base import ContentFile
+from django.core.files.storage import FileSystemStorage
+from django.shortcuts import redirect
+from django.conf import settings
+from django.views.generic.base import View
+
 
 from setup.models import GlobalConf
 from teacher.models import Teacher
@@ -15,9 +46,30 @@ from student.models import Student
 from academics.models import Class, Section
 from operations import sms
 from .models import ImageVideo, ShareWithStudents
+from .models import CredentialModel
 from .serializers import ImageVideoSerializer, SharedWithSerializer
 
 from authentication.views import JSONResponse, log_entry
+
+httplib2.RETRIES = 1
+MAX_RETRIES = 10
+RETRIABLE_EXCEPTIONS = (httplib2.HttpLib2Error, IOError, httplib.NotConnected,
+                            httplib.IncompleteRead, httplib.ImproperConnectionState,
+                            httplib.CannotSendRequest, httplib.CannotSendHeader,
+                            httplib.ResponseNotReady, httplib.BadStatusLine)
+RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
+CLIENT_SECRETS_FILE = 'client_secrets.json'
+SERVICE_ACCOUNT_FILE = 'service_account.json'
+YOUTUBE_UPLOAD_SCOPE = ['https://www.googleapis.com/auth/youtube.upload']
+YOUTUBE_API_SERVICE_NAME = 'youtube'
+YOUTUBE_API_VERSION = 'v3'
+MISSING_CLIENT_SECRETS_MESSAGE = 'client_secrets file missing'
+VALID_PRIVACY_STATUSES = ("public", "private", "unlisted")
+
+flow = flow_from_clientsecrets(
+            CLIENT_SECRETS_FILE,
+            YOUTUBE_UPLOAD_SCOPE,
+            redirect_uri='http://localhost:8000/pic_share/oauth2callback/')
 
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
@@ -234,3 +286,217 @@ class ImageVideoList(generics.ListCreateAPIView):
             except Exception as e:
                 print ('Exception 12082019-A from pic_share views.py %s %s' % (e.message, type(e)))
                 print('could not retrieve student with id %s' % user)
+
+
+def initialize_upload(youtube, options):
+    print('inside initialize upload')
+    tags = None
+    if options.keywords:
+        tags = options.keywords.split(",")
+
+    body = dict(
+        snippet=dict(
+            title=options.title,
+            description=options.description,
+            tags=tags,
+            categoryId=options.category
+        ),
+        status=dict(
+            privacyStatus=options.privacyStatus
+        )
+    )
+
+    # Call the API's uploaded_videos.insert method to create and upload the video.
+    insert_request = youtube.videos().insert(part=",".join(body.keys()), body=body,
+                                             media_body=MediaFileUpload(options.file, chunksize=-1, resumable=True)
+                                             )
+    resumable_upload(insert_request)
+
+
+def resumable_upload(insert_request):
+    print('inside resume upload')
+    response = None
+    error = None
+    retry = 0
+
+    widgets = ['Uploading: ', pb.Percentage(), ' ', pb.Bar(marker='0', left='[', right=']'), ' ', pb.ETA(), ' ',
+               pb.FileTransferSpeed()]  # see docs for other options
+    pbar = pb.ProgressBar(widgets=widgets, maxval=1)
+    pbar.start()
+    while response is None:
+        try:
+            print "Uploading file..."
+            status, response = insert_request.next_chunk()
+            if response is None:
+                pbar.update(status.progress())
+                continue
+            if 'id' in response:
+                print "Video id '%s' was successfully uploaded." % response['id']
+            else:
+                exit("The upload failed with an unexpected response: %s" % response)
+        except ResumableUploadError as e:
+            print(("ResumableUploadError e.content:{}".format(e.content)))
+            print("to get out of this loop:\nimport sys;sys.exit()")
+            import code;
+            code.interact(local=locals())
+        except HttpError, e:
+            if e.resp.status in RETRIABLE_STATUS_CODES:
+                error = "A retriable HTTP error %d occurred:\n%s" % (e.resp.status,
+                                                                     e.content)
+            else:
+                raise
+        except RETRIABLE_EXCEPTIONS, e:
+            error = "A retriable error occurred: %s" % e
+        except Exception as e:
+            print('exception 04092019-B from pic_share views.py %s %s' % (e.message, type(e)))
+            print('failed to upload video')
+
+        if error is not None:
+            print error
+            retry += 1
+            if retry > MAX_RETRIES:
+                exit("No longer attempting to retry.")
+
+            max_sleep = 2 ** retry
+            sleep_seconds = random.random() * max_sleep
+            print "Sleeping %f seconds and then retrying..." % sleep_seconds
+            time.sleep(sleep_seconds)
+
+
+class Oauth2CallbackView(View):
+
+    def get(self, request, *args, **kwargs):
+        if not xsrfutil.validate_token(
+            settings.SECRET_KEY, request.GET.get('state').encode(),
+            request.user):
+                return HttpResponseBadRequest()
+        credential = flow.step2_exchange(request.GET)
+        storage = DjangoORMStorage(
+            CredentialModel, 'id', request.user.id, 'credential')
+        storage.put(credential)
+        return redirect('/')
+
+
+class UploadVideo(generics.ListCreateAPIView):
+    print('inside upload video')
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+    parser_classes = (FileUploadParser,)
+
+    def get(self, request, *args, **kwargs):
+        print('inside setting up credentials')
+        print('user id = ')
+        print(request.user.id)
+        storage = DjangoORMStorage(
+            CredentialModel, 'id', request.user.id, 'credential')
+        credential = storage.get()
+        print('credentials = ')
+        print(credential)
+
+        if credential is None or credential.invalid == True:
+            print('credential found to be invalid or None')
+            flow.params['state'] = xsrfutil.generate_token(
+                settings.SECRET_KEY, request.user)
+            print('state = ')
+            print(flow.params['state'])
+            authorize_url = flow.step1_get_authorize_url()
+            print('authorize_url = ')
+            print(authorize_url)
+            return redirect(authorize_url)
+        else:
+            print('credential does exist and it is valid too!')
+        return redirect('/')
+
+    def post(self, request, *args, **kwargs):
+        print('user id in post request = ')
+        data = request.POST
+        print(data)
+        context_dict = {
+
+        }
+        try:
+            storage = DjangoORMStorage(
+                CredentialModel, 'id', 1, 'credential')
+
+            credential = storage.get()
+            print('credential = ')
+            print(credential)
+            if credential is None or credential.invalid == True:
+                print('credential found to be invalid or None')
+
+            client = build('youtube', 'v3', http=credential.authorize(httplib2.Http()))
+            print('client = ')
+            print(client)
+
+            # youtube = get_authenticated_service()
+            # print(youtube)
+
+            params = (request.POST['params'])
+            print(params)
+            data = json.loads(params)
+            print('Video sharing process started')
+            teacher = data['teacher']
+            t = Teacher.objects.get(email=teacher)
+            print (t)
+            print(teacher)
+            the_class = data['the_class']
+            print(the_class)
+            c = Class.objects.get(school=t.school, standard=the_class)
+            print (c)
+            section = data['section']
+            print(section)
+            s = Section.objects.get(school=t.school, section=section)
+            print (s)
+            description = data['description']
+            whole_class = data['whole_class']
+            print('whole class = %s' % whole_class)
+            if whole_class == 'false':
+                student_list = data['student_list']
+                print(student_list)
+                print(type(student_list))
+
+                # 29/08/2019 - when comes from Android, the student id list comes as an array. So we need to break it
+                # into list. But from iOS, it comes as a proper list. So need not break it
+                try:
+                    students = ast.literal_eval(student_list)
+                    print(students)
+                except Exception as e:
+                    print('exception 04092019-A from pic_share views.py %s %s' % (e.message, type(e)))
+                    print('looks the request has come from iOS, hence no need for ast.literal_eval')
+                    students = student_list
+            print('will now save the video received in local storage temporarily')
+            print(request.FILES)
+            up_file = request.FILES['video']
+            folder = 'uploaded_videos'
+            fs = FileSystemStorage(location=folder)  # defaults to   MEDIA_ROOT
+            filename = fs.save(up_file.name, up_file)
+            print('file saved successfully %s' % filename)
+
+            # youtube = get_authenticated_service()
+            # print(youtube)
+            body = dict(
+                snippet=dict(
+                    title=description,
+                    description=description,
+                    tags=['ClassUp'],
+                    categoryId=22
+                ),
+                status=dict(
+                    privacyStatus='private'
+                )
+            )
+
+            insert_request = client.videos().insert(part=','.join(body.keys()), body=body,
+                media_body=MediaFileUpload(
+                    '/Users/atul/classup/classup/pic_share/VID-20190610-WA0022_F8DdGlG.mp4',
+                    chunksize=-1,
+                    resumable=True)
+                )
+            # insert_request.execute()
+            resumable_upload(insert_request)
+        except Exception as e:
+            print('exception 02092019-A from pic_share views.py %s %s' % (e.message, type(e)))
+            print('failed to upload to YouTube')
+
+        return JSONResponse(context_dict, status=200)
+
+

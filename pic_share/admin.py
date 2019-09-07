@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import ImageVideo, ShareWithStudents
+from .models import ImageVideo, ShareWithStudents, CredentialModel
 
 # Register your models here.
 
@@ -20,6 +20,13 @@ class SharedAdmin(admin.ModelAdmin):
 
 
 admin.site.register(ShareWithStudents, SharedAdmin)
+
+
+class CredentialAdmin(admin.ModelAdmin):
+    list_display = ('credential',)
+
+
+admin.site.register(CredentialModel, CredentialAdmin)
 
 
 
