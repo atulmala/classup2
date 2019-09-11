@@ -13,18 +13,11 @@ import time
 import google.oauth2.credentials
 from django.http import HttpResponseBadRequest
 import progressbar as pb
-from googleapiclient.http import MediaFileUpload
-import google.oauth2.credentials
-import google_auth_oauthlib.flow
 
 from apiclient.discovery import build
-from apiclient.errors import HttpError
 from apiclient.http import MediaFileUpload
-from django.views.decorators.csrf import csrf_exempt
-from oauth2client import client
-from oauth2client.client import flow_from_clientsecrets, OAuth2WebServerFlow
+from oauth2client.client import flow_from_clientsecrets
 from oauth2client.contrib import xsrfutil
-from oauth2client.file import Storage
 from oauth2client.contrib.django_util.storage import DjangoORMStorage
 
 from googleapiclient.errors import HttpError, ResumableUploadError
@@ -288,29 +281,20 @@ class ImageVideoList(generics.ListCreateAPIView):
                 print('could not retrieve student with id %s' % user)
 
 
-def initialize_upload(youtube, options):
-    print('inside initialize upload')
-    tags = None
-    if options.keywords:
-        tags = options.keywords.split(",")
 
-    body = dict(
-        snippet=dict(
-            title=options.title,
-            description=options.description,
-            tags=tags,
-            categoryId=options.category
-        ),
-        status=dict(
-            privacyStatus=options.privacyStatus
-        )
-    )
 
-    # Call the API's uploaded_videos.insert method to create and upload the video.
-    insert_request = youtube.videos().insert(part=",".join(body.keys()), body=body,
-                                             media_body=MediaFileUpload(options.file, chunksize=-1, resumable=True)
-                                             )
-    resumable_upload(insert_request)
+class Oauth2CallbackView(View):
+
+    def get(self, request, *args, **kwargs):
+        if not xsrfutil.validate_token(
+            settings.SECRET_KEY, request.GET.get('state').encode(),
+            request.user):
+                return HttpResponseBadRequest()
+        credential = flow.step2_exchange(request.GET)
+        storage = DjangoORMStorage(
+            CredentialModel, 'id', request.user.id, 'credential')
+        storage.put(credential)
+        return redirect('/')
 
 
 def resumable_upload(insert_request):
@@ -319,7 +303,7 @@ def resumable_upload(insert_request):
     error = None
     retry = 0
 
-    widgets = ['Uploading: ', pb.Percentage(), ' ', pb.Bar(marker='0', left='[', right=']'), ' ', pb.ETA(), ' ',
+    widgets = ['Uploading: ', pb.Percentage(), ' ', pb.Bar(marker='#', left='[', right=']'), ' ', pb.ETA(), ' ',
                pb.FileTransferSpeed()]  # see docs for other options
     pbar = pb.ProgressBar(widgets=widgets, maxval=1)
     pbar.start()
@@ -332,12 +316,19 @@ def resumable_upload(insert_request):
                 continue
             if 'id' in response:
                 print "Video id '%s' was successfully uploaded." % response['id']
+                print('whole response = ')
+                print(response)
+                status = 'success'
+                return status, response['id']
             else:
-                exit("The upload failed with an unexpected response: %s" % response)
+                print("The upload failed with an unexpected response: %s" % response)
+                status = 'failure'
+                return status, None
+
         except ResumableUploadError as e:
             print(("ResumableUploadError e.content:{}".format(e.content)))
             print("to get out of this loop:\nimport sys;sys.exit()")
-            import code;
+            import code
             code.interact(local=locals())
         except HttpError, e:
             if e.resp.status in RETRIABLE_STATUS_CODES:
@@ -361,20 +352,6 @@ def resumable_upload(insert_request):
             sleep_seconds = random.random() * max_sleep
             print "Sleeping %f seconds and then retrying..." % sleep_seconds
             time.sleep(sleep_seconds)
-
-
-class Oauth2CallbackView(View):
-
-    def get(self, request, *args, **kwargs):
-        if not xsrfutil.validate_token(
-            settings.SECRET_KEY, request.GET.get('state').encode(),
-            request.user):
-                return HttpResponseBadRequest()
-        credential = flow.step2_exchange(request.GET)
-        storage = DjangoORMStorage(
-            CredentialModel, 'id', request.user.id, 'credential')
-        storage.put(credential)
-        return redirect('/')
 
 
 class UploadVideo(generics.ListCreateAPIView):
@@ -422,13 +399,12 @@ class UploadVideo(generics.ListCreateAPIView):
             print(credential)
             if credential is None or credential.invalid == True:
                 print('credential found to be invalid or None')
+            else:
+                print('credentials are found to be valid')
 
             client = build('youtube', 'v3', http=credential.authorize(httplib2.Http()))
             print('client = ')
             print(client)
-
-            # youtube = get_authenticated_service()
-            # print(youtube)
 
             params = (request.POST['params'])
             print(params)
@@ -469,10 +445,8 @@ class UploadVideo(generics.ListCreateAPIView):
             folder = 'uploaded_videos'
             fs = FileSystemStorage(location=folder)  # defaults to   MEDIA_ROOT
             filename = fs.save(up_file.name, up_file)
-            print('file saved successfully %s' % filename)
+            print('file successfully saved locally %s' % filename)
 
-            # youtube = get_authenticated_service()
-            # print(youtube)
             body = dict(
                 snippet=dict(
                     title=description,
@@ -484,19 +458,20 @@ class UploadVideo(generics.ListCreateAPIView):
                     privacyStatus='private'
                 )
             )
-
+            file_location = '%s/%s' % (folder, filename)
             insert_request = client.videos().insert(part=','.join(body.keys()), body=body,
                 media_body=MediaFileUpload(
-                    '/Users/atul/classup/classup/pic_share/VID-20190610-WA0022_F8DdGlG.mp4',
-                    chunksize=-1,
+                    file_location,
+                    #chunksize=-1,
+                    chunksize = 5 * 1024 * 1024,
                     resumable=True)
                 )
-            # insert_request.execute()
-            resumable_upload(insert_request)
+            status, video_id = resumable_upload(insert_request)
+            if status == 'success':
+                link = ''
         except Exception as e:
             print('exception 02092019-A from pic_share views.py %s %s' % (e.message, type(e)))
             print('failed to upload to YouTube')
 
         return JSONResponse(context_dict, status=200)
-
 

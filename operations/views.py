@@ -9,9 +9,11 @@ import urllib2
 
 import json
 
+import django
 import xlsxwriter
 
 from django.contrib.auth.models import User
+from django.db import DataError
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import ugettext
 from django.shortcuts import render
@@ -1232,14 +1234,21 @@ def send_message(request, school_id):
 
                     response["status"] = "success"
             if coming_from == 'ActivityGroup':
+                print('Activity Group communication')
                 from activity_groups.models import ActivityGroup, ActivityMembers
                 group_id = data['group_id']
+                print('group_id = %s' % group_id)
                 try:
                     group = ActivityGroup.objects.get(id=group_id)
                     teacher_record.sent_to = group.group_name
                     teacher_record.activity_group = group.group_name
                     teacher_record.save()
+                except Exception as e:
+                    print('exception 09092019-A from operations view.py %s %s' % (e.message, type(e)))
+                    print('failed to save teacher record')
+                try:
                     members_list = ActivityMembers.objects.filter (group=group)
+                    print(members_list)
                     for member in members_list:
                         p = member.student.parent
                         m1 = p.parent_mobile1

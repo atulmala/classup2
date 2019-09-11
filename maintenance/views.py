@@ -13,6 +13,7 @@ from attendance.models import Attendance, DailyAttendanceSummary
 from operations.models import SMSRecord
 from teacher.models import MessageReceivers
 from setup.models import School
+from student.models import Student
 
 from .models import SMSDelStats, DailyMessageCount
 
@@ -80,6 +81,29 @@ class DeDup(generics.ListCreateAPIView):
                         .delete()
                 )
             context_dict['remove_dup_attendance summaries'] = 'success'
+            #
+            # # 09/09/2019 - added for removing duplicate students
+            # unique_fields = ['student_erp_id']
+            # print('try to identify duplicate students')
+            # duplicates = (
+            #     Student.objects.values(*unique_fields)
+            #         .order_by()
+            #         .annotate(max_id=Max('id'), count_id=Count('id'))
+            #         .filter(count_id__gt=1)
+            # )
+            #
+            # print('total %i duplicates attendance summaries found' % len(duplicates))
+            # context_dict['duplicate attendances summaries count'] = len(duplicates)
+            #
+            # for duplicate in duplicates:
+            #     print(duplicate)
+            #     (
+            #         Student.objects
+            #             .filter(**{x: duplicate[x] for x in unique_fields})
+            #             .exclude(id=duplicate['max_id'])
+            #             .delete()
+            #     )
+            # context_dict['remove duplicate students'] = 'success'
 
             return JSONResponse(context_dict, status=200)
         except Exception as e:

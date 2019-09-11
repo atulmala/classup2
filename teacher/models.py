@@ -62,7 +62,7 @@ class TeacherMessageRecord (models.Model):
     date = models.DateTimeField(default=datetime.now)
     teacher = models.ForeignKey (Teacher)
     message = models.TextField()
-    sent_to = models.CharField(max_length=20)
+    sent_to = models.CharField(max_length=50)
     the_class = models.CharField(max_length=30, null=True)
     section = models.CharField(max_length=30, null=True)
     activity_group = models.CharField(max_length=50, null=True)

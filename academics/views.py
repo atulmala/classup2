@@ -456,7 +456,7 @@ def create_test1(request, school_id, the_class, section, subject,
     context_dict['header'] = 'Create Test'
     higher_classes = ['XI', 'XII']
     ninth_tenth = ['IX', 'X']
-    middle_classes = ['IV', 'V', 'VI', 'VII', 'VIII']
+    middle_classes = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII']
     junior_classes = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III']
 
     # all of the above except date are foreign key in Attendance model. Hence we need to get the actual object
@@ -762,7 +762,7 @@ def submit_marks(request, school_id):
     t1 = datetime.datetime.now()
     higher_classes = ['XI', 'XII']
     ninth_tenth = ['IX', 'X']
-    middle_classes = ['V', 'VI', 'VII', 'VIII']
+    middle_classes = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII']
 
     prac_subjects = ["Biology", "Physics", "Chemistry",
                      "Accountancy", "Business Studies", "Economics", "Fine Arts"
