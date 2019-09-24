@@ -633,7 +633,11 @@ def create_test1(request, school_id, the_class, section, subject,
                         marks_array = []
                         for ut in unit_tests:
                             ut_result = TestResults.objects.get(class_test=ut, student=student)
-                            ut_marks = (ut_result.marks_obtained / ut.max_marks) * Decimal(10.0)
+
+                            # 23/09/2019 - as per new CBSE ut_marks should be out of 5.
+                            # Another 5 marks component would be Multiple Assesment
+                            # ut_marks = (ut_result.marks_obtained / ut.max_marks) * Decimal(10.0)
+                            ut_marks = (ut_result.marks_obtained / ut.max_marks) * Decimal(5.0)
                             # 13/03/2018 - if the student was absent, then marks will be < 0
                             if ut_marks < 0.0:
                                 print('marks = %f' % ut_marks)
@@ -661,7 +665,8 @@ def create_test1(request, school_id, the_class, section, subject,
                                 pa_marks = -5000.0
 
                         term_test_result = TermTestResult(test_result=test_result, periodic_test_marks=pa_marks,
-                                                            note_book_marks=-5000.0, sub_enrich_marks=-5000.0)
+                                                          multi_asses_marks=-5000.0, note_book_marks=-5000.0,
+                                                          sub_enrich_marks=-5000.0)
                         term_test_result.save()
                     else:
                         print ('%s is a junior class. Hence not creating PA, Notbook Sub & Sub enrich' % the_class)
@@ -712,6 +717,7 @@ def save_marks(request):
                     ttr = TermTestResult.objects.get(test_result=tr)
                     print(ttr)
                     ttr.periodic_test_marks = float(data[key]['pa'])
+                    ttr.multi_asses_marks = float(data[key]['multi_assess'])
                     ttr.note_book_marks = float(data[key]['notebook'])
                     ttr.sub_enrich_marks = float(data[key]['subject_enrich'])
 
@@ -825,6 +831,7 @@ def submit_marks(request, school_id):
                     ttr = TermTestResult.objects.get(test_result=tr)
                     print(ttr)
                     ttr.periodic_test_marks = float(data[key]['pa'])
+                    ttr.multi_asses_marks = float(data[key]['multi_assess'])
                     ttr.note_book_marks = float(data[key]['notebook'])
                     ttr.sub_enrich_marks = float(data[key]['subject_enrich'])
 
@@ -957,7 +964,10 @@ def submit_marks(request, school_id):
                                     message += ', Practical: NA'
                             else:
                                 message += ', Periodic Test: %.2f, ' % float(ttr.periodic_test_marks)
-                                message += 'Notebook Submission: %.2f, ' % float(ttr.note_book_marks)
+
+                                # 16/09/2019 - Notebook submission is now Portfolio
+                                # message += 'Notebook Submission: %.2f, ' % float(ttr.note_book_marks)
+                                message += 'Portfolio: %.2f, ' % float(ttr.note_book_marks)
                                 message += 'Subject Enrichment: %.2f, ' % float(ttr.sub_enrich_marks)
                                 print('message till now %s' % message)
                                 total = float(tr.marks_obtained) + float(ttr.note_book_marks) + float(ttr.periodic_test_marks)

@@ -1067,14 +1067,14 @@ def prepare_results(request, school_id, the_class, section):
                     end_class = 'VIII'
                     data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', '',
                               'Term-2 (100 Marks)', '', '', '', '', ''],
-                             ['Sub Name', 'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
+                             ['Sub Name', 'Per Test\n(10)', 'Portfolio\n(5)', 'Sub\nEnrichment\n(5)',
                               'Half\nYearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade',
-                              'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
+                              'Per Test\n(10)', 'Portfolio\n(5)', 'Sub\nEnrichment\n(5)',
                               'Yearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
                 if the_class in ninth_tenth:
                     end_class = 'X'
                     data1 = [['Scholastic\nAreas', 'Academic Year (100 Marks)', '', '', '', '', ''],
-                             ['Sub Name', 'Per Test\n(10)', 'Note Book\n(5)', 'Sub\nEnrichment\n(5)',
+                             ['Sub Name', 'Per Test\n(10)', 'Portfolio\n(5)', 'Sub\nEnrichment\n(5)',
                               'Annual\nExamination\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
                 for i in range(0, sub_count):
                     sub = sub_dict.values()[i]

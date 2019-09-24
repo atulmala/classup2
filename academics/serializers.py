@@ -66,6 +66,7 @@ class TestMarksSerializer(serializers.ModelSerializer):
     student = serializers.StringRelatedField()
     parent = serializers.SerializerMethodField()
     periodic_test_marks = serializers.SerializerMethodField()
+    multi_asses_marks = serializers.SerializerMethodField()
     notebook_marks = serializers.SerializerMethodField()
     sub_enrich_marks = serializers.SerializerMethodField()
     prac_marks = serializers.SerializerMethodField()
@@ -73,7 +74,8 @@ class TestMarksSerializer(serializers.ModelSerializer):
     class Meta:
         model = TestResults
         fields = ('id', 'roll_no', 'student', 'parent', 'marks_obtained', 'grade',
-                  'periodic_test_marks', 'notebook_marks', 'sub_enrich_marks', 'prac_marks')
+                  'periodic_test_marks', 'multi_asses_marks', 'notebook_marks',
+                  'sub_enrich_marks', 'prac_marks')
 
     def get_parent(self, obj):
         return obj.student.parent.parent_name
@@ -93,6 +95,15 @@ class TestMarksSerializer(serializers.ModelSerializer):
             return term_test_result.periodic_test_marks
         except Exception as e:
             # print ('Failed to retrieve periodic test marks. This is not a Term Test but a Unit Test')
+            # print ('Exception 20 from academics serializer Exception = %s (%s)' % (e.message, type(e)))
+            return "N/A"
+
+    def get_multi_asses_marks(self, obj):
+        try:
+            term_test_result = TermTestResult.objects.get(test_result=obj)
+            return term_test_result.multi_asses_marks
+        except Exception as e:
+            # print ('Failed to retrieve multiple assessment marks marks. This is not a Term Test but a Unit Test')
             # print ('Exception 20 from academics serializer Exception = %s (%s)' % (e.message, type(e)))
             return "N/A"
 

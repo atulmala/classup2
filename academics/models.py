@@ -1,6 +1,5 @@
 from django.db import models
 
-
 # Create your models here.
 
 from setup.models import School
@@ -52,7 +51,7 @@ class Subject(models.Model):
         return self.subject_name
 
     class Meta:
-        ordering = ('subject_name', )
+        ordering = ('subject_name',)
 
 
 class ThirdLang(models.Model):
@@ -146,14 +145,17 @@ class TestResults(models.Model):
 
 class Term(models.Model):
     term = models.CharField(max_length=10, default='Term 1')
+
     def __unicode__(self):
         return self.term
-    
-    
+
+
 class TermTestResult(models.Model):
     # 21/09/2017 for CBSE evaluation. Below fields will be applicable only if the test is Term Test
     test_result = models.ForeignKey(TestResults)
     periodic_test_marks = models.DecimalField(max_digits=6, decimal_places=2, default=0.0)
+    # 18/09/2019 as per new CBSE scheme peridic test is now split into pen & paper and Multiple Assessment
+    multi_asses_marks = models.DecimalField(max_digits=6, decimal_places=2, default=0.0, null=True)
     note_book_marks = models.DecimalField(max_digits=6, decimal_places=2, default=0.0)
     sub_enrich_marks = models.DecimalField(max_digits=6, decimal_places=2, default=0.0)
     prac_marks = models.DecimalField(max_digits=6, decimal_places=2, null=True)
@@ -161,7 +163,7 @@ class TermTestResult(models.Model):
 
 class Grade(models.Model):
     grade = models.CharField(max_length=4)
-    
+
     def __unicode__(self):
         return self.grade
 
@@ -177,7 +179,7 @@ class CoScholastics(models.Model):
     discipline = models.CharField(max_length=4, default=' ', blank=True)
     teacher_remarks = models.CharField(max_length=100, default='All the Best')
     promoted_to_class = models.CharField(max_length=10, default=' ', blank='True')
-    
+
 
 class TeacherSubjects(models.Model):
     teacher = models.ForeignKey(Teacher)
