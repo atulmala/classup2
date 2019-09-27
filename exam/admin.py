@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from academics.models import ThirdLang
-from .models import Scheme, HigherClassMapping, NPromoted, Marksheet, Stream, StreamMapping
+from .models import Scheme, HigherClassMapping, NPromoted, Marksheet, Stream, StreamMapping, Wing
 
 # Register your models here.
 
@@ -102,4 +102,13 @@ class MarksheetAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Marksheet, MarksheetAdmin)
+
+
+class WingAdmin(admin.ModelAdmin):
+    list_display = ('school', 'wing', 'classes')
+    list_filter = ('school',)
+
+
+admin.site.register(Wing, WingAdmin)
+
 

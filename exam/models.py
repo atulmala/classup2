@@ -58,5 +58,11 @@ class Marksheet(models.Model):
         return self.school.school_name
 
 
+class Wing(models.Model):
+    school = models.ForeignKey(School, related_name='school')
+    wing = models.CharField(max_length=50)
+    classes = models.CharField(max_length=100)
+
+
 
 

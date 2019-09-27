@@ -5,6 +5,7 @@ import mimetypes
 import json
 import base64
 import datetime
+import ast
 from datetime import date
 from decimal import Decimal
 
@@ -23,7 +24,7 @@ from attendance.models import Attendance, AttendanceTaken
 from teacher.models import Teacher
 from student.models import Student
 from setup.models import Configurations, School
-from exam.models import HigherClassMapping
+from exam.models import HigherClassMapping, Wing
 from .models import Class, Section, Subject, ClassTest, TestResults, Exam, HW, TermTestResult, CoScholastics, ThirdLang
 from .serializers import ClassSerializer, SectionSerializer, \
     SubjectSerializer, TestSerializer, ClassSectionForTestSerializer, \
@@ -454,10 +455,10 @@ def create_test1(request, school_id, the_class, section, subject,
 
     }
     context_dict['header'] = 'Create Test'
-    higher_classes = ['XI', 'XII']
-    ninth_tenth = ['IX', 'X']
-    middle_classes = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII']
-    junior_classes = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III']
+    # higher_classes = ['XI', 'XII']
+    # ninth_tenth = ['IX', 'X']
+    # middle_classes = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII']
+    # junior_classes = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III']
 
     # all of the above except date are foreign key in Attendance model. Hence we need to get the actual object
     school = School.objects.get(id=school_id)
@@ -471,6 +472,47 @@ def create_test1(request, school_id, the_class, section, subject,
     print (t)
     the_date = date(int(y), int(m), int(d))
     print (the_date)
+
+    try:
+        jc = Wing.objects.get(school=school, wing='junior_classes')
+        junior_classes = ast.literal_eval(jc.classes)
+        print('junior_classes for %s are: ' % school)
+        print(junior_classes)
+    except Exception as e:
+        print('exception 26092019-A from academics views.py %s %s' % (e.message, type(e)))
+        print('junior_classes not defined for %s' % school)
+        junior_classes = ['not defined']
+
+    try:
+        mc = Wing.objects.get(school=school, wing='middle_classes')
+        print('raw middle_classes retrieved for %s: %s. Will be converted to proper string now' %
+              (school, mc.classes))
+        middle_classes = ast.literal_eval(mc.classes)
+        print('middle_classes for %s are: ' % school)
+        print(middle_classes)
+    except Exception as e:
+        print('exception 26092019-B from academics views.py %s %s' % (e.message, type(e)))
+        print('middle_classes not defined for %s' % school)
+        middle_classes = ['not defined']
+
+    try:
+        nt = Wing.objects.get(school=school, wing='ninth_tenth')
+        ninth_tenth = ast.literal_eval(nt.classes)
+        print('ninth_tenth for %s are: ' % school)
+        print(ninth_tenth)
+    except Exception as e:
+        print('exception 26092019-C from academics views.py %s %s' % (e.message, type(e)))
+        print('ninth_tenth not defined for %s' % school)
+        ninth_tenth = ['not defined']
+
+    try:
+        hc = Wing.objects.get(school=school, wing='higher_classes')
+        higher_classes = ast.literal_eval(hc.classes)
+        print('higher_classes for %s are: ' % school)
+        print(higher_classes)
+    except Exception as e:
+        print('exception 26092019-D from academics views.py %s %s' % (e.message, type(e)))
+        print('higher_classes not defined for %s' % school)
 
     exam = Exam.objects.get(pk=exam_id)
 

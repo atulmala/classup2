@@ -1,5 +1,5 @@
 
-import requests
+import ast
 
 from PIL import Image
 from decimal import Decimal
@@ -34,7 +34,7 @@ from academics.models import Class, Section, Subject, ThirdLang, ClassTest, \
     Exam, TermTestResult, TestResults, CoScholastics, ClassTeacher
 from attendance.models import Attendance, AttendanceTaken
 
-from .models import Scheme, HigherClassMapping, NPromoted, Marksheet, Stream, StreamMapping
+from .models import Scheme, HigherClassMapping, NPromoted, Marksheet, Stream, StreamMapping, Wing
 from .forms import TermResultForm, ResultSheetForm
 
 
@@ -506,9 +506,50 @@ def prepare_results(request, school_id, the_class, section):
         print('failed to retrieve the short name for %s' % school_name)
         print('exception 04022018-A from exam views.py %s %s' % (e.message, type(e)))
 
-    higher_classes = ['XI', 'XII']
-    ninth_tenth = ['IX', 'X']
-    middle_classes = ['IV', 'V', 'VI', 'VII', 'VIII']
+    # higher_classes = ['XI', 'XII']
+    # ninth_tenth = ['IX', 'X']
+    # middle_classes = ['IV', 'V', 'VI', 'VII', 'VIII']
+    try:
+        jc = Wing.objects.get(school=school, wing='junior_classes')
+        junior_classes = ast.literal_eval(jc.classes)
+        print('junior_classes for %s are: ' % school)
+        print(junior_classes)
+    except Exception as e:
+        print('exception 26092019-A from exam views.py %s %s' % (e.message, type(e)))
+        print('junior_classes not defined for %s' % school)
+        junior_classes = ['not defined']
+
+    try:
+        mc = Wing.objects.get(school=school, wing='middle_classes')
+        print('raw middle_classes retrieved for %s: %s. Will be converted to proper string now' %
+              (school, mc.classes))
+        middle_classes = ast.literal_eval(mc.classes)
+        print('middle_classes for %s are: ' % school)
+        print(middle_classes)
+    except Exception as e:
+        print('exception 26092019-B from exam views.py %s %s' % (e.message, type(e)))
+        print('middle_classes not defined for %s' % school)
+        middle_classes = ['not defined']
+
+    try:
+        nt = Wing.objects.get(school=school, wing='ninth_tenth')
+        ninth_tenth = ast.literal_eval(nt.classes)
+        print('ninth_tenth for %s are: ' % school)
+        print(ninth_tenth)
+    except Exception as e:
+        print('exception 26092019-C from exam views.py %s %s' % (e.message, type(e)))
+        print('ninth_tenth not defined for %s' % school)
+        ninth_tenth = ['not defined']
+
+    try:
+        hc = Wing.objects.get(school=school, wing='higher_classes')
+        higher_classes = ast.literal_eval(hc.classes)
+        print('higher_classes for %s are: ' % school)
+        print(higher_classes)
+    except Exception as e:
+        print('exception 26092019-D from exam views.py %s %s' % (e.message, type(e)))
+        print('higher_classes not defined for %s' % school)
+
 
     if request.method == 'GET':
         print(request.body)
@@ -1120,6 +1161,7 @@ def prepare_results(request, school_id, the_class, section):
                                 else:
                                     ttr = TermTestResult.objects.get(test_result=tr)
                                     pa = round(ttr.periodic_test_marks)
+
                                     notebook = ttr.note_book_marks
                                     sub_enrich = ttr.sub_enrich_marks
                                     main = tr.marks_obtained
@@ -1399,9 +1441,46 @@ class ResultSheet(generics.ListCreateAPIView):
             school = School.objects.get(id=school_id)
             form = ResultSheetForm(request.POST, school_id=school_id)
 
-            higher_classes = ['XI', 'XII']
-            ninth_tenth = ['IX', 'X']
-            middle_classes = ['IV', 'V', 'VI', 'VII', 'VIII']
+            try:
+                jc = Wing.objects.get(school=school, wing='junior_classes')
+                junior_classes = ast.literal_eval(jc.classes)
+                print('junior_classes for %s are: ' % school)
+                print(junior_classes)
+            except Exception as e:
+                print('exception 26092019-A from exam views.py %s %s' % (e.message, type(e)))
+                print('junior_classes not defined for %s' % school)
+                junior_classes = ['not defined']
+
+            try:
+                mc = Wing.objects.get(school=school, wing='middle_classes')
+                print('raw middle_classes retrieved for %s: %s. Will be converted to proper string now' %
+                      (school, mc.classes))
+                middle_classes = ast.literal_eval(mc.classes)
+                print('middle_classes for %s are: ' % school)
+                print(middle_classes)
+            except Exception as e:
+                print('exception 26092019-B from exam views.py %s %s' % (e.message, type(e)))
+                print('middle_classes not defined for %s' % school)
+                middle_classes = ['not defined']
+
+            try:
+                nt = Wing.objects.get(school=school, wing='ninth_tenth')
+                ninth_tenth = ast.literal_eval(nt.classes)
+                print('ninth_tenth for %s are: ' % school)
+                print(ninth_tenth)
+            except Exception as e:
+                print('exception 26092019-C from exam views.py %s %s' % (e.message, type(e)))
+                print('ninth_tenth not defined for %s' % school)
+                ninth_tenth = ['not defined']
+
+            try:
+                hc = Wing.objects.get(school=school, wing='higher_classes')
+                higher_classes = ast.literal_eval(hc.classes)
+                print('higher_classes for %s are: ' % school)
+                print(higher_classes)
+            except Exception as e:
+                print('exception 26092019-D from exam views.py %s %s' % (e.message, type(e)))
+                print('higher_classes not defined for %s' % school)
 
             if form.is_valid():
                 the_class = form.cleaned_data['the_class']
@@ -1687,7 +1766,8 @@ class ResultSheet(generics.ListCreateAPIView):
                     col = 0
 
                     for student in students:
-                        result_sheet.merge_range(row, col, row + 5, col, s_no, cell_normal)
+                        # result_sheet.merge_range(row, col, row + 5, col, s_no, cell_normal)
+                        result_sheet.merge_range(row, col, row + 6, col, s_no, cell_normal)
                         col += 1
                         admission_no = student.student_erp_id
 
@@ -1701,10 +1781,13 @@ class ResultSheet(generics.ListCreateAPIView):
                         except Exception as e:
                             print('exception 28032018-A from exam views.py %s %s' % (e.message, type(e)))
                             print('failed to retrieve house for %s' % student_name)
-                        result_sheet.merge_range(row, col, row + 5, col, house, cell_normal)
+                        # result_sheet.merge_range(row, col, row + 5, col, house, cell_normal)
+                        result_sheet.merge_range(row, col, row + 6, col, house, cell_normal)
                         col += 1
 
-                        result_sheet.merge_range(row, col, row + 5, col,
+                        # result_sheet.merge_range(row, col, row + 5, col,
+                        #                          ('%s\n(%s)' % (student_name, admission_no)), cell_normal)
+                        result_sheet.merge_range(row, col, row + 6, col,
                                                  ('%s\n(%s)' % (student_name, admission_no)), cell_normal)
                         col += 1
 
@@ -1720,7 +1803,8 @@ class ResultSheet(generics.ListCreateAPIView):
                             print('failed to retrieve the third language for %s %s of %s-%s' %
                                   (student.fist_name, student.last_name, the_class.standard, section.section))
                         pa = 'PA'
-                        nb = 'NB'
+                        ma = 'MA'       # 26/09/2019 - Multiple Assessment new Component
+                        nb = 'PF'       # 26/09/2019 - earlier it was Notebook Submission now Portfolio
                         se = 'SE'
                         the_term = 'Term'
                         tot = 'Tot'
@@ -1786,14 +1870,16 @@ class ResultSheet(generics.ListCreateAPIView):
                                         print('could not retrieve the GK grade for %s' % student_name)
                                         gk_grade = 'TBE '
 
-                                    result_sheet.merge_range(row, col, row + 5, col, gk_grade, cell_grade)
+                                    # result_sheet.merge_range(row, col, row + 5, col, gk_grade, cell_grade)
+                                    result_sheet.merge_range(row, col, row + 6, col, gk_grade, cell_grade)
                                     col += 1
                                 else:
                                     try:
                                         if s == 'Third Language':
                                             result_sheet.set_column(col, col, 3)
                                             result_sheet.set_column(col + 1, col + 2, 4.5)    # those were extra wide.
-                                            result_sheet.merge_range(row, col, row + 5, col, third_lang, vertical_text)
+                                            # result_sheet.merge_range(row, col, row + 5, col, third_lang, vertical_text)
+                                            result_sheet.merge_range(row, col, row + 6, col, third_lang, vertical_text)
                                             col += 1
                                             subject = tl.third_lang
                                         else:
@@ -1810,7 +1896,8 @@ class ResultSheet(generics.ListCreateAPIView):
                                             print('failed to retrieve term_test for %s class %s exam %s' %
                                                   (subject.subject_name, the_class.standard, term.title))
                                             print('exception 22012019-A from exam views.py %s %s' % (e.message, type(e)))
-                                            result_sheet.merge_range(row, col, row + 5, col + 1, 'TBE', cell_center)
+                                            # result_sheet.merge_range(row, col, row + 5, col + 1, 'TBE', cell_center)
+                                            result_sheet.merge_range(row, col, row + 6, col + 1, 'TBE', cell_center)
                                             col += 2
                                             continue
                                     except Exception as e:
@@ -1857,6 +1944,20 @@ class ResultSheet(generics.ListCreateAPIView):
                                         col += 1
                                         pa_marks = Decimal(round(term_test_result.periodic_test_marks))
                                         result_sheet.write_number(row, col, pa_marks, cell_normal)
+                                        cell = xl_rowcol_to_cell(row, col)
+                                        sub_total_formula += '%s,' % (cell)
+                                        row += 1
+                                        col -= 1
+
+                                        result_sheet.write_string(row, col, ma, cell_component)
+                                        col += 1
+                                        ma_marks = Decimal(round(term_test_result.multi_asses_marks))
+                                        if ma_marks < 0:
+                                            print('Multi Assessment marks not entered for %s in %s for %s' %
+                                                  (student_name, subject.subject_name, term.title))
+                                            result_sheet.write_string(row, col, 'TBE', cell_grade)
+                                        else:
+                                            result_sheet.write_number(row, col, ma_marks, cell_normal)
                                         cell = xl_rowcol_to_cell(row, col)
                                         sub_total_formula += '%s,' % (cell)
                                         row += 1
@@ -1923,7 +2024,8 @@ class ResultSheet(generics.ListCreateAPIView):
                                         result_sheet.write_formula(row, col, grade_formula, cell_bold)
 
                                         # 19/10/2018 - for the next subject, row and columns need to be reset
-                                        row -= 5
+                                        # row -= 5
+                                        row -= 6
                                         col += 1
                                     except Exception as e:
                                         print ('exception 20012018-D from exam views.py %s %s' % (e.message, type(e)))
@@ -1931,14 +2033,16 @@ class ResultSheet(generics.ListCreateAPIView):
                             term_total_formula += ')'
                             print('term_total_formula = %s' % term_total_formula)
                             result_sheet.set_column(col, col, 4)
-                            result_sheet.merge_range(row, col, row + 5, col, term_total_formula, cell_grade)
+                            # result_sheet.merge_range(row, col, row + 5, col, term_total_formula, cell_grade)
+                            result_sheet.merge_range(row, col, row + 6, col, term_total_formula, cell_grade)
                             result_sheet.write_formula(row, col, term_total_formula, cell_grade)
                             cell = xl_rowcol_to_cell(row, col)
                             rank_range += '%s,' % cell
                             col += 1
 
                             perc_formula = '=%s/%s' % (cell, str(total_marks))
-                            result_sheet.merge_range(row, col, row + 5, col, perc_formula, cell_grade)
+                            # result_sheet.merge_range(row, col, row + 5, col, perc_formula, cell_grade)
+                            result_sheet.merge_range(row, col, row + 6, col, perc_formula, cell_grade)
                             result_sheet.write_formula(row, col, perc_formula, perc_format)
                             result_sheet.set_column(col, col, 6)
                             cell = xl_rowcol_to_cell(row, col, row_abs=True, col_abs=True)
@@ -1948,7 +2052,8 @@ class ResultSheet(generics.ListCreateAPIView):
                                             'IF(%s*100 > 60, "B2", ' \
                                             'IF(%s*100 > 50, "C1", IF(%s*100 > 40, "C2", IF(%s*100 > 32, "D", "E")))))))' % \
                                             (cell, cell, cell, cell, cell, cell, cell)
-                            result_sheet.merge_range(row, col, row + 5, col, grade_formula, cell_grade)
+                            # result_sheet.merge_range(row, col, row + 5, col, grade_formula, cell_grade)
+                            result_sheet.merge_range(row, col, row + 6, col, grade_formula, cell_grade)
                             result_sheet.write_formula(row, col, grade_formula, cell_grade)
                             col += 1
 
@@ -1958,7 +2063,8 @@ class ResultSheet(generics.ListCreateAPIView):
                             cell_end = xl_rowcol_to_cell(start_row + stud_count*6 - 1, col -2, row_abs = True, col_abs = True)
                             rank_formula = '=RANK(%s, %s:%s)' % (cell, cell_start, cell_end)
                             print('formula for rank: %s', rank_formula)
-                            result_sheet.merge_range(row, col, row + 5, col, rank_formula, cell_grade)
+                            # result_sheet.merge_range(row, col, row + 5, col, rank_formula, cell_grade)
+                            result_sheet.merge_range(row, col, row + 6, col, rank_formula, cell_grade)
                             result_sheet.write_formula(row, col, rank_formula, cell_grade)
                             col += 1
                         both_term_tot_formula += ')'
@@ -1966,7 +2072,8 @@ class ResultSheet(generics.ListCreateAPIView):
 
                         # 20/10/2018 - summary for both terms
                         col = both_term_start_col
-                        result_sheet.merge_range(row, col, row + 5, col, both_term_tot_formula, cell_grade)
+                        # result_sheet.merge_range(row, col, row + 5, col, both_term_tot_formula, cell_grade)
+                        result_sheet.merge_range(row, col, row + 6, col, both_term_tot_formula, cell_grade)
                         result_sheet.write_formula(row, col, both_term_tot_formula, cell_grade)
                         cell = xl_rowcol_to_cell(row, col)
                         col += 1
@@ -1974,11 +2081,13 @@ class ResultSheet(generics.ListCreateAPIView):
                         perc_formula = '=%s/%s' % (cell, str(total_marks * 2))
                         if the_class.standard in ninth_tenth:
                             perc_formula = '=%s/%s' % (cell, str(total_marks))
-                        result_sheet.merge_range(row, col, row + 5, col, perc_formula, cell_grade)
+                        # result_sheet.merge_range(row, col, row + 5, col, perc_formula, cell_grade)
+                        result_sheet.merge_range(row, col, row + 6, col, perc_formula, cell_grade)
                         result_sheet.write_formula(row, col, perc_formula, perc_format)
                         col += 1
 
-                        result_sheet.merge_range(row, col, row + 5, col, grade_formula, cell_grade)
+                        # result_sheet.merge_range(row, col, row + 5, col, grade_formula, cell_grade)
+                        result_sheet.merge_range(row, col, row + 6, col, grade_formula, cell_grade)
                         result_sheet.write_formula(row, col, grade_formula, cell_grade)
                         col += 1
 
@@ -1987,7 +2096,8 @@ class ResultSheet(generics.ListCreateAPIView):
                         cell_end = xl_rowcol_to_cell(start_row + stud_count * 6 - 1, col - 2, row_abs=True, col_abs=True)
                         rank_formula = '=RANK(%s, %s:%s)' % (cell, cell_start, cell_end)
                         print('formula for rank: %s', rank_formula)
-                        result_sheet.merge_range(row, col, row + 5, col, rank_formula, cell_grade)
+                        # result_sheet.merge_range(row, col, row + 5, col, rank_formula, cell_grade)
+                        result_sheet.merge_range(row, col, row + 6, col, rank_formula, cell_grade)
                         result_sheet.write_formula(row, col, rank_formula, cell_grade)
                         col += 1
 
@@ -1997,29 +2107,34 @@ class ResultSheet(generics.ListCreateAPIView):
                             cs_term2 = CoScholastics.objects.get(term='term2', student=student)
                             work_ed1 = cs_term1.work_education
                             work_ed2 = '%s/%s' % (work_ed1, cs_term2.work_education)
-                            result_sheet.merge_range(row, col, row + 5, col,  work_ed2, cell_grade)
+                            # result_sheet.merge_range(row, col, row + 5, col,  work_ed2, cell_grade)
+                            result_sheet.merge_range(row, col, row + 6, col, work_ed2, cell_grade)
                             col += 1
 
                             art_ed1 = cs_term1.art_education
                             art_ed2 = '%s/%s' % (art_ed1,cs_term2.art_education)
-                            result_sheet.merge_range(row, col, row + 5, col, art_ed2, cell_grade)
+                            # result_sheet.merge_range(row, col, row + 5, col, art_ed2, cell_grade)
+                            result_sheet.merge_range(row, col, row + 6, col, art_ed2, cell_grade)
                             col += 1
 
                             health_ed1 = cs_term1.health_education
                             health_ed2 = '%s/%s' % (health_ed1, cs_term2.health_education)
-                            result_sheet.merge_range(row, col, row + 5, col, health_ed2, cell_grade)
+                            # result_sheet.merge_range(row, col, row + 5, col, health_ed2, cell_grade)
+                            result_sheet.merge_range(row, col, row + 6, col, health_ed2, cell_grade)
                             col += 1
 
                             discipline1 = cs_term1.discipline
                             discipline2 = '%s/%s' % (discipline1, cs_term2.discipline)
-                            result_sheet.merge_range(row, col, row + 5, col, discipline2, cell_grade)
+                            # result_sheet.merge_range(row, col, row + 5, col, discipline2, cell_grade)
+                            result_sheet.merge_range(row, col, row + 6, col, discipline2, cell_grade)
                             col += 1
 
                             teacher_remarks = cs_term2.teacher_remarks
                             print('class teacher remarks for %s of %s-%s in %s: %s' %
                                   (student_name, the_class.standard, section.section, term, teacher_remarks))
                             result_sheet.set_column(col, col, 10)
-                            result_sheet.merge_range(row, col, row + 5, col, teacher_remarks, cell_normal)
+                            # result_sheet.merge_range(row, col, row + 5, col, teacher_remarks, cell_normal)
+                            result_sheet.merge_range(row, col, row + 6, col, teacher_remarks, cell_normal)
 
                             col += 1
                             try:
@@ -2035,24 +2150,29 @@ class ResultSheet(generics.ListCreateAPIView):
                                 # student is Not Promoted. So, we chose to highlight all the cells in this row based on
                                 # criteria tha the cell is not blank which is true for every cell and hence the whole
                                 # row gets highlighted
-                                result_sheet.conditional_format(row, 0, row + 5, col + 1, {'type': 'no_blanks',
-                                                                                       'format': fail_format})
+                                # result_sheet.conditional_format(row, 0, row + 5, col + 1, {'type': 'no_blanks',
+                                #                                                        'format': fail_format})
+                                result_sheet.conditional_format(row, 0, row + 6, col + 1, {'type': 'no_blanks',
+                                                                                           'format': fail_format})
                             except Exception as e:
                                 print('student %s %s has passed in class %s.' % (student.fist_name, student.last_name,
                                                                                  the_class))
                                 print('exception 14032019-A from exam views.py %s %s' % (e.message, type(e)))
                                 promoted_status = 'Promoted'
                                 details = ' '
-                            result_sheet.merge_range(row, col, row + 5, col, promoted_status, cell_normal)
+                            # result_sheet.merge_range(row, col, row + 5, col, promoted_status, cell_normal)
+                            result_sheet.merge_range(row, col, row + 6, col, promoted_status, cell_normal)
                             col += 1
-                            result_sheet.merge_range(row, col, row + 5, col, details, cell_normal)
+                            # result_sheet.merge_range(row, col, row + 5, col, details, cell_normal)
+                            result_sheet.merge_range(row, col, row + 6, col, details, cell_normal)
 
                         except Exception as e:
                             print ('exception 21012018-A from exam views.py %s %s' % (e.message, type(e)))
                             print ('failed to retrieve Co-scholastics grade for %s' % student_name)
 
                         col = 0
-                        row += 6
+                        # row += 6
+                        row += 7
                         s_no = s_no + 1
                 if the_class.standard in ninth_tenth:
                     print('hiding columns for class IX')

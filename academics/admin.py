@@ -47,12 +47,23 @@ class TestAdmin(admin.ModelAdmin):
         return obj.exam
     get_exam.short_description = 'Exam'
 
+    def change_exam(modeladmin, request, queryset):
+        try:
+            exam = Exam.objects.get(title='PT I (XI-XII)')
+            print('successfully retrieved exam')
+            queryset.update(exam=exam)
+        except Exception as e:
+            print('exception 27092019-A from academics admin.py %s %s' % (e.message, type(e)))
+            print('failed to bulk update')
+    change_exam.short_description = 'Change Exam'
+
     list_display = ('get_school_name', 'get_class', 'subject', 'teacher', 'date_conducted', 'get_exam',
                     'test_type', 'max_marks', 'passing_marks', 'is_completed', )
 
     list_filter = ('the_class__school', 'test_type',)
 
     search_fields = ('subject__subject_name', 'the_class__standard', 'section__section', )
+    actions = [change_exam]
 
 
 admin.site.register(ClassTest, TestAdmin)
