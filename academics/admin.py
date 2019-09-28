@@ -113,6 +113,7 @@ class CoScholasticAdmin(admin.ModelAdmin):
     list_display = ('get_school_name', 'get_class', 'get_student', 'term', 'work_education', 'art_education',
                     'health_education', 'discipline', 'teacher_remarks', 'promoted_to_class',)
     list_filter = ('the_class__school', 'term',)
+    search_fields = ('the_class__standard',)
 
 
 admin.site.register(CoScholastics, CoScholasticAdmin)
