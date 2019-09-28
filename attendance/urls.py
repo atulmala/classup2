@@ -25,4 +25,7 @@ urlpatterns = patterns('',
             r'(?P<section>[\w.@+-]+)/(?P<subject>[\w\ ]+)/'
             r'(?P<d>\w+)/(?P<m>\w+)/(?P<y>\w+)/(?P<teacher>[\w.@+-]+)/$',
             views.attendance_taken, name='attendance_taken'),
+
+        url(r'^calculate_student_attendance/$', views.StudentAttendance.as_view(),
+            name='calculate_student_attendance'),
         )

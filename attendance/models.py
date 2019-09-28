@@ -44,3 +44,10 @@ class DailyAttendanceSummary(models.Model):
     percentage = models.DecimalField(decimal_places=2, max_digits=6)
 
 
+class IndividualAttendance(models.Model):
+    student = models.ForeignKey(Student)
+    total_days = models.IntegerField()
+    present_days = models.IntegerField()
+    absent_days = models.IntegerField()
+
+

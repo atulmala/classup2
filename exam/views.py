@@ -674,9 +674,9 @@ def prepare_results(request, school_id, the_class, section):
                       ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
                       ('VALIGN', (0, 0), (-1, -1), 'TOP'),
                       ('ALIGN', (1, 0), (7, 0), 'CENTER'),
-                      ('ALIGN', (8, 0), (13, 0), 'CENTER'),
+                      ('ALIGN', (8, 0), (14, 0), 'CENTER'),
                       ('SPAN', (1, 0), (7, 0)),
-                      ('SPAN', (8, 0), (13, 0)),
+                      ('SPAN', (8, 0), (14, 0)),
                       ('FONTSIZE', (0, 0), (-1, -1), 7),
                       ('FONT', (0, 0), (13, 0), 'Times-Bold'),
                       ('FONT', (0, 1), (0, 1), 'Times-Bold')]
@@ -729,7 +729,7 @@ def prepare_results(request, school_id, the_class, section):
                  ['41 - 50', 'C 2'],
                  ['33 - 40', 'D'],
                  ['32 & Below', 'E (Needs improvement)']]
-        session = 'Academic Session 2018-19'
+        session = 'Academic Session 2019-20'
         adm_no_lbl = 'Admission No:'
         stu_name_lbl = 'Student Name:'
         father_name_lbl = 'Mother/Father Name:'
@@ -1118,11 +1118,11 @@ def prepare_results(request, school_id, the_class, section):
                     print('exception 10022018-A from exam views.py %s %s' % (e.message, type(e)))
                 if the_class in middle_classes:
                     end_class = 'VIII'
-                    data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', '',
-                              'Term-2 (100 Marks)', '', '', '', '', ''],
-                             ['Sub Name', 'Per Test\n(5)', 'Mult\nAssess\n(5)', 'Portfolio\n(5)', 'Sub\nEnrich\n(5)',
+                    data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', '', '',
+                              'Term-2 (100 Marks)', '', '', '', '', '', ''],
+                             ['Sub Name', 'Per\n Test\n(5)', 'Mult\nAssess\n(5)', 'Portfolio\n(5)', 'Sub\nEnrich\n(5)',
                               'Half\nYearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade',
-                              'Per Test\n(10)', 'Portfolio\n(5)', 'Sub\nEnrichment\n(5)',
+                              'Per\n Test\n(5)', 'Mult\nAssess\n(5)', 'Portfolio\n(5)', 'Sub\nEnrich\n(5)',
                               'Yearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
                 if the_class in ninth_tenth:
                     end_class = 'X'
@@ -1173,6 +1173,7 @@ def prepare_results(request, school_id, the_class, section):
                                 else:
                                     ttr = TermTestResult.objects.get(test_result=tr)
                                     pa = round(ttr.periodic_test_marks)
+                                    multi_assess = ttr.multi_asses_marks
 
                                     notebook = ttr.note_book_marks
                                     sub_enrich = ttr.sub_enrich_marks
@@ -1187,6 +1188,7 @@ def prepare_results(request, school_id, the_class, section):
                                           (s.fist_name, term, sub.subject_name, grade))
                                 if total > -1000.0:
                                     sub_row.append(pa)
+                                    sub_row.append(multi_assess)
                                     sub_row.append(notebook)
                                     sub_row.append(sub_enrich)
                                     sub_row.append(main)
@@ -1304,26 +1306,26 @@ def prepare_results(request, school_id, the_class, section):
 
                     if the_class not in ninth_tenth:
                         c.drawString(left_margin, table3_top - 35, 'Promoted to Class: ')
-
+                        promoted_status = 'N/A'
                         # get the class to which this student is promoted. Only if he has passed the exam
-                        try:
-                            not_promoted = NPromoted.objects.get(student=s)
-                            print('student %s %s has failed in class %s.' % (s.fist_name, s.last_name, the_class))
-                            print(not_promoted)
-                            promoted_status = 'Not Promoted. %s' % not_promoted.details
-                        except Exception as e:
-                            print('student %s %s has passed in class %s.' % (s.fist_name, s.last_name, the_class))
-                            print('exception 02032018-A from exam views.py %s %s' % (e.message, type(e)))
-                            try:
-                                current_class = Class.objects.get(school=school, standard=the_class)
-                                next_class_sequence = current_class.sequence + 1
-                                next_class = Class.objects.get(school=school, sequence=next_class_sequence)
-                                next_class_standard = next_class.standard
-                                promoted_status = next_class_standard
-                            except Exception as e:
-                                print('%s %s of class %s has passed. But failed to determine his next class' %
-                                      (s.fist_name, s.last_name, the_class))
-                                print('exception 02032018-B from exam views.py %s %s' % (e.message, type(e)))
+                        # try:
+                        #     not_promoted = NPromoted.objects.get(student=s)
+                        #     print('student %s %s has failed in class %s.' % (s.fist_name, s.last_name, the_class))
+                        #     print(not_promoted)
+                        #     promoted_status = 'Not Promoted. %s' % not_promoted.details
+                        # except Exception as e:
+                        #     print('student %s %s has passed in class %s.' % (s.fist_name, s.last_name, the_class))
+                        #     print('exception 02032018-A from exam views.py %s %s' % (e.message, type(e)))
+                        #     try:
+                        #         current_class = Class.objects.get(school=school, standard=the_class)
+                        #         next_class_sequence = current_class.sequence + 1
+                        #         next_class = Class.objects.get(school=school, sequence=next_class_sequence)
+                        #         next_class_standard = next_class.standard
+                        #         promoted_status = next_class_standard
+                        #     except Exception as e:
+                        #         print('%s %s of class %s has passed. But failed to determine his next class' %
+                        #               (s.fist_name, s.last_name, the_class))
+                        #         print('exception 02032018-B from exam views.py %s %s' % (e.message, type(e)))
                         c.drawString(tab - 20, table3_top - 35, promoted_status)
 
                     c.drawString(left_margin, table3_top - 55, 'Place & Date:')
@@ -1356,25 +1358,26 @@ def prepare_results(request, school_id, the_class, section):
                     c.drawString(left_margin, table3_top - 35, 'Promoted to Class: ')
                 else:
                     c.drawString(left_margin, table3_top - 35, 'Promoted to Class: ')
+                promoted_status = 'N/A'
                 # get the class to which this student is promoted. Only if he has passed the exam
-                try:
-                    not_promoted = NPromoted.objects.get(student=s)
-                    print('student %s %s has failed in class %s.' % (s.fist_name, s.last_name, the_class))
-                    print(not_promoted)
-                    promoted_status = 'Not Promoted. %s' % not_promoted.details
-                except Exception as e:
-                    print('student %s %s has passed in class %s.' % (s.fist_name, s.last_name, the_class))
-                    print('exception 02032018-C from exam views.py %s %s' % (e.message, type(e)))
-                    try:
-                        current_class = Class.objects.get(school=school, standard=the_class)
-                        next_class_sequence = current_class.sequence + 1
-                        next_class = Class.objects.get(school=school, sequence=next_class_sequence)
-                        next_class_standard = next_class.standard
-                        promoted_status = next_class_standard
-                    except Exception as e:
-                        print('%s %s of class %s has passed. But failed to determine his next class' %
-                                (s.fist_name, s.last_name, the_class))
-                        print('exception 02032018-D from exam views.py %s %s' % (e.message, type(e)))
+                # try:
+                #     not_promoted = NPromoted.objects.get(student=s)
+                #     print('student %s %s has failed in class %s.' % (s.fist_name, s.last_name, the_class))
+                #     print(not_promoted)
+                #     promoted_status = 'Not Promoted. %s' % not_promoted.details
+                # except Exception as e:
+                #     print('student %s %s has passed in class %s.' % (s.fist_name, s.last_name, the_class))
+                #     print('exception 02032018-C from exam views.py %s %s' % (e.message, type(e)))
+                #     try:
+                #         current_class = Class.objects.get(school=school, standard=the_class)
+                #         next_class_sequence = current_class.sequence + 1
+                #         next_class = Class.objects.get(school=school, sequence=next_class_sequence)
+                #         next_class_standard = next_class.standard
+                #         promoted_status = next_class_standard
+                #     except Exception as e:
+                #         print('%s %s of class %s has passed. But failed to determine his next class' %
+                #                 (s.fist_name, s.last_name, the_class))
+                #         print('exception 02032018-D from exam views.py %s %s' % (e.message, type(e)))
                 c.drawString(tab - 20, table3_top - 35, promoted_status)
 
                 c.drawString(tab - 20, table3_top - 25, '')

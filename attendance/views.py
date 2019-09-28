@@ -12,7 +12,7 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import Attendance, AttendanceTaken, AttendanceUpdated, DailyAttendanceSummary
+from .models import Attendance, AttendanceTaken, AttendanceUpdated, DailyAttendanceSummary, IndividualAttendance
 from academics.models import Section, Class, Subject
 from student.models import Student
 from teacher.models import Teacher
@@ -388,3 +388,45 @@ def delete_attendance2(request, school_id, the_class, section, subject, d, m, y)
         # return render(request, 'classup/dummy.html')
         response_data['status'] = 'success'
         return JSONResponse(response_data, status=200)
+
+
+class StudentAttendance(generics.ListCreateAPIView):
+    def post(self, request):
+        context_dict = {
+
+        }
+        schools = School.objects.filter()
+        first_april = date(int(2019), int(4), int(1))
+        for school in schools:
+            print('now dealing with students of %s' % school)
+            students = Student.objects.filter(school=school)
+            for student in students:
+                total_days = AttendanceTaken.objects.filter(the_class = student.current_class, date__gte=first_april,
+                                                            section=student.current_section).count()
+                print('total working days for class %s %s of %s: %i' % (student.current_class.standard,
+                                                                        student.current_section.section,
+                                                                        school, total_days))
+                absent_days = Attendance.objects.filter(student=student, date__gte=first_april).count()
+                present_days = total_days - absent_days
+                print('%s attendance = %i/%i. Will now store to database' % (student, present_days, total_days))
+
+                try:
+                    entry = IndividualAttendance.objects.get(student=student)
+                    entry.total_days = total_days
+                    entry.present_days = present_days
+                    entry.absent_days = absent_days
+                    entry.save()
+                    print('successfully updated individual attendance for %s  of %s' % (student, school))
+                except Exception as e:
+                    print('exception 28092019-A from attendance views.py %s %s' % (e.message, type(e)))
+                    print('entry does not exist for %s %s. Will create now' % (student, school))
+                    entry = IndividualAttendance(student=student)
+                    entry.total_days = total_days
+                    entry.present_days = present_days
+                    entry.absent_days = absent_days
+                    entry.save()
+                    print('successfully created individual attendance for %s  of %s' % (student, school))
+
+
+        context_dict['status'] = 'success'
+        return JSONResponse(context_dict, status=200)

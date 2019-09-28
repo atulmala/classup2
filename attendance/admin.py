@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Attendance, AttendanceTaken, AttendanceUpdated, DailyAttendanceSummary
+from .models import Attendance, AttendanceTaken, AttendanceUpdated, DailyAttendanceSummary, IndividualAttendance
 
 # Register your models here.
 
@@ -54,3 +54,16 @@ class DailyAttendanceSummaryAdmin(admin.ModelAdmin):
 
 
 admin.site.register(DailyAttendanceSummary, DailyAttendanceSummaryAdmin)
+
+
+class IndividualAttendanceAdmin(admin.ModelAdmin):
+    def get_school_name(self, obj):
+        return obj.student.school
+    get_school_name.short_description = 'School'
+
+    list_display = ('get_school_name', 'student', 'total_days', 'present_days', 'absent_days',)
+    list_filter = ('student__school',)
+    search_fields = ('student__fist_name',)
+
+
+admin.site.register(IndividualAttendance, IndividualAttendanceAdmin)
