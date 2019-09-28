@@ -656,17 +656,29 @@ def prepare_results(request, school_id, the_class, section):
         if the_class in middle_classes:
             print('result being prepared for %s, a middle class. Hence both Term1 & Term2 results to be shown.' %
                   the_class)
+            # style1 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            #           ('BOX', (0, 0), (-1, -1), 1, colors.black),
+            #           ('TOPPADDING', (0, 0), (-1, -1), 1),
+            #           ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+            #           ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            #           ('ALIGN', (1, 0), (6, 0), 'CENTER'),
+            #           ('ALIGN', (7, 0), (12, 0), 'CENTER'),
+            #           ('SPAN', (1, 0), (6, 0)),
+            #           ('SPAN', (7, 0), (12, 0)),
+            #           ('FONTSIZE', (0, 0), (-1, -1), 7),
+            #           ('FONT', (0, 0), (12, 0), 'Times-Bold'),
+            #           ('FONT', (0, 1), (0, 1), 'Times-Bold')]
             style1 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
                       ('BOX', (0, 0), (-1, -1), 1, colors.black),
                       ('TOPPADDING', (0, 0), (-1, -1), 1),
                       ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
                       ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                      ('ALIGN', (1, 0), (6, 0), 'CENTER'),
-                      ('ALIGN', (7, 0), (12, 0), 'CENTER'),
-                      ('SPAN', (1, 0), (6, 0)),
-                      ('SPAN', (7, 0), (12, 0)),
+                      ('ALIGN', (1, 0), (7, 0), 'CENTER'),
+                      ('ALIGN', (8, 0), (13, 0), 'CENTER'),
+                      ('SPAN', (1, 0), (7, 0)),
+                      ('SPAN', (8, 0), (13, 0)),
                       ('FONTSIZE', (0, 0), (-1, -1), 7),
-                      ('FONT', (0, 0), (12, 0), 'Times-Bold'),
+                      ('FONT', (0, 0), (13, 0), 'Times-Bold'),
                       ('FONT', (0, 1), (0, 1), 'Times-Bold')]
 
             style2 = style3 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
@@ -1108,14 +1120,14 @@ def prepare_results(request, school_id, the_class, section):
                     end_class = 'VIII'
                     data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', '',
                               'Term-2 (100 Marks)', '', '', '', '', ''],
-                             ['Sub Name', 'Per Test\n(10)', 'Portfolio\n(5)', 'Sub\nEnrichment\n(5)',
+                             ['Sub Name', 'Per Test\n(5)', 'Mult\nAssess\n(5)', 'Portfolio\n(5)', 'Sub\nEnrich\n(5)',
                               'Half\nYearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade',
                               'Per Test\n(10)', 'Portfolio\n(5)', 'Sub\nEnrichment\n(5)',
                               'Yearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
                 if the_class in ninth_tenth:
                     end_class = 'X'
                     data1 = [['Scholastic\nAreas', 'Academic Year (100 Marks)', '', '', '', '', ''],
-                             ['Sub Name', 'Per Test\n(10)', 'Portfolio\n(5)', 'Sub\nEnrichment\n(5)',
+                             ['Sub Name', 'Per Test\n(10)', 'Portfolio\n(5)', 'Sub\nEnrich\n(5)',
                               'Annual\nExamination\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
                 for i in range(0, sub_count):
                     sub = sub_dict.values()[i]

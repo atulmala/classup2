@@ -766,7 +766,8 @@ def save_marks(request):
                     # 25/12/2017 practical marks to be saved
                     if test.the_class.standard == 'XI' or test.the_class.standard == 'XII':
                         print ('term test for higher classes. May need to save the practical marks')
-                        if test.subject.subject_name in prac_subjects:
+                        # if test.subject.subject_name in prac_subjects:
+                        if test.subject.subject_prac:
                             print ('need to save practical marks for %s' % test.subject.subject_name)
                             ttr.prac_marks = float(data[key]['prac_marks'])
                         else:
