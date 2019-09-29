@@ -32,7 +32,7 @@ from setup.views import validate_excel_extension
 from student.models import Student, DOB, AdditionalDetails, House
 from academics.models import Class, Section, Subject, ThirdLang, ClassTest, \
     Exam, TermTestResult, TestResults, CoScholastics, ClassTeacher
-from attendance.models import Attendance, AttendanceTaken
+from attendance.models import Attendance, AttendanceTaken, IndividualAttendance
 
 from .models import Scheme, HigherClassMapping, NPromoted, Marksheet, Stream, StreamMapping, Wing
 from .forms import TermResultForm, ResultSheetForm
@@ -700,8 +700,8 @@ def prepare_results(request, school_id, the_class, section):
                         ('TOPPADDING', (0, 0), (-1, -1), 1),
                         ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
                         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                        ('ALIGN', (1, 0), (6, 0), 'CENTER'),
-                        ('SPAN', (1, 0), (6, 0)),
+                        ('ALIGN', (1, 0), (7, 0), 'CENTER'),
+                        ('SPAN', (1, 0), (7, 0)),
                         ('FONTSIZE', (0, 0), (-1, -1), 7),
                         ('FONT', (0, 0), (6, 0), 'Times-Bold'),
                         ('FONT', (0, 1), (0, 1), 'Times-Bold')]
@@ -816,8 +816,7 @@ def prepare_results(request, school_id, the_class, section):
 
             c.drawString(left_margin, stu_detail_top - 60, class_sec_lbl)
             c.drawString(tab, stu_detail_top - 60, the_class + '-' + section)
-            #c.drawString(left_margin, stu_detail_top - 75, 'Attendance:')
-            #c.drawString(tab + 300, stu_detail_top -60, 'Attendance:')
+
             print('report heading prepared')
 
             # 06/02/2019 - calculate the attendance
@@ -1126,8 +1125,9 @@ def prepare_results(request, school_id, the_class, section):
                               'Yearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
                 if the_class in ninth_tenth:
                     end_class = 'X'
-                    data1 = [['Scholastic\nAreas', 'Academic Year (100 Marks)', '', '', '', '', ''],
-                             ['Sub Name', 'Per Test\n(10)', 'Portfolio\n(5)', 'Sub\nEnrich\n(5)',
+                    data1 = [['Scholastic\nAreas', 'Academic Year (100 Marks)', '', '', '', '', '', ''],
+                             ['Sub Name', 'Per Test\n(5)', 'Multi\nAssess\n(5)',
+                              'Portfolio\n(5)', 'Sub\nEnrich\n(5)',
                               'Annual\nExamination\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
                 for i in range(0, sub_count):
                     sub = sub_dict.values()[i]
@@ -1178,7 +1178,7 @@ def prepare_results(request, school_id, the_class, section):
                                     notebook = ttr.note_book_marks
                                     sub_enrich = ttr.sub_enrich_marks
                                     main = tr.marks_obtained
-                                    total = float(main) + float(pa) + float(notebook) + float(sub_enrich)
+                                    total = float(main) + float(pa) + float(multi_assess) + (notebook) + float(sub_enrich)
                                     # in case the student was absent we need to show ABS in the marksheet.
                                     if float(main) < 0.0:
                                         main = 'ABS'
@@ -1303,6 +1303,16 @@ def prepare_results(request, school_id, the_class, section):
                     c.drawString(tab - 20, table3_top - 15, remark)
                     if ms.show_attendance:
                         c.drawString(left_margin, table3_top - 25, 'Attendance: ')
+                        try:
+                            attendance = IndividualAttendance.objects.get(student=s)
+                            total_days = attendance.total_days
+                            present_days = attendance.present_days
+                            c.drawString(left_margin + 50, table3_top - 25, '%s/%s' % (str(present_days),
+                                                                                         str(total_days)))
+                        except Exception as e:
+                            print('exception 28092019-A from exam views.py %s %s' % (e.message, type(e)))
+                            print('attendance recored not available for %s' % s)
+
 
                     if the_class not in ninth_tenth:
                         c.drawString(left_margin, table3_top - 35, 'Promoted to Class: ')
@@ -1354,6 +1364,14 @@ def prepare_results(request, school_id, the_class, section):
             try:
                 if ms.show_attendance:
                     c.drawString(left_margin, table3_top - 25, 'Attendance: ')
+                    try:
+                        attendance = IndividualAttendance.objects.get(student=s)
+                        total_days = attendance.total_days
+                        present_days = attendance.present_days
+                        c.drawString(left_margin +50, table3_top - 25, '%s/%s' % (str(present_days), str(total_days)))
+                    except Exception as e:
+                        print('exception 28092019-B from exam views.py %s %s' % (e.message, type(e)))
+                        print('attendance recored not available for %s' % s)
                 if the_class in ninth_tenth:
                     c.drawString(left_margin, table3_top - 35, 'Promoted to Class: ')
                 else:
