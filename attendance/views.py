@@ -397,12 +397,13 @@ class StudentAttendance(generics.ListCreateAPIView):
         }
         schools = School.objects.filter()
         first_april = date(int(2019), int(4), int(1))
+        thirty_sep = date(int(2019), int(9), int(30))
         for school in schools:
             print('now dealing with students of %s' % school)
             students = Student.objects.filter(school=school)
             for student in students:
                 total_days = AttendanceTaken.objects.filter(the_class = student.current_class, date__gte=first_april,
-                                                            section=student.current_section).count()
+                                                            date__lte=thirty_sep, section=student.current_section).count()
                 print('total working days for class %s %s of %s: %i' % (student.current_class.standard,
                                                                         student.current_section.section,
                                                                         school, total_days))

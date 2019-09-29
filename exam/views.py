@@ -550,7 +550,6 @@ def prepare_results(request, school_id, the_class, section):
         print('exception 26092019-D from exam views.py %s %s' % (e.message, type(e)))
         print('higher_classes not defined for %s' % school)
 
-
     if request.method == 'GET':
         print(request.body)
         whole_class = request.GET.get('whole_class')
@@ -630,19 +629,19 @@ def prepare_results(request, school_id, the_class, section):
                       ('TOPPADDING', (0, 0), (-1, -1), 1),
                       ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
                       ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                      ('ALIGN', (1, 0), (9, 0), 'CENTER'),
-                      ('ALIGN', (10, 0), (13, 0), 'CENTER'),
-                      ('SPAN', (1, 0), (9, 0)),
-                      ('SPAN', (10, 0), (13, 0)),
-                      ('SPAN', (4, 1), (6, 1)),
-                      ('SPAN', (7, 1), (9, 1)),
+                      ('ALIGN', (1, 0), (7, 0), 'CENTER'),
+                      ('ALIGN', (10, 0), (11, 0), 'CENTER'),
+                      ('SPAN', (1, 0), (7, 0)),
+                      ('SPAN', (8, 0), (11, 0)),
+                      ('SPAN', (2, 1), (4, 1)),
+                      ('SPAN', (5, 1), (7, 1)),
                       ('LINEABOVE', (0, 1), (0, 1), 1, colors.white),
                       ('LINEABOVE', (0, 2), (0, 2), 1, colors.white),
                       ('FONTSIZE', (0, 0), (-1, -1), 7),
-                      ('FONT', (0, 0), (13, 0), 'Times-Bold'),
-                      ('FONT', (0, 1), (13, 1), 'Times-Bold'),
-                      ('FONT', (0, 2), (13, 2), 'Times-Bold'),
-                      ('FONT', (0, 2), (13, 1), 'Times-Bold')
+                      ('FONT', (0, 0), (11, 0), 'Times-Bold'),
+                      ('FONT', (0, 1), (11, 1), 'Times-Bold'),
+                      ('FONT', (0, 2), (11, 2), 'Times-Bold'),
+                      ('FONT', (0, 2), (11, 1), 'Times-Bold')
                       ]
             style2 = style3 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
                                ('BOX', (0, 0), (-1, -1), 1, colors.black),
@@ -668,31 +667,57 @@ def prepare_results(request, school_id, the_class, section):
             #           ('FONTSIZE', (0, 0), (-1, -1), 7),
             #           ('FONT', (0, 0), (12, 0), 'Times-Bold'),
             #           ('FONT', (0, 1), (0, 1), 'Times-Bold')]
+
+            # 29/09/2019 - uncomment when generating result for final exam
+            # style1 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            #           ('BOX', (0, 0), (-1, -1), 1, colors.black),
+            #           ('TOPPADDING', (0, 0), (-1, -1), 1),
+            #           ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+            #           ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            #           ('ALIGN', (1, 0), (7, 0), 'CENTER'),
+            #           ('ALIGN', (8, 0), (14, 0), 'CENTER'),
+            #           ('SPAN', (1, 0), (7, 0)),
+            #           ('SPAN', (8, 0), (14, 0)),
+            #           ('FONTSIZE', (0, 0), (-1, -1), 7),
+            #           ('FONT', (0, 0), (13, 0), 'Times-Bold'),
+            #           ('FONT', (0, 1), (0, 1), 'Times-Bold')]
+
+            # 29/09/2019 - comment when generating results for fianl exam
             style1 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
                       ('BOX', (0, 0), (-1, -1), 1, colors.black),
                       ('TOPPADDING', (0, 0), (-1, -1), 1),
                       ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
                       ('VALIGN', (0, 0), (-1, -1), 'TOP'),
                       ('ALIGN', (1, 0), (7, 0), 'CENTER'),
-                      ('ALIGN', (8, 0), (14, 0), 'CENTER'),
                       ('SPAN', (1, 0), (7, 0)),
-                      ('SPAN', (8, 0), (14, 0)),
-                      ('FONTSIZE', (0, 0), (-1, -1), 7),
-                      ('FONT', (0, 0), (13, 0), 'Times-Bold'),
-                      ('FONT', (0, 1), (0, 1), 'Times-Bold')]
 
+                      ('FONTSIZE', (0, 0), (-1, -1), 7),
+                      ('FONT', (0, 0), (7, 0), 'Times-Bold'),
+                      ('FONT', (0, 1), (0, 1), 'Times-Bold')]
+            # 29/09/2019  - uncomment when generating result for final exam
+            # style2 = style3 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            #                     ('BOX', (0, 0), (-1, -1), 1, colors.black),
+            #                     ('TOPPADDING', (0, 0), (-1, -1), 1),
+            #                     ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+            #                     ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            #                     ('ALIGN', (0, 0), (1, 0), 'RIGHT'),
+            #                     ('ALIGN', (2, 0), (3, 0), 'RIGHT'),
+            #                     ('SPAN', (0, 0), (1, 0)),
+            #                     ('SPAN', (2, 0), (3, 0)),
+            #                     ('FONTSIZE', (0, 0), (-1, -1), 8),
+            #                     ('FONT', (0, 0), (1, 0), 'Times-Bold'),
+            #                     ('FONT', (2, 0), (3, 0), 'Times-Bold')]
+
+            # 29/09/2019 - comment while generating result for final exam
             style2 = style3 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-                                ('BOX', (0, 0), (-1, -1), 1, colors.black),
-                                ('TOPPADDING', (0, 0), (-1, -1), 1),
-                                ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
-                                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                                ('ALIGN', (0, 0), (1, 0), 'RIGHT'),
-                                ('ALIGN', (2, 0), (3, 0), 'RIGHT'),
-                                ('SPAN', (0, 0), (1, 0)),
-                                ('SPAN', (2, 0), (3, 0)),
-                                ('FONTSIZE', (0, 0), (-1, -1), 8),
-                                ('FONT', (0, 0), (1, 0), 'Times-Bold'),
-                                ('FONT', (2, 0), (3, 0), 'Times-Bold')]
+                               ('BOX', (0, 0), (-1, -1), 1, colors.black),
+                               ('TOPPADDING', (0, 0), (-1, -1), 1),
+                               ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+                               ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                               ('ALIGN', (0, 0), (1, 0), 'RIGHT'),
+                               ('SPAN', (0, 0), (1, 0)),
+                               ('FONTSIZE', (0, 0), (-1, -1), 8),
+                               ('FONT', (0, 0), (1, 0), 'Times-Bold')]
         if the_class in ninth_tenth:
             print('result being prepared for class %s, hence only final Term Results will be prepared' % the_class)
             style1 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
@@ -816,26 +841,30 @@ def prepare_results(request, school_id, the_class, section):
 
             c.drawString(left_margin, stu_detail_top - 60, class_sec_lbl)
             c.drawString(tab, stu_detail_top - 60, the_class + '-' + section)
-
             print('report heading prepared')
 
-            # 06/02/2019 - calculate the attendance
-            att_taken_t1 = AttendanceTaken.objects.filter(date__gte='2018-04-01', date__lte='2018-10-30',
-                                                          the_class=s.current_class, section=s.current_section).count()
-            print('total working days in term I = %i' % att_taken_t1)
-
-            att_taken_t2 = AttendanceTaken.objects.filter(date__gte='2018-11-01', date__lte='2019-03-15',
-                                                          the_class=s.current_class, section=s.current_section).count()
-            print('total working days in term II = %i' % att_taken_t2)
+            # # 06/02/2019 - calculate the attendance
+            # att_taken_t1 = AttendanceTaken.objects.filter(date__gte='2018-04-01', date__lte='2018-10-30',
+            #                                               the_class=s.current_class, section=s.current_section).count()
+            # print('total working days in term I = %i' % att_taken_t1)
+            #
+            # att_taken_t2 = AttendanceTaken.objects.filter(date__gte='2018-11-01', date__lte='2019-03-15',
+            #                                               the_class=s.current_class, section=s.current_section).count()
+            # print('total working days in term II = %i' % att_taken_t2)
 
             c.setFont(font, 8)
             if the_class in higher_classes:
                 print('result being prepared for class %s. This will be in school own format' % the_class)
 
-                data1 = [['', 'TERM RESULT', '', '', '', '', '', '', '', '', 'CUMULATIVE RESULT', '', '', ''],
-                         ['\nSUBJECT', 'UT-I', 'UT-II', 'UT-III', 'Half Yearly\nExam', '', '',
-                           'Final Exam', '', '', 'Unit\nTest', 'Half Yearly\nExam', 'Final\nExam', 'Total'],
-                         ['', '25', '25', '25', 'Th', 'Pr', 'Tot', 'Th', 'Pr', 'Tot', '25', '25', '50', '100']]
+                # data1 = [['', 'TERM RESULT', '', '', '', '', '', '', '', '', 'CUMULATIVE RESULT', '', '', ''],
+                #          ['\nSUBJECT', 'UT-I', 'UT-II', 'UT-III', 'Half Yearly\nExam', '', '',
+                #            'Final Exam', '', '', 'Unit\nTest', 'Half Yearly\nExam', 'Final\nExam', 'Total'],
+                #          ['', '25', '25', '25', 'Th', 'Pr', 'Tot', 'Th', 'Pr', 'Tot', '25', '25', '50', '100']]
+
+                data1 = [['', 'TERM RESULT', '', '', '', '', '', '', 'CUMULATIVE RESULT', '', '', ''],
+                         ['\nSUBJECT', 'UT-I', 'Half Yearly\nExam', '', '',
+                          'Final Exam', '', '', 'Unit\nTest', 'Half Yearly\nExam', 'Final\nExam', 'Total'],
+                         ['', '25', 'Th', 'Pr', 'Tot', 'Th', 'Pr', 'Tot', '25', '25', '50', '100']]
                 print('class %s is a higher class. Subject list will come from the student/subject mapping' % the_class)
                 sequence = 0
                 mapping = HigherClassMapping.objects.filter(student=s)
@@ -849,6 +878,7 @@ def prepare_results(request, school_id, the_class, section):
                 maths_stream = ['English', 'Mathematics', 'Physics', 'Chemistry']
                 bio_stream = ['English', 'Biology', 'Physics', 'Chemistry']
                 commerce_stream = ['English', 'Economics', 'Accountancy', 'Business Studies']
+                humanties_stream = ['English', 'History', 'Sociology', 'Economics']
 
                 try:
                     print('now determining the stream chosen by %s %s...' % (s.fist_name, s.last_name))
@@ -858,9 +888,12 @@ def prepare_results(request, school_id, the_class, section):
                     if 'Biology' in sub_dict.values():
                         chosen_stream = bio_stream
                         print('%s %s has chosen %s stream' % (s.fist_name, s.last_name, 'biology'))
-                    if 'Economics' in sub_dict.values():
+                    if 'Accountancy' in sub_dict.values():
                         chosen_stream = commerce_stream
                         print('%s %s has chosen %s stream' % (s.fist_name, s.last_name, 'commerce'))
+                    if 'History' in sub_dict.values():
+                        chosen_stream = humanties_stream
+                        print('%s %s has chosen %s stream' % (s.fist_name, s.last_name, 'humanities'))
                 except Exception as e:
                     print('failed to determine the stream chosen by %s %s' % (s.fist_name, s.last_name))
                     print('exception 24022018-A from exam views.py %s %s' % (e.message, type(e)))
@@ -923,26 +956,27 @@ def prepare_results(request, school_id, the_class, section):
                                 term_test_results = TermTestResult.objects.get(test_result=result)
 
                                 # this is a half yearly or annual exam. The possibility of practical marks...
-                                if sub in prac_subjects:
+                                if subject.subject_prac:
+                                # if sub in prac_subjects:
                                     print('%s has practical component' % (sub))
                                     prac_marks = float(term_test_results.prac_marks)
                                     if prac_marks < 0.0:
-                                        if index == 0 and subject.subject_name in commerce_sub:
-                                            prac_marks = 'NA'
-                                        else:
-                                            prac_marks = ' '
+                                    #     if index == 0 and subject.subject_name in commerce_sub:
+                                    #         prac_marks = 'NA'
+                                    #     else:
+                                        prac_marks = ' '
                                         tot_marks = marks
                                     else:
                                         # 26032018 - there is a possibility that student was absent
                                         # in theory but present in practical
                                         if marks != 'ABS':
-                                            if subject.subject_name not in commerce_sub:
-                                                tot_marks = marks + prac_marks
-                                            else:
-                                                if index == 0:
-                                                    tot_marks = marks
-                                                else:
-                                                    tot_marks = marks + prac_marks
+                                            # if subject.subject_name not in commerce_sub:
+                                            #     tot_marks = marks + prac_marks
+                                            # else:
+                                            #     if index == 0:
+                                            #         tot_marks = marks
+                                            #     else:
+                                            tot_marks = marks + prac_marks
                                         else:
                                             tot_marks = prac_marks
                                 else:
@@ -956,19 +990,22 @@ def prepare_results(request, school_id, the_class, section):
                                 if index == 0: # we are dealing with half-yearly exam
                                     print('dealing with half yearly exam')
                                     # 20/02/2019 only theory marks will be considered in the cumulative
-                                    if sub in prac_subjects:
-                                        if subject.subject_name not in commerce_sub:
-                                            #half_yearly_marks = tot_marks - prac_marks
-                                            half_yearly_marks = marks
-                                        else:
-                                            half_yearly_marks = tot_marks
-                                    else:
-                                        half_yearly_marks = tot_marks
+                                    # if subject.subject_prac:
+                                    # # if sub in prac_subjects:
+                                    #     if subject.subject_name not in commerce_sub:
+                                    #         #half_yearly_marks = tot_marks - prac_marks
+                                    #         half_yearly_marks = marks
+                                    #     else:
+                                    #         half_yearly_marks = tot_marks
+                                    # else:
+                                    #     half_yearly_marks = tot_marks
+                                    half_yearly_marks = tot_marks
                                     print('half yearly marks =')
                                     print(half_yearly_marks)
                                 if index == 1: # we are dealing with final exam
                                     print('dealing with final exam')
-                                    if sub in prac_subjects:
+                                    if subject.subject_prac:
+                                    # if sub in prac_subjects:
                                         final_marks = tot_marks - prac_marks
                                     else:
                                         final_marks = tot_marks
@@ -989,32 +1026,37 @@ def prepare_results(request, school_id, the_class, section):
                         try:
                             ut_cumul = round(ut_total/float(3), 2)
                             grand_total += ut_cumul
-                            sub_row.append(ut_cumul)
+                            # 29/09/2019 - uncomment when preparing result for final exam
+                            # sub_row.append(ut_cumul)
 
                             # 20/02/2019 cumulative for half yearly to be calculated out of 70 if the subject
                             # has practical component
                             #if sub in prac_subjects:
                             commerce_sub = ['Economics', 'Accountancy', 'Business Studies']
                             if half_yearly_marks != 'ABS':
-                                if subject.subject_name not in commerce_sub:
-                                    half_year_cumul = round((half_yearly_marks*float(25))/float(subject.theory_marks), 2)
-                                else:
-                                    half_year_cumul = round((half_yearly_marks * float(25)) / 100.00, 2)
+                                # if subject.subject_name not in commerce_sub:
+                                #     half_year_cumul = round((half_yearly_marks*float(25))/float(subject.theory_marks), 2)
+                                # else:
+                                half_year_cumul = round((half_yearly_marks * float(25)) / 100.00, 2)
                                 grand_total += half_year_cumul
                             else:
                                 half_year_cumul = 'ABS'
                             # else:
                             #     half_year_cumul = round(half_yearly_marks/float(4), 2)
-                            sub_row.append(half_year_cumul)
+
+                            # 29/09/2019 - uncomment when preparing result for final exam
+                            # sub_row.append(half_year_cumul)
 
                             if final_marks != 'ABS':
                                 final_cumul = round(final_marks*float(50)/float(subject.theory_marks), 2)
                                 grand_total += final_cumul
                             else:
                                 final_cumul = 'ABS'
-                            sub_row.append(final_cumul)
+
+                            # 29/09/2019 - uncomment while generating result for final exam
+                            # sub_row.append(final_cumul)
                             #grand_total = ut_cumul + half_year_cumul + final_cumul
-                            sub_row.append(grand_total)
+                            # sub_row.append(grand_total)
                         except Exception as e:
                             print('failed to enter Cumulative Result. This may be because certain marks not entered')
                             print('exception 01032018-A from exam views.py %s %s' % (e.message, type(e)))
@@ -1029,11 +1071,8 @@ def prepare_results(request, school_id, the_class, section):
                     print('table1 drawn for %s %s' % (s.fist_name, s.last_name))
                     theory_prac_split = ms.theory_prac_split
                     print('theory_prac_split = %s' % theory_prac_split)
-                    # theory_prac_split = 'Physics, Chemistry, Comp. Sc., Info. Prac., Biology, Phy. Edu., Eco, AccTB - '
-                    # theory_prac_split += '  Max Marks: Theory-70, Practical-30'
                     c.drawString(left_margin, table1_top - 20, theory_prac_split)
                     split_2 = ms.split_2
-                    # theory_prac_split = 'English, Mathematics - Max Marks: Theory-100, Prac: Not Applicable (NA)'
                     c.drawString(left_margin, table1_top-30, split_2)
                 except Exception as e:
                     print('Error while preparing results for class: %s' % (the_class))
@@ -1117,12 +1156,18 @@ def prepare_results(request, school_id, the_class, section):
                     print('exception 10022018-A from exam views.py %s %s' % (e.message, type(e)))
                 if the_class in middle_classes:
                     end_class = 'VIII'
-                    data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', '', '',
-                              'Term-2 (100 Marks)', '', '', '', '', '', ''],
+                    # 29/09/2019 - uncomment when generting final exam result
+                    # data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', '', '',
+                    #           'Term-2 (100 Marks)', '', '', '', '', '', ''],
+                    #          ['Sub Name', 'Per\n Test\n(5)', 'Mult\nAssess\n(5)', 'Portfolio\n(5)', 'Sub\nEnrich\n(5)',
+                    #           'Half\nYearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade',
+                    #           'Per\n Test\n(5)', 'Mult\nAssess\n(5)', 'Portfolio\n(5)', 'Sub\nEnrich\n(5)',
+                    #           'Yearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
+
+                    # 29/09/2019 - comment when generating final exam result
+                    data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', '', ''],
                              ['Sub Name', 'Per\n Test\n(5)', 'Mult\nAssess\n(5)', 'Portfolio\n(5)', 'Sub\nEnrich\n(5)',
-                              'Half\nYearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade',
-                              'Per\n Test\n(5)', 'Mult\nAssess\n(5)', 'Portfolio\n(5)', 'Sub\nEnrich\n(5)',
-                              'Yearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
+                              'Half\nYearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
                 if the_class in ninth_tenth:
                     end_class = 'X'
                     data1 = [['Scholastic\nAreas', 'Academic Year (100 Marks)', '', '', '', '', '', ''],
@@ -1222,8 +1267,12 @@ def prepare_results(request, school_id, the_class, section):
                 table2_top = table1_top - 70
                 try:
                     if the_class in middle_classes:
-                        data2 = [['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale]', '',
-                                'Co-Scholastic Areas: Term-2[On a 3-point(A-C) grading scale]', '']]
+                        # 29/09/2019- uncomment when generating result for final exam
+                        # data2 = [['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale]', '',
+                        #         'Co-Scholastic Areas: Term-2[On a 3-point(A-C) grading scale]', '']]
+
+                        # 29/09/2019 - comment while generating result for final exam
+                        data2 = [['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale]', '']]
                     if the_class in ninth_tenth:
                         data2 = [['Co-Scholastic Areas: Academic Year[On a 3-point(A-C) grading scale]', '']]
                     work_array = []
@@ -1231,9 +1280,17 @@ def prepare_results(request, school_id, the_class, section):
                     health_array = []
                     dscpln_array = []
 
-                    terms = ['term1', 'term2']
+                    # 29/09/2019 - uncomment while generating result for final exam
+                    # terms = ['term1', 'term2']
+
+                    # 29/09/2019 - comment while generating result for final exam
+                    terms = ['term1']
                     if the_class in ninth_tenth:
-                        terms = ['term2']
+                        # 29/09/2019 - uncomment while generating result for final exam
+                        # terms = ['term2']
+                        # 29/09/2019 - comment while generating result for final exam
+                        terms = ['term1']
+
                     for term in terms:
                         # for class IX, only the result of Term2, ie the final exam is to be shown
                         #if term == 'Term1' and the_class in ninth_tenth:
@@ -1284,7 +1341,11 @@ def prepare_results(request, school_id, the_class, section):
                 table3_top = table2_top - 40
                 try:
                     if the_class in middle_classes:
-                        data3 = [['Grade', '', 'Grade', '']]
+                        # 29/09/2019 - uncomment while generating result for final exam
+                        # data3 = [['Grade', '', 'Grade', '']]
+
+                        # 29/09/2019 - comment while generating result for final exam
+                        data3 = [['Grade', '']]
                     if the_class in ninth_tenth:
                         data3 = [['Grade', '']]
 
@@ -1344,6 +1405,9 @@ def prepare_results(request, school_id, the_class, section):
                     c.drawString(400, table3_top - 55, 'Signature of Principal')
                 except Exception as e:
                     print('exception 08022018-A from exam views.py %s %s' % (e.message, type(e)))
+
+                # 29/09/2019 - show Grading scheme on next page
+                # c.showPage()
 
                 c.drawString(170, table3_top - 90, "Instructions")
                 c.drawString(0, table3_top - 100, "Grading Scale for Scholastic Areas: "
