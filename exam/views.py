@@ -1212,6 +1212,7 @@ def prepare_results(request, school_id, the_class, section):
 
                                     tr = TestResults.objects.get(class_test=test, student=s)
                                     pa = 'NA'
+                                    multi_assess = 'NA'
                                     sub_enrich = 'NA'
                                     main = 'NA'
                                     notebook = 'NA'
