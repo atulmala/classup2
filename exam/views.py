@@ -1190,6 +1190,7 @@ def prepare_results(request, school_id, the_class, section):
                     terms = Exam.objects.filter(school=school, exam_type='term', end_class=end_class)
                     try:
                         for idx, term in enumerate(terms):
+                            print(term)
                             # for class IX, only the result of Term2, ie the final exam is to be shown
                             #if term == 'Term1' and the_class in ninth_tenth:
                                 #continue
@@ -1202,6 +1203,7 @@ def prepare_results(request, school_id, the_class, section):
                                 if sub.subject_name != 'GK':
                                     test = ClassTest.objects.get(subject=sub, the_class=standard,
                                                                  section=sec, exam=term)
+                                    print(test)
                                     tr = TestResults.objects.get(class_test=test, student=s)
 
                                 if sub.subject_name == 'GK':
@@ -1223,11 +1225,11 @@ def prepare_results(request, school_id, the_class, section):
                                     notebook = ttr.note_book_marks
                                     sub_enrich = ttr.sub_enrich_marks
                                     main = tr.marks_obtained
-                                    total = float(main) + float(pa) + float(multi_assess) + (notebook) + float(sub_enrich)
+                                    total = float(main) + float(pa) + float(multi_assess) + float(notebook) + float(sub_enrich)
                                     # in case the student was absent we need to show ABS in the marksheet.
                                     if float(main) < 0.0:
                                         main = 'ABS'
-                                        total = float(pa) + float(notebook) + float(sub_enrich)
+                                        total = float(pa) + float(multi_assess) + float(notebook) + float(sub_enrich)
                                     grade = get_grade(total)
                                     print('grade obtained by %s in %s exam of %s: %s' %
                                           (s.fist_name, term, sub.subject_name, grade))
