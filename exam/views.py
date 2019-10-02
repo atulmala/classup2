@@ -1263,7 +1263,7 @@ def prepare_results(request, school_id, the_class, section):
                                     print(test)
                                     tr = TestResults.objects.get(class_test=test, student=s)
 
-                                if sub.subject_name == 'GK' or sub.subject_name =='Computer':
+                                if sub.subject_name == 'GK':
                                     test = ClassTest.objects.filter(subject=sub,
                                                                     the_class=standard, section=sec)[idx]
 
@@ -1276,14 +1276,6 @@ def prepare_results(request, school_id, the_class, section):
                                     if sub.subject_name == 'GK':
                                         total = 'NA'
                                         grade = tr.grade
-
-                                    if the_class in ninth_tenth:
-                                        if sub.subject_name == 'Computer':
-                                            main = 'NA'
-                                            ttr = TermTestResult.objects.get(test_result=tr)
-                                            theory = tr.marks_obtained
-                                            prac = ttr.prac_marks
-                                            total = float(theory) + float(prac)
                                 else:
                                     ttr = TermTestResult.objects.get(test_result=tr)
                                     pa = round(ttr.periodic_test_marks)
@@ -1294,13 +1286,32 @@ def prepare_results(request, school_id, the_class, section):
                                     main = tr.marks_obtained
                                     total = float(main) + float(pa) + float(multi_assess) + float(notebook) + float(sub_enrich)
                                     print(total)
+
+                                    if the_class in ninth_tenth:
+                                        print('the_class in ninth_tenth')
+                                        if sub.subject_name == 'Computer':
+                                            print('suject is computer')
+                                            pa = 'NA'
+                                            multi_assess = 'NA'
+                                            sub_enrich = 'NA'
+                                            main = tr.marks_obtained
+                                            notebook = 'NA'
+                                            ttr = TermTestResult.objects.get(test_result=tr)
+                                            theory = tr.marks_obtained
+                                            prac = ttr.prac_marks
+                                            total = float(theory) + float(prac)
                                     # in case the student was absent we need to show ABS in the marksheet.
-                                    if float(main) < 0.0:
-                                        main = 'ABS'
-                                        total = float(pa) + float(multi_assess) + float(notebook) + float(sub_enrich)
+                                    if the_class not in ninth_tenth:
+                                        if float(main) < 0.0:
+                                            main = 'ABS'
+                                            total = float(pa) + float(multi_assess) + float(notebook) + float(sub_enrich)
+                                        grade = get_grade(total)
+                                        print('grade obtained by %s in %s exam of %s: %s' %
+                                              (s.fist_name, term, sub.subject_name, grade))
+                                    if the_class in ninth_tenth:
+                                        if sub.subject_name == 'Computer':
+                                            main = 'NA'
                                     grade = get_grade(total)
-                                    print('grade obtained by %s in %s exam of %s: %s' %
-                                          (s.fist_name, term, sub.subject_name, grade))
                                 if total > -1000.0:
                                     sub_row.append(pa)
                                     sub_row.append(multi_assess)
@@ -2551,7 +2562,8 @@ class ResultSheet(generics.ListCreateAPIView):
                                                 comments += '%s/%s' % (str(result.marks_obtained),
                                                                          str(round(test.max_marks, 0)))
                                                 print(comments)
-                                                marks = (25.0*float(result.marks_obtained))/(float(test.max_marks))
+                                                # marks = (25.0*float(result.marks_obtained))/(float(test.max_marks))
+                                                marks = float(result.marks_obtained)
                                                 ut_total += marks
                                                 print('ut_total = %f' % ut_total)
                                         except Exception as e:
@@ -2616,6 +2628,8 @@ class ResultSheet(generics.ListCreateAPIView):
                                                         result_sheet.write_string(row, col, 'TBE', cell_center)
 
                                                 col += 1
+                                                result_sheet.set_column(col+1, col+7, options={'hidden': True})
+
                                             except Exception as e:
                                                 print('%s practical marks for %s could not be retrieved' %
                                                       (sub, student_name))
@@ -2627,9 +2641,9 @@ class ResultSheet(generics.ListCreateAPIView):
                                             col += 1
                                         # 20/02/2019 for cumulative only theory marks are to be taken into
                                         # account for Half yearly and Annual Exams
-                                        cell_range = xl_range(row, col-2, row, col-2)
-                                        formula = '=SUM(%s)' % cell_range
-                                        result_sheet.write_formula(row, col, formula, cell_normal)
+                                        # cell_range = xl_range(row, col-2, row, col-2)
+                                        # formula = '=SUM(%s)' % cell_range
+                                        # result_sheet.write_formula(row, col, formula, cell_normal)
                                         col += 1
                                     except Exception as e:
                                         print('no test could be found corresponding to %s class %s subject %s' %
@@ -2637,12 +2651,14 @@ class ResultSheet(generics.ListCreateAPIView):
                                         print('exception 04032018-B from exam views.py %s %s'
                                               % (e.message, type(e)))
                                         col +=3
+                                        # col += 5
                                 # fill in cumulative results
                                 # get the UT cell
                                 cell = xl_rowcol_to_cell(row, col-7)
                                 formula = '=%s' % cell
                                 result_sheet.write_formula(row, col, formula, cell_normal)
-                                col += 1
+                                # col += 1
+                                col += 4
 
                                 commerce_sub = ['Economics', 'Accountancy', 'Business Studies']
                                 # get the half yearly total cell
