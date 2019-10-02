@@ -42,6 +42,63 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
     def enforce_csrf(self, request):
         return  # To not perform the csrf check previously happening
 
+from rest_framework.decorators import parser_classes
+from rest_framework.parsers import MultiPartParser
+@parser_classes((MultiPartParser, ))
+class UploadMarks(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def post(self, request, format=None):
+        context_dict = {}
+        print('resuest = ')
+        print(request.FILES)
+        context_dict = {
+
+        }
+
+        try:
+            print ('now starting to process the uploaded file for fee upload...')
+            fileToProcess_handle = request.FILES['computer_marks.xlsx']
+
+            # check that the file uploaded should be a valid excel
+            # file with .xls or .xlsx
+
+            # if this is a valid excel file - start processing it
+            fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
+            sheet = fileToProcess.sheet_by_index(0)
+            if sheet:
+                print ('Successfully got hold of sheet!')
+            for row in range(sheet.nrows):
+                # first two rows are header rows
+                if row == 0:
+                    continue
+                else:
+                    erp_id = str(sheet.cell(row, 0).value)
+                    school = School.objects.get(id=23)
+                    try:
+                        student = Student.objects.get(school=school, student_erp_id=erp_id)
+                        print('now dealing with %s' % student)
+                        theory = sheet.cell(row, 5).value
+                        practical = sheet.cell(row, 6).value
+                        subject = Subject.objects.get(school=school, subject_name='Computer')
+                        exam = Exam.objects.get(school=school, title='Term-I (IX - X)')
+                        class_test = ClassTest.objects.get(subject=subject, exam=exam,
+                                                           the_class=student.current_class,
+                                                           section=student.current_section)
+                        test_result = TestResults.objects.get(student=student, class_test=class_test)
+                        test_result.marks_obtained = float(theory)
+                        test_result.save()
+                        ttr = TermTestResult.objects.get(test_result=test_result)
+                        ttr.prac_marks = float(practical)
+                        ttr.save()
+                    except Exception as e:
+                        print('exception 02102019-A from exam views.py %s %s' % (e.message, type(e)))
+        except Exception as e:
+            print('exception 02102019-B from exam views.py %s %s' % (e.message, type(e)))
+        return render(request, 'classup/setup_index.html', context_dict)
+
+
+
 
 def setup_scheme(request):
     context_dict = {'user_type': 'school_admin', 'school_name': request.session['school_name']}
@@ -1173,7 +1230,7 @@ def prepare_results(request, school_id, the_class, section):
                     data1 = [['Scholastic\nAreas', 'Academic Year (100 Marks)', '', '', '', '', '', ''],
                              ['Sub Name', 'Per Test\n(5)', 'Multi\nAssess\n(5)',
                               'Portfolio\n(5)', 'Sub\nEnrich\n(5)',
-                              'Annual\nExamination\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
+                              'Half\nYearly Exam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
                 for i in range(0, sub_count):
                     sub = sub_dict.values()[i]
                     print ('sub = %s' % sub)
@@ -1206,7 +1263,7 @@ def prepare_results(request, school_id, the_class, section):
                                     print(test)
                                     tr = TestResults.objects.get(class_test=test, student=s)
 
-                                if sub.subject_name == 'GK':
+                                if sub.subject_name == 'GK' or sub.subject_name =='Computer':
                                     test = ClassTest.objects.filter(subject=sub,
                                                                     the_class=standard, section=sec)[idx]
 
@@ -1216,8 +1273,17 @@ def prepare_results(request, school_id, the_class, section):
                                     sub_enrich = 'NA'
                                     main = 'NA'
                                     notebook = 'NA'
-                                    total = 'NA'
-                                    grade = tr.grade
+                                    if sub.subject_name == 'GK':
+                                        total = 'NA'
+                                        grade = tr.grade
+
+                                    if the_class in ninth_tenth:
+                                        if sub.subject_name == 'Computer':
+                                            main = 'NA'
+                                            ttr = TermTestResult.objects.get(test_result=tr)
+                                            theory = tr.marks_obtained
+                                            prac = ttr.prac_marks
+                                            total = float(theory) + float(prac)
                                 else:
                                     ttr = TermTestResult.objects.get(test_result=tr)
                                     pa = round(ttr.periodic_test_marks)
@@ -1227,6 +1293,7 @@ def prepare_results(request, school_id, the_class, section):
                                     sub_enrich = ttr.sub_enrich_marks
                                     main = tr.marks_obtained
                                     total = float(main) + float(pa) + float(multi_assess) + float(notebook) + float(sub_enrich)
+                                    print(total)
                                     # in case the student was absent we need to show ABS in the marksheet.
                                     if float(main) < 0.0:
                                         main = 'ABS'
@@ -2283,6 +2350,7 @@ class ResultSheet(generics.ListCreateAPIView):
                     maths_stream = ['English', 'Mathematics', 'Physics', 'Chemistry', 'Elective']
                     bio_stream = ['English', 'Biology', 'Physics', 'Chemistry', 'Elective']
                     commerce_stream = ['English', 'Economics', 'Accountancy', 'Business Studies', 'Elective']
+                    humanities_stream = ['English', 'Economics', 'History', 'Sociology', 'Elective']
                     components = ['UT', 'Half Yearly', 'Final Exam', 'Cumulative']
                     try:
                         students = Student.objects.filter(school=school, current_class=the_class,
@@ -2314,10 +2382,14 @@ class ResultSheet(generics.ListCreateAPIView):
                                     chosen_stream = bio_stream
                                     print('%s %s has chosen %s stream' %
                                           (the_class.standard, section.section, 'biology'))
-                                if 'Economics' in sub_dict:
+                                if 'Accountancy' in sub_dict:
                                     chosen_stream = commerce_stream
                                     print('%s %s has chosen %s stream' %
                                           (the_class.standard, section.section, 'commerce'))
+                                if 'History' in sub_dict:
+                                    chosen_stream = humanities_stream
+                                    print('%s %s has chosen %s stream' %
+                                          (the_class.standard, section.section, 'humanities'))
                             except Exception as e:
                                 print('failed to determine the stream chosen by %s %s' %
                                       (student.fist_name, student.last_name))
@@ -2397,7 +2469,7 @@ class ResultSheet(generics.ListCreateAPIView):
                         # elective chosen by each student.
                         chosen_stream.pop()
 
-                        ut_list = Exam.objects.filter(school=school, exam_type='unit', start_class=the_class.standard)
+                        ut_list = Exam.objects.filter(school=school, exam_type='unit', start_class='XI')
                         s_no = 1
                         for student in students:
                             col = 0
@@ -2502,7 +2574,7 @@ class ResultSheet(generics.ListCreateAPIView):
 
                                 # get the half yearly marks & final exam marks
                                 term_exams = Exam.objects.filter(school=school, exam_type='term',
-                                                         start_class=the_class.standard)
+                                                         start_class='XI')
                                 prac_subjects = ["Biology", "Physics", "Chemistry", "Fine Arts",
                                                  "Accountancy", "Business Studies", "Economics",
                                                  "Information Practices", "Informatics Practices", "Computer Science",
@@ -2510,7 +2582,6 @@ class ResultSheet(generics.ListCreateAPIView):
                                                  "Physical Education"]
                                 for term in term_exams:
                                     try:
-                                        term_exam = Exam.objects.get(school=school, title=term)
                                         test = ClassTest.objects.get(subject=subject, the_class=the_class,
                                                                      section=section, exam=term)
                                         print('test was conducted for %s under exam: %s for class %s' %
@@ -2529,7 +2600,8 @@ class ResultSheet(generics.ListCreateAPIView):
 
                                         col += 1
 
-                                        if sub in prac_subjects:
+                                        if subject.subject_prac:
+                                        # if sub in prac_subjects:
                                             try:
                                                 term_test_results = TermTestResult.objects.get(test_result=result)
                                                 print('%s has practical component' % (sub))

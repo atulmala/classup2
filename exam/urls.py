@@ -22,4 +22,5 @@ urlpatterns = patterns(
          name='setup_higher_class_subject_mapping'),
 
     url (r'result_sheet/$', views.ResultSheet.as_view(), name='result_sheet'),
+    url(r'upload_marks/$', views.UploadMarks.as_view(), name='upload_marks'),
 )
