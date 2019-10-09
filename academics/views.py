@@ -455,10 +455,6 @@ def create_test1(request, school_id, the_class, section, subject,
 
     }
     context_dict['header'] = 'Create Test'
-    # higher_classes = ['XI', 'XII']
-    # ninth_tenth = ['IX', 'X']
-    # middle_classes = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII']
-    # junior_classes = ['Nursery', 'LKG', 'UKG', 'I', 'II', 'III']
 
     # all of the above except date are foreign key in Attendance model. Hence we need to get the actual object
     school = School.objects.get(id=school_id)
@@ -809,15 +805,6 @@ def save_marks(request):
 @csrf_exempt
 def submit_marks(request, school_id):
     t1 = datetime.datetime.now()
-    higher_classes = ['XI', 'XII']
-    ninth_tenth = ['IX', 'X']
-    middle_classes = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII']
-
-    prac_subjects = ["Biology", "Physics", "Chemistry",
-                     "Accountancy", "Business Studies", "Economics", "Fine Arts"
-                     "Information Practices", "Computer Science", "Painting",
-                     "Physical Education"]
-
     message_list = {
 
     }
@@ -828,11 +815,12 @@ def submit_marks(request, school_id):
         print ('request.body=')
         print (request.body)
         school = School.objects.get(id=school_id)
+        hc = Wing.objects.get(school=school, wing='higher_classes')
+        higher_classes = ast.literal_eval(hc.classes)
+        print(higher_classes)
         conf = Configurations.objects.get(school=school)
         # convert the raw data received to json
         data = json.loads(request.body)
-
-        school_name = school.school_name
 
         # determine whether this test is marks based or grade based
         grade_based = False
@@ -879,7 +867,8 @@ def submit_marks(request, school_id):
                     ttr.sub_enrich_marks = float(data[key]['subject_enrich'])
 
                     # 27/12/2017 practical marks to be saved
-                    if test.the_class.standard == 'XI' or test.the_class.standard == 'XII':
+                    if test.the_class.standard in higher_classes:
+                    # if test.the_class.standard == 'XI' or test.the_class.standard == 'XII':
                         print ('term test for higher classes. May need to save the practical marks')
                         if test.subject.subject_prac:
                             print ('need to save practical marks for %s' % test.subject.subject_name)
@@ -1007,15 +996,19 @@ def submit_marks(request, school_id):
                                     message += ', Practical: NA'
                             else:
                                 message += ', Periodic Test: %.2f, ' % float(ttr.periodic_test_marks)
+                                message += ' Multi Assess: %.2f, ' % float(ttr.multi_asses_marks)
 
                                 # 16/09/2019 - Notebook submission is now Portfolio
                                 # message += 'Notebook Submission: %.2f, ' % float(ttr.note_book_marks)
                                 message += 'Portfolio: %.2f, ' % float(ttr.note_book_marks)
-                                message += 'Subject Enrichment: %.2f, ' % float(ttr.sub_enrich_marks)
+                                message += 'Subject Enrichment: %.2f ' % float(ttr.sub_enrich_marks)
                                 print('message till now %s' % message)
-                                total = float(tr.marks_obtained) + float(ttr.note_book_marks) + float(ttr.periodic_test_marks)
+                                total = float(tr.marks_obtained) + float(ttr.multi_asses_marks)
+                                total += float(ttr.note_book_marks) + float(ttr.periodic_test_marks)
                                 total += float(ttr.sub_enrich_marks)
-                                message += 'Total: %.2f/100' % total
+                                print(total)
+                                message += 'Total: %.2f/100' % float(total)
+                                print(message)
                     except Exception as e:
                         print('exception 27032018-X from academics views.py %s %s' % (e.message, type(e)))
                         print('failed to create a part of message')
