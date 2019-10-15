@@ -542,10 +542,6 @@ def get_grade(marks):
 
 @csrf_exempt
 def prepare_results(request, school_id, the_class, section):
-    prac_subjects = ["Biology", "Physics", "Chemistry", "Fine Arts",
-                     "Accountancy", "Business Studies", "Economics",
-                     "Information Practices", "Informatics Practices", "Computer Science", "Painting",
-                     "Physical Education"]
     school = School.objects.get(id=school_id)
     school_name = school.school_name
     school_address = school.school_address
@@ -563,9 +559,6 @@ def prepare_results(request, school_id, the_class, section):
         print('failed to retrieve the short name for %s' % school_name)
         print('exception 04022018-A from exam views.py %s %s' % (e.message, type(e)))
 
-    # higher_classes = ['XI', 'XII']
-    # ninth_tenth = ['IX', 'X']
-    # middle_classes = ['IV', 'V', 'VI', 'VII', 'VIII']
     try:
         jc = Wing.objects.get(school=school, wing='junior_classes')
         junior_classes = ast.literal_eval(jc.classes)
@@ -1288,18 +1281,19 @@ def prepare_results(request, school_id, the_class, section):
                                     print(total)
 
                                     if the_class in ninth_tenth:
-                                        print('the_class in ninth_tenth')
-                                        if sub.subject_name == 'Computer':
-                                            print('suject is computer')
-                                            pa = 'NA'
-                                            multi_assess = 'NA'
-                                            sub_enrich = 'NA'
-                                            main = tr.marks_obtained
-                                            notebook = 'NA'
-                                            ttr = TermTestResult.objects.get(test_result=tr)
-                                            theory = tr.marks_obtained
-                                            prac = ttr.prac_marks
-                                            total = float(theory) + float(prac)
+                                        if school_id == 23:
+                                            print('the_class in ninth_tenth and school is Jagran Public School')
+                                            if sub.subject_name == 'Computer':
+                                                print('suject is computer')
+                                                pa = 'NA'
+                                                multi_assess = 'NA'
+                                                sub_enrich = 'NA'
+                                                main = tr.marks_obtained
+                                                notebook = 'NA'
+                                                ttr = TermTestResult.objects.get(test_result=tr)
+                                                theory = tr.marks_obtained
+                                                prac = ttr.prac_marks
+                                                total = float(theory) + float(prac)
                                     # in case the student was absent we need to show ABS in the marksheet.
                                     if the_class not in ninth_tenth:
                                         if float(main) < 0.0:
@@ -1310,7 +1304,8 @@ def prepare_results(request, school_id, the_class, section):
                                               (s.fist_name, term, sub.subject_name, grade))
                                     if the_class in ninth_tenth:
                                         if sub.subject_name == 'Computer':
-                                            main = 'NA'
+                                            if school_id == 23:
+                                                main = 'NA'
                                     grade = get_grade(total)
                                 if total > -1000.0:
                                     sub_row.append(pa)
@@ -1449,8 +1444,8 @@ def prepare_results(request, school_id, the_class, section):
                             attendance = IndividualAttendance.objects.get(student=s)
                             total_days = attendance.total_days
                             present_days = attendance.present_days
-                            c.drawString(left_margin + 50, table3_top - 25, '%s/%s' % (str(present_days),
-                                                                                         str(total_days)))
+                            # c.drawString(left_margin + 50, table3_top - 25, '%s/%s' % (str(present_days),
+                            #                                                              str(total_days)))
                         except Exception as e:
                             print('exception 28092019-A from exam views.py %s %s' % (e.message, type(e)))
                             print('attendance recored not available for %s' % s)
@@ -1513,7 +1508,7 @@ def prepare_results(request, school_id, the_class, section):
                         attendance = IndividualAttendance.objects.get(student=s)
                         total_days = attendance.total_days
                         present_days = attendance.present_days
-                        c.drawString(left_margin +50, table3_top - 25, '%s/%s' % (str(present_days), str(total_days)))
+                        # c.drawString(left_margin +50, table3_top - 25, '%s/%s' % (str(present_days), str(total_days)))
                     except Exception as e:
                         print('exception 28092019-B from exam views.py %s %s' % (e.message, type(e)))
                         print('attendance recored not available for %s' % s)

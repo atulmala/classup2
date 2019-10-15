@@ -87,6 +87,15 @@ class StudentList(generics.ListAPIView):
                           (first_name, the_class))
 
 
+class SingleStudentDetails(generics.ListAPIView):
+    serializer_class = StudentSerializer
+
+    def get_queryset(self):
+        student_id = self.kwargs['student_id']
+        query_set = Student.objects.filter(id=student_id)
+        return query_set
+
+
 class StudentListForTest(generics.ListCreateAPIView):
     serializer_class = StudentSerializer
 
@@ -183,7 +192,6 @@ def get_parent(request, student_id):
             return JSONResponse(parent_detail, status=201)
 
         return JSONResponse(parent_detail, status=201)
-
 
 def get_student_detail(request, student_id):
     student_detail =    {
