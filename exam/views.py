@@ -2233,7 +2233,7 @@ class ResultSheet(generics.ListCreateAPIView):
                             # determine the rank
                             cell = xl_rowcol_to_cell(row, col - 2)
                             cell_start = xl_rowcol_to_cell(start_row, col - 2, row_abs = True, col_abs = True)
-                            cell_end = xl_rowcol_to_cell(start_row + stud_count*6 - 1, col -2, row_abs = True, col_abs = True)
+                            cell_end = xl_rowcol_to_cell(start_row + stud_count*7 - 1, col -2, row_abs = True, col_abs = True)
                             rank_formula = '=RANK(%s, %s:%s)' % (cell, cell_start, cell_end)
                             print('formula for rank: %s', rank_formula)
                             # result_sheet.merge_range(row, col, row + 5, col, rank_formula, cell_grade)
