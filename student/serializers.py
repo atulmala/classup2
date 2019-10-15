@@ -43,7 +43,7 @@ class StudentSerializer(serializers.ModelSerializer):
     def get_bus_rout(self, obj):
         try:
             rout = Student_Rout.objects.get(student=obj)
-            print ('% is a bus user' % obj)
+            print ('%s is a bus user' % obj)
             return rout.bus_root.bus_root
         except Exception as e:
             print('exception 12102019-B from student serializers.py %s %s' % (e.message, type(e)))
