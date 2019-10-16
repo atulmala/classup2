@@ -36,8 +36,8 @@ class StudentSerializer(serializers.ModelSerializer):
             # print ('% is a bus user' % obj)
             return True
         except Exception as e:
-            print('exception 12102019-A from student serializers.py %s %s' % (e.message, type(e)))
-            print('%s is not a bus user' % obj)
+            # print('exception 12102019-A from student serializers.py %s %s' % (e.message, type(e)))
+            # print('%s is not a bus user' % obj)
             return False
 
     def get_bus_rout(self, obj):
