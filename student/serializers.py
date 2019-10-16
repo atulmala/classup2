@@ -33,7 +33,7 @@ class StudentSerializer(serializers.ModelSerializer):
     def get_bus_user(self, obj):
         try:
             bus_user = BusUser.objects.get(student=obj)
-            print ('% is a bus user' % obj)
+            # print ('% is a bus user' % obj)
             return True
         except Exception as e:
             print('exception 12102019-A from student serializers.py %s %s' % (e.message, type(e)))
@@ -43,7 +43,7 @@ class StudentSerializer(serializers.ModelSerializer):
     def get_bus_rout(self, obj):
         try:
             rout = Student_Rout.objects.get(student=obj)
-            print ('%s is a bus user' % obj)
+            # print ('%s is a bus user' % obj)
             return rout.bus_root.bus_root
         except Exception as e:
             # print('exception 12102019-B from student serializers.py %s %s' % (e.message, type(e)))
@@ -53,7 +53,7 @@ class StudentSerializer(serializers.ModelSerializer):
     def get_bus_stop(self, obj):
         try:
             rout = Student_Rout.objects.get(student=obj)
-            print ('%s is a bus user' % obj)
+            # print ('%s is a bus user' % obj)
             return rout.bus_stop.stop_name
         except Exception as e:
             # print('exception 12102019-C from student serializers.py %s %s' % (e.message, type(e)))
