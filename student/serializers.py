@@ -46,8 +46,8 @@ class StudentSerializer(serializers.ModelSerializer):
             print ('%s is a bus user' % obj)
             return rout.bus_root.bus_root
         except Exception as e:
-            print('exception 12102019-B from student serializers.py %s %s' % (e.message, type(e)))
-            print('%s is not a bus user. Hence rout is N/A' % obj)
+            # print('exception 12102019-B from student serializers.py %s %s' % (e.message, type(e)))
+            # print('%s is not a bus user. Hence rout is N/A' % obj)
             return 'N/A'
 
     def get_bus_stop(self, obj):
@@ -56,8 +56,8 @@ class StudentSerializer(serializers.ModelSerializer):
             print ('%s is a bus user' % obj)
             return rout.bus_stop.stop_name
         except Exception as e:
-            print('exception 12102019-C from student serializers.py %s %s' % (e.message, type(e)))
-            print('%s is not a bus user. Hence bus stop is N/A' % obj)
+            # print('exception 12102019-C from student serializers.py %s %s' % (e.message, type(e)))
+            # print('%s is not a bus user. Hence bus stop is N/A' % obj)
             return 'N/A'
 
     def get_house(self, obj):
@@ -65,8 +65,8 @@ class StudentSerializer(serializers.ModelSerializer):
             house = House.objects.get(student=obj)
             return house.house
         except Exception as e:
-            print('exception 12102019-D from student serializers.py %s %s' % (e.message, type(e)))
-            print('no house assigned for %s' % obj)
+            # print('exception 12102019-D from student serializers.py %s %s' % (e.message, type(e)))
+            # print('no house assigned for %s' % obj)
             return 'Not Assigned'
 
     def get_mother(self, obj):
@@ -74,8 +74,8 @@ class StudentSerializer(serializers.ModelSerializer):
             ad = AdditionalDetails.objects.get(student=obj)
             return ad.mother_name
         except Exception as e:
-            print('exception 13102019-A from student serializers.py %s %s' % (e.message, type(e)))
-            print('addtional details (mother) not entered for %s' % obj)
+            # print('exception 13102019-A from student serializers.py %s %s' % (e.message, type(e)))
+            # print('addtional details (mother) not entered for %s' % obj)
             return 'Not Available'
 
     def get_mother_occ(self, obj):
@@ -83,8 +83,8 @@ class StudentSerializer(serializers.ModelSerializer):
             ad = AdditionalDetails.objects.get(student=obj)
             return ad.mother_occupation
         except Exception as e:
-            print('exception 13102019-H from student serializers.py %s %s' % (e.message, type(e)))
-            print('addtional details (mother occupation) not entered for %s' % obj)
+            # print('exception 13102019-H from student serializers.py %s %s' % (e.message, type(e)))
+            # print('addtional details (mother occupation) not entered for %s' % obj)
             return 'Not Available'
 
     def get_father_occ(self, obj):
@@ -92,8 +92,8 @@ class StudentSerializer(serializers.ModelSerializer):
             ad = AdditionalDetails.objects.get(student=obj)
             return ad.father_occupation
         except Exception as e:
-            print('exception 13102019-I from student serializers.py %s %s' % (e.message, type(e)))
-            print('addtional details (father occupation) not entered for %s' % obj)
+            # print('exception 13102019-I from student serializers.py %s %s' % (e.message, type(e)))
+            # print('addtional details (father occupation) not entered for %s' % obj)
             return 'Not Available'
 
     def get_parent_mob(self, obj):
@@ -110,8 +110,8 @@ class StudentSerializer(serializers.ModelSerializer):
             dob = DOB.objects.get(student=obj)
             return dob.dob
         except Exception as e:
-            print('exception 13102019-B from student serializers.py %s %s' % (e.message, type(e)))
-            print('DOB not entered for %s' % obj)
+            # print('exception 13102019-B from student serializers.py %s %s' % (e.message, type(e)))
+            # print('DOB not entered for %s' % obj)
             return 'Not Available'
 
     def get_gender(self, obj):
@@ -119,8 +119,8 @@ class StudentSerializer(serializers.ModelSerializer):
             ad = AdditionalDetails.objects.get(student=obj)
             return ad.gender
         except Exception as e:
-            print('exception 13102019-C from student serializers.py %s %s' % (e.message, type(e)))
-            print('addtional details (gender) not entered for %s' % obj)
+            # print('exception 13102019-C from student serializers.py %s %s' % (e.message, type(e)))
+            # print('addtional details (gender) not entered for %s' % obj)
             return 'Not Available'
 
     def get_blood_group(self, obj):
@@ -128,8 +128,8 @@ class StudentSerializer(serializers.ModelSerializer):
             ad = AdditionalDetails.objects.get(student=obj)
             return ad.blood_group
         except Exception as e:
-            print('exception 13102019-D from student serializers.py %s %s' % (e.message, type(e)))
-            print('addtional details (blood group) not entered for %s' % obj)
+            # print('exception 13102019-D from student serializers.py %s %s' % (e.message, type(e)))
+            # print('addtional details (blood group) not entered for %s' % obj)
             return 'Not Available'
 
     def get_adhar(self, obj):
@@ -137,8 +137,8 @@ class StudentSerializer(serializers.ModelSerializer):
             ad = AdditionalDetails.objects.get(student=obj)
             return ad.adhar
         except Exception as e:
-            print('exception 13102019-E from student serializers.py %s %s' % (e.message, type(e)))
-            print('addtional details (adhar) not entered for %s' % obj)
+            # print('exception 13102019-E from student serializers.py %s %s' % (e.message, type(e)))
+            # print('addtional details (adhar) not entered for %s' % obj)
             return 'Not Available'
 
     def get_address(self, obj):
@@ -146,8 +146,8 @@ class StudentSerializer(serializers.ModelSerializer):
             ad = AdditionalDetails.objects.get(student=obj)
             return ad.address
         except Exception as e:
-            print('exception 13102019-F from student serializers.py %s %s' % (e.message, type(e)))
-            print('addtional details (address) not entered for %s' % obj)
+            # print('exception 13102019-F from student serializers.py %s %s' % (e.message, type(e)))
+            # print('addtional details (address) not entered for %s' % obj)
             return 'Not Available'
 
     class Meta:
