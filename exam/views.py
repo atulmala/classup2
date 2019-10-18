@@ -1281,7 +1281,7 @@ def prepare_results(request, school_id, the_class, section):
                                     print(total)
 
                                     if the_class in ninth_tenth:
-                                        if school_id == 23:
+                                        if school_name == 'Jagran Public School':
                                             print('the_class in ninth_tenth and school is Jagran Public School')
                                             if sub.subject_name == 'Computer':
                                                 print('suject is computer')
@@ -1294,6 +1294,8 @@ def prepare_results(request, school_id, the_class, section):
                                                 theory = tr.marks_obtained
                                                 prac = ttr.prac_marks
                                                 total = float(theory) + float(prac)
+                                        else:
+                                            print('this is not Jagran Public School')
                                     # in case the student was absent we need to show ABS in the marksheet.
                                     if the_class not in ninth_tenth:
                                         if float(main) < 0.0:
