@@ -515,8 +515,10 @@ def create_test1(request, school_id, the_class, section, subject,
     q = ClassTest.objects.filter(exam=exam, the_class=c, section=s, subject=sub)
     print (q.count())
     if q.count() > 0:
-        outcome = ('test for %s %s %s-%s already exist. Hence not creating' %
-                   (exam.title, sub, the_class, section))
+        teacher = q[:1].get().teacher
+        name = '%s %s' % (teacher.first_name, teacher.last_name)
+        outcome = ('test for %s %s %s-%s already created by %s. Hence not creating' %
+                   (exam.title, sub, the_class, section, name))
         print(outcome)
         context_dict['outcome'] = outcome
         return JSONResponse(context_dict, status=201)

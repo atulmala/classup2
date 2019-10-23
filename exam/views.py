@@ -42,6 +42,7 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
     def enforce_csrf(self, request):
         return  # To not perform the csrf check previously happening
 
+
 from rest_framework.decorators import parser_classes
 from rest_framework.parsers import MultiPartParser
 @parser_classes((MultiPartParser, ))
@@ -99,7 +100,6 @@ class UploadMarks(generics.ListCreateAPIView):
 
 
 
-
 def setup_scheme(request):
     context_dict = {'user_type': 'school_admin', 'school_name': request.session['school_name']}
 
@@ -146,7 +146,7 @@ def setup_scheme(request):
                         print ('exception 011117-A from exam views.py %s %s ' % (e.message, type(e)))
                         continue
 
-                    for col in range(1, 9):
+                    for col in range(1, 11):
                         sub = sheet.cell(row, col).value
                         print(sub)
                         if sub == 'N/A':
@@ -816,12 +816,6 @@ def prepare_results(request, school_id, the_class, section):
         left_margin = -30
 
         def marksheet(c, s):
-            c.translate(inch, inch)
-            c.drawInlineImage(school_logo, 410, 690, width=65, height=50)
-            c.drawInlineImage(cbse_logo, left_margin, 690, width=60, height=50)
-            font = 'Times-Bold'
-            c.setFont(font, 14)
-
             # 07/04/2019 - get the start position for school name and address to appear on the top
             try:
                 ms = Marksheet.objects.get(school=school)
@@ -829,11 +823,21 @@ def prepare_results(request, school_id, the_class, section):
                 address_start = ms.address_start
                 place = ms.place
                 result_date = ms.result_date
+                logo_left = ms.logo_left_margin
+                logo_width = ms.logo_width
             except Exception as e:
                 print('failed to retrieve the start coordinates for school name and address %s ' % school.school_name)
                 print('exception 07022019-A from exam view.py %s %s' % (e.message, type(e)))
                 title_start = 130
                 address_start = 155
+
+            c.translate(inch, inch)
+            c.drawInlineImage(school_logo, logo_left, 690, width=logo_width, height=50)
+            c.drawInlineImage(cbse_logo, left_margin, 690, width=60, height=50)
+            font = 'Times-Bold'
+            c.setFont(font, 14)
+
+
 
             c.drawString(title_start, top+20, school_name)
             c.setFont(font, 10)

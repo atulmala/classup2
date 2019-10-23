@@ -12,6 +12,7 @@ class Scheme(models.Model):
     the_class = models.ForeignKey(Class)
     sequence = models.IntegerField()
     subject = models.ForeignKey(Subject)
+    max_marks = models.DecimalField(max_digits=6, decimal_places=2, default=80.00)
     subject_type = models.CharField(max_length=50, default='Regular')
 
 
@@ -53,6 +54,8 @@ class Marksheet(models.Model):
     show_attendance = models.BooleanField(default=False)
     theory_prac_split = models.CharField(max_length='200', default=' ')
     split_2 = models.CharField(max_length='200', default=' ')
+    logo_left_margin = models.IntegerField(default=410)
+    logo_width = models.IntegerField(default=65)
 
     def __unicode__(self):
         return self.school.school_name
