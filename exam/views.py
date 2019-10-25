@@ -551,6 +551,24 @@ def prepare_results(request, school_id, the_class, section):
     sec = Section.objects.get(school=school, section=section)
     print(sec)
 
+    # 07/04/2019 - get the start position for school name and address to appear on the top
+    try:
+        ms = Marksheet.objects.get(school=school)
+        title_start = ms.title_start
+        address_start = ms.address_start
+        place = ms.place
+        result_date = ms.result_date
+        logo_left = ms.logo_left_margin
+        logo_width = ms.logo_width
+        affiliation = ms.affiliation
+        board_logo_path = ms.board_logo_path
+        print('board_logo_path = %s' % board_logo_path)
+    except Exception as e:
+        print('failed to retrieve the start coordinates for school name and address %s ' % school.school_name)
+        print('exception 07022019-A from exam view.py %s %s' % (e.message, type(e)))
+        title_start = 130
+        address_start = 155
+
     # 04/01/2018 get the logos
     try:
         conf = Configurations.objects.get(school=school)
@@ -650,18 +668,20 @@ def prepare_results(request, school_id, the_class, section):
             storage_client = storage.Client()
             bucket = storage_client.get_bucket('classup')
             print(bucket)
-            cbse_logo_path = 'classup2/media/dev/cbse_logo/Logo/cbse-logo.png'
-            blob = bucket.blob(cbse_logo_path)
-            blob.download_to_filename('exam/cbse_logo.png')
-            cbse_logo = Image.open('exam/cbse_logo.png')
-            print('cbse logo downloaded')
+            # cbse_logo_path = 'classup2/media/dev/cbse_logo/Logo/cbse-logo.png'
+            blob = bucket.blob(board_logo_path)
+            # blob.download_to_filename('exam/cbse_logo.png')
+            blob.download_to_filename('exam/board_logo.png')
+            # cbse_logo = Image.open('exam/cbse_logo.png')
+            #blob.download_to_filename('exam/cbse_logo.png')
+            board_logo = Image.open('exam/board_logo.png')
+            print('board logo downloaded')
 
             school_logo_path = 'classup2/media/dev/school_logos/%s/%s.png' % (short_name, short_name)
             blob = bucket.blob(school_logo_path)
             blob.download_to_filename('exam/%s.png' % short_name)
             school_logo = Image.open('exam/%s.png' % short_name)
             print('school logo downloaded')
-
 
             logo_url = 'https://storage.googleapis.com/classup/classup2/media/dev/school_logos/%s/%s.png' % \
                        (short_name, short_name)
@@ -816,34 +836,17 @@ def prepare_results(request, school_id, the_class, section):
         left_margin = -30
 
         def marksheet(c, s):
-            # 07/04/2019 - get the start position for school name and address to appear on the top
-            try:
-                ms = Marksheet.objects.get(school=school)
-                title_start = ms.title_start
-                address_start = ms.address_start
-                place = ms.place
-                result_date = ms.result_date
-                logo_left = ms.logo_left_margin
-                logo_width = ms.logo_width
-            except Exception as e:
-                print('failed to retrieve the start coordinates for school name and address %s ' % school.school_name)
-                print('exception 07022019-A from exam view.py %s %s' % (e.message, type(e)))
-                title_start = 130
-                address_start = 155
-
             c.translate(inch, inch)
             c.drawInlineImage(school_logo, logo_left, 690, width=logo_width, height=50)
-            c.drawInlineImage(cbse_logo, left_margin, 690, width=60, height=50)
+            c.drawInlineImage(board_logo, left_margin, 690, width=60, height=50)
             font = 'Times-Bold'
             c.setFont(font, 14)
-
-
 
             c.drawString(title_start, top+20, school_name)
             c.setFont(font, 10)
             c.drawString(address_start, top+7, school_address)
             c.setFont(font, 8)
-            c.drawString(180, top-4, '(Affiliated to CBSE)')
+            c.drawString(180, top-4, '(%s)' % affiliation)
             c.setFont(font, 10)
             c.line(-30, line_top, 6.75 * inch, line_top)
 
@@ -860,6 +863,9 @@ def prepare_results(request, school_id, the_class, section):
 
             c.drawString(left_margin, stu_detail_top - 15, stu_name_lbl)
             c.drawString(tab, stu_detail_top - 15, s.fist_name + ' ' + s.last_name)
+            c.drawString(left_margin + 300, stu_detail_top - 15, class_sec_lbl)
+            # c.drawString(left_margin, stu_detail_top - 60, class_sec_lbl)
+            c.drawString(left_margin + 300 + tab, stu_detail_top - 15, the_class + '-' + section)
 
             c.drawString(left_margin, stu_detail_top - 30, father_name_lbl)
 
@@ -883,18 +889,19 @@ def prepare_results(request, school_id, the_class, section):
                     parent_name = '%s / %s' % (mother_name, s.parent.parent_name)
             c.drawString(tab, stu_detail_top - 30, parent_name)
 
-            c.drawString(left_margin, stu_detail_top - 45, dob_lbl)
+            # c.drawString(left_margin, stu_detail_top - 45, dob_lbl)
+            c.drawString(left_margin + 300, stu_detail_top, dob_lbl)
             try:
                 d = DOB.objects.get(student=s)
                 dob = d.dob
                 print(dob)
-                c.drawString(tab, stu_detail_top - 45, dob.strftime('%d-%m-%Y'))
+                # c.drawString(tab, stu_detail_top - 45, dob.strftime('%d-%m-%Y'))
+                c.drawString(left_margin + tab + 300, stu_detail_top, dob.strftime('%d-%m-%Y'))
             except Exception as e:
                 print ('date of birth not yet set for %s %s ' % (s.fist_name, s.last_name))
                 print('Exception 23102017-A from exam views.py %s %s ' % (e.message, type(e)))
 
-            c.drawString(left_margin, stu_detail_top - 60, class_sec_lbl)
-            c.drawString(tab, stu_detail_top - 60, the_class + '-' + section)
+
             print('report heading prepared')
 
             # # 06/02/2019 - calculate the attendance
@@ -1575,7 +1582,7 @@ def prepare_results(request, school_id, the_class, section):
         # 31/10/2018 - delete the downloaded png files for school and cbse logo
         try:
             import os
-            os.remove('exam/cbse_logo.png')
+            os.remove('exam/board_logo.png')
             print('successfully removed cbse_logo.png')
             os.remove('exam/%s.png' % short_name)
             print('successfully removed %s.png' % short_name)

@@ -56,6 +56,10 @@ class Marksheet(models.Model):
     split_2 = models.CharField(max_length='200', default=' ')
     logo_left_margin = models.IntegerField(default=410)
     logo_width = models.IntegerField(default=65)
+    affiliation = models.CharField(max_length=200, default='Affiliated to CBSE')
+    board_logo_path = models.CharField(max_length=100,
+                                       default='classup2/media/dev/cbse_logo/Logo/cbse-logo.png')
+
 
     def __unicode__(self):
         return self.school.school_name
