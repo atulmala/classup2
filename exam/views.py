@@ -8,6 +8,8 @@ from django.shortcuts import render
 from django.contrib import messages
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from rest_framework.decorators import parser_classes
+from rest_framework.parsers import MultiPartParser
 
 from google.cloud import storage
 
@@ -32,7 +34,7 @@ from setup.views import validate_excel_extension
 from student.models import Student, DOB, AdditionalDetails, House
 from academics.models import Class, Section, Subject, ThirdLang, ClassTest, \
     Exam, TermTestResult, TestResults, CoScholastics, ClassTeacher
-from attendance.models import Attendance, AttendanceTaken, IndividualAttendance
+from attendance.models import IndividualAttendance
 
 from .models import Scheme, HigherClassMapping, NPromoted, Marksheet, Stream, StreamMapping, Wing
 from .forms import TermResultForm, ResultSheetForm
@@ -43,8 +45,6 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
         return  # To not perform the csrf check previously happening
 
 
-from rest_framework.decorators import parser_classes
-from rest_framework.parsers import MultiPartParser
 @parser_classes((MultiPartParser, ))
 class UploadMarks(generics.ListCreateAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
