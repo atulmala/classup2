@@ -5,6 +5,12 @@ from django.db.models import Sum, Avg
 from rest_framework import generics
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import inch, cm
+from reportlab.lib import colors
+from reportlab.platypus import Table, TableStyle
+
 from authentication.views import JSONResponse
 
 from setup.models import School
@@ -316,3 +322,30 @@ class GenerateSubAnalysis(generics.ListCreateAPIView):
                               (student, subject, student.current_class, student.current_section))
         context_dict['outcome'] = 'success'
         return JSONResponse(context_dict, status=200)
+
+
+class StudentPerformanceAnalysis(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def post(self, request, *args, **kwargs):
+        context_dict = {
+
+        }
+        school_id = self.kwargs['school_id']
+        school = School.objects.get(id=school_id)
+        cl = self.kwargs['the_class']
+        the_class = Class.objects.get(school=school, standard=cl)
+        sec = self.kwargs['section']
+        section = Section.objects.get(school=school, section=sec)
+
+        whole_class = True
+        student_id = self.kwargs['student']
+        if student_id != 'na':
+            student = Student.objects.get(id=student_id)
+            whole_class = False
+
+        if whole_class:
+            stude
+
+
+        exams = Exam.objects.filter(school=school, exam_type='term')

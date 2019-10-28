@@ -99,7 +99,6 @@ class UploadMarks(generics.ListCreateAPIView):
         return render(request, 'classup/setup_index.html', context_dict)
 
 
-
 def setup_scheme(request):
     context_dict = {'user_type': 'school_admin', 'school_name': request.session['school_name']}
 

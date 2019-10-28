@@ -22,7 +22,7 @@ class StudentTotalMarksAdmin(admin.ModelAdmin):
 @admin.register(ExamHighestAverage)
 class ExamHighestAverageAdmin(admin.ModelAdmin):
     def get_school_name(self, obj):
-        return obj.student.school
+        return obj.the_class.school
     get_school_name.short_description = 'School'
 
     list_display = ('get_school_name', 'exam', 'the_class', 'section', 'highest', 'average',)
