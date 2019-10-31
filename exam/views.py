@@ -625,14 +625,15 @@ def prepare_results(request, school_id, the_class, section):
         print (selected_student)
 
         if whole_class == 'true':
-            pdf_name = the_class + '-' + section + '_Term1_Results.pdf'
+            pdf_name = '%s-%s%s' % (the_class, section, '_Term1_Results.pdf')
+            # pdf_name = the_class + '-' + section + '_Term1_Results.pdf'
         else:
             adm_no = selected_student.partition('(')[-1].rpartition(')')[0]
             print('admission/registrtion no is %s' % adm_no)
             s = Student.objects.get(school=school, student_erp_id=adm_no)
             print(s)
             selected_student = ('%s_%s' % (s.fist_name, s.last_name))
-            print('selectd_student now = %s' % selected_student)
+            print('selected_student now = %s' % selected_student)
             pdf_name = ('%s_%s_TermI_Results.pdf' % (s.fist_name, s.last_name))
             print('pdf_name = %s' % pdf_name)
         print('pdf file generated will be %s' % pdf_name)
@@ -853,8 +854,8 @@ def prepare_results(request, school_id, the_class, section):
             c.drawString(152, session_top + 2, session)
             print('heading created')
 
-            report_card = 'Report Card for Class ' + the_class + '-' + section
-            c.drawString(146, report_card_top + 2, report_card)
+            heading = 'Performance Analysis Sheet '
+            c.drawString(146, report_card_top + 2, heading)
 
             c.setFont(font, 10)
             c.drawString(left_margin, stu_detail_top, adm_no_lbl)

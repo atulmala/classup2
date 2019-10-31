@@ -41,4 +41,10 @@ class StudentTotalMarks(models.Model):
     student = models.ForeignKey(Student)
     exam = models.ForeignKey(Exam)
     total_marks = models.DecimalField(max_digits=6, decimal_places=2)
+    percentage = models.DecimalField(max_digits=6, decimal_places=2, default=0.0)
+    rank = models.IntegerField(default=0)
+    out_of = models.IntegerField(default=0)
+
+
+
 

@@ -3,7 +3,6 @@ from django.conf.urls import url, patterns
 from student import views as student_view
 from . import views
 
-
 urlpatterns = patterns(
     '',
     url(r'^setup_third_lang/$', views.setup_third_lang, name='setup_third_lang'),
@@ -18,7 +17,7 @@ urlpatterns = patterns(
     url(r'^term_results/academics/prepare_results/(?P<school_id>\w+)/(?P<the_class>[\w.@+-]+)/(?P<section>[\w.@+-]+)/$',
         views.prepare_results, name='prepare_results'),
 
-    url (r'^setup_higher_class_subject_mapping/$', views.setup_higher_class_subject_mapping,
+    url(r'^setup_higher_class_subject_mapping/$', views.setup_higher_class_subject_mapping,
          name='setup_higher_class_subject_mapping'),
 
     url (r'result_sheet/$', views.ResultSheet.as_view(), name='result_sheet'),

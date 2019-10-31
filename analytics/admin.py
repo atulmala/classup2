@@ -14,7 +14,8 @@ class StudentTotalMarksAdmin(admin.ModelAdmin):
         return '%s-%s' % (obj.student.current_class, obj.student.current_section)
     get_class.short_description = 'Class'
 
-    list_display = ('get_school_name', 'student', 'get_class', 'exam', 'total_marks',)
+    list_display = ('get_school_name', 'student', 'get_class', 'exam',
+                    'total_marks', 'percentage', 'rank', 'out_of')
     list_filter = ('student__school',)
     search_fields = ('student__fist_name', 'student__current_class__standard')
 
