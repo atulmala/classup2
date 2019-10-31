@@ -1,7 +1,7 @@
 import ast
 import statistics
 
-from django.db.models import Sum, Avg, Count
+from django.db.models import Sum, Count
 from django.http import HttpResponse
 from reportlab.lib.colors import black
 from rest_framework import generics
@@ -9,11 +9,9 @@ from rest_framework.authentication import SessionAuthentication, BasicAuthentica
 
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.units import inch, cm
+from reportlab.lib.units import inch
 from reportlab.lib import colors
-from reportlab.graphics.shapes import Rect
 from reportlab.graphics.charts.textlabels import Label
-from reportlab.platypus import Table, TableStyle
 from reportlab.graphics.shapes import Drawing
 from reportlab.graphics.charts.barcharts import VerticalBarChart
 
@@ -21,8 +19,8 @@ from authentication.views import JSONResponse
 
 from setup.models import School
 from student.models import Student
-from academics.models import Class, Section, Subject, Exam, ClassTest, TestResults, TermTestResult, ThirdLang
-from exam.models import Wing, Scheme, Marksheet
+from academics.models import Class, Section, Subject, Exam, ClassTest, TestResults, TermTestResult
+from exam.models import Wing, Marksheet
 from .models import SubjectAnalysis, SubjectHighestAverage, ExamHighestAverage, StudentTotalMarks
 
 
@@ -487,7 +485,6 @@ class StudentPerformanceAnalysis(generics.ListCreateAPIView):
 
             c.setFont(font, 6)
             dy = inch * 3 / 4.0
-            dx = inch * 5.5 / 5
             w = h = dy / 6
             c.setFillColorRGB(1, 0, 0)
             c.rect(tab, stu_detail_top - 40, w, h, fill=1)
@@ -508,6 +505,8 @@ class StudentPerformanceAnalysis(generics.ListCreateAPIView):
                 title = exam.title
                 subject_analysis = SubjectAnalysis.objects.filter(student=student, exam=exam)
                 if subject_analysis.count() > 0:
+                    print('generating analytics for %s of %s-%s' % (student, student.current_class,
+                                                                    student.current_section))
                     c.drawString(left_margin, analytics_top, title)
                     c.drawString(left_margin, analytics_top - 10, 'Subject-wise comparative Analysis')
 
@@ -599,6 +598,7 @@ class StudentPerformanceAnalysis(generics.ListCreateAPIView):
                         c.drawString(left_margin + 489, analytics_top - 135, str(rank))
                     c.drawString(left_margin + 486, analytics_top - 148, str(out_of))
 
+                    analytics_top -= 300
             c.showPage()
         try:
             c.save()
