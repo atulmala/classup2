@@ -1,5 +1,5 @@
-
 import ast
+import json
 
 from PIL import Image
 from decimal import Decimal
@@ -30,6 +30,7 @@ from setup.models import Configurations
 from setup.forms import ExcelFileUploadForm
 from setup.models import School
 from setup.views import validate_excel_extension
+from formats.formats import Formats as format
 
 from student.models import Student, DOB, AdditionalDetails, House
 from academics.models import Class, Section, Subject, ThirdLang, ClassTest, \
@@ -45,12 +46,11 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
         return  # To not perform the csrf check previously happening
 
 
-@parser_classes((MultiPartParser, ))
+@parser_classes((MultiPartParser,))
 class UploadMarks(generics.ListCreateAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
     def post(self, request, format=None):
-        context_dict = {}
         print('resuest = ')
         print(request.FILES)
         context_dict = {
@@ -58,7 +58,7 @@ class UploadMarks(generics.ListCreateAPIView):
         }
 
         try:
-            print ('now starting to process the uploaded file for fee upload...')
+            print ('now starting to process the uploaded file for marks upload...')
             fileToProcess_handle = request.FILES['computer_marks.xlsx']
 
             # check that the file uploaded should be a valid excel
@@ -175,14 +175,14 @@ def setup_scheme(request):
                         except Exception as e:
                             print('scheme of subject %s of class %s of school %s is not set yet. This will be created' %
                                   (sub, standard, school.school_name))
-                            print('exception 201117-C from exam views.py %s %s'% (e.message, type(e)))
+                            print('exception 201117-C from exam views.py %s %s' % (e.message, type(e)))
                             try:
                                 scheme = Scheme(school=school, the_class=the_class, sequence=sequence, subject=subject)
                                 scheme.save()
                                 print ('successfully created the scheme of subject %s of class %s of school %s' %
                                        (sub, standard, school.school_name))
                             except Exception as e:
-                                print ('failed in creating the scheme of subject %s of class %s of school %s'%
+                                print ('failed in creating the scheme of subject %s of class %s of school %s' %
                                        (sub, standard, school.school_name))
                                 print ('exception 021117-D from exam views.py %s %s' % (e.message, type(e)))
 
@@ -207,7 +207,7 @@ def setup_higher_class_subject_mapping(request):
     maths_stream = ['English', 'Mathematics', 'Physics', 'Chemistry']
     biology_stream = ['English', 'Biology', 'Physics', 'Chemistry']
     commerce_stream = ['English', 'Economics', 'Accountancy', 'Business Studies']
-    humanities_stream = ['English', 'Socialogy', 'History', 'Economics' ]
+    humanities_stream = ['English', 'Socialogy', 'History', 'Economics']
     maths = 'Mathematics'
     bio = 'Biology'
     commerce = 'Commerce'
@@ -231,7 +231,6 @@ def setup_higher_class_subject_mapping(request):
             try:
                 print ('now starting to process the uploaded file for Higher classes subject mapping...')
                 fileToProcess_handle = request.FILES['excelFile']
-
                 # check that the file uploaded should be a valid excel
                 # file with .xls or .xlsx
                 if not validate_excel_extension(fileToProcess_handle, form, context_dict):
@@ -261,7 +260,7 @@ def setup_higher_class_subject_mapping(request):
                                 try:
                                     m_stream = Stream.objects.get(stream='Mathematics')
                                     stream_mapping = StreamMapping.objects.get_or_create(student=student,
-                                                                                         stream = m_stream)
+                                                                                         stream=m_stream)
                                     print('set Mathematics for %s' % student)
                                     print(stream_mapping)
                                 except Exception as e:
@@ -275,7 +274,7 @@ def setup_higher_class_subject_mapping(request):
                                 try:
                                     b_stream = Stream.objects.get(stream='Biology')
                                     stream_mapping = StreamMapping.objects.get_or_create(student=student,
-                                                                                         stream = b_stream)
+                                                                                         stream=b_stream)
                                     print('set biology for %s' % student)
                                     print(stream_mapping)
                                 except Exception as e:
@@ -289,7 +288,7 @@ def setup_higher_class_subject_mapping(request):
                                 try:
                                     c_stream = Stream.objects.get(stream='Commerce')
                                     stream_mapping = StreamMapping.objects.get_or_create(student=student,
-                                                                                         stream = c_stream)
+                                                                                         stream=c_stream)
                                     print('set Commerce for %s' % student)
                                     print(stream_mapping)
                                 except Exception as e:
@@ -303,7 +302,7 @@ def setup_higher_class_subject_mapping(request):
                                 try:
                                     h_stream = Stream.objects.get(stream='Humanities')
                                     stream_mapping = StreamMapping.objects.get_or_create(student=student,
-                                                                                         stream = h_stream)
+                                                                                         stream=h_stream)
                                     print('set Humanities for %s' % student)
                                     print(stream_mapping)
                                 except Exception as e:
@@ -327,10 +326,12 @@ def setup_higher_class_subject_mapping(request):
                                     subject = Subject.objects.get(school=school, subject_name=sub)
                                     print('retrieved the subject object for %s' % sub)
                                     mapping = HigherClassMapping.objects.get(student=student, subject=subject)
-                                    print ('subject %s mapping for %s already exist. Not doing again.' % (sub, student_name))
+                                    print ('subject %s mapping for %s already exist. Not doing again.' % (
+                                        sub, student_name))
                                 except Exception as e:
                                     print ('exception 141117-C from exam views.py %s %s' % (e.message, type(e)))
-                                    print ('subject %s mapping for %s does not exist. Hence creating...' % (sub, student_name))
+                                    print ('subject %s mapping for %s does not exist. Hence creating...' % (
+                                        sub, student_name))
                                     try:
                                         mapping = HigherClassMapping(student=student, subject=subject)
                                         mapping.save()
@@ -406,7 +407,7 @@ def setup_third_lang(request):
                     # 31/10/2017 - get the third language
                     t_l = sheet.cell(row, 5).value
                     print('third language specified for %s %s in the sheet is %s' %
-                        (student.fist_name, student.last_name, t_l))
+                          (student.fist_name, student.last_name, t_l))
                     try:
                         third_lang = Subject.objects.get(school=school, subject_name=t_l)
                     except Exception as e:
@@ -416,18 +417,18 @@ def setup_third_lang(request):
                     try:
                         record = ThirdLang.objects.get(student=student)
                         print('third language for %s %s is already set as %s. This will be updated' %
-                            (student.fist_name, student.last_name, record.third_lang.subject_name))
+                              (student.fist_name, student.last_name, record.third_lang.subject_name))
                         print ('third language ' + student.fist_name + ' ' +
                                student.last_name + ' already exists. This will be updated')
                         try:
                             record.third_lang = third_lang
                             record.save()
                             print('successfully updated third language for %s %s as %s' %
-                                (student.fist_name, student.last_name, t_l))
+                                  (student.fist_name, student.last_name, t_l))
                             print ('successfully updated the third language for ' +
                                    student.fist_name, ' ' + student.last_name)
                         except Exception as e:
-                            print ('failed to update the third language for '+
+                            print ('failed to update the third language for ' +
                                    student.fist_name, ' ' + student.last_name)
                             print ('(exception 311017-B from exam views.py %s %s) ' % (e.message, type(e)))
                     except Exception as e:
@@ -576,46 +577,51 @@ def prepare_results(request, school_id, the_class, section):
         print('failed to retrieve the short name for %s' % school_name)
         print('exception 04022018-A from exam views.py %s %s' % (e.message, type(e)))
 
-    try:
-        jc = Wing.objects.get(school=school, wing='junior_classes')
-        junior_classes = ast.literal_eval(jc.classes)
-        print('junior_classes for %s are: ' % school)
-        print(junior_classes)
-    except Exception as e:
-        print('exception 26092019-A from exam views.py %s %s' % (e.message, type(e)))
-        print('junior_classes not defined for %s' % school)
-        junior_classes = ['not defined']
-
-    try:
-        mc = Wing.objects.get(school=school, wing='middle_classes')
-        print('raw middle_classes retrieved for %s: %s. Will be converted to proper string now' %
-              (school, mc.classes))
-        middle_classes = ast.literal_eval(mc.classes)
-        print('middle_classes for %s are: ' % school)
-        print(middle_classes)
-    except Exception as e:
-        print('exception 26092019-B from exam views.py %s %s' % (e.message, type(e)))
-        print('middle_classes not defined for %s' % school)
-        middle_classes = ['not defined']
-
-    try:
-        nt = Wing.objects.get(school=school, wing='ninth_tenth')
-        ninth_tenth = ast.literal_eval(nt.classes)
-        print('ninth_tenth for %s are: ' % school)
-        print(ninth_tenth)
-    except Exception as e:
-        print('exception 26092019-C from exam views.py %s %s' % (e.message, type(e)))
-        print('ninth_tenth not defined for %s' % school)
-        ninth_tenth = ['not defined']
-
-    try:
-        hc = Wing.objects.get(school=school, wing='higher_classes')
-        higher_classes = ast.literal_eval(hc.classes)
-        print('higher_classes for %s are: ' % school)
-        print(higher_classes)
-    except Exception as e:
-        print('exception 26092019-D from exam views.py %s %s' % (e.message, type(e)))
-        print('higher_classes not defined for %s' % school)
+    wings = get_wings(school)
+    junior_classes = wings['junior_classes']
+    middle_classes = wings['middle_classes']
+    ninth_tenth = wings['ninth_tenth']
+    higher_classes = wings['higher_classes']
+    # try:
+    #     jc = Wing.objects.get(school=school, wing='junior_classes')
+    #     junior_classes = ast.literal_eval(jc.classes)
+    #     print('junior_classes for %s are: ' % school)
+    #     print(junior_classes)
+    # except Exception as e:
+    #     print('exception 26092019-A from exam views.py %s %s' % (e.message, type(e)))
+    #     print('junior_classes not defined for %s' % school)
+    #     junior_classes = ['not defined']
+    #
+    # try:
+    #     mc = Wing.objects.get(school=school, wing='middle_classes')
+    #     print('raw middle_classes retrieved for %s: %s. Will be converted to proper string now' %
+    #           (school, mc.classes))
+    #     middle_classes = ast.literal_eval(mc.classes)
+    #     print('middle_classes for %s are: ' % school)
+    #     print(middle_classes)
+    # except Exception as e:
+    #     print('exception 26092019-B from exam views.py %s %s' % (e.message, type(e)))
+    #     print('middle_classes not defined for %s' % school)
+    #     middle_classes = ['not defined']
+    #
+    # try:
+    #     nt = Wing.objects.get(school=school, wing='ninth_tenth')
+    #     ninth_tenth = ast.literal_eval(nt.classes)
+    #     print('ninth_tenth for %s are: ' % school)
+    #     print(ninth_tenth)
+    # except Exception as e:
+    #     print('exception 26092019-C from exam views.py %s %s' % (e.message, type(e)))
+    #     print('ninth_tenth not defined for %s' % school)
+    #     ninth_tenth = ['not defined']
+    #
+    # try:
+    #     hc = Wing.objects.get(school=school, wing='higher_classes')
+    #     higher_classes = ast.literal_eval(hc.classes)
+    #     print('higher_classes for %s are: ' % school)
+    #     print(higher_classes)
+    # except Exception as e:
+    #     print('exception 26092019-D from exam views.py %s %s' % (e.message, type(e)))
+    #     print('higher_classes not defined for %s' % school)
 
     if request.method == 'GET':
         print(request.body)
@@ -673,7 +679,7 @@ def prepare_results(request, school_id, the_class, section):
             # blob.download_to_filename('exam/cbse_logo.png')
             blob.download_to_filename('exam/board_logo.png')
             # cbse_logo = Image.open('exam/cbse_logo.png')
-            #blob.download_to_filename('exam/cbse_logo.png')
+            # blob.download_to_filename('exam/cbse_logo.png')
             board_logo = Image.open('exam/board_logo.png')
             print('board logo downloaded')
 
@@ -791,29 +797,29 @@ def prepare_results(request, school_id, the_class, section):
         if the_class in ninth_tenth:
             print('result being prepared for class %s, hence only final Term Results will be prepared' % the_class)
             style1 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-                        ('BOX', (0, 0), (-1, -1), 1, colors.black),
-                        ('TOPPADDING', (0, 0), (-1, -1), 1),
-                        ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
-                        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                        ('ALIGN', (1, 0), (7, 0), 'CENTER'),
-                        ('SPAN', (1, 0), (7, 0)),
-                        ('FONTSIZE', (0, 0), (-1, -1), 7),
-                        ('FONT', (0, 0), (6, 0), 'Times-Bold'),
-                        ('FONT', (0, 1), (0, 1), 'Times-Bold')]
+                      ('BOX', (0, 0), (-1, -1), 1, colors.black),
+                      ('TOPPADDING', (0, 0), (-1, -1), 1),
+                      ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+                      ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                      ('ALIGN', (1, 0), (7, 0), 'CENTER'),
+                      ('SPAN', (1, 0), (7, 0)),
+                      ('FONTSIZE', (0, 0), (-1, -1), 7),
+                      ('FONT', (0, 0), (6, 0), 'Times-Bold'),
+                      ('FONT', (0, 1), (0, 1), 'Times-Bold')]
 
             style2 = style3 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-                                ('BOX', (0, 0), (-1, -1), 1, colors.black),
-                                ('TOPPADDING', (0, 0), (-1, -1), 1),
-                                ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
-                                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                                ('ALIGN', (0, 0), (1, 0), 'RIGHT'),
-                                ('SPAN', (0, 0), (1, 0)),
-                                ('FONTSIZE', (0, 0), (-1, -1), 8),
-                                ('FONT', (0, 0), (1, 0), 'Times-Bold')]
+                               ('BOX', (0, 0), (-1, -1), 1, colors.black),
+                               ('TOPPADDING', (0, 0), (-1, -1), 1),
+                               ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+                               ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                               ('ALIGN', (0, 0), (1, 0), 'RIGHT'),
+                               ('SPAN', (0, 0), (1, 0)),
+                               ('FONTSIZE', (0, 0), (-1, -1), 8),
+                               ('FONT', (0, 0), (1, 0), 'Times-Bold')]
 
         style4 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black), ('TOPPADDING', (0, 0), (-1, -1), 1),
-                      ('BOTTOMPADDING', (0, 0), (-1, -1), 1), ('FONT', (0, 0), (1, 0), 'Times-Bold'),
-                    ('FONTSIZE', (0, 0), (-1, -1), 6)]
+                  ('BOTTOMPADDING', (0, 0), (-1, -1), 1), ('FONT', (0, 0), (1, 0), 'Times-Bold'),
+                  ('FONTSIZE', (0, 0), (-1, -1), 6)]
 
         data4 = [['MARKS RANGE', 'GRADE'],
                  ['91 - 100', 'A 1'],
@@ -842,11 +848,11 @@ def prepare_results(request, school_id, the_class, section):
             font = 'Times-Bold'
             c.setFont(font, 14)
 
-            c.drawString(title_start, top+20, school_name)
+            c.drawString(title_start, top + 20, school_name)
             c.setFont(font, 10)
-            c.drawString(address_start, top+7, school_address)
+            c.drawString(address_start, top + 7, school_address)
             c.setFont(font, 8)
-            c.drawString(180, top-4, '(%s)' % affiliation)
+            c.drawString(180, top - 4, '(%s)' % affiliation)
             c.setFont(font, 10)
             c.line(-30, line_top, 6.75 * inch, line_top)
 
@@ -900,7 +906,6 @@ def prepare_results(request, school_id, the_class, section):
             except Exception as e:
                 print ('date of birth not yet set for %s %s ' % (s.fist_name, s.last_name))
                 print('Exception 23102017-A from exam views.py %s %s ' % (e.message, type(e)))
-
 
             print('report heading prepared')
 
@@ -1018,13 +1023,13 @@ def prepare_results(request, school_id, the_class, section):
 
                                 # this is a half yearly or annual exam. The possibility of practical marks...
                                 if subject.subject_prac:
-                                # if sub in prac_subjects:
+                                    # if sub in prac_subjects:
                                     print('%s has practical component' % (sub))
                                     prac_marks = float(term_test_results.prac_marks)
                                     if prac_marks < 0.0:
-                                    #     if index == 0 and subject.subject_name in commerce_sub:
-                                    #         prac_marks = 'NA'
-                                    #     else:
+                                        #     if index == 0 and subject.subject_name in commerce_sub:
+                                        #         prac_marks = 'NA'
+                                        #     else:
                                         prac_marks = ' '
                                         tot_marks = marks
                                     else:
@@ -1048,7 +1053,7 @@ def prepare_results(request, school_id, the_class, section):
                                 sub_row.append(prac_marks)
                                 sub_row.append(tot_marks)
 
-                                if index == 0: # we are dealing with half-yearly exam
+                                if index == 0:  # we are dealing with half-yearly exam
                                     print('dealing with half yearly exam')
                                     # 20/02/2019 only theory marks will be considered in the cumulative
                                     # if subject.subject_prac:
@@ -1063,36 +1068,36 @@ def prepare_results(request, school_id, the_class, section):
                                     half_yearly_marks = tot_marks
                                     print('half yearly marks =')
                                     print(half_yearly_marks)
-                                if index == 1: # we are dealing with final exam
+                                if index == 1:  # we are dealing with final exam
                                     print('dealing with final exam')
                                     if subject.subject_prac:
-                                    # if sub in prac_subjects:
+                                        # if sub in prac_subjects:
                                         final_marks = tot_marks - prac_marks
                                     else:
                                         final_marks = tot_marks
                                     print('final marks = ')
                                     print(final_marks)
-                                #index += 1
+                                # index += 1
                             except Exception as e:
                                 print('exception 15022019-B from exam views.py %s %s' % (e.message, type(e)))
                                 print('term test for %s not created for %s' % (a_term_exam, subject))
                                 for component in ['Th', 'Prac', 'Total']:
                                     sub_row.append(' ')
-                                #index += 1
+                                # index += 1
                             index += 1
 
                         # calculate the cumulative result for this subject. UTs & Half yearly weightage is 25% each
                         #  & final exam weightage is 50%
                         grand_total = 0.0
                         try:
-                            ut_cumul = round(ut_total/float(3), 2)
+                            ut_cumul = round(ut_total / float(3), 2)
                             grand_total += ut_cumul
                             # 29/09/2019 - uncomment when preparing result for final exam
                             # sub_row.append(ut_cumul)
 
                             # 20/02/2019 cumulative for half yearly to be calculated out of 70 if the subject
                             # has practical component
-                            #if sub in prac_subjects:
+                            # if sub in prac_subjects:
                             commerce_sub = ['Economics', 'Accountancy', 'Business Studies']
                             if half_yearly_marks != 'ABS':
                                 # if subject.subject_name not in commerce_sub:
@@ -1109,14 +1114,14 @@ def prepare_results(request, school_id, the_class, section):
                             # sub_row.append(half_year_cumul)
 
                             if final_marks != 'ABS':
-                                final_cumul = round(final_marks*float(50)/float(subject.theory_marks), 2)
+                                final_cumul = round(final_marks * float(50) / float(subject.theory_marks), 2)
                                 grand_total += final_cumul
                             else:
                                 final_cumul = 'ABS'
 
                             # 29/09/2019 - uncomment while generating result for final exam
                             # sub_row.append(final_cumul)
-                            #grand_total = ut_cumul + half_year_cumul + final_cumul
+                            # grand_total = ut_cumul + half_year_cumul + final_cumul
                             # sub_row.append(grand_total)
                         except Exception as e:
                             print('failed to enter Cumulative Result. This may be because certain marks not entered')
@@ -1134,7 +1139,7 @@ def prepare_results(request, school_id, the_class, section):
                     print('theory_prac_split = %s' % theory_prac_split)
                     c.drawString(left_margin, table1_top - 20, theory_prac_split)
                     split_2 = ms.split_2
-                    c.drawString(left_margin, table1_top-30, split_2)
+                    c.drawString(left_margin, table1_top - 30, split_2)
                 except Exception as e:
                     print('Error while preparing results for class: %s' % (the_class))
                     print ('Exception 25022018-A from exam views.py %s %s' % (e.message, type(e)))
@@ -1168,7 +1173,7 @@ def prepare_results(request, school_id, the_class, section):
                         dscpln_array.append(dscpln)
                     except Exception as e:
                         print('failed to retrieve %s Co-scholastic grades for %s %s for ' %
-                                    ('Term2', s.fist_name, s.last_name))
+                              ('Term2', s.fist_name, s.last_name))
                         print('exception 20032017-X from exam views.py %s %s' % (e.message, type(e)))
                 except Exception as e:
                     print('failed to retrieve Co-scholastic grades for %s %s for ' % (s.fist_name, s.last_name))
@@ -1253,8 +1258,8 @@ def prepare_results(request, school_id, the_class, section):
                         for idx, term in enumerate(terms):
                             print(term)
                             # for class IX, only the result of Term2, ie the final exam is to be shown
-                            #if term == 'Term1' and the_class in ninth_tenth:
-                                #continue
+                            # if term == 'Term1' and the_class in ninth_tenth:
+                            # continue
 
                             # exam =  Exam.objects.get(school=school, title=term)
                             # print(exam)
@@ -1288,7 +1293,8 @@ def prepare_results(request, school_id, the_class, section):
                                     notebook = ttr.note_book_marks
                                     sub_enrich = ttr.sub_enrich_marks
                                     main = tr.marks_obtained
-                                    total = float(main) + float(pa) + float(multi_assess) + float(notebook) + float(sub_enrich)
+                                    total = float(main) + float(pa) + float(multi_assess) + float(notebook) + float(
+                                        sub_enrich)
                                     print(total)
 
                                     if the_class in ninth_tenth:
@@ -1311,7 +1317,8 @@ def prepare_results(request, school_id, the_class, section):
                                     if the_class not in ninth_tenth:
                                         if float(main) < 0.0:
                                             main = 'ABS'
-                                            total = float(pa) + float(multi_assess) + float(notebook) + float(sub_enrich)
+                                            total = float(pa) + float(multi_assess) + float(notebook) + float(
+                                                sub_enrich)
                                         grade = get_grade(total)
                                         print('grade obtained by %s in %s exam of %s: %s' %
                                               (s.fist_name, term, sub.subject_name, grade))
@@ -1382,8 +1389,8 @@ def prepare_results(request, school_id, the_class, section):
 
                     for term in terms:
                         # for class IX, only the result of Term2, ie the final exam is to be shown
-                        #if term == 'Term1' and the_class in ninth_tenth:
-                            #continue
+                        # if term == 'Term1' and the_class in ninth_tenth:
+                        # continue
                         try:
                             co_scl = CoScholastics.objects.get(term=term, student=s)
                             work_array.append('Work Education (or Pre-vocational Education)')
@@ -1463,7 +1470,6 @@ def prepare_results(request, school_id, the_class, section):
                             print('exception 28092019-A from exam views.py %s %s' % (e.message, type(e)))
                             print('attendance recored not available for %s' % s)
 
-
                     if the_class not in ninth_tenth:
                         c.drawString(left_margin, table3_top - 35, 'Promoted to Class: ')
                         promoted_status = 'N/A'
@@ -1489,7 +1495,7 @@ def prepare_results(request, school_id, the_class, section):
                         c.drawString(tab - 20, table3_top - 35, promoted_status)
 
                     c.drawString(left_margin, table3_top - 55, 'Place & Date:')
-                    #c.drawString(left_margin + 50, table3_top - 55, 'Noida   26/03/2018')
+                    # c.drawString(left_margin + 50, table3_top - 55, 'Noida   26/03/2018')
                     c.drawString(175, table3_top - 55, 'Signature of Class Teacher')
                     c.drawString(400, table3_top - 55, 'Signature of Principal')
                 except Exception as e:
@@ -1593,1212 +1599,1144 @@ def prepare_results(request, school_id, the_class, section):
     return HttpResponse()
 
 
+def get_wings(school):
+    wings = {
+
+    }
+    try:
+        jc = Wing.objects.get(school=school, wing='junior_classes')
+        junior_classes = ast.literal_eval(jc.classes)
+        print('junior_classes for %s are: ' % school)
+        print(junior_classes)
+    except Exception as e:
+        print('exception 26092019-A from exam views.py %s %s' % (e.message, type(e)))
+        print('junior_classes not defined for %s' % school)
+        junior_classes = ['not defined']
+    wings['junior_classes'] = junior_classes
+
+    try:
+        mc = Wing.objects.get(school=school, wing='middle_classes')
+        print('raw middle_classes retrieved for %s: %s. Will be converted to proper string now' %
+              (school, mc.classes))
+        middle_classes = ast.literal_eval(mc.classes)
+        print('middle_classes for %s are: ' % school)
+        print(middle_classes)
+    except Exception as e:
+        print('exception 26092019-B from exam views.py %s %s' % (e.message, type(e)))
+        print('middle_classes not defined for %s' % school)
+        middle_classes = ['not defined']
+    wings['middle_classes'] = middle_classes
+
+    try:
+        nt = Wing.objects.get(school=school, wing='ninth_tenth')
+        ninth_tenth = ast.literal_eval(nt.classes)
+        print('ninth_tenth for %s are: ' % school)
+        print(ninth_tenth)
+    except Exception as e:
+        print('exception 26092019-C from exam views.py %s %s' % (e.message, type(e)))
+        print('ninth_tenth not defined for %s' % school)
+        ninth_tenth = ['not defined']
+    wings['ninth_tenth'] = ninth_tenth
+
+    try:
+        hc = Wing.objects.get(school=school, wing='higher_classes')
+        higher_classes = ast.literal_eval(hc.classes)
+        print('higher_classes for %s are: ' % school)
+        print(higher_classes)
+    except Exception as e:
+        print('exception 26092019-D from exam views.py %s %s' % (e.message, type(e)))
+        print('higher_classes not defined for %s' % school)
+        higher_classes = ['not defined']
+    wings['higher_classes'] = higher_classes
+
+    return wings
+
+
 class ResultSheet(generics.ListCreateAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
     def get(self, request, *args, **kwargs):
-        context_dict = {
+        school_id = request.query_params.get('school_id')
+        school = School.objects.get(id=school_id)
+        standard = request.query_params.get('the_class')
+        the_class = Class.objects.get(school=school, standard=standard)
+        sec = request.query_params.get('section')
+        section = Section.objects.get(school=school, section=sec)
+        print ('result sheet will be generated for %s-%s' % (the_class.standard, section.section))
 
-        }
-        context_dict['school_name'] = request.session['school_name']
-        context_dict['header'] = 'Download Result Sheets'
+        wings = get_wings(school)
+        junior_classes = wings['junior_classes']
+        middle_classes = wings['middle_classes']
+        ninth_tenth = wings['ninth_tenth']
+        higher_classes = wings['higher_classes']
 
-        if request.session['user_type'] == 'school_admin':
-            context_dict['user_type'] = 'school_admin'
+        excel_file_name = 'Result_Sheet_%s-%s.xlsx' % (str(the_class.standard), str(section.section))
+        print('excel_file_name = %s' % excel_file_name)
 
-        school_id = request.session['school_id']
-        form = ResultSheetForm(school_id=school_id)
-        context_dict['form'] = form
-        return render(request, 'classup/result_sheet.html', context_dict)
+        output = StringIO.StringIO(excel_file_name)
+        workbook = xlsxwriter.Workbook(output)
+        result_sheet = workbook.add_worksheet("Result Sheet")
 
-    def post(self, request, *args, **kwargs):
-        context_dict = {
+        border = workbook.add_format()
+        border.set_border()
 
-        }
-        context_dict['school_name'] = request.session['school_name']
-        context_dict['header'] = 'Download Result Sheets'
+        fmt = format()
+        title = workbook.add_format(fmt.get_title())
+        header = workbook.add_format(fmt.get_header())
 
-        if request.session['user_type'] == 'school_admin':
-            context_dict['user_type'] = 'school_admin'
-        if "cancel" in request.POST:
-            return render(request, 'classup/result_sheet.html', context_dict)
+        cell_normal = workbook.add_format(fmt.get_cell_normal())
+        cell_normal.set_border()
+        cell_bold = workbook.add_format(fmt.get_cell_bold())
+        cell_bold.set_border()
+        cell_component = workbook.add_format(fmt.get_cell_component())
+        cell_component.set_border()
+        cell_center = workbook.add_format(fmt.get_cell_center())
+        cell_center.set_border()
+        vertical_text = workbook.add_format(fmt.get_vertical_text())
+        vertical_text.set_border()
+        perc_format = workbook.add_format(fmt.get_perc_format())
+        cell_grade = workbook.add_format(fmt.get_cell_grade())
+        cell_small = workbook.add_format(fmt.get_cell_small())
+        fail_format = workbook.add_format()
+        fail_format.set_bg_color('yellow')
+
+        school_name = school.school_name + ' ' + school.school_address
+        result_sheet.merge_range('A1:AI1', school_name, title)
+
+        title_text = 'CONSOLIDATED RESULT SHEET (2018-2019) FOR CLASS %s-%s' % \
+                     (the_class.standard, section.section)
+        print (title_text)
+        result_sheet.merge_range('A2:AI2', title_text, title)
+
+        # get the name of the class teacher
+        class_teacher = 'N/A'
+        try:
+            ct = ClassTeacher.objects.get(school=school, standard=the_class, section=section)
+            class_teacher = '%s %s' % (ct.class_teacher.first_name, ct.class_teacher.last_name)
+            print ('class teacher for class %s-%s is %s' %
+                   (the_class.standard, section.section, class_teacher))
+        except Exception as e:
+            print ('exception 19012018-A from exam views.py %s %s' % (e.message, type(e)))
+            print ('class teacher for class %s-%s is not set!' % (the_class.standard, section.section))
+        result_sheet.merge_range('A3:AI3', ('CLASS TEACHER: %s' % class_teacher), header)
+
+        row = 3
+        col = 0
+        result_sheet.set_column(col, col, 3)
+
+        if the_class.standard in higher_classes:
+            result_sheet.merge_range(row, col, row + 2, col, 'S No', cell_center)
         else:
-            school_id = request.session['school_id']
-            school = School.objects.get(id=school_id)
-            form = ResultSheetForm(request.POST, school_id=school_id)
+            result_sheet.merge_range(row, col, row + 1, col, 'S No', cell_center)
+        col += 1
+        result_sheet.set_column(col, col, 3)
+
+        if the_class.standard in higher_classes:
+            result_sheet.merge_range(row, col, row + 2, col, 'House', vertical_text)
+        else:
+            result_sheet.merge_range(row, col, row + 1, col, 'House', vertical_text)
+        col += 1
+
+        result_sheet.set_column(col, col, 14)
+
+        if the_class.standard in higher_classes:
+            result_sheet.merge_range(row, col, row + 2, col, 'Student Name\nAdmission/Reg No', cell_center)
+        else:
+            result_sheet.merge_range(row, col, row + 1, col, 'Student Name\nAdmission/Reg No', cell_center)
+        col += 1
+
+        if the_class.standard not in higher_classes:
+            try:
+                scheme = Scheme.objects.filter(school=school, the_class=the_class)
+                sub_count = scheme.count()
+                sub_list = []
+                for sc in scheme:
+                    sub_list.append(sc.subject.subject_name)
+                    print('sub_list = ')
+                    print (sub_list)
+            except Exception as e:
+                print('exception 19102018-A from academics views.py %s (%s)' % (e.message, type(e)))
+                print('looks the exam scheme is not yet set for class %s of %s' %
+                      (the_class.standard, school_name))
+
+            terms = ['Term I', 'Term II']
+            if the_class in ninth_tenth:
+                terms = ['Academic Year']
+            term_comp = ['Tot', '%', 'Grade', 'Rank']
 
             try:
-                jc = Wing.objects.get(school=school, wing='junior_classes')
-                junior_classes = ast.literal_eval(jc.classes)
-                print('junior_classes for %s are: ' % school)
-                print(junior_classes)
-            except Exception as e:
-                print('exception 26092019-A from exam views.py %s %s' % (e.message, type(e)))
-                print('junior_classes not defined for %s' % school)
-                junior_classes = ['not defined']
-
-            try:
-                mc = Wing.objects.get(school=school, wing='middle_classes')
-                print('raw middle_classes retrieved for %s: %s. Will be converted to proper string now' %
-                      (school, mc.classes))
-                middle_classes = ast.literal_eval(mc.classes)
-                print('middle_classes for %s are: ' % school)
-                print(middle_classes)
-            except Exception as e:
-                print('exception 26092019-B from exam views.py %s %s' % (e.message, type(e)))
-                print('middle_classes not defined for %s' % school)
-                middle_classes = ['not defined']
-
-            try:
-                nt = Wing.objects.get(school=school, wing='ninth_tenth')
-                ninth_tenth = ast.literal_eval(nt.classes)
-                print('ninth_tenth for %s are: ' % school)
-                print(ninth_tenth)
-            except Exception as e:
-                print('exception 26092019-C from exam views.py %s %s' % (e.message, type(e)))
-                print('ninth_tenth not defined for %s' % school)
-                ninth_tenth = ['not defined']
-
-            try:
-                hc = Wing.objects.get(school=school, wing='higher_classes')
-                higher_classes = ast.literal_eval(hc.classes)
-                print('higher_classes for %s are: ' % school)
-                print(higher_classes)
-            except Exception as e:
-                print('exception 26092019-D from exam views.py %s %s' % (e.message, type(e)))
-                print('higher_classes not defined for %s' % school)
-
-            if form.is_valid():
-                the_class = form.cleaned_data['the_class']
-                section = form.cleaned_data['section']
-                print ('result sheet will be generated for %s-%s' % (the_class.standard, section.section))
-
-                excel_file_name = 'Result_Sheet_' + str(the_class.standard) + '-' + str(section.section) + '.xlsx'
-
-                output = StringIO.StringIO(excel_file_name)
-                workbook = xlsxwriter.Workbook(output)
-                result_sheet = workbook.add_worksheet("Result Sheet")
-
-                border = workbook.add_format()
-                border.set_border()
-
-                title = workbook.add_format({
-                    'bold': True,
-                    'font_size': 14,
-                    'align': 'center',
-                    'valign': 'vcenter'
-                })
-                header = workbook.add_format({
-                    'bold': True,
-                    'bg_color': '#F7F7F7',
-                    'color': 'black',
-                    'align': 'center',
-                    'valign': 'top',
-                    'border': 1
-                })
-                cell_normal = workbook.add_format({
-                    'align': 'left',
-                    'valign': 'top',
-                    'text_wrap': True
-                })
-                cell_normal.set_border()
-                cell_bold = workbook.add_format({
-                    'bold': True,
-                    'align': 'left',
-                    'valign': 'top',
-                    'text_wrap': True
-                })
-                cell_bold.set_border()
-                cell_component = workbook.add_format({
-                    'bold': True,
-                    'color': 'gray',
-                    'align': 'left',
-                    'valign': 'top',
-                    'text_wrap': True
-                })
-                cell_component.set_border()
-                cell_center = workbook.add_format({
-                    'align': 'center',
-                    'valign': 'vcenter',
-                    'text_wrap': True,
-                    'bold': True
-                })
-                cell_center.set_border()
-                vertical_text = workbook.add_format({
-                    'bold': True,
-                    'bg_color': '#F7F7F7',
-                    'align': 'center',
-                    'valign': 'vcenter',
-                    'rotation': 90
-                })
-                vertical_text.set_border()
-                perc_format = workbook.add_format({
-                    'num_format': '0.0%',
-                    'font_size': 9,
-                    'align': 'center',
-                    'valign': 'vcenter',
-                    'bold': True,
-                    'border': 1
-                })
-                cell_grade = workbook.add_format({
-                    'align': 'center',
-                    'valign': 'vcenter',
-                    'bold': True,
-                    'border': 1
-                })
-                cell_small = workbook.add_format({
-                    'align': 'left',
-                    'valign': 'top',
-                    'font_size': 8,
-                    'bold': True,
-                    'border': 1,
-                    'text_wrap': True
-                })
-                fail_format = workbook.add_format()
-                fail_format.set_bg_color('yellow')
-
-                school_name = school.school_name + ' ' + school.school_address
-                result_sheet.merge_range('A1:AI1', school_name, title)
-
-                title_text = 'CONSOLIDATED RESULT SHEET (2018-2019) FOR CLASS %s-%s' % \
-                             (the_class.standard, section.section)
-                print (title_text)
-                result_sheet.merge_range('A2:AI2', title_text, title)
-
-                # get the name of the class teacher
-                class_teacher = 'N/A'
-                try:
-                    ct = ClassTeacher.objects.get(school=school, standard=the_class, section=section)
-                    class_teacher = '%s %s' % (ct.class_teacher.first_name, ct.class_teacher.last_name)
-                    print ('class teacher for class %s-%s is %s' %
-                           (the_class.standard, section.section, class_teacher))
-                except Exception as e:
-                    print ('exception 19012018-A from exam views.py %s %s' % (e.message, type(e)))
-                    print ('class teacher for class %s-%s is not set!' % (the_class.standard, section.section))
-                result_sheet.merge_range('A3:AI3', ('CLASS TEACHER: %s' % class_teacher), header)
-
-                row = 3
-                col = 0
-                result_sheet.set_column(col, col, 3)
-
-                if the_class.standard in higher_classes:
-                    result_sheet.merge_range(row, col, row + 2, col, 'S No', cell_center)
+                if 'GK' in sub_list:
+                    print('GK is a grade based subject. Hence Grand total will exclude GK')
+                    total_marks = (sub_count - 1) * 100
                 else:
-                    result_sheet.merge_range(row, col, row + 1, col, 'S No', cell_center)
-                col += 1
-                result_sheet.set_column(col, col, 3)
-
-                if the_class.standard in higher_classes:
-                    result_sheet.merge_range(row, col, row + 2, col, 'House', vertical_text)
+                    total_marks = sub_count * 100
+                print('the scheme for this class %s consist of %i subjects. Hence total marks = %s' %
+                      (the_class.standard, sub_count, str(total_marks)))
+                if the_class.standard not in ninth_tenth:
+                    term1_heading = 'Term I (%s)' % str(total_marks)
+                    term2_heading = 'Term II (%s)' % str(total_marks)
                 else:
-                    result_sheet.merge_range(row, col, row + 1, col, 'House', vertical_text)
-                col += 1
+                    term1_heading = 'Academic Year (%s)' % str(total_marks)
+                    term2_heading = ''
 
-                result_sheet.set_column(col, col, 14)
+                print('Term I heading = %s, Term II heading = %s' % (term1_heading, term2_heading))
 
-                if the_class.standard in higher_classes:
-                    result_sheet.merge_range(row, col, row + 2, col, 'Student Name\nAdmission/Reg No', cell_center)
+                # 19/10/2018 - we have decided to show the components vertically to avoid horizontal scrolling
+                # each term width will be the number of subjects plus Term total components
+                term_width = sub_count * 2
+                print('term width for class % s without taking Third Language or GK into account: %i' %
+                      (the_class.standard, term_width))
+
+                if 'Third Language' in sub_list:  # third language need additional column to show third language
+                    print('Third Language is present in the scheme of class %s. Hence incrementing term_width' %
+                          the_class.standard)
+                    term_width += 1
+                    print('now, the term_width for class %s: %i' % (the_class.standard, term_width))
                 else:
-                    result_sheet.merge_range(row, col, row + 1, col, 'Student Name\nAdmission/Reg No', cell_center)
-                col += 1
+                    print('Third Language is not included in the scheme of class %s. No change in term_width' %
+                          the_class.standard)
 
-                if the_class.standard not in higher_classes:
-                    try:
-                        scheme = Scheme.objects.filter(school=school, the_class=the_class)
-                        sub_count = scheme.count()
-                        sub_list = []
-                        for sc in scheme:
-                            sub_list.append(sc.subject.subject_name)
-                            print('sub_list = ')
-                            print (sub_list)
-                    except Exception as e:
-                        print('exception 19102018-A from academics views.py %s (%s)' % (e.message, type(e)))
-                        print('looks the exam scheme is not yet set for class %s of %s' %
-                              (the_class.standard, school_name))
+                if 'GK' in sub_list:
+                    print('GK is present in the scheme of class %s. Hence decrementing term_width' %
+                          the_class.standard)
+                    term_width -= 1
 
-                    terms = ['Term I', 'Term II']
-                    if the_class in ninth_tenth:
-                        terms = ['Academic Year']
-                    term_comp = ['Tot', '%', 'Grade', 'Rank']
+                print('finally, the term_width for class %s: %i' % (the_class.standard, term_width))
+                print('for %i subjects, term width will be %i' % (sub_count, term_width))
+                print('current column is at %i' % col)
+                result_sheet.merge_range(row, col, row, col + term_width - 1, term1_heading, cell_center)
+                result_sheet.merge_range(row, col + term_width + len(term_comp), row,
+                                         (col + (2 * term_width)) + len(term_comp) - 1, term2_heading, cell_center)
+                result_sheet.set_column(col, (term_width * 2) + 15, 2.5)
+                row += 1
+            except Exception as e:
+                print('exception 14102018-A-A from academics views.py %s (%s)' % (e.message, type(e)))
+                print('failed to set up Term headings for class %s of %s' %
+                      (the_class.standard, school_name))
 
-                    try:
-                        if 'GK' in sub_list:
-                            print('GK is a grade based subject. Hence Grand total will exclude GK')
-                            total_marks = (sub_count - 1) * 100
+            print('after setting the term heading we are at %i row' % row)
+            for term in terms:
+                for sub in sub_list:
+                    if sub != 'GK':
+                        if sub == 'Third Language':
+                            # 19/10/2018 - we are going to show the third language subject in vertical
+                            result_sheet.set_column(col, col + 1, 3)
+                            result_sheet.merge_range(row, col, row, col + 2, sub, cell_center)
+                            col += 3
                         else:
-                            total_marks = sub_count * 100
-                        print('the scheme for this class %s consist of %i subjects. Hence total marks = %s' %
-                              (the_class.standard, sub_count, str(total_marks)))
-                        if the_class.standard not in ninth_tenth:
-                            term1_heading = 'Term I (%s)' % str(total_marks)
-                            term2_heading = 'Term II (%s)' % str(total_marks)
-                        else:
-                            term1_heading = 'Academic Year (%s)' % str(total_marks)
-                            term2_heading = ''
-
-                        print('Term I heading = %s, Term II heading = %s' % (term1_heading, term2_heading))
-
-                        # 19/10/2018 - we have decided to show the components vertically to avoid horizontal scrolling
-                        # each term width will be the number of subjects plus Term total components
-                        term_width = sub_count * 2
-                        print('term width for class % s without taking Third Language or GK into account: %i' %
-                              (the_class.standard, term_width))
-
-                        if 'Third Language' in sub_list: # third language need additional column to show third language
-                            print('Third Language is present in the scheme of class %s. Hence incrementing term_width' %
-                                  the_class.standard)
-                            term_width += 1
-                            print('now, the term_width for class %s: %i' % (the_class.standard, term_width))
-                        else:
-                            print('Third Language is not included in the scheme of class %s. No change in term_width' %
-                                  the_class.standard)
-
-                        if 'GK' in sub_list:
-                            print('GK is present in the scheme of class %s. Hence decrementing term_width' %
-                                  the_class.standard)
-                            term_width -= 1
-
-                        print('finally, the term_width for class %s: %i' % (the_class.standard, term_width))
-                        print('for %i subjects, term width will be %i' % (sub_count, term_width))
-                        print('current column is at %i' % col)
-                        result_sheet.merge_range(row, col, row, col + term_width - 1, term1_heading, cell_center)
-                        result_sheet.merge_range(row, col + term_width + len(term_comp), row,
-                                                 (col  + (2 *term_width)) + len(term_comp) - 1, term2_heading, cell_center)
-                        result_sheet.set_column(col, (term_width * 2) + 15, 2.5)
-                        row += 1
-                    except Exception as e:
-                        print('exception 14102018-A-A from academics views.py %s (%s)' % (e.message, type(e)))
-                        print('failed to set up Term headings for class %s of %s' %
-                              (the_class.standard, school_name))
-
-                    print('after setting the term heading we are at %i row' % row)
-                    for term in terms:
-                        for sub in sub_list:
-                            if sub != 'GK':
-                                if sub == 'Third Language':
-                                    # 19/10/2018 - we are going to show the third language subject in vertical
-                                    result_sheet.set_column(col, col + 1, 3)
-                                    result_sheet.merge_range(row, col, row, col + 2, sub, cell_center)
-                                    col += 3
-                                else:
-                                    result_sheet.set_column(col, col + 1, 3)
-                                    result_sheet.merge_range(row, col, row, col + 1, sub, cell_center)
-                                    col += 2
-                            else:
-                                result_sheet.set_column(col, col, 4)
-                                result_sheet.write_string(row, col, sub, cell_center)
-                                col += 1
-
-                        term_tot = '%s Total' % term
-                        result_sheet.merge_range(row - 1, col, row - 1, col + 3, term_tot, cell_center)
-                        for tc in term_comp:
-                            result_sheet.set_column(col, col, 4)
-                            result_sheet.write_string(row, col, tc, cell_center)
-                            col += 1
-
-                    row -= 1
-                    comp_row = row + 1
-                    both_term_start_col = col
-                    both_term_tot_marks = total_marks * 2
-                    if the_class.standard in ninth_tenth:
-                        both_term_tot_marks = total_marks
-                    print('both_term_tot_marks = %i' % both_term_tot_marks )
-                    both_term_tot = 'Both Term Total (%s)' % str(both_term_tot_marks)
-                    if the_class.standard in ninth_tenth:
-                        both_term_tot = 'Academic Year Total (%s)' % str(both_term_tot_marks)
-                    result_sheet.merge_range(row, col, row, col + 3, both_term_tot, cell_center)
-                    for tc in term_comp:
-                        result_sheet.write_string(comp_row, col, tc, cell_center)
+                            result_sheet.set_column(col, col + 1, 3)
+                            result_sheet.merge_range(row, col, row, col + 1, sub, cell_center)
+                            col += 2
+                    else:
                         result_sheet.set_column(col, col, 4)
+                        result_sheet.write_string(row, col, sub, cell_center)
                         col += 1
 
-                    co_schol = ['Work Ed', 'Art/Music', 'Health/Phy Act', 'Discipline']
-                    for co in co_schol:
-                        result_sheet.merge_range(row, col, row + 1, col, co, vertical_text)
-                        result_sheet.set_column(col, col, 3)
-                        col += 1
-
-                    result_sheet.set_column(col, col, 25)
-                    result_sheet.merge_range(row, col, row + 1, col, 'Class Teacher\nRemarks', cell_center)
+                term_tot = '%s Total' % term
+                result_sheet.merge_range(row - 1, col, row - 1, col + 3, term_tot, cell_center)
+                for tc in term_comp:
+                    result_sheet.set_column(col, col, 4)
+                    result_sheet.write_string(row, col, tc, cell_center)
                     col += 1
 
-                    result_sheet.set_column(col, col, 8)
-                    result_sheet.merge_range(row, col, row + 1, col, 'Result', cell_center)
-                    col += 1
-                    result_sheet.merge_range(row, col, row + 1, col, 'Result Remarks', cell_center)
+            row -= 1
+            comp_row = row + 1
+            both_term_start_col = col
+            both_term_tot_marks = total_marks * 2
+            if the_class.standard in ninth_tenth:
+                both_term_tot_marks = total_marks
+            print('both_term_tot_marks = %i' % both_term_tot_marks)
+            both_term_tot = 'Both Term Total (%s)' % str(both_term_tot_marks)
+            if the_class.standard in ninth_tenth:
+                both_term_tot = 'Academic Year Total (%s)' % str(both_term_tot_marks)
+            result_sheet.merge_range(row, col, row, col + 3, both_term_tot, cell_center)
+            for tc in term_comp:
+                result_sheet.write_string(comp_row, col, tc, cell_center)
+                result_sheet.set_column(col, col, 4)
+                col += 1
 
-                    # header rows are ready, now is the time to get the result of each student
-                    row += 2
-                    start_row = row         # 17/10/2018 - will be used for determining rank
+            co_schol = ['Work Ed', 'Art/Music', 'Health/Phy Act', 'Discipline']
+            for co in co_schol:
+                result_sheet.merge_range(row, col, row + 1, col, co, vertical_text)
+                result_sheet.set_column(col, col, 3)
+                col += 1
 
-                    last_col = col + 1
-                    try:
-                        students = Student.objects.filter(school=school, current_class=the_class,
-                                                          current_section=section,
-                                                          active_status=True).order_by('fist_name')
-                        stud_count = students.count()
-                        print('total %i students in class %s %s' % (stud_count, the_class.standard, section.section))
-                        print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
-                        print (students)
-                        # prepare the borders
-                        for a_row in range(row, students.count() * 6 + row):
-                            for col in range(0, last_col):
-                                result_sheet.write(a_row, col, '', border)
-                    except Exception as e:
-                        print ('exception 20012018-A from exam views.py %s %s' % (e.message, type(e)))
-                        print ('failed to retrieve the list of students for %s-%s' %
-                               (the_class.standard, section.section))
-                    s_no = 1
-                    col = 0
+            result_sheet.set_column(col, col, 25)
+            result_sheet.merge_range(row, col, row + 1, col, 'Class Teacher\nRemarks', cell_center)
+            col += 1
 
-                    for student in students:
-                        # result_sheet.merge_range(row, col, row + 5, col, s_no, cell_normal)
-                        result_sheet.merge_range(row, col, row + 6, col, s_no, cell_normal)
-                        col += 1
-                        admission_no = student.student_erp_id
+            result_sheet.set_column(col, col, 8)
+            result_sheet.merge_range(row, col, row + 1, col, 'Result', cell_center)
+            col += 1
+            result_sheet.merge_range(row, col, row + 1, col, 'Result Remarks', cell_center)
 
-                        student_name = '%s %s' % (student.fist_name, student.last_name)
+            # header rows are ready, now is the time to get the result of each student
+            row += 2
+            start_row = row  # 17/10/2018 - will be used for determining rank
 
-                        # get the house information
-                        house = ' '
-                        try:
-                            h = House.objects.get(student=student)
-                            house = h.house
-                        except Exception as e:
-                            print('exception 28032018-A from exam views.py %s %s' % (e.message, type(e)))
-                            print('failed to retrieve house for %s' % student_name)
-                        # result_sheet.merge_range(row, col, row + 5, col, house, cell_normal)
-                        result_sheet.merge_range(row, col, row + 6, col, house, cell_normal)
-                        col += 1
+            last_col = col + 1
+            try:
+                students = Student.objects.filter(school=school, current_class=the_class,
+                                                  current_section=section,
+                                                  active_status=True).order_by('fist_name')
+                stud_count = students.count()
+                print('total %i students in class %s %s' % (stud_count, the_class.standard, section.section))
+                print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
+                print (students)
+                # prepare the borders
+                for a_row in range(row, students.count() * 6 + row):
+                    for col in range(0, last_col):
+                        result_sheet.write(a_row, col, '', border)
+            except Exception as e:
+                print ('exception 20012018-A from exam views.py %s %s' % (e.message, type(e)))
+                print ('failed to retrieve the list of students for %s-%s' %
+                       (the_class.standard, section.section))
+            s_no = 1
+            col = 0
 
-                        # result_sheet.merge_range(row, col, row + 5, col,
-                        #                          ('%s\n(%s)' % (student_name, admission_no)), cell_normal)
-                        result_sheet.merge_range(row, col, row + 6, col,
-                                                 ('%s\n(%s)' % (student_name, admission_no)), cell_normal)
-                        col += 1
+            for student in students:
+                # result_sheet.merge_range(row, col, row + 5, col, s_no, cell_normal)
+                result_sheet.merge_range(row, col, row + 6, col, s_no, cell_normal)
+                col += 1
+                admission_no = student.student_erp_id
 
-                        # todo insert the code for getting the third language here
-                        third_lang = ' '
-                        try:
-                            tl = ThirdLang.objects.get(student=student)
-                            third_lang = tl.third_lang.subject_name
-                            print('retrieve the third language % s for %s of %s-%s' %
-                                  (third_lang, student_name, the_class.standard, section.section))
-                        except Exception as e:
-                            print('exception 19102018-B from exam views.py %s %s' % (e.message, type(e)))
-                            print('failed to retrieve the third language for %s %s of %s-%s' %
-                                  (student.fist_name, student.last_name, the_class.standard, section.section))
-                        pa = 'PA'
-                        ma = 'MA'       # 26/09/2019 - Multiple Assessment new Component
-                        nb = 'PF'       # 26/09/2019 - earlier it was Notebook Submission now Portfolio
-                        se = 'SE'
-                        the_term = 'Term'
-                        tot = 'Tot'
-                        gr = 'Gr'
+                student_name = '%s %s' % (student.fist_name, student.last_name)
 
-                        comp_title_created = False
+                # get the house information
+                house = ' '
+                try:
+                    h = House.objects.get(student=student)
+                    house = h.house
+                except Exception as e:
+                    print('exception 28032018-A from exam views.py %s %s' % (e.message, type(e)))
+                    print('failed to retrieve house for %s' % student_name)
+                # result_sheet.merge_range(row, col, row + 5, col, house, cell_normal)
+                result_sheet.merge_range(row, col, row + 6, col, house, cell_normal)
+                col += 1
 
-                        if the_class.standard in middle_classes:
-                            print('%s is in middle_classes' % the_class.standard)
-                            wing = middle_classes
-                        if the_class.standard in ninth_tenth:
-                            print('%s is in ninth_tenth' % the_class.standard)
-                            wing = ninth_tenth
-                        if the_class.standard in higher_classes:
-                            print('%s is in higher_classes' % the_class.standard)
-                            wing = higher_classes
-                        start_class = wing[0]
-                        print('start class would be %s' % start_class)
-                        end_class = wing[len(wing) -1]
-                        print('end class would be %s' % end_class)
-                        term_exams = Exam.objects.filter(school=school, exam_type='term',
-                                                         start_class=start_class, end_class=end_class)
-                        print('term exam count = %i' % term_exams.count())
-                        print('term exams: %s' % term_exams)
-                        both_term_tot_formula = '=sum('
+                # result_sheet.merge_range(row, col, row + 5, col,
+                #                          ('%s\n(%s)' % (student_name, admission_no)), cell_normal)
+                result_sheet.merge_range(row, col, row + 6, col,
+                                         ('%s\n(%s)' % (student_name, admission_no)), cell_normal)
+                col += 1
 
-                        for index, term in enumerate(term_exams):
-                            if term_exams.count() > 1:
-                                if the_class.standard in ninth_tenth and index == 0:
-                                    continue
-                            # we will be using formulas to calculate total
-                            term_total_formula = '=sum('
-                            rank_range = '('
+                # todo insert the code for getting the third language here
+                third_lang = ' '
+                try:
+                    tl = ThirdLang.objects.get(student=student)
+                    third_lang = tl.third_lang.subject_name
+                    print('retrieve the third language % s for %s of %s-%s' %
+                          (third_lang, student_name, the_class.standard, section.section))
+                except Exception as e:
+                    print('exception 19102018-B from exam views.py %s %s' % (e.message, type(e)))
+                    print('failed to retrieve the third language for %s %s of %s-%s' %
+                          (student.fist_name, student.last_name, the_class.standard, section.section))
+                pa = 'PA'
+                ma = 'MA'  # 26/09/2019 - Multiple Assessment new Component
+                nb = 'PF'  # 26/09/2019 - earlier it was Notebook Submission now Portfolio
+                se = 'SE'
+                the_term = 'Term'
+                tot = 'Tot'
+                gr = 'Gr'
 
-                            for s in sub_list:
-                                if s == 'GK':
-                                    try:
-                                        result_sheet.set_column(col, col, 3)
-                                        gk = Subject.objects.get(school=school, subject_name=s)
-                                        gk_tests = ClassTest.objects.filter(the_class=the_class,
-                                                                            section=section, subject=gk)
-                                        gk_grade = ' '
-                                        if index == 0:
-                                            tr1 = TestResults.objects.get(class_test=gk_tests.first(), student=student)
-                                            gk_grade1 = tr1.grade
-                                            gk_grade = gk_grade1
-                                            print('GK grade secured by %s %s of %s-%s in %s: %s' %
-                                                  (student.fist_name, student.last_name, the_class.standard,
-                                                   section.section, term, gk_grade))
-                                        gk_grade2 = ' '
-                                        if index == 1:
-                                            tr2 = TestResults.objects.get(class_test=gk_tests.last(), student=student)
-                                            gk_grade2 = '%s' % tr2.grade
-                                            print('GK grade secured by %s %s of %s-%s in %s: %s' %
-                                                  (student.fist_name, student.last_name, the_class.standard,
-                                                   section.section, term, gk_grade))
-                                            gk_grade = gk_grade2
-                                        #gk_grade = '%s%s' % (gk_grade1, gk_grade2)
+                comp_title_created = False
 
-                                        print('GK grade secured by %s: %s' % (student_name, gk_grade))
-                                    except Exception as e:
-                                        print('exception 22032018-A from exam views.py %s %s' % (e.message, type(e)))
-                                        print('could not retrieve the GK grade for %s' % student_name)
-                                        gk_grade = 'TBE '
-
-                                    # result_sheet.merge_range(row, col, row + 5, col, gk_grade, cell_grade)
-                                    result_sheet.merge_range(row, col, row + 6, col, gk_grade, cell_grade)
-                                    col += 1
-                                else:
-                                    try:
-                                        if s == 'Third Language':
-                                            result_sheet.set_column(col, col, 3)
-                                            result_sheet.set_column(col + 1, col + 2, 4.5)    # those were extra wide.
-                                            # result_sheet.merge_range(row, col, row + 5, col, third_lang, vertical_text)
-                                            result_sheet.merge_range(row, col, row + 6, col, third_lang, vertical_text)
-                                            col += 1
-                                            subject = tl.third_lang
-                                        else:
-                                            subject = Subject.objects.get(school=school, subject_name=s)
-                                        print ('retrieved the subject object for %s' % s)
-                                        print (subject)
-                                        try:
-                                            term_test = ClassTest.objects.get(the_class=the_class, section=section,
-                                                                         subject=subject, exam=term)
-                                            print ('retrieved the term tests for class: %s-%s, subject: %s' %
-                                                   (the_class.standard, section.section, s))
-                                            print (term_test)
-                                        except Exception as e:
-                                            print('failed to retrieve term_test for %s class %s exam %s' %
-                                                  (subject.subject_name, the_class.standard, term.title))
-                                            print('exception 22012019-A from exam views.py %s %s' % (e.message, type(e)))
-                                            # result_sheet.merge_range(row, col, row + 5, col + 1, 'TBE', cell_center)
-                                            result_sheet.merge_range(row, col, row + 6, col + 1, 'TBE', cell_center)
-                                            col += 2
-                                            continue
-                                    except Exception as e:
-                                        print ('exception 20012018-B from exam views.py %s %s' % (e.message, type(e)))
-                                        print ('failed to retrieve subject for %s' % s)
-                                        if subject.subject_name != 'GK':
-                                            result_sheet.merge_range(row, col, row, col + 3, 'TBE', cell_grade)
-                                            col += 6
-                                        else:
-                                            result_sheet.write_string(row, col, 'TBE', cell_grade)
-                                            col += 1
-                                        continue
-                                    sub_total_formula = '=sum('
-                                    try:
-                                        print ('retrieving % s marks for %s' % (s, student_name))
-                                        test_result = TestResults.objects.get(class_test=term_test, student=student)
-                                        term_marks = test_result.marks_obtained
-
-                                        # 17/10/2018 - deal with cases of marks not yet entered or Absent
-                                        if term_marks == -5000 or term_marks == -5000.0 or term_marks == -5000.00:
-                                            print('marks not entered case')
-                                            print(term_marks)
-                                            print('%s test for %s for %s created but marks/absence not entered' %
-                                                  (subject.subject_name, term.title, student_name))
-                                            result_sheet.set_column(col, col, 4)
-                                            term_marks = 'TBE'
-
-                                        if term_marks == -1000 or term_marks == -1000.0 or term_marks == -1000.00:
-                                            print('absence case')
-                                            print(term_marks)
-                                            print('%s absent (ABS) in  %s test for %s for ' %
-                                                  (student_name, subject.subject_name, term.title))
-                                            result_sheet.set_column(col, col, 4)
-                                            term_marks = 'ABS'
-
-                                        term_test_result = TermTestResult.objects.get(test_result=test_result)
-
-                                        if comp_title_created:
-                                            result_sheet.set_column(col, col, 0)
-                                        else:
-                                            comp_title_created = True
-
-                                        result_sheet.write_string(row, col, pa, cell_component)
-                                        col += 1
-                                        pa_marks = Decimal(round(term_test_result.periodic_test_marks))
-                                        result_sheet.write_number(row, col, pa_marks, cell_normal)
-                                        cell = xl_rowcol_to_cell(row, col)
-                                        sub_total_formula += '%s,' % (cell)
-                                        row += 1
-                                        col -= 1
-
-                                        result_sheet.write_string(row, col, ma, cell_component)
-                                        col += 1
-                                        ma_marks = Decimal(round(term_test_result.multi_asses_marks))
-                                        if ma_marks < 0:
-                                            print('Multi Assessment marks not entered for %s in %s for %s' %
-                                                  (student_name, subject.subject_name, term.title))
-                                            result_sheet.write_string(row, col, 'TBE', cell_grade)
-                                        else:
-                                            result_sheet.write_number(row, col, ma_marks, cell_normal)
-                                        cell = xl_rowcol_to_cell(row, col)
-                                        sub_total_formula += '%s,' % (cell)
-                                        row += 1
-                                        col -= 1
-
-                                        result_sheet.write_string(row, col, nb, cell_component)
-                                        col += 1
-                                        nb_marks = term_test_result.note_book_marks
-                                        if nb_marks < 0:
-                                            print('Notebook submission marks not entered for %s in %s for %s' %
-                                                  (student_name, subject.subject_name, term.title))
-                                            result_sheet.write_string(row, col, 'TBE', cell_grade)
-                                        else:
-                                            result_sheet.write_number(row, col, nb_marks, cell_normal)
-                                        cell = xl_rowcol_to_cell(row, col)
-                                        sub_total_formula += '%s,' % (cell)
-                                        row += 1
-                                        col -= 1
-
-                                        result_sheet.write_string(row, col, se, cell_component)
-                                        col += 1
-                                        se_marks = term_test_result.sub_enrich_marks
-                                        if se_marks < 0:
-                                            print('Subject Enrichment submission marks not entered for %s in %s for %s' %
-                                                  (student_name, subject.subject_name, term.title))
-                                            result_sheet.write_string(row, col, 'TBE', cell_grade)
-                                        else:
-                                            result_sheet.write_number(row, col, se_marks, cell_normal)
-                                        cell = xl_rowcol_to_cell(row, col)
-                                        sub_total_formula += '%s,' % (cell)
-                                        row += 1
-                                        col -= 1
-
-                                        result_sheet.write_string(row, col, the_term, cell_component)
-                                        col += 1
-                                        if term_marks == 'ABS' or term_marks == 'TBE':
-                                            result_sheet.write_string(row, col, term_marks, cell_grade)
-                                        else:
-                                            result_sheet.write_number(row, col, term_marks, cell_normal)
-                                        cell = xl_rowcol_to_cell(row, col)
-                                        sub_total_formula += '%s)' % (cell)
-                                        row += 1
-                                        col -= 1
-
-                                        result_sheet.write_string(row, col, tot, cell_component)
-                                        col += 1
-                                        print('formula constructed = %s' % sub_total_formula)
-                                        result_sheet.write_formula(row, col, sub_total_formula, cell_bold)
-                                        # the above cell, in which we are writing the subject total, is a component
-                                        # for calculating the term total
-                                        cell = xl_rowcol_to_cell(row, col)
-                                        term_total_formula += '%s,' % (cell)
-                                        both_term_tot_formula += '%s,' % (cell)
-
-                                        row += 1
-                                        col -= 1
-
-                                        grade_formula = '=IF(%s > 90, "A1", IF(%s > 80, "A2", IF(%s > 70, "B1", ' \
-                                                        'IF(%s > 60, "B2", ' \
-                                                        'IF(%s > 50, "C1", IF(%s > 40, "C2", IF(%s > 32, "D", "E")))))))' % \
-                                                        (cell, cell, cell, cell, cell, cell, cell)
-                                        result_sheet.write_string(row, col, gr, cell_component)
-                                        col += 1
-                                        result_sheet.write_formula(row, col, grade_formula, cell_bold)
-
-                                        # 19/10/2018 - for the next subject, row and columns need to be reset
-                                        # row -= 5
-                                        row -= 6
-                                        col += 1
-                                    except Exception as e:
-                                        print ('exception 20012018-D from exam views.py %s %s' % (e.message, type(e)))
-                                        print ('failed to retrieve %s marks for %s' % (s, student_name))
-                            term_total_formula += ')'
-                            print('term_total_formula = %s' % term_total_formula)
-                            result_sheet.set_column(col, col, 4)
-                            # result_sheet.merge_range(row, col, row + 5, col, term_total_formula, cell_grade)
-                            result_sheet.merge_range(row, col, row + 6, col, term_total_formula, cell_grade)
-                            result_sheet.write_formula(row, col, term_total_formula, cell_grade)
-                            cell = xl_rowcol_to_cell(row, col)
-                            rank_range += '%s,' % cell
-                            col += 1
-
-                            perc_formula = '=%s/%s' % (cell, str(total_marks))
-                            # result_sheet.merge_range(row, col, row + 5, col, perc_formula, cell_grade)
-                            result_sheet.merge_range(row, col, row + 6, col, perc_formula, cell_grade)
-                            result_sheet.write_formula(row, col, perc_formula, perc_format)
-                            result_sheet.set_column(col, col, 6)
-                            cell = xl_rowcol_to_cell(row, col, row_abs=True, col_abs=True)
-                            col += 1
-
-                            grade_formula = '=IF(%s*100 > 90, "A1", IF(%s*100 > 80, "A2", IF(%s*100 > 70, "B1", ' \
-                                            'IF(%s*100 > 60, "B2", ' \
-                                            'IF(%s*100 > 50, "C1", IF(%s*100 > 40, "C2", IF(%s*100 > 32, "D", "E")))))))' % \
-                                            (cell, cell, cell, cell, cell, cell, cell)
-                            # result_sheet.merge_range(row, col, row + 5, col, grade_formula, cell_grade)
-                            result_sheet.merge_range(row, col, row + 6, col, grade_formula, cell_grade)
-                            result_sheet.write_formula(row, col, grade_formula, cell_grade)
-                            col += 1
-
-                            # determine the rank
-                            cell = xl_rowcol_to_cell(row, col - 2)
-                            cell_start = xl_rowcol_to_cell(start_row, col - 2, row_abs = True, col_abs = True)
-                            cell_end = xl_rowcol_to_cell(start_row + stud_count*7 - 1, col -2, row_abs = True, col_abs = True)
-                            rank_formula = '=RANK(%s, %s:%s)' % (cell, cell_start, cell_end)
-                            print('formula for rank: %s', rank_formula)
-                            # result_sheet.merge_range(row, col, row + 5, col, rank_formula, cell_grade)
-                            result_sheet.merge_range(row, col, row + 6, col, rank_formula, cell_grade)
-                            result_sheet.write_formula(row, col, rank_formula, cell_grade)
-                            col += 1
-                        both_term_tot_formula += ')'
-                        print('both_term_total_formula = %s' % both_term_tot_formula)
-
-                        # 20/10/2018 - summary for both terms
-                        col = both_term_start_col
-                        # result_sheet.merge_range(row, col, row + 5, col, both_term_tot_formula, cell_grade)
-                        result_sheet.merge_range(row, col, row + 6, col, both_term_tot_formula, cell_grade)
-                        result_sheet.write_formula(row, col, both_term_tot_formula, cell_grade)
-                        cell = xl_rowcol_to_cell(row, col)
-                        col += 1
-
-                        perc_formula = '=%s/%s' % (cell, str(total_marks * 2))
-                        if the_class.standard in ninth_tenth:
-                            perc_formula = '=%s/%s' % (cell, str(total_marks))
-                        # result_sheet.merge_range(row, col, row + 5, col, perc_formula, cell_grade)
-                        result_sheet.merge_range(row, col, row + 6, col, perc_formula, cell_grade)
-                        result_sheet.write_formula(row, col, perc_formula, perc_format)
-                        col += 1
-
-                        # result_sheet.merge_range(row, col, row + 5, col, grade_formula, cell_grade)
-                        result_sheet.merge_range(row, col, row + 6, col, grade_formula, cell_grade)
-                        result_sheet.write_formula(row, col, grade_formula, cell_grade)
-                        col += 1
-
-                        cell = xl_rowcol_to_cell(row, col - 2)
-                        cell_start = xl_rowcol_to_cell(start_row, col - 2, row_abs=True, col_abs=True)
-                        cell_end = xl_rowcol_to_cell(start_row + stud_count * 6 - 1, col - 2, row_abs=True, col_abs=True)
-                        rank_formula = '=RANK(%s, %s:%s)' % (cell, cell_start, cell_end)
-                        print('formula for rank: %s', rank_formula)
-                        # result_sheet.merge_range(row, col, row + 5, col, rank_formula, cell_grade)
-                        result_sheet.merge_range(row, col, row + 6, col, rank_formula, cell_grade)
-                        result_sheet.write_formula(row, col, rank_formula, cell_grade)
-                        col += 1
-
-                        # co-scholastic grades. We will show grades for both terms separated by /, eg B/A
-                        try:
-                            cs_term1 = CoScholastics.objects.get(term='term1', student=student)
-                            cs_term2 = CoScholastics.objects.get(term='term2', student=student)
-                            work_ed1 = cs_term1.work_education
-                            work_ed2 = '%s/%s' % (work_ed1, cs_term2.work_education)
-                            # result_sheet.merge_range(row, col, row + 5, col,  work_ed2, cell_grade)
-                            result_sheet.merge_range(row, col, row + 6, col, work_ed2, cell_grade)
-                            col += 1
-
-                            art_ed1 = cs_term1.art_education
-                            art_ed2 = '%s/%s' % (art_ed1,cs_term2.art_education)
-                            # result_sheet.merge_range(row, col, row + 5, col, art_ed2, cell_grade)
-                            result_sheet.merge_range(row, col, row + 6, col, art_ed2, cell_grade)
-                            col += 1
-
-                            health_ed1 = cs_term1.health_education
-                            health_ed2 = '%s/%s' % (health_ed1, cs_term2.health_education)
-                            # result_sheet.merge_range(row, col, row + 5, col, health_ed2, cell_grade)
-                            result_sheet.merge_range(row, col, row + 6, col, health_ed2, cell_grade)
-                            col += 1
-
-                            discipline1 = cs_term1.discipline
-                            discipline2 = '%s/%s' % (discipline1, cs_term2.discipline)
-                            # result_sheet.merge_range(row, col, row + 5, col, discipline2, cell_grade)
-                            result_sheet.merge_range(row, col, row + 6, col, discipline2, cell_grade)
-                            col += 1
-
-                            teacher_remarks = cs_term2.teacher_remarks
-                            print('class teacher remarks for %s of %s-%s in %s: %s' %
-                                  (student_name, the_class.standard, section.section, term, teacher_remarks))
-                            result_sheet.set_column(col, col, 10)
-                            # result_sheet.merge_range(row, col, row + 5, col, teacher_remarks, cell_normal)
-                            result_sheet.merge_range(row, col, row + 6, col, teacher_remarks, cell_normal)
-
-                            col += 1
-                            try:
-                                not_promoted = NPromoted.objects.get(student=student)
-                                details = not_promoted.details
-                                print('student %s %s has failed in class %s.' % (student.fist_name,
-                                                                                 student.last_name, the_class))
-                                print(not_promoted)
-                                promoted_status = 'Not Promoted'
-
-                                # 14/03/2019 - we want to highlight the row of detained students. But xlxswriter
-                                # only allows to highlight a cell. If we are in this block of code, means that the =
-                                # student is Not Promoted. So, we chose to highlight all the cells in this row based on
-                                # criteria tha the cell is not blank which is true for every cell and hence the whole
-                                # row gets highlighted
-                                # result_sheet.conditional_format(row, 0, row + 5, col + 1, {'type': 'no_blanks',
-                                #                                                        'format': fail_format})
-                                result_sheet.conditional_format(row, 0, row + 6, col + 1, {'type': 'no_blanks',
-                                                                                           'format': fail_format})
-                            except Exception as e:
-                                print('student %s %s has passed in class %s.' % (student.fist_name, student.last_name,
-                                                                                 the_class))
-                                print('exception 14032019-A from exam views.py %s %s' % (e.message, type(e)))
-                                promoted_status = 'Promoted'
-                                details = ' '
-                            # result_sheet.merge_range(row, col, row + 5, col, promoted_status, cell_normal)
-                            result_sheet.merge_range(row, col, row + 6, col, promoted_status, cell_normal)
-                            col += 1
-                            # result_sheet.merge_range(row, col, row + 5, col, details, cell_normal)
-                            result_sheet.merge_range(row, col, row + 6, col, details, cell_normal)
-
-                        except Exception as e:
-                            print ('exception 21012018-A from exam views.py %s %s' % (e.message, type(e)))
-                            print ('failed to retrieve Co-scholastics grade for %s' % student_name)
-
-                        col = 0
-                        # row += 6
-                        row += 7
-                        s_no = s_no + 1
+                if the_class.standard in middle_classes:
+                    print('%s is in middle_classes' % the_class.standard)
+                    wing = middle_classes
                 if the_class.standard in ninth_tenth:
-                    print('hiding columns for class IX')
-                    for col in range(16, 37):
-                        result_sheet.set_column(col, col, options={'hidden': True})
-
+                    print('%s is in ninth_tenth' % the_class.standard)
+                    wing = ninth_tenth
                 if the_class.standard in higher_classes:
-                    maths_stream = ['English', 'Mathematics', 'Physics', 'Chemistry', 'Elective']
-                    bio_stream = ['English', 'Biology', 'Physics', 'Chemistry', 'Elective']
-                    commerce_stream = ['English', 'Economics', 'Accountancy', 'Business Studies', 'Elective']
-                    humanities_stream = ['English', 'Economics', 'History', 'Sociology', 'Elective']
-                    components = ['UT', 'Half Yearly', 'Final Exam', 'Cumulative']
+                    print('%s is in higher_classes' % the_class.standard)
+                    wing = higher_classes
+                start_class = wing[0]
+                print('start class would be %s' % start_class)
+                end_class = wing[len(wing) - 1]
+                print('end class would be %s' % end_class)
+                term_exams = Exam.objects.filter(school=school, exam_type='term',
+                                                 start_class=start_class, end_class=end_class)
+                print('term exam count = %i' % term_exams.count())
+                print('term exams: %s' % term_exams)
+                both_term_tot_formula = '=sum('
+
+                for index, term in enumerate(term_exams):
+                    if term_exams.count() > 1:
+                        if the_class.standard in ninth_tenth and index == 0:
+                            continue
+                    # we will be using formulas to calculate total
+                    term_total_formula = '=sum('
+                    rank_range = '('
+
+                    for s in sub_list:
+                        if s == 'GK':
+                            try:
+                                result_sheet.set_column(col, col, 3)
+                                gk = Subject.objects.get(school=school, subject_name=s)
+                                gk_tests = ClassTest.objects.filter(the_class=the_class,
+                                                                    section=section, subject=gk)
+                                gk_grade = ' '
+                                if index == 0:
+                                    tr1 = TestResults.objects.get(class_test=gk_tests.first(), student=student)
+                                    gk_grade1 = tr1.grade
+                                    gk_grade = gk_grade1
+                                    print('GK grade secured by %s %s of %s-%s in %s: %s' %
+                                          (student.fist_name, student.last_name, the_class.standard,
+                                           section.section, term, gk_grade))
+                                gk_grade2 = ' '
+                                if index == 1:
+                                    tr2 = TestResults.objects.get(class_test=gk_tests.last(), student=student)
+                                    gk_grade2 = '%s' % tr2.grade
+                                    print('GK grade secured by %s %s of %s-%s in %s: %s' %
+                                          (student.fist_name, student.last_name, the_class.standard,
+                                           section.section, term, gk_grade))
+                                    gk_grade = gk_grade2
+                                # gk_grade = '%s%s' % (gk_grade1, gk_grade2)
+
+                                print('GK grade secured by %s: %s' % (student_name, gk_grade))
+                            except Exception as e:
+                                print('exception 22032018-A from exam views.py %s %s' % (e.message, type(e)))
+                                print('could not retrieve the GK grade for %s' % student_name)
+                                gk_grade = 'TBE '
+
+                            # result_sheet.merge_range(row, col, row + 5, col, gk_grade, cell_grade)
+                            result_sheet.merge_range(row, col, row + 6, col, gk_grade, cell_grade)
+                            col += 1
+                        else:
+                            try:
+                                if s == 'Third Language':
+                                    result_sheet.set_column(col, col, 3)
+                                    result_sheet.set_column(col + 1, col + 2, 4.5)  # those were extra wide.
+                                    # result_sheet.merge_range(row, col, row + 5, col, third_lang, vertical_text)
+                                    result_sheet.merge_range(row, col, row + 6, col, third_lang, vertical_text)
+                                    col += 1
+                                    subject = tl.third_lang
+                                else:
+                                    subject = Subject.objects.get(school=school, subject_name=s)
+                                print ('retrieved the subject object for %s' % s)
+                                print (subject)
+                                try:
+                                    term_test = ClassTest.objects.get(the_class=the_class, section=section,
+                                                                      subject=subject, exam=term)
+                                    print ('retrieved the term tests for class: %s-%s, subject: %s' %
+                                           (the_class.standard, section.section, s))
+                                    print (term_test)
+                                except Exception as e:
+                                    print('failed to retrieve term_test for %s class %s exam %s' %
+                                          (subject.subject_name, the_class.standard, term.title))
+                                    print('exception 22012019-A from exam views.py %s %s' % (e.message, type(e)))
+                                    # result_sheet.merge_range(row, col, row + 5, col + 1, 'TBE', cell_center)
+                                    result_sheet.merge_range(row, col, row + 6, col + 1, 'TBE', cell_center)
+                                    col += 2
+                                    continue
+                            except Exception as e:
+                                print ('exception 20012018-B from exam views.py %s %s' % (e.message, type(e)))
+                                print ('failed to retrieve subject for %s' % s)
+                                if subject.subject_name != 'GK':
+                                    result_sheet.merge_range(row, col, row, col + 3, 'TBE', cell_grade)
+                                    col += 6
+                                else:
+                                    result_sheet.write_string(row, col, 'TBE', cell_grade)
+                                    col += 1
+                                continue
+                            sub_total_formula = '=sum('
+                            try:
+                                print ('retrieving % s marks for %s' % (s, student_name))
+                                test_result = TestResults.objects.get(class_test=term_test, student=student)
+                                term_marks = test_result.marks_obtained
+
+                                # 17/10/2018 - deal with cases of marks not yet entered or Absent
+                                if term_marks == -5000 or term_marks == -5000.0 or term_marks == -5000.00:
+                                    print('marks not entered case')
+                                    print(term_marks)
+                                    print('%s test for %s for %s created but marks/absence not entered' %
+                                          (subject.subject_name, term.title, student_name))
+                                    result_sheet.set_column(col, col, 4)
+                                    term_marks = 'TBE'
+
+                                if term_marks == -1000 or term_marks == -1000.0 or term_marks == -1000.00:
+                                    print('absence case')
+                                    print(term_marks)
+                                    print('%s absent (ABS) in  %s test for %s for ' %
+                                          (student_name, subject.subject_name, term.title))
+                                    result_sheet.set_column(col, col, 4)
+                                    term_marks = 'ABS'
+
+                                term_test_result = TermTestResult.objects.get(test_result=test_result)
+
+                                if comp_title_created:
+                                    result_sheet.set_column(col, col, 0)
+                                else:
+                                    comp_title_created = True
+
+                                result_sheet.write_string(row, col, pa, cell_component)
+                                col += 1
+                                pa_marks = Decimal(round(term_test_result.periodic_test_marks))
+                                result_sheet.write_number(row, col, pa_marks, cell_normal)
+                                cell = xl_rowcol_to_cell(row, col)
+                                sub_total_formula += '%s,' % (cell)
+                                row += 1
+                                col -= 1
+
+                                result_sheet.write_string(row, col, ma, cell_component)
+                                col += 1
+                                ma_marks = Decimal(round(term_test_result.multi_asses_marks))
+                                if ma_marks < 0:
+                                    print('Multi Assessment marks not entered for %s in %s for %s' %
+                                          (student_name, subject.subject_name, term.title))
+                                    result_sheet.write_string(row, col, 'TBE', cell_grade)
+                                else:
+                                    result_sheet.write_number(row, col, ma_marks, cell_normal)
+                                cell = xl_rowcol_to_cell(row, col)
+                                sub_total_formula += '%s,' % (cell)
+                                row += 1
+                                col -= 1
+
+                                result_sheet.write_string(row, col, nb, cell_component)
+                                col += 1
+                                nb_marks = term_test_result.note_book_marks
+                                if nb_marks < 0:
+                                    print('Notebook submission marks not entered for %s in %s for %s' %
+                                          (student_name, subject.subject_name, term.title))
+                                    result_sheet.write_string(row, col, 'TBE', cell_grade)
+                                else:
+                                    result_sheet.write_number(row, col, nb_marks, cell_normal)
+                                cell = xl_rowcol_to_cell(row, col)
+                                sub_total_formula += '%s,' % (cell)
+                                row += 1
+                                col -= 1
+
+                                result_sheet.write_string(row, col, se, cell_component)
+                                col += 1
+                                se_marks = term_test_result.sub_enrich_marks
+                                if se_marks < 0:
+                                    print('Subject Enrichment submission marks not entered for %s in %s for %s' %
+                                          (student_name, subject.subject_name, term.title))
+                                    result_sheet.write_string(row, col, 'TBE', cell_grade)
+                                else:
+                                    result_sheet.write_number(row, col, se_marks, cell_normal)
+                                cell = xl_rowcol_to_cell(row, col)
+                                sub_total_formula += '%s,' % (cell)
+                                row += 1
+                                col -= 1
+
+                                result_sheet.write_string(row, col, the_term, cell_component)
+                                col += 1
+                                if term_marks == 'ABS' or term_marks == 'TBE':
+                                    result_sheet.write_string(row, col, term_marks, cell_grade)
+                                else:
+                                    result_sheet.write_number(row, col, term_marks, cell_normal)
+                                cell = xl_rowcol_to_cell(row, col)
+                                sub_total_formula += '%s)' % (cell)
+                                row += 1
+                                col -= 1
+
+                                result_sheet.write_string(row, col, tot, cell_component)
+                                col += 1
+                                print('formula constructed = %s' % sub_total_formula)
+                                result_sheet.write_formula(row, col, sub_total_formula, cell_bold)
+                                # the above cell, in which we are writing the subject total, is a component
+                                # for calculating the term total
+                                cell = xl_rowcol_to_cell(row, col)
+                                term_total_formula += '%s,' % (cell)
+                                both_term_tot_formula += '%s,' % (cell)
+
+                                row += 1
+                                col -= 1
+
+                                grade_formula = '=IF(%s > 90, "A1", IF(%s > 80, "A2", IF(%s > 70, "B1", ' \
+                                                'IF(%s > 60, "B2", ' \
+                                                'IF(%s > 50, "C1", IF(%s > 40, "C2", IF(%s > 32, "D", "E")))))))' % \
+                                                (cell, cell, cell, cell, cell, cell, cell)
+                                result_sheet.write_string(row, col, gr, cell_component)
+                                col += 1
+                                result_sheet.write_formula(row, col, grade_formula, cell_bold)
+
+                                # 19/10/2018 - for the next subject, row and columns need to be reset
+                                # row -= 5
+                                row -= 6
+                                col += 1
+                            except Exception as e:
+                                print ('exception 20012018-D from exam views.py %s %s' % (e.message, type(e)))
+                                print ('failed to retrieve %s marks for %s' % (s, student_name))
+                    term_total_formula += ')'
+                    print('term_total_formula = %s' % term_total_formula)
+                    result_sheet.set_column(col, col, 4)
+                    # result_sheet.merge_range(row, col, row + 5, col, term_total_formula, cell_grade)
+                    result_sheet.merge_range(row, col, row + 6, col, term_total_formula, cell_grade)
+                    result_sheet.write_formula(row, col, term_total_formula, cell_grade)
+                    cell = xl_rowcol_to_cell(row, col)
+                    rank_range += '%s,' % cell
+                    col += 1
+
+                    perc_formula = '=%s/%s' % (cell, str(total_marks))
+                    # result_sheet.merge_range(row, col, row + 5, col, perc_formula, cell_grade)
+                    result_sheet.merge_range(row, col, row + 6, col, perc_formula, cell_grade)
+                    result_sheet.write_formula(row, col, perc_formula, perc_format)
+                    result_sheet.set_column(col, col, 6)
+                    cell = xl_rowcol_to_cell(row, col, row_abs=True, col_abs=True)
+                    col += 1
+
+                    grade_formula = '=IF(%s*100 > 90, "A1", IF(%s*100 > 80, "A2", IF(%s*100 > 70, "B1", ' \
+                                    'IF(%s*100 > 60, "B2", ' \
+                                    'IF(%s*100 > 50, "C1", IF(%s*100 > 40, "C2", IF(%s*100 > 32, "D", "E")))))))' % \
+                                    (cell, cell, cell, cell, cell, cell, cell)
+                    # result_sheet.merge_range(row, col, row + 5, col, grade_formula, cell_grade)
+                    result_sheet.merge_range(row, col, row + 6, col, grade_formula, cell_grade)
+                    result_sheet.write_formula(row, col, grade_formula, cell_grade)
+                    col += 1
+
+                    # determine the rank
+                    cell = xl_rowcol_to_cell(row, col - 2)
+                    cell_start = xl_rowcol_to_cell(start_row, col - 2, row_abs=True, col_abs=True)
+                    cell_end = xl_rowcol_to_cell(start_row + stud_count * 7 - 1, col - 2, row_abs=True,
+                                                 col_abs=True)
+                    rank_formula = '=RANK(%s, %s:%s)' % (cell, cell_start, cell_end)
+                    print('formula for rank: %s', rank_formula)
+                    # result_sheet.merge_range(row, col, row + 5, col, rank_formula, cell_grade)
+                    result_sheet.merge_range(row, col, row + 6, col, rank_formula, cell_grade)
+                    result_sheet.write_formula(row, col, rank_formula, cell_grade)
+                    col += 1
+                both_term_tot_formula += ')'
+                print('both_term_total_formula = %s' % both_term_tot_formula)
+
+                # 20/10/2018 - summary for both terms
+                col = both_term_start_col
+                # result_sheet.merge_range(row, col, row + 5, col, both_term_tot_formula, cell_grade)
+                result_sheet.merge_range(row, col, row + 6, col, both_term_tot_formula, cell_grade)
+                result_sheet.write_formula(row, col, both_term_tot_formula, cell_grade)
+                cell = xl_rowcol_to_cell(row, col)
+                col += 1
+
+                perc_formula = '=%s/%s' % (cell, str(total_marks * 2))
+                if the_class.standard in ninth_tenth:
+                    perc_formula = '=%s/%s' % (cell, str(total_marks))
+                # result_sheet.merge_range(row, col, row + 5, col, perc_formula, cell_grade)
+                result_sheet.merge_range(row, col, row + 6, col, perc_formula, cell_grade)
+                result_sheet.write_formula(row, col, perc_formula, perc_format)
+                col += 1
+
+                # result_sheet.merge_range(row, col, row + 5, col, grade_formula, cell_grade)
+                result_sheet.merge_range(row, col, row + 6, col, grade_formula, cell_grade)
+                result_sheet.write_formula(row, col, grade_formula, cell_grade)
+                col += 1
+
+                cell = xl_rowcol_to_cell(row, col - 2)
+                cell_start = xl_rowcol_to_cell(start_row, col - 2, row_abs=True, col_abs=True)
+                cell_end = xl_rowcol_to_cell(start_row + stud_count * 6 - 1, col - 2, row_abs=True, col_abs=True)
+                rank_formula = '=RANK(%s, %s:%s)' % (cell, cell_start, cell_end)
+                print('formula for rank: %s', rank_formula)
+                # result_sheet.merge_range(row, col, row + 5, col, rank_formula, cell_grade)
+                result_sheet.merge_range(row, col, row + 6, col, rank_formula, cell_grade)
+                result_sheet.write_formula(row, col, rank_formula, cell_grade)
+                col += 1
+
+                # co-scholastic grades. We will show grades for both terms separated by /, eg B/A
+                try:
+                    cs_term1 = CoScholastics.objects.get(term='term1', student=student)
+                    cs_term2 = CoScholastics.objects.get(term='term2', student=student)
+                    work_ed1 = cs_term1.work_education
+                    work_ed2 = '%s/%s' % (work_ed1, cs_term2.work_education)
+                    # result_sheet.merge_range(row, col, row + 5, col,  work_ed2, cell_grade)
+                    result_sheet.merge_range(row, col, row + 6, col, work_ed2, cell_grade)
+                    col += 1
+
+                    art_ed1 = cs_term1.art_education
+                    art_ed2 = '%s/%s' % (art_ed1, cs_term2.art_education)
+                    # result_sheet.merge_range(row, col, row + 5, col, art_ed2, cell_grade)
+                    result_sheet.merge_range(row, col, row + 6, col, art_ed2, cell_grade)
+                    col += 1
+
+                    health_ed1 = cs_term1.health_education
+                    health_ed2 = '%s/%s' % (health_ed1, cs_term2.health_education)
+                    # result_sheet.merge_range(row, col, row + 5, col, health_ed2, cell_grade)
+                    result_sheet.merge_range(row, col, row + 6, col, health_ed2, cell_grade)
+                    col += 1
+
+                    discipline1 = cs_term1.discipline
+                    discipline2 = '%s/%s' % (discipline1, cs_term2.discipline)
+                    # result_sheet.merge_range(row, col, row + 5, col, discipline2, cell_grade)
+                    result_sheet.merge_range(row, col, row + 6, col, discipline2, cell_grade)
+                    col += 1
+
+                    teacher_remarks = cs_term2.teacher_remarks
+                    print('class teacher remarks for %s of %s-%s in %s: %s' %
+                          (student_name, the_class.standard, section.section, term, teacher_remarks))
+                    result_sheet.set_column(col, col, 10)
+                    # result_sheet.merge_range(row, col, row + 5, col, teacher_remarks, cell_normal)
+                    result_sheet.merge_range(row, col, row + 6, col, teacher_remarks, cell_normal)
+
+                    col += 1
                     try:
-                        students = Student.objects.filter(school=school, current_class=the_class,
-                                                          current_section=section,
-                                                          active_status=True).order_by('fist_name')
-                        print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
-                        print (students)
-                        last_col = 68
-                        for row in range(6, students.count() + 7):
-                            for col in range(0, last_col):
-                                result_sheet.write(row, col, '', border)
-                        for student in students:
-                            sub_dict = []
-                            # for higher classes we need to determine the stream selected by
-                            # student as well as the elective
-                            mapping = HigherClassMapping.objects.filter(student=student)
-                            for m in mapping:
-                                sub_dict.append(m.subject.subject_name)
-                            print('subjects chosen by %s %s are = ' % (student.fist_name, student.last_name))
-                            print(sub_dict)
+                        not_promoted = NPromoted.objects.get(student=student)
+                        details = not_promoted.details
+                        print('student %s %s has failed in class %s.' % (student.fist_name,
+                                                                         student.last_name, the_class))
+                        print(not_promoted)
+                        promoted_status = 'Not Promoted'
+
+                        # 14/03/2019 - we want to highlight the row of detained students. But xlxswriter
+                        # only allows to highlight a cell. If we are in this block of code, means that the =
+                        # student is Not Promoted. So, we chose to highlight all the cells in this row based on
+                        # criteria tha the cell is not blank which is true for every cell and hence the whole
+                        # row gets highlighted
+                        # result_sheet.conditional_format(row, 0, row + 5, col + 1, {'type': 'no_blanks',
+                        #                                                        'format': fail_format})
+                        result_sheet.conditional_format(row, 0, row + 6, col + 1, {'type': 'no_blanks',
+                                                                                   'format': fail_format})
+                    except Exception as e:
+                        print('student %s %s has passed in class %s.' % (student.fist_name, student.last_name,
+                                                                         the_class))
+                        print('exception 14032019-A from exam views.py %s %s' % (e.message, type(e)))
+                        promoted_status = 'Promoted'
+                        details = ' '
+                    # result_sheet.merge_range(row, col, row + 5, col, promoted_status, cell_normal)
+                    result_sheet.merge_range(row, col, row + 6, col, promoted_status, cell_normal)
+                    col += 1
+                    # result_sheet.merge_range(row, col, row + 5, col, details, cell_normal)
+                    result_sheet.merge_range(row, col, row + 6, col, details, cell_normal)
+
+                except Exception as e:
+                    print ('exception 21012018-A from exam views.py %s %s' % (e.message, type(e)))
+                    print ('failed to retrieve Co-scholastics grade for %s' % student_name)
+
+                col = 0
+                # row += 6
+                row += 7
+                s_no = s_no + 1
+        if the_class.standard in ninth_tenth:
+            print('hiding columns for class IX')
+            for col in range(16, 37):
+                result_sheet.set_column(col, col, options={'hidden': True})
+
+        if the_class.standard in higher_classes:
+            maths_stream = ['English', 'Mathematics', 'Physics', 'Chemistry', 'Elective']
+            bio_stream = ['English', 'Biology', 'Physics', 'Chemistry', 'Elective']
+            commerce_stream = ['English', 'Economics', 'Accountancy', 'Business Studies', 'Elective']
+            humanities_stream = ['English', 'Economics', 'History', 'Sociology', 'Elective']
+            components = ['UT', 'Half Yearly', 'Final Exam', 'Cumulative']
+            try:
+                students = Student.objects.filter(school=school, current_class=the_class,
+                                                  current_section=section,
+                                                  active_status=True).order_by('fist_name')
+                print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
+                print (students)
+                last_col = 68
+                for row in range(6, students.count() + 7):
+                    for col in range(0, last_col):
+                        result_sheet.write(row, col, '', border)
+                for student in students:
+                    sub_dict = []
+                    # for higher classes we need to determine the stream selected by
+                    # student as well as the elective
+                    mapping = HigherClassMapping.objects.filter(student=student)
+                    for m in mapping:
+                        sub_dict.append(m.subject.subject_name)
+                    print('subjects chosen by %s %s are = ' % (student.fist_name, student.last_name))
+                    print(sub_dict)
+                    try:
+                        print('now determining the stream for this class %s-%s...' %
+                              (the_class.standard, section.section))
+                        if 'Mathematics' in sub_dict:
+                            chosen_stream = maths_stream
+                            print('%s-%s has chosen %s stream' %
+                                  (the_class.standard, section.section, 'maths'))
+                        if 'Biology' in sub_dict:
+                            chosen_stream = bio_stream
+                            print('%s %s has chosen %s stream' %
+                                  (the_class.standard, section.section, 'biology'))
+                        if 'Accountancy' in sub_dict:
+                            chosen_stream = commerce_stream
+                            print('%s %s has chosen %s stream' %
+                                  (the_class.standard, section.section, 'commerce'))
+                        if 'History' in sub_dict:
+                            chosen_stream = humanities_stream
+                            print('%s %s has chosen %s stream' %
+                                  (the_class.standard, section.section, 'humanities'))
+                    except Exception as e:
+                        print('failed to determine the stream chosen by %s %s' %
+                              (student.fist_name, student.last_name))
+                        print('exception 03032018-A from exam views.py %s %s' % (e.message, type(e)))
+                    row = 3
+                    col = 3
+                    result_sheet.merge_range(row, col, row + 2, col, 'Elective Sub', vertical_text)
+                    col = col + 1
+                    result_sheet.set_column('D:D', 6)
+                    result_sheet.set_column('E:BH', 4.5)
+                    for sub in chosen_stream:
+                        print('now creating heading for subject: %s' % sub)
+                        result_sheet.merge_range(row, col, row, col + 10, sub, cell_center)
+                        col1 = col
+
+                        # UT
+                        result_sheet.merge_range(row + 1, col1, row + 2, col1, components[0], cell_center)
+                        col1 = col1 + 1
+
+                        # Half Yearly Exam
+                        result_sheet.merge_range(row + 1, col1, row + 1, col1 + 2, components[1], cell_center)
+                        result_sheet.write_string(row + 2, col1, 'Th', cell_center)
+                        col1 += 1
+                        result_sheet.write_string(row + 2, col1, 'Pr', cell_center)
+                        col1 += 1
+                        result_sheet.write_string(row + 2, col1, 'Total', cell_center)
+                        result_sheet.set_column(col1, col1, options={'hidden': True})
+                        col1 += 1
+
+                        # Final Exam
+                        result_sheet.merge_range(row + 1, col1, row + 1, col1 + 2, components[2], cell_center)
+                        result_sheet.write_string(row + 2, col1, 'Th', cell_center)
+                        col1 += 1
+                        result_sheet.write_string(row + 2, col1, 'Pr', cell_center)
+                        col1 += 1
+                        result_sheet.write_string(row + 2, col1, 'Total', cell_center)
+                        result_sheet.set_column(col1, col1, options={'hidden': True})
+                        col1 += 1
+
+                        # Cumulative
+                        result_sheet.merge_range(row + 1, col1, row + 1, col1 + 3, components[3], cell_center)
+                        result_sheet.write_string(row + 2, col1, 'UT\n(25%)', cell_center)
+                        col1 += 1
+                        result_sheet.write_string(row + 2, col1, 'HY\n(25%)', cell_center)
+                        col1 += 1
+                        result_sheet.write_string(row + 2, col1, 'Final\n(50%)', cell_center)
+                        col1 += 1
+                        result_sheet.write_string(row + 2, col1, 'Total', cell_center)
+
+                        col = col + 11
+                    break
+                result_sheet.set_column('BI:BI', 4.5)
+                result_sheet.set_column('BJ:BO', 2.5)
+                g_col = 59
+                result_sheet.merge_range(row, g_col, row + 2, g_col, 'Grand Total', vertical_text)
+                g_col += 1
+                result_sheet.merge_range(row, g_col, row + 2, g_col, 'Percentage', vertical_text)
+                g_col += 1
+                result_sheet.merge_range(row, g_col, row + 2, g_col, 'Grade', vertical_text)
+                g_col += 1
+                result_sheet.merge_range(row, g_col, row + 2, g_col, 'Rank', vertical_text)
+                g_col += 1
+                result_sheet.merge_range(row, g_col, row + 2, g_col, 'GS', vertical_text)
+                g_col += 1
+                result_sheet.merge_range(row, g_col, row + 2, g_col, 'Work Ex', vertical_text)
+                g_col += 1
+                result_sheet.merge_range(row, g_col, row + 2, g_col, 'PHED', vertical_text)
+                g_col += 1
+                result_sheet.merge_range(row, g_col, row + 2, g_col, 'Discipline', vertical_text)
+                g_col += 1
+                result_sheet.merge_range(row, g_col, row + 2, g_col, 'Result', cell_center)
+                g_col += 1
+                result_sheet.merge_range(row, g_col, row + 2, g_col, 'Details', cell_center)
+                row += 3
+
+                # delete the "Elective" entry from the sub_dict. We will now substitute it with the real
+                # elective chosen by each student.
+                chosen_stream.pop()
+
+                ut_list = Exam.objects.filter(school=school, exam_type='unit', start_class='XI')
+                s_no = 1
+                for student in students:
+                    col = 0
+                    result_sheet.write_number(row, col, s_no, cell_normal)
+                    col += 1
+                    admission_no = student.student_erp_id
+                    student_name = student.fist_name + ' ' + student.last_name
+                    # get the house information
+                    try:
+                        h = House.objects.get(student=student)
+                        house = h.house
+                        result_sheet.write_string(row, col, house, cell_normal)
+                    except Exception as e:
+                        print('exception 28032018-A from exam views.py %s %s' % (e.message, type(e)))
+                        print('failed to retrieve house for %s' % student_name)
+                        result_sheet.write_string(row, col, ' ', cell_normal)
+                    col += 1
+                    student_name = '%s %s\n%s' % (student.fist_name, student.last_name, admission_no)
+                    result_sheet.write_string(row, col, student_name, cell_normal)
+                    col += 1
+
+                    sub_dict = []
+                    mapping = HigherClassMapping.objects.filter(student=student)
+                    print('mapping for %s is %s' % (student_name, mapping))
+                    for m in mapping:
+                        sub_dict.append(m.subject.subject_name)
+                    print('subjects chosen by %s %s are = ' % (student.fist_name, student.last_name))
+                    print(sub_dict)
+                    # now find the elective subject
+                    elective_sub = (set(sub_dict) ^ set(chosen_stream)).pop()
+                    result_sheet.write_string(row, col, elective_sub, cell_small)
+                    print('elective chosen by %s %s: %s' %
+                          (student.fist_name, student.last_name, elective_sub))
+                    col += 1
+
+                    # complete the list of all subjects chosen by this student
+                    chosen_stream.append(elective_sub)
+                    print('complete list of subjects chosen by %s %s: ' %
+                          (student.fist_name, student.last_name))
+                    print(chosen_stream)
+
+                    # start retrieving the marks secured by this student in all tests & exams
+                    student_name = student.fist_name + ' ' + student.last_name
+                    print('starting to retrieve the marks for %s of class %s-%s' %
+                          (student_name, the_class.standard, section.section))
+                    for sub in chosen_stream:
+                        print('retrieving UT marks for %s for %s' % (student_name, sub))
+                        try:
+                            subject = Subject.objects.get(school=school, subject_name=sub)
+                            print('successfully retrieved the subject object for subject: %s' % sub)
+                            print(subject)
+                        except Exception as e:
+                            print('failed to retrieve the subject object for subject: %s' % sub)
+                            print('exception 04032018-A from exams views.py %s %s' % (e.message, type(e)))
+
+                        ut_total = 0.0
+                        ut_count = 0.0
+                        comments = 'UT details for %s in %s: \n' % (student_name, sub)
+                        for ut in ut_list:
+                            comments += '\n%s: ' % ut
                             try:
-                                print('now determining the stream for this class %s-%s...' %
-                                      (the_class.standard, section.section))
-                                if 'Mathematics' in sub_dict:
-                                    chosen_stream = maths_stream
-                                    print('%s-%s has chosen %s stream' %
-                                          (the_class.standard, section.section, 'maths'))
-                                if 'Biology' in sub_dict:
-                                    chosen_stream = bio_stream
-                                    print('%s %s has chosen %s stream' %
-                                          (the_class.standard, section.section, 'biology'))
-                                if 'Accountancy' in sub_dict:
-                                    chosen_stream = commerce_stream
-                                    print('%s %s has chosen %s stream' %
-                                          (the_class.standard, section.section, 'commerce'))
-                                if 'History' in sub_dict:
-                                    chosen_stream = humanities_stream
-                                    print('%s %s has chosen %s stream' %
-                                          (the_class.standard, section.section, 'humanities'))
+                                print('now trying to retrieve test in %s for subject %s class %s' %
+                                      (ut, sub, the_class.standard))
+                                a_ut = Exam.objects.get(school=school, title=ut)
+                                print('retrieved %s for class %s' % (ut, the_class.standard))
+                                print(a_ut)
+                                try:
+                                    test = ClassTest.objects.get(subject=subject, the_class=the_class,
+                                                                 section=section, exam=a_ut)
+                                    print('test was conducted for %s under exam: %s for class %s' %
+                                          (sub, ut, the_class.standard))
+                                    print(test)
+                                    ut_count += 1.0
+                                    print('ut_count = %f' % float(ut_count))
+                                    result = TestResults.objects.get(class_test=test, student=student)
+                                    print(result)
+                                    # convert the marks to be out of 25
+                                    if float(result.marks_obtained > -1000.0):
+                                        comments += '%s/%s' % (str(result.marks_obtained),
+                                                               str(round(test.max_marks, 0)))
+                                        print(comments)
+                                        # marks = (25.0*float(result.marks_obtained))/(float(test.max_marks))
+                                        marks = float(result.marks_obtained)
+                                        ut_total += marks
+                                        print('ut_total = %f' % ut_total)
+                                except Exception as e:
+                                    print('no test could be found corresponding to %s class %s subject %s' %
+                                          (ut, the_class.standard, sub))
+                                    print('exception 04032018-B from exam views.py %s %s'
+                                          % (e.message, type(e)))
                             except Exception as e:
-                                print('failed to determine the stream chosen by %s %s' %
-                                      (student.fist_name, student.last_name))
-                                print('exception 03032018-A from exam views.py %s %s' % (e.message, type(e)))
-                            row = 3
-                            col = 3
-                            result_sheet.merge_range(row, col, row + 2, col, 'Elective Sub', vertical_text)
-                            col = col + 1
-                            result_sheet.set_column('D:D', 6)
-                            result_sheet.set_column('E:BH', 4.5)
-                            for sub in chosen_stream:
-                                print('now creating heading for subject: %s' % sub)
-                                result_sheet.merge_range(row, col, row, col + 10, sub, cell_center)
-                                col1 = col
+                                print('%s could not be retrieved for class %s' % (ut, the_class.standard))
+                                print('exception 04032018-C from exam views.py %s %s' % (e.message, type(e)))
+                                col += 1
+                        try:
+                            result_sheet.write_number(row, col, round(ut_total / float(ut_count), 2), cell_normal)
+                            result_sheet.write_comment(row, col, comments, {'height': 150})
+                        except Exception as e:
+                            print('UT average not available for %s in %s' %
+                                  (student_name, subject.subject_name))
+                            print('exception 30012019-A from exam views.py %s %s' % (e.message, type(e)))
+                        col += 1
 
-                                # UT
-                                result_sheet.merge_range(row+1, col1, row+2, col1, components[0], cell_center)
-                                col1 = col1 + 1
-
-                                # Half Yearly Exam
-                                result_sheet.merge_range(row+1, col1, row+1, col1+2, components[1], cell_center)
-                                result_sheet.write_string(row+2, col1, 'Th', cell_center)
-                                col1 += 1
-                                result_sheet.write_string(row + 2, col1, 'Pr', cell_center)
-                                col1 += 1
-                                result_sheet.write_string(row + 2, col1, 'Total', cell_center)
-                                result_sheet.set_column(col1, col1, options={'hidden': True})
-                                col1 += 1
-
-                                # Final Exam
-                                result_sheet.merge_range(row + 1, col1, row + 1, col1 + 2, components[2], cell_center)
-                                result_sheet.write_string(row + 2, col1, 'Th', cell_center)
-                                col1 += 1
-                                result_sheet.write_string(row + 2, col1, 'Pr', cell_center)
-                                col1 += 1
-                                result_sheet.write_string(row + 2, col1, 'Total', cell_center)
-                                result_sheet.set_column(col1, col1, options={'hidden': True})
-                                col1 += 1
-
-                                # Cumulative
-                                result_sheet.merge_range(row + 1, col1, row + 1, col1 + 3, components[3], cell_center)
-                                result_sheet.write_string(row + 2, col1, 'UT\n(25%)', cell_center)
-                                col1 += 1
-                                result_sheet.write_string(row + 2, col1, 'HY\n(25%)', cell_center)
-                                col1 += 1
-                                result_sheet.write_string(row + 2, col1, 'Final\n(50%)', cell_center)
-                                col1 += 1
-                                result_sheet.write_string(row + 2, col1, 'Total', cell_center)
-
-                                col = col + 11
-                            break
-                        result_sheet.set_column('BI:BI', 4.5)
-                        result_sheet.set_column('BJ:BO', 2.5)
-                        g_col = 59
-                        result_sheet.merge_range(row, g_col, row+2, g_col, 'Grand Total', vertical_text)
-                        g_col += 1
-                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Percentage', vertical_text)
-                        g_col += 1
-                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Grade', vertical_text)
-                        g_col += 1
-                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Rank', vertical_text)
-                        g_col += 1
-                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'GS', vertical_text)
-                        g_col += 1
-                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Work Ex', vertical_text)
-                        g_col += 1
-                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'PHED', vertical_text)
-                        g_col += 1
-                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Discipline', vertical_text)
-                        g_col += 1
-                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Result', cell_center)
-                        g_col += 1
-                        result_sheet.merge_range(row, g_col, row + 2, g_col, 'Details', cell_center)
-                        row += 3
-
-                        # delete the "Elective" entry from the sub_dict. We will now substitute it with the real
-                        # elective chosen by each student.
-                        chosen_stream.pop()
-
-                        ut_list = Exam.objects.filter(school=school, exam_type='unit', start_class='XI')
-                        s_no = 1
-                        for student in students:
-                            col = 0
-                            result_sheet.write_number(row, col, s_no, cell_normal)
-                            col += 1
-                            admission_no = student.student_erp_id
-                            student_name = student.fist_name + ' ' + student.last_name
-                            # get the house information
+                        # get the half yearly marks & final exam marks
+                        term_exams = Exam.objects.filter(school=school, exam_type='term',
+                                                         start_class='XI')
+                        prac_subjects = ["Biology", "Physics", "Chemistry", "Fine Arts",
+                                         "Accountancy", "Business Studies", "Economics",
+                                         "Information Practices", "Informatics Practices", "Computer Science",
+                                         "Painting",
+                                         "Physical Education"]
+                        for term in term_exams:
                             try:
-                                h = House.objects.get(student=student)
-                                house = h.house
-                                result_sheet.write_string(row, col, house, cell_normal)
-                            except Exception as e:
-                                print('exception 28032018-A from exam views.py %s %s' % (e.message, type(e)))
-                                print('failed to retrieve house for %s' % student_name)
-                                result_sheet.write_string(row, col, ' ', cell_normal)
-                            col += 1
-                            student_name = '%s %s\n%s' % (student.fist_name, student.last_name, admission_no)
-                            result_sheet.write_string(row, col, student_name, cell_normal)
-                            col += 1
+                                test = ClassTest.objects.get(subject=subject, the_class=the_class,
+                                                             section=section, exam=term)
+                                print('test was conducted for %s under exam: %s for class %s' %
+                                      (sub, term, the_class.standard))
+                                print(test)
+                                result = TestResults.objects.get(class_test=test, student=student)
+                                print(result)
+                                if result.marks_obtained > -1000.0:
+                                    result_sheet.write_number(row, col,
+                                                              float(result.marks_obtained), cell_normal)
+                                else:
+                                    if result.marks_obtained == -1000.0 or result.marks_obtained == -1000.00:
+                                        result_sheet.write_string(row, col, 'ABS', cell_center)
+                                    if result.marks_obtained == -5000.0 or result.marks_obtained == -5000.00:
+                                        result_sheet.write_string(row, col, 'TBE', cell_center)
 
-                            sub_dict = []
-                            mapping = HigherClassMapping.objects.filter(student=student)
-                            print('mapping for %s is %s' % (student_name, mapping))
-                            for m in mapping:
-                                sub_dict.append(m.subject.subject_name)
-                            print('subjects chosen by %s %s are = ' % (student.fist_name, student.last_name))
-                            print(sub_dict)
-                            # now find the elective subject
-                            elective_sub = (set(sub_dict) ^ set(chosen_stream)).pop()
-                            result_sheet.write_string(row, col, elective_sub, cell_small)
-                            print('elective chosen by %s %s: %s' %
-                                  (student.fist_name, student.last_name, elective_sub))
-                            col += 1
-
-                            # complete the list of all subjects chosen by this student
-                            chosen_stream.append(elective_sub)
-                            print('complete list of subjects chosen by %s %s: ' %
-                                  (student.fist_name, student.last_name))
-                            print(chosen_stream)
-
-                            # start retrieving the marks secured by this student in all tests & exams
-                            student_name = student.fist_name + ' ' + student.last_name
-                            print('starting to retrieve the marks for %s of class %s-%s' %
-                                  (student_name, the_class.standard, section.section))
-                            for sub in chosen_stream:
-                                print('retrieving UT marks for %s for %s' % (student_name, sub))
-                                try:
-                                    subject = Subject.objects.get(school=school, subject_name=sub)
-                                    print('successfully retrieved the subject object for subject: %s' % sub)
-                                    print(subject)
-                                except Exception as e:
-                                    print('failed to retrieve the subject object for subject: %s' % sub)
-                                    print('exception 04032018-A from exams views.py %s %s' % (e.message, type(e)))
-
-                                ut_total = 0.0
-                                ut_count = 0.0
-                                comments = 'UT details for %s in %s: \n' % (student_name, sub)
-                                for ut in ut_list:
-                                    comments += '\n%s: ' % ut
-                                    try:
-                                        print('now trying to retrieve test in %s for subject %s class %s' %
-                                              (ut, sub, the_class.standard))
-                                        a_ut = Exam.objects.get(school=school, title=ut)
-                                        print('retrieved %s for class %s' % (ut, the_class.standard))
-                                        print(a_ut)
-                                        try:
-                                            test = ClassTest.objects.get(subject=subject, the_class=the_class,
-                                                                         section=section, exam=a_ut)
-                                            print('test was conducted for %s under exam: %s for class %s' %
-                                                  (sub, ut, the_class.standard))
-                                            print(test)
-                                            ut_count += 1.0
-                                            print('ut_count = %f' % float(ut_count))
-                                            result = TestResults.objects.get(class_test=test, student=student)
-                                            print(result)
-                                            # convert the marks to be out of 25
-                                            if float(result.marks_obtained > -1000.0):
-                                                comments += '%s/%s' % (str(result.marks_obtained),
-                                                                         str(round(test.max_marks, 0)))
-                                                print(comments)
-                                                # marks = (25.0*float(result.marks_obtained))/(float(test.max_marks))
-                                                marks = float(result.marks_obtained)
-                                                ut_total += marks
-                                                print('ut_total = %f' % ut_total)
-                                        except Exception as e:
-                                            print('no test could be found corresponding to %s class %s subject %s' %
-                                                  (ut, the_class.standard, sub))
-                                            print('exception 04032018-B from exam views.py %s %s'
-                                                  % (e.message, type(e)))
-                                    except Exception as e:
-                                        print('%s could not be retrieved for class %s' % (ut, the_class.standard))
-                                        print('exception 04032018-C from exam views.py %s %s' % (e.message, type(e)))
-                                        col += 1
-                                try:
-                                    result_sheet.write_number(row, col, round(ut_total/float(ut_count), 2), cell_normal)
-                                    result_sheet.write_comment(row, col, comments, {'height': 150})
-                                except Exception as e:
-                                    print('UT average not available for %s in %s' %
-                                          (student_name, subject.subject_name))
-                                    print('exception 30012019-A from exam views.py %s %s' % (e.message, type(e)))
                                 col += 1
 
-                                # get the half yearly marks & final exam marks
-                                term_exams = Exam.objects.filter(school=school, exam_type='term',
-                                                         start_class='XI')
-                                prac_subjects = ["Biology", "Physics", "Chemistry", "Fine Arts",
-                                                 "Accountancy", "Business Studies", "Economics",
-                                                 "Information Practices", "Informatics Practices", "Computer Science",
-                                                 "Painting",
-                                                 "Physical Education"]
-                                for term in term_exams:
+                                if subject.subject_prac:
+                                    # if sub in prac_subjects:
                                     try:
-                                        test = ClassTest.objects.get(subject=subject, the_class=the_class,
-                                                                     section=section, exam=term)
-                                        print('test was conducted for %s under exam: %s for class %s' %
-                                              (sub, term, the_class.standard))
-                                        print(test)
-                                        result = TestResults.objects.get(class_test=test, student=student)
-                                        print(result)
-                                        if result.marks_obtained > -1000.0:
-                                            result_sheet.write_number(row, col,
-                                                                      float(result.marks_obtained), cell_normal)
+                                        term_test_results = TermTestResult.objects.get(test_result=result)
+                                        print('%s has practical component' % (sub))
+                                        prac_marks = float(term_test_results.prac_marks)
+
+                                        if prac_marks > -1000.00:
+                                            result_sheet.write_number(row, col, prac_marks, cell_normal)
                                         else:
-                                            if result.marks_obtained == -1000.0 or result.marks_obtained == -1000.00:
+                                            if prac_marks == -1000.0 or prac_marks == -1000.00:
                                                 result_sheet.write_string(row, col, 'ABS', cell_center)
-                                            if result.marks_obtained == -5000.0 or result.marks_obtained == -5000.00:
+                                            if prac_marks == -5000.0 or prac_marks == -5000.00:
                                                 result_sheet.write_string(row, col, 'TBE', cell_center)
 
                                         col += 1
+                                        result_sheet.set_column(col + 1, col + 7, options={'hidden': True})
 
-                                        if subject.subject_prac:
-                                        # if sub in prac_subjects:
-                                            try:
-                                                term_test_results = TermTestResult.objects.get(test_result=result)
-                                                print('%s has practical component' % (sub))
-                                                prac_marks = float(term_test_results.prac_marks)
-
-                                                if prac_marks > -1000.00:
-                                                    result_sheet.write_number(row, col, prac_marks, cell_normal)
-                                                else:
-                                                    if prac_marks == -1000.0 or prac_marks == -1000.00:
-                                                        result_sheet.write_string(row, col, 'ABS', cell_center)
-                                                    if prac_marks == -5000.0 or prac_marks == -5000.00:
-                                                        result_sheet.write_string(row, col, 'TBE', cell_center)
-
-                                                col += 1
-                                                result_sheet.set_column(col+1, col+7, options={'hidden': True})
-
-                                            except Exception as e:
-                                                print('%s practical marks for %s could not be retrieved' %
-                                                      (sub, student_name))
-                                                print('exception 04032018-D from exam views.py %s %s' %
-                                                      (e.message, type(e)))
-                                                col += 1
-                                        else:
-                                            result_sheet.write_string(row, col, 'NA', cell_normal)
-                                            col += 1
-                                        # 20/02/2019 for cumulative only theory marks are to be taken into
-                                        # account for Half yearly and Annual Exams
-                                        # cell_range = xl_range(row, col-2, row, col-2)
-                                        # formula = '=SUM(%s)' % cell_range
-                                        # result_sheet.write_formula(row, col, formula, cell_normal)
-                                        col += 1
                                     except Exception as e:
-                                        print('no test could be found corresponding to %s class %s subject %s' %
-                                              (ut, the_class.standard, sub))
-                                        print('exception 04032018-B from exam views.py %s %s'
-                                              % (e.message, type(e)))
-                                        col +=3
-                                        # col += 5
-                                # fill in cumulative results
-                                # get the UT cell
-                                cell = xl_rowcol_to_cell(row, col-7)
-                                formula = '=%s' % cell
-                                result_sheet.write_formula(row, col, formula, cell_normal)
-                                # col += 1
-                                col += 4
-
-                                commerce_sub = ['Economics', 'Accountancy', 'Business Studies']
-                                # get the half yearly total cell
-                                cell = xl_rowcol_to_cell(row, col-5)
-                                # if subject.subject_prac:
-                                if subject.subject_name not in commerce_sub:
-                                    formula = '=%s * 25/%f' % (cell, subject.theory_marks)
+                                        print('%s practical marks for %s could not be retrieved' %
+                                              (sub, student_name))
+                                        print('exception 04032018-D from exam views.py %s %s' %
+                                              (e.message, type(e)))
+                                        col += 1
                                 else:
-                                    formula = '=%s * 25/%f' % (cell, 100.00)
-                                # else:
-                                #     formula = '=%s/4.0' % cell
-                                result_sheet.write_formula(row, col, formula, cell_normal)
-                                col += 1
-
-                                # get the final exam total cell
-                                cell = xl_rowcol_to_cell(row, col - 3)
-                                formula = '=%s * 50/%f' % (cell, subject.theory_marks)
-                                result_sheet.write_formula(row, col, formula, cell_normal)
-                                col += 1
-
-                                # write the grand total
-                                cell_range = xl_range(row, col - 3, row, col - 1)
-                                formula = '=SUM(%s)' % cell_range
-                                result_sheet.write_formula(row, col, formula, cell_normal)
-                                col += 1
-
-                            # write the total for all subjects for this student
-                            c1 = xl_rowcol_to_cell(row, 14)
-                            c2 = xl_rowcol_to_cell(row, 25)
-                            c3 = xl_rowcol_to_cell(row, 36)
-                            c4 = xl_rowcol_to_cell(row, 47)
-                            c5 = xl_rowcol_to_cell(row, 58)
-                            formula = '=ROUND(SUM(%s, %s, %s, %s, %s), 1)' % (c1, c2, c3, c4, c5)
-                            print('formula for grand total = %s' % formula)
-                            result_sheet.write_formula(row, col, formula, cell_normal)
-                            col += 1
-
-                            # percentage
-                            cell_range = xl_range(row, col-1, row, col-1)
-                            formula = '=%s/500.00' % cell_range
-                            result_sheet.write_formula(row, col, formula, perc_format)
-                            col += 1
-
-                            index = 'BI%s*100' % str(row+1)
-                            print ('index = %s' % index)
-                            formula = '=IF(%s > 90, "A1", IF(%s > 80, "A2", IF(%s > 70, "B1", IF(%s > 60, "B2", ' \
-                                        'IF(%s > 50, "C1", IF(%s > 40, "C2", IF(%s > 32, "D", "E")))))))' % \
-                                        (index, index, index, index, index, index, index)
-                            print ('formula for grade = %s' % formula)
-                            result_sheet.write_formula(row, col, formula, cell_grade)
-
-                            col += 1
-                            # determine the rank
-                            count = students.count()
-                            start_row = 7
-                            formula = '=RANK(BI%s, $BI$%s:$BI$%s)' % (str(row + 1), str(start_row), str(count + 7))
-                            print('formula for rank: %s', formula)
-                            result_sheet.write_formula(row, col, formula, cell_grade)
-                            col += 1
-
-                            try:
-                                cs_term1 = CoScholastics.objects.get(term='term2', student=student)
-                                work_ed1 = cs_term1.work_education
-                                result_sheet.write_string(row, col, work_ed1, cell_grade)
-                                col += 1
-                                art_ed1 = cs_term1.art_education
-                                result_sheet.write_string(row, col, art_ed1, cell_grade)
-                                col += 1
-                                health_ed1 = cs_term1.health_education
-                                result_sheet.write_string(row, col, health_ed1, cell_grade)
-                                col += 1
-                                discipline1 = cs_term1.discipline
-                                result_sheet.write_string(row, col, discipline1, cell_grade)
+                                    result_sheet.write_string(row, col, 'NA', cell_normal)
+                                    col += 1
+                                # 20/02/2019 for cumulative only theory marks are to be taken into
+                                # account for Half yearly and Annual Exams
+                                # cell_range = xl_range(row, col-2, row, col-2)
+                                # formula = '=SUM(%s)' % cell_range
+                                # result_sheet.write_formula(row, col, formula, cell_normal)
                                 col += 1
                             except Exception as e:
-                                print('failed to retrieve co-scholastic for %s' % student_name)
-                                print('exception 29012019-A from exam views.py %s %s' % (e.message, type(e)))
-                                col += 4
+                                print('no test could be found corresponding to %s class %s subject %s' %
+                                      (ut, the_class.standard, sub))
+                                print('exception 04032018-B from exam views.py %s %s'
+                                      % (e.message, type(e)))
+                                col += 3
+                                # col += 5
+                        # fill in cumulative results
+                        # get the UT cell
+                        cell = xl_rowcol_to_cell(row, col - 7)
+                        formula = '=%s' % cell
+                        result_sheet.write_formula(row, col, formula, cell_normal)
+                        # col += 1
+                        col += 4
 
-                            # show the result/remarks. In the beginning it will show Promoted,
-                            #  but after the analysis is done, it will show the actual result
-                            print('now determining the promoted status for %s' % student)
-                            result_sheet.set_column('BQ:BQ', 15)
-                            result_sheet.set_column('BR:BR', 30)
-                            details = ' '
-                            try:
-                                not_promoted = NPromoted.objects.get(student=student)
-                                details = not_promoted.details
-                                print('student %s %s has failed in class %s.' % (student.fist_name,
-                                                                                 student.last_name, the_class))
-                                print(not_promoted)
-                                promoted_status = 'Not Promoted'
+                        commerce_sub = ['Economics', 'Accountancy', 'Business Studies']
+                        # get the half yearly total cell
+                        cell = xl_rowcol_to_cell(row, col - 5)
+                        # if subject.subject_prac:
+                        if subject.subject_name not in commerce_sub:
+                            formula = '=%s * 25/%f' % (cell, subject.theory_marks)
+                        else:
+                            formula = '=%s * 25/%f' % (cell, 100.00)
+                        # else:
+                        #     formula = '=%s/4.0' % cell
+                        result_sheet.write_formula(row, col, formula, cell_normal)
+                        col += 1
 
-                                # 14/03/2019 - we want to highlight the row of detained students. But xlxswriter
-                                # only allows to highlight a cell. If we are in this block of code, means that the =
-                                # student is Not Promoted. So, we chose to highlight all the cells in this row based on
-                                # criteria tha the cell is not blank which is true for every cell and hence the whole
-                                # row gets highlighted
-                                result_sheet.conditional_format(row, 0, row, col + 1, {'type': 'no_blanks',
-                                                                                     'format': fail_format})
-                            except Exception as e:
-                                print('student %s %s has passed in class %s.' % (student.fist_name, student.last_name,
-                                                                                 the_class))
-                                print('exception 25032018-C from exam views.py %s %s' % (e.message, type(e)))
-                                promoted_status = 'Promoted'
-                            result_sheet.write_string(row, col, promoted_status, cell_normal)
+                        # get the final exam total cell
+                        cell = xl_rowcol_to_cell(row, col - 3)
+                        formula = '=%s * 50/%f' % (cell, subject.theory_marks)
+                        result_sheet.write_formula(row, col, formula, cell_normal)
+                        col += 1
 
-                            col += 1
-                            result_sheet.write_string(row, col, details, cell_normal)
-                            # reset the chosen_stream to standard subjects
-                            chosen_stream.pop()
-                            row += 1
-                            s_no += 1
+                        # write the grand total
+                        cell_range = xl_range(row, col - 3, row, col - 1)
+                        formula = '=SUM(%s)' % cell_range
+                        result_sheet.write_formula(row, col, formula, cell_normal)
+                        col += 1
+
+                    # write the total for all subjects for this student
+                    c1 = xl_rowcol_to_cell(row, 14)
+                    c2 = xl_rowcol_to_cell(row, 25)
+                    c3 = xl_rowcol_to_cell(row, 36)
+                    c4 = xl_rowcol_to_cell(row, 47)
+                    c5 = xl_rowcol_to_cell(row, 58)
+                    formula = '=ROUND(SUM(%s, %s, %s, %s, %s), 1)' % (c1, c2, c3, c4, c5)
+                    print('formula for grand total = %s' % formula)
+                    result_sheet.write_formula(row, col, formula, cell_normal)
+                    col += 1
+
+                    # percentage
+                    cell_range = xl_range(row, col - 1, row, col - 1)
+                    formula = '=%s/500.00' % cell_range
+                    result_sheet.write_formula(row, col, formula, perc_format)
+                    col += 1
+
+                    index = 'BI%s*100' % str(row + 1)
+                    print ('index = %s' % index)
+                    formula = '=IF(%s > 90, "A1", IF(%s > 80, "A2", IF(%s > 70, "B1", IF(%s > 60, "B2", ' \
+                              'IF(%s > 50, "C1", IF(%s > 40, "C2", IF(%s > 32, "D", "E")))))))' % \
+                              (index, index, index, index, index, index, index)
+                    print ('formula for grade = %s' % formula)
+                    result_sheet.write_formula(row, col, formula, cell_grade)
+
+                    col += 1
+                    # determine the rank
+                    count = students.count()
+                    start_row = 7
+                    formula = '=RANK(BI%s, $BI$%s:$BI$%s)' % (str(row + 1), str(start_row), str(count + 7))
+                    print('formula for rank: %s', formula)
+                    result_sheet.write_formula(row, col, formula, cell_grade)
+                    col += 1
+
+                    try:
+                        cs_term1 = CoScholastics.objects.get(term='term2', student=student)
+                        work_ed1 = cs_term1.work_education
+                        result_sheet.write_string(row, col, work_ed1, cell_grade)
+                        col += 1
+                        art_ed1 = cs_term1.art_education
+                        result_sheet.write_string(row, col, art_ed1, cell_grade)
+                        col += 1
+                        health_ed1 = cs_term1.health_education
+                        result_sheet.write_string(row, col, health_ed1, cell_grade)
+                        col += 1
+                        discipline1 = cs_term1.discipline
+                        result_sheet.write_string(row, col, discipline1, cell_grade)
+                        col += 1
                     except Exception as e:
-                        print('failed to retrieve the list of students for class %s-%s' %
-                              (the_class.standard, section.section))
-                        print('exception 03032018-B from exam views.py %s %s' % (e.message, type(e)))
-                row += 4
-                sig_col = 3
-                result_sheet.merge_range(row, sig_col, row, sig_col + 6, "Class Teacher's Signature", title)
-                sig_col += 10
-                result_sheet.merge_range(row, sig_col, row, sig_col + 6, "Vice Principal's Signature", title)
-                sig_col += 10
-                result_sheet.merge_range(row, sig_col, row, sig_col + 6, "Principal's Signature", title)
-                workbook.close()
-                response = HttpResponse(content_type='application/vnd.ms-excel')
-                response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
-                response.write(output.getvalue())
-                return response
-            else:
-                error = 'You have missed to select either Class, or Section'
-                form = ResultSheetForm(request)
-                context_dict['form'] = form
-                form.errors['__all__'] = form.error_class([error])
-                return render(request, 'classup/result_sheet.html', context_dict)
+                        print('failed to retrieve co-scholastic for %s' % student_name)
+                        print('exception 29012019-A from exam views.py %s %s' % (e.message, type(e)))
+                        col += 4
+
+                    # show the result/remarks. In the beginning it will show Promoted,
+                    #  but after the analysis is done, it will show the actual result
+                    print('now determining the promoted status for %s' % student)
+                    result_sheet.set_column('BQ:BQ', 15)
+                    result_sheet.set_column('BR:BR', 30)
+                    details = ' '
+                    try:
+                        not_promoted = NPromoted.objects.get(student=student)
+                        details = not_promoted.details
+                        print('student %s %s has failed in class %s.' % (student.fist_name,
+                                                                         student.last_name, the_class))
+                        print(not_promoted)
+                        promoted_status = 'Not Promoted'
+
+                        # 14/03/2019 - we want to highlight the row of detained students. But xlxswriter
+                        # only allows to highlight a cell. If we are in this block of code, means that the =
+                        # student is Not Promoted. So, we chose to highlight all the cells in this row based on
+                        # criteria tha the cell is not blank which is true for every cell and hence the whole
+                        # row gets highlighted
+                        result_sheet.conditional_format(row, 0, row, col + 1, {'type': 'no_blanks',
+                                                                               'format': fail_format})
+                    except Exception as e:
+                        print('student %s %s has passed in class %s.' % (student.fist_name, student.last_name,
+                                                                         the_class))
+                        print('exception 25032018-C from exam views.py %s %s' % (e.message, type(e)))
+                        promoted_status = 'Promoted'
+                    result_sheet.write_string(row, col, promoted_status, cell_normal)
+
+                    col += 1
+                    result_sheet.write_string(row, col, details, cell_normal)
+                    # reset the chosen_stream to standard subjects
+                    chosen_stream.pop()
+                    row += 1
+                    s_no += 1
+            except Exception as e:
+                print('failed to retrieve the list of students for class %s-%s' %
+                      (the_class.standard, section.section))
+                print('exception 03032018-B from exam views.py %s %s' % (e.message, type(e)))
+        row += 4
+        sig_col = 3
+        result_sheet.merge_range(row, sig_col, row, sig_col + 6, "Class Teacher's Signature", title)
+        sig_col += 10
+        result_sheet.merge_range(row, sig_col, row, sig_col + 6, "Vice Principal's Signature", title)
+        sig_col += 10
+        result_sheet.merge_range(row, sig_col, row, sig_col + 6, "Principal's Signature", title)
+        workbook.close()
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
+        response.write(output.getvalue())
+        return response

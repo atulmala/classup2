@@ -29,7 +29,7 @@ from .forms import MidTermAdmissionForm
 
 from setup.views import validate_excel_extension
 
-from .serializers import StudentSerializer, ParentSerializer
+from .serializers import StudentSerializer, ParentSerializer, StudentDetailSerializer
 
 from authentication.views import JSONResponse
 from operations import sms
@@ -88,11 +88,14 @@ class StudentList(generics.ListAPIView):
 
 
 class SingleStudentDetails(generics.ListAPIView):
-    serializer_class = StudentSerializer
+    serializer_class = StudentDetailSerializer
 
     def get_queryset(self):
-        student_id = self.kwargs['student_id']
-        query_set = Student.objects.filter(id=student_id)
+        school_id = self.kwargs['school_id']
+        school = School.objects.get(id=school_id)
+        student_id = self.request.query_params.get('student_id')
+        print(student_id)
+        query_set = Student.objects.filter(school=school, student_erp_id=student_id)
         return query_set
 
 
@@ -192,6 +195,7 @@ def get_parent(request, student_id):
             return JSONResponse(parent_detail, status=201)
 
         return JSONResponse(parent_detail, status=201)
+
 
 def get_student_detail(request, student_id):
     student_detail =    {
