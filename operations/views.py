@@ -778,8 +778,13 @@ def send_bulk_sms(request):
         try:
             data = json.loads(request.body)
             print('Bulk SMS process initiated from device')
-            from_device = True
-            message_type = 'Bulk SMS (Device)'
+            from_device = data['from_device']
+            # from_device = True
+            if from_device == "true":
+                message_type = 'Bulk SMS (Device)'
+            else:
+                message_type = 'Bulk SMS (Web Interface)'
+
             school_id = data['school_id']
             school = School.objects.get(id=school_id)
 
@@ -1003,7 +1008,8 @@ def send_bulk_sms(request):
                         print(staff_mobile)
                         sms.send_sms1(school, sender, staff_mobile, message, message_type)
 
-        # 23/10/2018 - there was a demand that if whole school is chosen then send to teachers & staff (18/02/2019)as well
+        # 23/10/2018 - there was a demand that if whole school is chosen then send to
+        # teachers & staff (18/02/2019)as well
         try:
             if whole_school == 'true':
                 for teacher in Teacher.objects.filter(school=school):
@@ -1049,8 +1055,12 @@ def send_bulk_sms(request):
             ca = ClassUpAdmin.objects.get(pk=1)
             admin_mobile = ca.admin_mobile
             print(admin_mobile)
-            message1 = '%s has initiated bulk sms process. Run the batch. Message was: "%s"' % \
-                       (school, message_body)
+            if message_type == 'Bulk SMS (Web Interface)':
+                message1 = '%s has initiated bulk sms process through Web Interface. ' % school
+                message1 += 'Run the batch. Message was: "%s"' % message_body
+            else:
+                message1 = '%s has initiated bulk sms process through Device Interface. ' % school
+                message1 += 'Message was: "%s"' % message_body
             print(message1)
             message_type = 'Run Batch'
             sms.send_sms1(school, sender, admin_mobile, message1, message_type)
