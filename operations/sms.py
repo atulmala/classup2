@@ -1,7 +1,10 @@
 l__author__ = 'atulgupta'
-
 import urllib2
 import json
+
+import clicksend_client
+from clicksend_client import SmsMessage
+from clicksend_client.rest import ApiException
 
 from django.db.models import Q
 from django.contrib.auth.models import User
@@ -193,18 +196,30 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
             url += '&msg=%s' % m3
 
         if vendor == 2:
-            print('vendor for sending this sms for %s is SMSGateway Hub' % school.school_name)
-            vendor_name = 'SMSGatewayHub'
+            print('vendor for sending this sms for %s is ClickSend' % school.school_name)
+            vendor_name = 'ClickSend'
             try:
                 v = SMSVendor.objects.get(vendor=vendor_name)
                 vendor_retrieved = True
             except Exception as e:
                 print('exception 12072019-B from sms.py %s %s' % (e.message, type(e)))
                 print('could not retrieve the vendor object associated with %s' % vendor_name)
-            api_key = '6ZWRKLTUnEmMMQro3P30SQ'
-            url = 'https://www.smsgatewayhub.com/api/mt/SendSMS?APIKey=%s' % api_key
-            senderid = 'CLSSUP'
-            url += '&senderid=%s&channel=2&DCS=0&flashsms=0&number=%s&text=%s' % (senderid, mobile, m3)
+            configuration = clicksend_client.Configuration()
+            configuration.username = 'atul.gupta@classup.in'
+            configuration.password = 'FFB1E530-5CB9-CD36-0135-5F0C5D206FBB'
+
+            # create an instance of the API class
+            api_instance = clicksend_client.SMSApi(clicksend_client.ApiClient(configuration))
+            sms_message = SmsMessage(source="php", body=m3, to=mobile, schedule=1436874701)
+            sms_messages = clicksend_client.SmsMessageCollection(messages=[sms_message])
+
+            try:
+                # Send sms message(s)
+                api_response = api_instance.sms_send_post(sms_messages)
+                print(api_response)
+            except ApiException as e:
+                print('exception 12112019-A from sms.py %s %s' % (e.message, type(e)))
+                print("Exception when calling SMSApi->sms_send_post: %s\n" % e)
 
         if vendor == 3:
             print('vendor for sending this sms for %s is DealSMS' % school.school_name)

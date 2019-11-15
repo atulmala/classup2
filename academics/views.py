@@ -846,7 +846,10 @@ def submit_marks(request, school_id):
             tr = TestResults.objects.get(pk=key)
 
             if grade_based:
+                print('its a grade based test')
                 tr.grade = data[key]
+                print('key = %s' % key)
+                print('grade = %s' % data[key])
             else:
                 tr.marks_obtained = float(data[key]['marks'])
                 if float(data[key]['marks']) > highest_marks:
@@ -962,13 +965,24 @@ def submit_marks(request, school_id):
                 message += f_name + ' in '
 
                 # 26/07/2019 include the exam name in message
-                message += ' %s ' %  test.exam.title
+                message += ' %s ' % test.exam.title
                 message += sub.subject_name + ' test on ' + dmy_date + ': '
+                print('message till now = %s' % message)
                 if grade_based:
-                    if data[key]['marks'] == '-1000.00' or data[key]['marks'] == '-1000':
+                    print('still grade based !')
+                    print(data[key])
+                    if data[key] == '-1000.00' or data[key] == '-1000':
+                        print('entered here')
                         message += 'ABSENT'
                     else:
-                        message +=  tr.grade + ' Grade'
+                        print('entered the right place')
+                        try:
+                            message += tr.grade + ' Grade'
+                            print('message after fetching grade = % s' % message)
+
+                        except Exception as e:
+                            print(' exception 12112019-B %s %s' % (e.message, type(e)))
+                    print('message after fetching grade = % s' % message)
                 else:
                     if data[key]['marks'] == '-1000.00' or data[key]['marks'] == '-1000':
                         message += 'ABSENT'

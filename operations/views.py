@@ -1,3 +1,5 @@
+import ast
+import logging
 from datetime import datetime, date
 
 import time
@@ -5,6 +7,7 @@ import calendar
 from calendar import monthrange
 import StringIO
 import base64
+import re
 import urllib2
 
 import json
@@ -14,6 +17,7 @@ import xlsxwriter
 
 from django.contrib.auth.models import User
 from django.db import DataError
+from django.utils import log
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import ugettext
 from django.shortcuts import render
@@ -28,7 +32,7 @@ from academics.models import Class, Section, Subject, ClassTest, TestResults, Cl
 from student.models import Student
 from teacher.models import Teacher, TeacherMessageRecord, MessageReceivers, Staff
 from attendance.models import Attendance, AttendanceTaken, DailyAttendanceSummary
-from parents.models import  ParentCommunication
+from parents.models import ParentCommunication
 from setup.models import Configurations, School, GlobalConf
 from pic_share.models import ImageVideo, ShareWithStudents, SharedWithTeacher
 
@@ -57,7 +61,7 @@ class SMSHistoryList(generics.ListAPIView):
         except Exception as e:
             print('unable to create logbook entry')
             print('Exception 500 from operations views.py = %s (%s)' % (e.message, type(e)))
-        q = SMSRecord.objects.filter(recipient_number=recipient).\
+        q = SMSRecord.objects.filter(recipient_number=recipient). \
             exclude(message_type='Forgot Password').order_by('-date')
         return q
 
@@ -85,7 +89,7 @@ def att_summary_school_device(request):
 
         main = Subject.objects.get(school=school, subject_name='Main')
 
-        grand_total = p_total = a_total =  0
+        grand_total = p_total = a_total = 0
 
         for c in Class.objects.filter(school=school):
             for s in Section.objects.filter(school=school):
@@ -273,11 +277,11 @@ def att_summary_school(request):
                     att_taken = AttendanceTaken.objects.filter(date=converted_date, the_class=c,
                                                                section=s, subject=main).count()
                     if 0 == att_taken:
-                        summary_sheet.write_number(row, 0, idx+1, cell_center)
+                        summary_sheet.write_number(row, 0, idx + 1, cell_center)
                         summary_sheet.write_string(row, 1, c.standard, cell_center)
                         summary_sheet.write_string(row, 2, s.section, cell_center)
                         summary_sheet.write_number(row, 3, total, cell_center)
-                        merge_range = 'E' + str(row+1) + ':' + 'G' + str(row+1)
+                        merge_range = 'E' + str(row + 1) + ':' + 'G' + str(row + 1)
                         summary_sheet.merge_range(merge_range, "Attendance Not Taken", summary_row)
 
                         idx += 1
@@ -286,13 +290,13 @@ def att_summary_school(request):
                     absent = Attendance.objects.filter(date=converted_date,
                                                        the_class=c, section=s, subject=main).count()
                     present = total - absent
-                    perc_present = float(float(present)/float(total))
+                    perc_present = float(float(present) / float(total))
 
                     p_total += present
                     a_total += absent
-                    grand_present_perc = float(float(p_total)/float(grand_total))
+                    grand_present_perc = float(float(p_total) / float(grand_total))
 
-                    summary_sheet.write_number(row, 0, idx+1, cell_center)
+                    summary_sheet.write_number(row, 0, idx + 1, cell_center)
                     summary_sheet.write_string(row, 1, c.standard, cell_center)
                     summary_sheet.write_string(row, 2, s.section, cell_center)
                     summary_sheet.write_number(row, 3, total, cell_center)
@@ -307,7 +311,6 @@ def att_summary_school(request):
                     absentee_sheet.write_string(row_absentee, 1, s.section, cell_center)
                     for student in Attendance.objects.filter(date=converted_date,
                                                              the_class=c, section=s, subject=main):
-
                         absentee_sheet.write_string(row_absentee, 2,
                                                     student.student.fist_name + ' ' + student.student.last_name,
                                                     cell_left)
@@ -316,9 +319,9 @@ def att_summary_school(request):
                         absentee_sheet.write_string(row_absentee, 5, student.student.parent.parent_mobile1, cell_left)
                         row_absentee += 1
                     # to make a gap between rows of subsequent classes
-                    row_absentee +=1
+                    row_absentee += 1
         if 0 != p_total:
-            merge_range = 'A' + str(row+1) + ':' 'C' + str(row+1)
+            merge_range = 'A' + str(row + 1) + ':' 'C' + str(row + 1)
             summary_sheet.merge_range(merge_range, "Grand Total", summary_row)
             summary_sheet.write_number(row, 3, grand_total, summary_row)
             summary_sheet.write_number(row, 4, p_total, summary_row)
@@ -433,7 +436,7 @@ def sms_summary(request):
         sms_sheet.write(3, 7, ugettext("Message"), header)
         sms_sheet.write(3, 8, ugettext("Message Type"), header)
         sms_sheet.write(3, 9, ugettext("Status/Job ID"), header)
-        sms_sheet.write(3,10, ugettext("Credits Consumed"), header)
+        sms_sheet.write(3, 10, ugettext("Credits Consumed"), header)
         try:
             sms_list = SMSRecord.objects.filter(school=school, date__month=month_int,
                                                 date__year=year_int).order_by('-date')
@@ -450,8 +453,8 @@ def sms_summary(request):
                     iso_date = sms_date.isoformat()
                     d, t = iso_date.split('T')
                     date_time = '%s %s' % (d, t[:8])
-                    #print('date_time = %s' % date_time)
-                    #sms_sheet.write(current_row, 1, sms_date, date_format)
+                    # print('date_time = %s' % date_time)
+                    # sms_sheet.write(current_row, 1, sms_date, date_format)
                     sms_sheet.write(current_row, 1, date_time, text_format)
                 except Exception as e:
                     print('exception 05122018-A from operations views.py %s %s' % (e.message, type(e)))
@@ -487,7 +490,7 @@ def sms_summary(request):
                 sms_sheet.write(current_row, 8, ugettext(message_type), text_format)
 
                 if message_type == 'Forgot Password':
-                    message = '<Contents Hidden>'   # don't show the password in the Excel sheet
+                    message = '<Contents Hidden>'  # don't show the password in the Excel sheet
                     sms_sheet.write(current_row, 7, ugettext(message), text_format)
 
                 status = s.status
@@ -495,7 +498,7 @@ def sms_summary(request):
 
                 # calculate the sms credits consumed by this sms
                 total_char = len(message)
-                sms_credits = total_char/160
+                sms_credits = total_char / 160
                 additional = total_char % 160
                 if additional > 0:
                     sms_credits += 1
@@ -612,7 +615,7 @@ def att_register_class(request):
             'valign': 'top'
         })
 
-        title_text = 'Monthly Attendance for Class ' + the_class.standard + '-' + section.section +\
+        title_text = 'Monthly Attendance for Class ' + the_class.standard + '-' + section.section + \
                      ', Subject: ' + str(the_subject)
         title_text += ' for ' + month + '/' + y
         attendance_sheet.merge_range('A2:Q2', title_text, title)
@@ -630,16 +633,16 @@ def att_register_class(request):
         DayL = ['M', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su']
 
         days = monthrange(year_int, month_int)[1]
-        for d in range(1, days+1):
+        for d in range(1, days + 1):
             date_for_db = date(year_int, month_int, int(d))
             the_day = DayL[date_for_db.weekday()]
 
-            attendance_sheet.write(2, d+2, ugettext(the_day), header)
-            attendance_sheet.write_number(3, d+2, d, header)
-        attendance_sheet.write(3, days+3, ugettext("Total"), header)
-        attendance_sheet.write(3, days+4, ugettext("%"), header)
-        attendance_sheet.write(3, days+5, ugettext("Till Date"), header)
-        attendance_sheet.write(3, days+6, ugettext("Till Date %"), header)
+            attendance_sheet.write(2, d + 2, ugettext(the_day), header)
+            attendance_sheet.write_number(3, d + 2, d, header)
+        attendance_sheet.write(3, days + 3, ugettext("Total"), header)
+        attendance_sheet.write(3, days + 4, ugettext("%"), header)
+        attendance_sheet.write(3, days + 5, ugettext("Till Date"), header)
+        attendance_sheet.write(3, days + 6, ugettext("Till Date %"), header)
         attendance_sheet.write(3, days + 7, ugettext("Student Reg No"), header)
 
         idx = 0
@@ -657,49 +660,49 @@ def att_register_class(request):
         for s in Student.objects.filter(school=school, current_class=the_class,
                                         current_section=section, active_status=True).order_by('fist_name'):
             print('\ndealing with: %s %s' % (s.fist_name, s.last_name))
-            attendance_sheet.write_number(row, 0, idx+1, cell_center)
-            attendance_sheet.write_number(row, 1, idx+1, cell_center)
+            attendance_sheet.write_number(row, 0, idx + 1, cell_center)
+            attendance_sheet.write_number(row, 1, idx + 1, cell_center)
             attendance_sheet.write_string(row, 2, ugettext(s.fist_name + ' ' + s.last_name), cell_left)
 
             db_hit += 1
-            for d in range(1, days+1):
+            for d in range(1, days + 1):
                 date_for_db = date(year_int, month_int, int(d))
                 if d not in holidays:
                     try:
                         a = AttendanceTaken.objects.filter(date=date_for_db,
                                                            the_class=the_class, section=section, subject=subject)
                         db_hit += 1
-                        if 0 < a.count():   # this means this date was not a holiday :( and attendance was taken
+                        if 0 < a.count():  # this means this date was not a holiday :( and attendance was taken
                             # check if this student was present in the class that day or was in a cinema hall or mall :)
                             try:
                                 q = Attendance.objects.filter(date=date_for_db, student=s,
                                                               the_class=the_class, section=section, subject=subject)
                                 db_hit += 1
-                                if 0 < q.count():    # student bunked this class!
-                                    attendance_sheet.write_string(row, d+2, ugettext("A"), absent_format)
-                                else:   # student was getting bored attending this lecture
-                                    attendance_sheet.write_string(row, d+2, ugettext("P"), present_format)
+                                if 0 < q.count():  # student bunked this class!
+                                    attendance_sheet.write_string(row, d + 2, ugettext("A"), absent_format)
+                                else:  # student was getting bored attending this lecture
+                                    attendance_sheet.write_string(row, d + 2, ugettext("P"), present_format)
                                     present_count += 1
                             except Exception as e:
                                 print ('exception occured while doing lookup in the Attendance table')
                                 print ('Exception1 from operations views.py = %s (%s)' % (e.message, type(e)))
-                        else:   # wow, this day was a holiday
+                        else:  # wow, this day was a holiday
                             holidays.append(d)
                             holiday_count += 1
-                            attendance_sheet.write(row, d+2, ugettext("NA"), holiday_format)
+                            attendance_sheet.write(row, d + 2, ugettext("NA"), holiday_format)
 
                     except Exception as e:
                         print ('exception occured while doing lookup in the AttendanceTaken table')
                         print ('Exception2 from operations views.py = %s (%s)' % (e.message, type(e)))
                 else:
-                    attendance_sheet.write(row, d+2, ugettext("NA"), holiday_format)
+                    attendance_sheet.write(row, d + 2, ugettext("NA"), holiday_format)
 
                 working_days = days - holiday_count
-                attendance_sheet.write_string(row, d+3,
+                attendance_sheet.write_string(row, d + 3,
                                               ugettext(str(present_count) + '/' + str(working_days)), cell_center)
                 try:
-                    perc_present = float(float(present_count)/float(working_days))
-                    attendance_sheet.write_number(row, d+4, perc_present, perc_format)
+                    perc_present = float(float(present_count) / float(working_days))
+                    attendance_sheet.write_number(row, d + 4, perc_present, perc_format)
                 except Exception as e:
                     print ('exception occured while trying to calculate percentage')
                     print ('Exception3 from operations views.py = %s (%s)' % (e.message, type(e)))
@@ -710,14 +713,14 @@ def att_register_class(request):
                 session_start_month = conf.session_start_month
                 print('the session start month is %i' % session_start_month)
                 if month_int < session_start_month:
-                    start = date(year_int-1, session_start_month, 1)
+                    start = date(year_int - 1, session_start_month, 1)
 
                 else:
                     start = date(year_int, session_start_month, 1)
                 print('start = ')
                 print(start)
                 no_of_days = calendar.monthrange(year_int, month_int)[1]
-                end = date (year_int, month_int, no_of_days)
+                end = date(year_int, month_int, no_of_days)
                 print('end = ')
                 print(end)
 
@@ -731,19 +734,19 @@ def att_register_class(request):
                 print('absent days till date: %i' % absent_days_till_date)
                 present_days_till_date = working_days_till_date - absent_days_till_date
                 print('present days till date: %i' % present_days_till_date)
-                attendance_sheet.write(row, d+5,
+                attendance_sheet.write(row, d + 5,
                                        ugettext(str(present_days_till_date) + '/' + str(working_days_till_date)),
                                        cell_center)
                 if int(working_days_till_date) < 1:
                     present_perc_till_date = 'N/A'
-                    attendance_sheet.write_string(row, d+6, present_perc_till_date)
+                    attendance_sheet.write_string(row, d + 6, present_perc_till_date)
                 else:
-                    present_perc_till_date = float(float(present_days_till_date)/float(working_days_till_date))
-                    attendance_sheet.write(row, d+6, present_perc_till_date, perc_format)
+                    present_perc_till_date = float(float(present_days_till_date) / float(working_days_till_date))
+                    attendance_sheet.write(row, d + 6, present_perc_till_date, perc_format)
             except Exception as e:
                 print ('unable to calculate attendance till date')
                 print ('Exception4 from operations views.py = %s (%s)' % (e.message, type(e)))
-            attendance_sheet.write(row, d+7, ugettext(s.student_erp_id), cell_left)
+            attendance_sheet.write(row, d + 7, ugettext(s.student_erp_id), cell_left)
 
             row += 1
             idx += 1
@@ -772,32 +775,22 @@ def send_bulk_sms(request):
     staff = None
 
     if request.method == 'POST':
-        # 13/02/17 - as we have implemented the functionality to send bulk sms from device, we need to check here
-        # whether bulk sms is triggered from device or web interface? If json is decoded, request came from device
-        # otherwise from web interface
         try:
             data = json.loads(request.body)
             print('Bulk SMS process initiated from device')
-            from_device = data['from_device']
-            # from_device = True
-            if from_device == "true":
-                message_type = 'Bulk SMS (Device)'
-            else:
-                message_type = 'Bulk SMS (Web Interface)'
-
+            # print(data)
+            # print(data)
+            from_device = True
+            message_type = 'Bulk SMS (Device)'
             school_id = data['school_id']
-            school = School.objects.get(id=school_id)
-
+            sender = data['user']
             message_body = data['message_text']
-            print(message_body)
 
             whole_school = data['whole_school']
-            if whole_school == "true":
-                selected_classes = Class.objects.filter(school=school)
-            else:
-                print('trying to extract selected classes/teachers/staff...')
+            if whole_school != 'true':
                 selected_classes = data['classes_array']
-                print(selected_classes)
+            else:
+                selected_classes = ['All Classes']
 
             try:
                 image_included = data['image_included']
@@ -810,213 +803,170 @@ def send_bulk_sms(request):
             if image_included == 'yes':
                 image = data['image']
                 image_name = data['image_name']
+                print('image_name = %s' % image_name)
                 image_file = ContentFile(base64.b64decode(image), name=image_name.replace('@', ''))
-                description = message_body
-                long_link = 'https://storage.cloud.google.com/classup/classup2/media/prod/image_video/%s' % \
-                            image_name.replace('@', '')
-                print('long_link = %s' % long_link)
-                short_link = long_link
-
-                # prepare short link
-                global_conf = GlobalConf.objects.get(pk=1)
-                key = global_conf.short_link_api
-                url = 'https://cutt.ly/api/api.php?'
-                url += 'key=%s&short=%s' % (key, long_link)
-                print('url for generating short link = %s' % url)
-                try:
-                    response = urllib2.urlopen(url)
-                    print('response for generating short link = %s' % response)
-                    outcome = json.loads(response.read())
-                    print('ouctome = ')
-                    print(outcome)
-                    status = outcome['url']['status']
-                    print('status = %i' % status)
-                    if status == 7:
-                        short_link = outcome['url']['shortLink']
-                        print('short_lint = %s' % short_link)
-                except Exception as e:
-                    print('exception 20082019-A from operations views.py %s %s' % (e.message, type(e)))
-                    print('failed to generate short link  for the image/video uploaded by %s' % t)
+                # print(image_file)
         except Exception as e:
-            print('Exception 225 from operations views.py = %s (%s)' % (e.message, type(e)))
-            print('Bulk SMS process initiated from web interface')
-
-            # first see whether the cancel button was pressed
-            if "cancel" in request.POST:
-                return render(request, 'classup/setup_index.html', context_dict)
-
-            from_device = False
-            school_id = request.session['school_id']
-            school = School.objects.get(id=school_id)
-            form = BulkSMSForm(request.POST, school_id=school_id)
-            context_dict['form'] = form
+            print('exception 13112019-A from operations views.py %s %s' % (e.message, type(e)))
+            print('json not present, means this is request from vue.js web admin interface')
 
             message_type = 'Bulk SMS (Web Interface)'
-            message_body = request.POST['message_text']
+            print('Bulk SMS process initiated from vue.js admin web interface')
+            school_id = request.POST.get('school_id')
+            sender = request.POST.get('user')
+            message_body = request.POST.get('message_text')
+            whole_school = request.POST.get('whole_school')
+            sc = str(request.POST.get('classes_array')).split()
+            selected_classes = sc[0].split(',')
+            print(selected_classes)
+            print map(str, selected_classes)
 
-            if message_body == '':
-                error = 'Message is Empty'
-                form.errors['__all__'] = form.error_class([error])
-                print (error)
-                return render(request, 'classup/bulk_sms.html', context_dict)
+            image_included = request.POST.get('image_included')
+            print('image_included = %s' % image_included)
+            if image_included == 'true' or image_included == 'yes':
+                image_file = request.FILES['file']
+                print(type(image_file))
+                print('image_file = %s' % image_file)
+                print(image_file)
+                image = request.POST.get('image')
+                image_name  = request.POST.get('image_name')
 
-            # 17/02/17 we are restricting the lenght of message to 140 char. Salutations will be added automatically
-            if len(message_body) > 250:
-                error = 'Message to long (' + str(len(message_body)) + ' characters). Please restrict it to 250 chars'
-                form.errors['__all__'] = form.error_class([error])
-                print (error)
-                return render(request, 'classup/bulk_sms.html', context_dict)
-            else:
-                print('message size is well within limits')
+        school = School.objects.get(id=school_id)
+        if whole_school == "true":
+            selected_classes = Class.objects.filter(school=school)
 
-            selected_classes = request.POST.getlist('Class')
-            print('selected classes from web interface = ' + str(selected_classes) )
-            staff = request.POST.getlist('Staff')
+        print(str(selected_classes))
+        print(type(selected_classes))
+        description = message_body
 
-            if len(selected_classes) == 0 and len(staff) == 0:
-                error = 'You have not selected any Class, Teacher, or Staff'
-                form.errors['__all__'] = form.error_class([error])
-                print (error)
-                return render(request, 'classup/bulk_sms.html', context_dict)
+        if image_included == 'true' or image_included == 'yes':
+            # 14/11/2019 - need to make sure that 'dev' to be changed to 'prod' when this code is pushed to production
+            long_link = 'https://storage.cloud.google.com/classup/classup2/media/prod/image_video/%s' % \
+                        image_name.replace('@', '')
+            # long_link = 'https://storage.cloud.google.com/classup/classup2/media/dev/image_video/%s' % \
+            #             image_name.replace('@', '')
 
-        start_time = time.time()
+            print('long_link = %s' % long_link)
+            short_link = long_link
 
-        if from_device:
-            sender = data['user']
-        else:
-            sender = request.session['user']
-        print('sender = ' + sender)
+            # prepare short link
+            global_conf = GlobalConf.objects.get(pk=1)
+            key = global_conf.short_link_api
+            url = 'https://cutt.ly/api/api.php?'
+            url += 'key=%s&short=%s' % (key, long_link)
+            print('url for generating short link = %s' % url)
+            try:
+                response = urllib2.urlopen(url)
+                print('response for generating short link = %s' % response)
+                outcome = json.loads(response.read())
+                print('ouctome = ')
+                print(outcome)
+                status = outcome['url']['status']
+                print('status = %i' % status)
+                if status == 7:
+                    short_link = outcome['url']['shortLink']
+                    print('short_lint = %s' % short_link)
+            except Exception as e:
+                print('exception 20082019-A from operations views.py %s %s' % (e.message, type(e)))
+                print('failed to generate short link  for the image/video uploaded by %s' % sender)
 
-        # send to parents
-        try:
-            configuration = Configurations.objects.get(school=school)
-            for sc in selected_classes:
-                print('class = ' + str(sc))
-                if sc != 'Teachers' and sc != 'Staff':
-                    the_class = Class.objects.get(school=school, standard=sc)
-                    sections = Section.objects.filter(school=school)
-                    for section in sections:
-                        print('section = %s' % section)
-                        if image_included == 'yes':
+    start_time = time.time()
+
+    # send to parents
+    try:
+        configuration = Configurations.objects.get(school=school)
+        for sc in selected_classes:
+            print('class = ' + str(sc))
+            if sc != 'Teachers' and sc != 'Staff':
+                the_class = Class.objects.get(school=school, standard=sc)
+                sections = Section.objects.filter(school=school)
+                for section in sections:
+                    print('section = %s' % section)
+                    if image_included == 'yes' or image_included == 'true':
+                        try:
+                            image_video = ImageVideo()
+                            print('image_file = ')
+                            print(image_file)
+                            image_video.location = image_file
+                            image_video.descrition = message_body
+                            image_video.the_class = the_class
+                            image_video.section = section
+                            image_video.short_link = short_link
+                            image_video.save()
+                        except Exception as e:
+                            print('exception 20082019-B from operations views.py %s %s' % (e.message, type(e)))
+                            print('error in saving image/video for admin broadcast')
+                    student_list = Student.objects.filter(current_class=the_class, current_section=section,
+                                                          active_status=True)
+                    start_time = time.time()
+                    for student in student_list:
+                        student_name = '%s %s' % (student.fist_name, student.last_name)
+                        parent = student.parent
+                        if configuration.type == 'Collage':
+                            message = 'Dear %s, ' % student_name
+                        else:
+                            message = 'Dear %s, ' % parent.parent_name
+
+                        if image_included == 'yes' or image_included == 'true':
                             try:
-                                image_video = ImageVideo()
-                                image_video.location = image_file
-                                image_video.descrition = description
-                                image_video.the_class = the_class
-                                image_video.section = section
-                                image_video.short_link = short_link
-                                image_video.save()
+                                shared = ShareWithStudents(image_video=image_video,
+                                                           student=student, the_class=the_class, section=section)
+                                shared.save()
+                                message += '%s. link: %s Regards, %s' % \
+                                           (message_body, short_link, configuration.school_short_name)
                             except Exception as e:
-                                print('exception 20082019-B from operations views.py %s %s' % (e.message, type(e)))
-                                print('error in saving image/video for admin broadcast')
-                        student_list = Student.objects.filter(current_class=the_class, current_section=section,
-                                                                  active_status=True)
-                        start_time = time.time()
-                        for student in student_list:
-                            student_name = '%s %s' % (student.fist_name, student.last_name)
-                            parent = student.parent
-                            if configuration.type == 'Collage':
-                                message = 'Dear %s, ' % student_name
-                            else:
-                                message = 'Dear %s, ' % parent.parent_name
-
-                            if image_included == 'yes':
-                                try:
-                                    shared = ShareWithStudents(image_video=image_video,
-                                                                student=student, the_class=the_class, section=section)
-                                    shared.save()
-                                    message += '%s. link: %s Regards, %s' % \
-                                                (message_body, short_link, configuration.school_short_name)
-                                except Exception as e:
-                                    print('exception 20082019-C from operations views.py %s %s' %
-                                              (e.message, type(e)))
-                                    print('failed to save SharedWithStudent object')
-                            else:
-                                message += message_body + ' Regards, ' + configuration.school_short_name
-                                print(message)
-                            mobile = parent.parent_mobile1
-                            sms.send_sms1(school, sender, mobile, message, message_type)
-
-                            if configuration.send_absence_sms_both_to_parent:
-                                mobile = parent.parent_mobile2
-                                if mobile != '':
-                                    sms.send_sms1(school, sender, mobile, message, message_type)
-                if sc == 'Teachers':
-                    staff = ['teacher']
-                if sc == 'Staff':
-                    if staff is not None:
-                        staff.append('Staff')
-                    else:
-                        staff = ['Staff']
-        except Exception as e:
-            print('Exception 255 from opertions views.py = %s (%s)' % (e.message, type(e)))
-            print('failed to send sms to parents of students of selected classes')
-
-        # send to teachers/staff
-        print('now sending bulk sms to teacher & staff')
-        if staff is not None:
-            if image_included == 'yes':
-                try:
-                    image_video = ImageVideo()
-                    image_video.location = image_file
-                    image_video.descrition = description
-                    image_video.short_link = short_link
-                    image_video.save()
-                except Exception as e:
-                    print('exception 22082019-B from operations views.py %s %s' % (e.message, type(e)))
-                    print('error in saving image/video for admin broadcast')
-            for st in staff:
-                print('st = ' + str(st))
-                if st == 'teacher' or st == 'Teachers':
-                    for teacher in Teacher.objects.filter(school=school):
-                        teacher_name = teacher.first_name + ' ' + teacher.last_name
-                        print(teacher_name)
-                        message = 'Dear ' + teacher_name + ', '
-                        if image_included == 'yes':
-                            try:
-                                shared_with_teacher = SharedWithTeacher(image_video=image_video, teacher=teacher)
-                                shared_with_teacher.save()
-                            except Exception as e:
-                                print('exception 22082019-C from operations views.py %s %s' % (e.message, type(e)))
-                                print('error in saving image/video for admin broadcast')
-                            message += '%s. link: %s Regards, %s' % \
-                                       (message_body, short_link, configuration.school_short_name)
+                                print('exception 20082019-C from operations views.py %s %s' %
+                                      (e.message, type(e)))
+                                print('failed to save SharedWithStudent object')
                         else:
                             message += message_body + ' Regards, ' + configuration.school_short_name
-                        print(message)
-                        teacher_mobile = teacher.mobile
-                        print(teacher_mobile)
-                        sms.send_sms1(school, sender, teacher_mobile, message, message_type)
-                if st == 'staff' or st == 'Staff':
-                    for staff in Staff.objects.filter(school=school):
-                        staff_name = '%s %s' % (staff.first_name, staff.last_name)
-                        print(staff_name)
-                        message = 'Dear ' + staff_name + ', '
-                        if image_included == 'yes':
-                            try:
-                                shared_with_teacher = SharedWithTeacher(image_video=image_video, staff=staff)
-                                shared_with_teacher.save()
-                            except Exception as e:
-                                print('exception 22082019-D from operations views.py %s %s' % (e.message, type(e)))
-                                print('error in saving image/video for admin broadcast')
-                            message += '%s. link: %s Regards, %s' % \
-                                       (message_body, short_link, configuration.school_short_name)
-                        else:
-                            message += message_body + ' Regards, ' + configuration.school_short_name
-                        print(message)
-                        staff_mobile = staff.mobile
-                        print(staff_mobile)
-                        sms.send_sms1(school, sender, staff_mobile, message, message_type)
+                            print(message)
+                        mobile = parent.parent_mobile1
+                        sms.send_sms1(school, sender, mobile, message, message_type)
 
-        # 23/10/2018 - there was a demand that if whole school is chosen then send to
-        # teachers & staff (18/02/2019)as well
-        try:
-            if whole_school == 'true':
+                        if configuration.send_absence_sms_both_to_parent:
+                            mobile = parent.parent_mobile2
+                            if mobile != '':
+                                sms.send_sms1(school, sender, mobile, message, message_type)
+            if sc == 'Teachers':
+                staff = ['teacher']
+            if sc == 'Staff':
+                if staff is not None:
+                    staff.append('Staff')
+                else:
+                    staff = ['Staff']
+    except Exception as e:
+        print('Exception 255 from opertions views.py = %s (%s)' % (e.message, type(e)))
+        print('failed to send sms to parents of students of selected classes')
+
+    # send to teachers/staff
+    print('now sending bulk sms to teacher & staff')
+    if staff is not None:
+        if image_included == 'yes' or image_included == 'true':
+            try:
+                image_video = ImageVideo()
+                image_video.location = image_file
+                image_video.descrition = message_body
+                image_video.short_link = short_link
+                image_video.save()
+                print('image saved')
+            except Exception as e:
+                print('exception 22082019-B from operations views.py %s %s' % (e.message, type(e)))
+                print('error in saving image/video for admin broadcast')
+        for st in staff:
+            print('st = ' + str(st))
+            if st == 'teacher' or st == 'Teachers':
                 for teacher in Teacher.objects.filter(school=school):
                     teacher_name = teacher.first_name + ' ' + teacher.last_name
                     print(teacher_name)
                     message = 'Dear ' + teacher_name + ', '
-                    if image_included == 'yes':
+                    if image_included == 'yes' or image_included == 'true':
+                        try:
+                            shared_with_teacher = SharedWithTeacher(image_video=image_video, teacher=teacher)
+                            shared_with_teacher.save()
+                        except Exception as e:
+                            print('exception 22082019-C from operations views.py %s %s' % (e.message, type(e)))
+                            print('error in saving image/video for admin broadcast')
                         message += '%s. link: %s Regards, %s' % \
                                    (message_body, short_link, configuration.school_short_name)
                     else:
@@ -1025,13 +975,18 @@ def send_bulk_sms(request):
                     teacher_mobile = teacher.mobile
                     print(teacher_mobile)
                     sms.send_sms1(school, sender, teacher_mobile, message, message_type)
-                print('sent bulk sms message: %s : to all the teachers of %s' % (message, school.school_name))
-
+            if st == 'staff' or st == 'Staff':
                 for staff in Staff.objects.filter(school=school):
                     staff_name = '%s %s' % (staff.first_name, staff.last_name)
                     print(staff_name)
                     message = 'Dear ' + staff_name + ', '
                     if image_included == 'yes':
+                        try:
+                            shared_with_teacher = SharedWithTeacher(image_video=image_video, staff=staff)
+                            shared_with_teacher.save()
+                        except Exception as e:
+                            print('exception 22082019-D from operations views.py %s %s' % (e.message, type(e)))
+                            print('error in saving image/video for admin broadcast')
                         message += '%s. link: %s Regards, %s' % \
                                    (message_body, short_link, configuration.school_short_name)
                     else:
@@ -1040,49 +995,74 @@ def send_bulk_sms(request):
                     staff_mobile = staff.mobile
                     print(staff_mobile)
                     sms.send_sms1(school, sender, staff_mobile, message, message_type)
-                print('sent bulk sms message: %s : to all the staff of %s' % (message, school.school_name))
-        except Exception as e:
-            print('exception 23102018-A from operations views.py %s %s' % (e.message, type(e)))
-            print('trying to send bulk sms to teachers of %s but failed' % school.school_name)
 
-        elapsed_time = time.time() - start_time
-        print('time taken to send sms=' + str(elapsed_time))
+    # 23/10/2018 - there was a demand that if whole school is chosen then send to
+    # teachers & staff (18/02/2019)as well
+    try:
+        if whole_school == 'true':
+            for teacher in Teacher.objects.filter(school=school):
+                teacher_name = teacher.first_name + ' ' + teacher.last_name
+                print(teacher_name)
+                message = 'Dear ' + teacher_name + ', '
+                if image_included == 'yes' or image_included == 'true':
+                    message += '%s. link: %s Regards, %s' % \
+                               (message_body, short_link, configuration.school_short_name)
+                else:
+                    message += message_body + ' Regards, ' + configuration.school_short_name
+                print(message)
+                teacher_mobile = teacher.mobile
+                print(teacher_mobile)
+                sms.send_sms1(school, sender, teacher_mobile, message, message_type)
+            print('sent bulk sms message: %s : to all the teachers of %s' % (message, school.school_name))
 
-        # 11/02/17 - As we have made bulk sms sending a batch process, we need to send an sms to ClassUp Admin
-        # reminding to run the batch job
-        print('now sending sms to ClassUp Admin to run the batch process to deliver bulk sms...')
-        try:
-            ca = ClassUpAdmin.objects.get(pk=1)
-            admin_mobile = ca.admin_mobile
-            print(admin_mobile)
-            if message_type == 'Bulk SMS (Web Interface)':
-                message1 = '%s has initiated bulk sms process through Web Interface. ' % school
-                message1 += 'Run the batch. Message was: "%s"' % message_body
-            else:
-                message1 = '%s has initiated bulk sms process through Device Interface. ' % school
-                message1 += 'Message was: "%s"' % message_body
-            print(message1)
-            message_type = 'Run Batch'
-            sms.send_sms1(school, sender, admin_mobile, message1, message_type)
-        except Exception as e:
-            print('Failed to retrieve the mobile number of ClassUp Admin. '
-                  'Cannot send sms for running the batch process for sending bulk sms')
-            print('Exception 125 fron operations views.py = %s (%s)' % (e.message, type(e)))
+            for staff in Staff.objects.filter(school=school):
+                staff_name = '%s %s' % (staff.first_name, staff.last_name)
+                print(staff_name)
+                message = 'Dear ' + staff_name + ', '
+                if image_included == 'yes' or image_included == 'true':
+                    message += '%s. link: %s Regards, %s' % \
+                               (message_body, short_link, configuration.school_short_name)
+                else:
+                    message += message_body + ' Regards, ' + configuration.school_short_name
+                print(message)
+                staff_mobile = staff.mobile
+                print(staff_mobile)
+                sms.send_sms1(school, sender, staff_mobile, message, message_type)
+            print('sent bulk sms message: %s : to all the staff of %s' % (message, school.school_name))
+    except Exception as e:
+        print('exception 23102018-A from operations views.py %s %s' % (e.message, type(e)))
+        print('trying to send bulk sms to teachers of %s but failed' % school.school_name)
 
-        context_dict['header'] = 'Operation Completed'
-        messages.success(request, 'Messages Sent!')
-        if from_device:
-            return JSONResponse(context_dict, status=200)
+    elapsed_time = time.time() - start_time
+    print('time taken to send sms=' + str(elapsed_time))
+
+    # 11/02/17 - As we have made bulk sms sending a batch process, we need to send an sms to ClassUp Admin
+    # reminding to run the batch job
+    print('now sending sms to ClassUp Admin to run the batch process to deliver bulk sms...')
+    try:
+        ca = ClassUpAdmin.objects.get(pk=1)
+        admin_mobile = ca.admin_mobile
+        print(admin_mobile)
+        if message_type == 'Bulk SMS (Web Interface)':
+            message1 = '%s has initiated bulk sms process through Web Interface. ' % school
+            message1 += 'Run the batch. Message was: "%s"' % message_body
         else:
-            return render(request, 'classup/setup_index.html', context_dict)
+            message1 = '%s has initiated bulk sms process through Device Interface. ' % school
+            message1 += 'Message was: "%s"' % message_body
+        print(message1)
+        message_type = 'Run Batch'
+        sms.send_sms1(school, sender, admin_mobile, message1, message_type)
+    except Exception as e:
+        print('Failed to retrieve the mobile number of ClassUp Admin. '
+              'Cannot send sms for running the batch process for sending bulk sms')
+        print('Exception 125 fron operations views.py = %s (%s)' % (e.message, type(e)))
 
-    if request.method == 'GET':
-        school_id = request.session['school_id']
-        print('getting the bulk sms form')
-        form = BulkSMSForm(school_id=school_id)
-        context_dict['form'] = form
-        print(context_dict)
-    return render(request, 'classup/bulk_sms.html', context_dict)
+    context_dict['header'] = 'Operation Completed'
+    messages.success(request, 'Messages Sent!')
+
+    context_dict['status'] = 'success'
+    context_dict['outcome'] = 'Messages Sent'
+    return JSONResponse(context_dict, status=200)
 
 
 @csrf_exempt
@@ -1187,7 +1167,7 @@ def send_message(request, school_id):
                                 teacher_record.section = s.current_section.section
                                 teacher_record.save()
                             except Exception as e:
-                                print ('exception 291117-B from operations views.py %s %s'% e.message, type(e))
+                                print ('exception 291117-B from operations views.py %s %s' % e.message, type(e))
                                 print ('error occured while trying to save teacher_record')
                             p = s.parent
                             m1 = p.parent_mobile1
@@ -1211,7 +1191,7 @@ def send_message(request, school_id):
                                 message_header = 'Dear %s, ' % student_name
                             else:
                                 message_header = 'Dear ' + p.parent_name + ', message regarding ' + \
-                                             f_name + ': '
+                                                 f_name + ': '
                             message = message_header + message_content + message_trailer
                             print ('message = ' + message)
 
@@ -1257,7 +1237,7 @@ def send_message(request, school_id):
                     print('exception 09092019-A from operations view.py %s %s' % (e.message, type(e)))
                     print('failed to save teacher record')
                 try:
-                    members_list = ActivityMembers.objects.filter (group=group)
+                    members_list = ActivityMembers.objects.filter(group=group)
                     print(members_list)
                     for member in members_list:
                         p = member.student.parent
@@ -1373,9 +1353,9 @@ def test_result(request):
         s_d = str(start_date).split('-')[2]  # start date
         s_m = str(start_date).split('-')[1]  # start month
         s_y = str(start_date).split('-')[0]  # start year
-        e_d = str(end_date).split('-')[2]    # end date
-        e_m = str(end_date).split('-')[1]    # end month
-        e_y = str(end_date).split('-')[0]    # end year
+        e_d = str(end_date).split('-')[2]  # end date
+        e_m = str(end_date).split('-')[1]  # end month
+        e_y = str(end_date).split('-')[0]  # end year
 
         title_text = 'Test Result for Class ' + the_class.standard + '-' + section.section
         title_text += ' for ' + term + ' (' + s_d + '-' + s_m + '-' + s_y + ' to ' + e_d + '-' + e_m + '-' + e_y + ')'
@@ -1392,7 +1372,7 @@ def test_result(request):
         row = 2
         col = 3
         idx = 0
-        s_list = []         # list to hold Students objects
+        s_list = []  # list to hold Students objects
         s_list_created = False
         marks_col1 = 5
         for test in ClassTest.objects.filter(the_class=the_class, section=section,
@@ -1402,54 +1382,54 @@ def test_result(request):
             date_conducted = test.date_conducted
             d2 = date_conducted.strftime('%d-%m-%Y')
             # sub += ' (' + d2 + ')'
-            result_sheet.merge_range(2, col, 2, col+1, ugettext(sub), header)
-            result_sheet.write(2+1, col, ugettext("MM"), header2)
+            result_sheet.merge_range(2, col, 2, col + 1, ugettext(sub), header)
+            result_sheet.write(2 + 1, col, ugettext("MM"), header2)
             if not test.grade_based:
-                result_sheet.write(2+1, col+1, ugettext("Marks"), header2)
+                result_sheet.write(2 + 1, col + 1, ugettext("Marks"), header2)
             else:
-                result_sheet.write(2+1, col+1, ugettext("Grade"), header2)
+                result_sheet.write(2 + 1, col + 1, ugettext("Grade"), header2)
             col += 2
 
             if not s_list_created:
                 for s in Student.objects.filter(current_class=the_class, current_section=section, active_status=True):
                     s_list.append(s)
 
-                    result_sheet.write_number(row+2, 0, idx+1, cell_center)
-                    result_sheet.write_number(row+2, 1, idx+1, cell_center)
-                    result_sheet.write_string(row+2, 2, ugettext(s.fist_name + ' ' + s.last_name), cell_left)
+                    result_sheet.write_number(row + 2, 0, idx + 1, cell_center)
+                    result_sheet.write_number(row + 2, 1, idx + 1, cell_center)
+                    result_sheet.write_string(row + 2, 2, ugettext(s.fist_name + ' ' + s.last_name), cell_left)
 
                     marks_col = 3
 
                     if not test.grade_based:
                         mm = test.max_marks
-                        result_sheet.write_number(row+2, marks_col, mm, cell_center)
+                        result_sheet.write_number(row + 2, marks_col, mm, cell_center)
                     else:
                         mm = "NA"
-                        result_sheet.write(row+2, marks_col, ugettext(mm), cell_center)
+                        result_sheet.write(row + 2, marks_col, ugettext(mm), cell_center)
                     try:
                         result = TestResults.objects.get(class_test=test, student=s)
                         if not test.grade_based:
                             marks = result.marks_obtained
                             if marks == -1000:
                                 marks = 'ABS'
-                                result_sheet.write(row+2, marks_col+1, marks, absent_format)
+                                result_sheet.write(row + 2, marks_col + 1, marks, absent_format)
                             elif marks == -5000:
                                 marks = 'NA'
-                                result_sheet.write(row+2, marks_col+1, ugettext(marks), absent_format)
+                                result_sheet.write(row + 2, marks_col + 1, ugettext(marks), absent_format)
                             elif marks < test.passing_marks:
-                                result_sheet.write(row+2, marks_col+1, marks, low_marks)
+                                result_sheet.write(row + 2, marks_col + 1, marks, low_marks)
                             else:
-                                result_sheet.write(row+2, marks_col+1, marks, cell_center)
+                                result_sheet.write(row + 2, marks_col + 1, marks, cell_center)
                         else:
                             grade = result.grade
                             if grade == -1000:
                                 grade = 'ABS'
-                                result_sheet.write(row+2, marks_col+1, ugettext(grade), absent_format)
+                                result_sheet.write(row + 2, marks_col + 1, ugettext(grade), absent_format)
                             elif grade == -5000:
                                 grade = 'NA'
-                                result_sheet.write(row+2, marks_col+1, ugettext(grade), absent_format)
+                                result_sheet.write(row + 2, marks_col + 1, ugettext(grade), absent_format)
                             else:
-                                result_sheet.write(row+2, marks_col+1, ugettext(grade), cell_center)
+                                result_sheet.write(row + 2, marks_col + 1, ugettext(grade), cell_center)
                     except Exception as e:
                         print ('Exception occured while trying to fetch marks/grade for a student')
                         print ('Exception5 from operations views.py = %s (%s)' % (e.message, type(e)))
@@ -1462,38 +1442,38 @@ def test_result(request):
                 row = 2
                 marks_col = 5
                 for s in s_list:
-                    #marks_col = 5
+                    # marks_col = 5
                     if not test.grade_based:
                         mm = test.max_marks
-                        result_sheet.write_number(row+2, marks_col1, mm, cell_center)
+                        result_sheet.write_number(row + 2, marks_col1, mm, cell_center)
                     else:
                         mm = "NA"
-                        result_sheet.write(row+2, marks_col1, ugettext(mm), cell_center)
+                        result_sheet.write(row + 2, marks_col1, ugettext(mm), cell_center)
                     try:
                         result = TestResults.objects.get(class_test=test, student=s)
                         if not test.grade_based:
                             marks = result.marks_obtained
                             if marks == -1000:
                                 marks = 'ABS'
-                                result_sheet.write(row+2, marks_col1+1, marks, absent_format)
+                                result_sheet.write(row + 2, marks_col1 + 1, marks, absent_format)
                             elif marks == -5000.00:
                                 print ('No marks have been entered for this test')
                                 marks = 'NA'
-                                result_sheet.write(row+2, marks_col1+1, marks, absent_format)
+                                result_sheet.write(row + 2, marks_col1 + 1, marks, absent_format)
                             elif marks < test.passing_marks:
-                                result_sheet.write(row+2, marks_col1+1, marks, low_marks)
+                                result_sheet.write(row + 2, marks_col1 + 1, marks, low_marks)
                             else:
-                                result_sheet.write(row+2, marks_col1+1, marks, cell_center)
+                                result_sheet.write(row + 2, marks_col1 + 1, marks, cell_center)
                         else:
                             grade = result.grade
                             if grade == -1000:
                                 grade = 'ABS'
-                                result_sheet.write(row+2, marks_col1+1, ugettext(grade), absent_format)
+                                result_sheet.write(row + 2, marks_col1 + 1, ugettext(grade), absent_format)
                             elif grade == -5000:
                                 grade = 'NA'
-                                result_sheet.write(row+2, marks_col1+1, grade, absent_format)
+                                result_sheet.write(row + 2, marks_col1 + 1, grade, absent_format)
                             else:
-                                result_sheet.write(row+2, marks_col1+1, ugettext(grade), cell_center)
+                                result_sheet.write(row + 2, marks_col1 + 1, ugettext(grade), cell_center)
                     except Exception as e:
                         print ('Exception occured while trying to fetch marks/grade for a student')
                         print ('Exception6 from operations views.py = %s (%s)' % (e.message, type(e)))
@@ -1536,7 +1516,7 @@ def send_welcome_sms(request):
                        (parent.parent_name, mobile))
                 try:
                     if User.objects.filter(username=mobile).exists():
-                        print('user for parent %s exist. Welcome message can be sent' % parent.parent_name )
+                        print('user for parent %s exist. Welcome message can be sent' % parent.parent_name)
                         try:
                             conf = Configurations.objects.get(school=school)
                             android_link = conf.google_play_link
@@ -1694,7 +1674,7 @@ def parents_communication_details(request):
     context_dict['user_type'] = request.session['user_type']
     context_dict['school_name'] = request.session['school_name']
 
-    school = School.objects.get(school_name = request.session['school_name'])
+    school = School.objects.get(school_name=request.session['school_name'])
 
     # first see whether the cancel button was pressed
     if "cancel" in request.POST:
