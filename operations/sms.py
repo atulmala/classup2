@@ -2,9 +2,7 @@ l__author__ = 'atulgupta'
 import urllib2
 import json
 
-import clicksend_client
-from clicksend_client import SmsMessage
-from clicksend_client.rest import ApiException
+
 
 from django.db.models import Q
 from django.contrib.auth.models import User
