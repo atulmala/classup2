@@ -804,7 +804,7 @@ def send_bulk_sms(request):
                 image = data['image']
                 image_name = data['image_name']
                 print('image_name = %s' % image_name)
-                image_file = ContentFile(base64.b64decode(image), name=image_name.replace('@', ''))
+                image_file = ContentFile(base64.b64decode(image), name=image_name.replace('@', '').replace(' ', '_'))
                 # print(image_file)
         except Exception as e:
             print('exception 13112019-A from operations views.py %s %s' % (e.message, type(e)))
@@ -829,7 +829,7 @@ def send_bulk_sms(request):
                 print('image_file = %s' % image_file)
                 print(image_file)
                 image = request.POST.get('image')
-                image_name  = request.POST.get('image_name')
+                image_name  = request.POST.get('image_name').replace(' ', '_')
 
         school = School.objects.get(id=school_id)
         if whole_school == "true":
