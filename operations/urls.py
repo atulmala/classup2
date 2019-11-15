@@ -1,8 +1,6 @@
 __author__ = 'atulmala'
 
 from django.conf.urls import url, patterns
-from student import views as student_view
-from academics import views as academic_views
 from operations import views
 
 urlpatterns = patterns(
@@ -27,9 +25,9 @@ urlpatterns = patterns(
 
     url(r'send_bulk_sms/$', views.send_bulk_sms, name='send_bulk_sms'),
 
-    url(r'retrieve_sms_history/(?P<parent_mobile>\w+)/$', views.SMSHistoryList.as_view()),
+    url(r'commit_bulk_sms/$', views.CommitBulkSMS.as_view(), name='commit_bulk_sms'),
 
-    url(r'webhooks/$', views.webhooks, name='webhooks'),
+    url(r'retrieve_sms_history/(?P<parent_mobile>\w+)/$', views.SMSHistoryList.as_view()),
 
     url(r'send_welcome_sms/$', views.send_welcome_sms, name='send_welcome_sms'),
 )
