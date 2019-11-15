@@ -48,6 +48,7 @@ def operations_index():
 
 class CommitBulkSMS(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
+        print('Starting to send bulk sms')
         try:
             # connect to the database
             try:
