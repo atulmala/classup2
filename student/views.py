@@ -1209,10 +1209,138 @@ class AddStudent(generics.ListCreateAPIView):
             return JSONResponse(context_dict, status=201)
 
 
+class UpdateStudent(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
+    def post(self, request, *args, **kwargs):
+        context_dict = {
 
+        }
+        context_dict['header'] = 'Student Update Web'
+        try:
+            data = json.loads(request.body)
+            print(data)
 
+            print('Student Update from web - process started')
+            school_id = data['school_id']
 
+            school = School.objects.get(pk=school_id)
 
+            sender = data['sender']
+            reg_no = data['reg_no']
 
+            # retrieve the student
+            student = Student.objects.get(school=school, student_erp_id=reg_no)
+            the_class = student.current_class.standard
+            section = student.current_section.section
+            print('retrieved student with reg no %s of %s-%s. This will be updated now...' %
+                  (reg_no, the_class, section))
 
+            first_name = data['first_name']
+            student.fist_name = first_name
+            last_name = data['last_name']
+            student.last_name = last_name
+            cls = data['the_class']
+            the_class = Class.objects.get(school=school, standard=cls)
+            student.current_class = the_class
+            sec = data['section']
+            section = Section.objects.get(school=school, section=sec)
+            student.current_section = section
+            student.save()
+
+            # parent update
+            father_name = data['father_name']
+            new_mobile = data['father_mobile']
+            email = data['email']
+            # retrieve current mobile of this parent
+            parent = student.parent
+            current_mobile = parent.parent_mobile1
+            if new_mobile != current_mobile:
+                print('mobile number of this student parent is changed. New user has to be created ')
+                try:
+                    user = User.objects.get(username=current_mobile)
+                    user.username = new_mobile
+
+                    # need to generate a new password and communicate to the parent
+                    password = User.objects.make_random_password(length=5, allowed_chars='1234567890')
+                    user.set_password(password)
+                    user.save()
+                    conf = Configurations.objects.get(school=school)
+                    android_link = conf.google_play_link
+                    iOS_link = conf.app_store_link
+                    message = 'Dear %s, your details for ClassUp app are updated. ' % father_name
+                    message += 'New user id is %s password is %s ' % (new_mobile, password)
+                    message += '. Please install ClassUp from these links. Android: '
+                    message += android_link
+                    message += '. iPhone/iOS: '
+                    message += iOS_link
+                    message += ' For any help please send email to info@classup.in. Regards, ClassUp Support'
+                    print('message = %s' % message)
+                    message_type = 'Update Student/Parent'
+                    sms.send_sms1(school, sender, str(new_mobile), message, message_type)
+                except Exception as e:
+                    print('exception 16112019-B from student views.py %s %s' % (e.message, type(e)))
+                    print('parent user with mobile number %s does not exist' % current_mobile)
+                parent.parent_mobile1 = new_mobile
+            mother_mobile = data['mother_mobile']
+            parent.parent_mobile2 = mother_mobile
+            parent.save()
+            student.parent = parent
+            student.save()
+
+            # update additional details
+            date_of_birth = data['dob']
+            try:
+                date = datetime.datetime.strptime(date_of_birth, '%Y-%m-%d')
+                dob = DOB.objects.get(student=student)
+                dob.dob = date
+                dob.save()
+                print('dob updated for %s as %s' % (student, date_of_birth))
+            except Exception as e:
+                print('exception 16112019-C from student views.py %s %s' % (e.message, type(e)))
+                print('failed in updating up date of birth for %s of %s' % (student, school))
+
+            gender = data['gender']
+            mother_name = data['mother_name']
+            adhar = data['adhar']
+            blood_group = data['blood_group']
+            house = data['house']
+            father_occupation = data['father_occupation']
+            mother_occupation = data['mother_occupation']
+            address = data['address']
+            try:
+                additional_details = AdditionalDetails.objects.get(student=student)
+                additional_details.gender = gender
+                additional_details.mothers_name = mother_name
+                additional_details.adhar = adhar
+                additional_details.blood_group = blood_group
+                additional_details.fathers_occupation=father_occupation
+                additional_details.mother_occupation = mother_occupation
+                additional_details.address = address
+                additional_details.save()
+                print('saved additional details for %s' % student)
+            except Exception as e:
+                print('exception 16112019-D from student views.py %s %s' % (e.message, type(e)))
+                print('failed to save additional details for %s' % student)
+
+            # the bus user data
+            transport = data['transport']
+            if transport == 'bus_user':
+                try:
+                    bus_user = BusUser.objects.get(student=student)
+                    bus_user.save()
+                    print('%s is bus user' % student)
+                except Exception as e:
+                    print('exception 16112019-D from student views.py %s %s' % (e.message, type(e)))
+                    print('%s was not a bus user earlier. Now setting as bus user...' % student)
+                    bus_user = BusUser(student=student)
+                    bus_user.save()
+                    print('%s is now a bus user' % student)
+            context_dict['status'] = 'success'
+            return JSONResponse(context_dict, status=200)
+        except Exception as e:
+            print('exception 07082019-F from student views.py %s %s' % (e.message, type(e)))
+            print('probably json decoding error while adding student')
+            context_dict['status'] = 'fail'
+            context_dict['message'] = 'failed to add student'
+            return JSONResponse(context_dict, status=201)

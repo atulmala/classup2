@@ -59,4 +59,3 @@ class AdditionalDetails(models.Model):
 class House(models.Model):
     student = models.ForeignKey(Student)
     house = models.CharField(max_length=20, null=True, blank=True)
-

@@ -118,6 +118,7 @@ def auth_index(request):
     response = render(request, 'classup/auth_index.html')
     return response
 
+
 @csrf_exempt
 def auth_login(request):
     # we need to record every login attempt into database
