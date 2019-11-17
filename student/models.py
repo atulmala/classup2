@@ -51,7 +51,7 @@ class AdditionalDetails(models.Model):
     mother_name = models.CharField(max_length=50, default='Not Available')
     address = models.CharField(max_length=200, default=' ')
     adhar = models.CharField(max_length=30, default='Not Available')
-    blood_group = models.CharField(max_length=10, default='NA')
+    blood_group = models.CharField(max_length=20, default='NA')
     father_occupation = models.CharField(max_length=100, default='Not Available')
     mother_occupation = models.CharField(max_length=100, default='Not Available')
 

@@ -21,6 +21,7 @@ urlpatterns = patterns('',
                        url(r'promote_students/$', views.StudentPromotion.as_view(), name='promote_students'),
                        url(r'parent_inquiry/$', views.ParentInquiry.as_view(), name='parent_inquiry'),
                        url(r'add_student_web/$', views.AddStudent.as_view(), name='add_student_web'),
+                       url(r'update_student_web/$', views.UpdateStudent.as_view(), name='update_student_web'),
                        url(r'single_student_details/(?P<school_id>\w+)/$', views.SingleStudentDetails.as_view(),
                            name='single_student_details'),
             )

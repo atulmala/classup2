@@ -52,12 +52,12 @@ class StudentDetailSerializer(serializers.ModelSerializer):
     def get_bus_user(self, obj):
         try:
             bus_user = BusUser.objects.get(student=obj)
-            print ('% is a bus user' % obj)
-            return True
+            print ('%s is a bus user' % obj)
+            return 'bus_user'
         except Exception as e:
             print('exception 12102019-A from student serializers.py %s %s' % (e.message, type(e)))
             print('%s is not a bus user' % obj)
-            return False
+            return 'walker'
 
     def get_bus_rout(self, obj):
         try:

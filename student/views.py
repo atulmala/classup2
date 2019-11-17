@@ -1254,7 +1254,9 @@ class UpdateStudent(generics.ListCreateAPIView):
             email = data['email']
             # retrieve current mobile of this parent
             parent = student.parent
+            parent.parent_name = father_name
             current_mobile = parent.parent_mobile1
+            parent.parent_email = email
             if new_mobile != current_mobile:
                 print('mobile number of this student parent is changed. New user has to be created ')
                 try:
@@ -1298,7 +1300,12 @@ class UpdateStudent(generics.ListCreateAPIView):
                 print('dob updated for %s as %s' % (student, date_of_birth))
             except Exception as e:
                 print('exception 16112019-C from student views.py %s %s' % (e.message, type(e)))
-                print('failed in updating up date of birth for %s of %s' % (student, school))
+                print('date of birth for %s of %s was not set before. Setting now...' % (student, school))
+                dob = DOB(student=student)
+                dob.dob = date
+                dob.save()
+                print('date of birth for %s of %s is not set to %s' % (student, school, date_of_birth))
+
 
             gender = data['gender']
             mother_name = data['mother_name']
@@ -1310,18 +1317,19 @@ class UpdateStudent(generics.ListCreateAPIView):
             address = data['address']
             try:
                 additional_details = AdditionalDetails.objects.get(student=student)
-                additional_details.gender = gender
-                additional_details.mothers_name = mother_name
-                additional_details.adhar = adhar
-                additional_details.blood_group = blood_group
-                additional_details.fathers_occupation=father_occupation
-                additional_details.mother_occupation = mother_occupation
-                additional_details.address = address
-                additional_details.save()
-                print('saved additional details for %s' % student)
             except Exception as e:
                 print('exception 16112019-D from student views.py %s %s' % (e.message, type(e)))
-                print('failed to save additional details for %s' % student)
+                print('additional details for %s were not created before. Creating now...' % student)
+                additional_details = AdditionalDetails(student=student)
+            additional_details.gender = gender
+            additional_details.mother_name = mother_name
+            additional_details.adhar = adhar
+            additional_details.blood_group = blood_group
+            additional_details.father_occupation=father_occupation
+            additional_details.mother_occupation = mother_occupation
+            additional_details.address = address
+            additional_details.save()
+            print('updated additional details for %s' % student)
 
             # the bus user data
             transport = data['transport']
@@ -1336,6 +1344,13 @@ class UpdateStudent(generics.ListCreateAPIView):
                     bus_user = BusUser(student=student)
                     bus_user.save()
                     print('%s is now a bus user' % student)
+            if transport == 'walker':
+                try:
+                    bus_user = BusUser.objects.get(student=student)
+                    bus_user.delete()
+                except Exception as e:
+                    print('exception 17112019-A from student views.py %s %s' % (e.message, type(e)))
+                    print('%s was not a bus user either.' % student)
             context_dict['status'] = 'success'
             return JSONResponse(context_dict, status=200)
         except Exception as e:
