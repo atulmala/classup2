@@ -4,7 +4,6 @@ from django.conf.urls import url
 from rest_framework.urlpatterns import format_suffix_patterns
 from academics import views
 
-
 urlpatterns = [
     url(r'^class_list/(?P<school_id>\w+)/$', views.ClassList.as_view()),
 
@@ -22,7 +21,7 @@ urlpatterns = [
         r'(?P<subject>[\w\ ]+)/(?P<teacher>[\w.@+-]+)'
         r'/(?P<d>\w+)/(?P<m>\w+)/(?P<y>\w+)/'
         r'(?P<max_marks>\w+)/(?P<pass_marks>\w+)/(?P<grade_based>\w+)'
-        r'/(?P<comments>[\w.@,&\ ]+)/(?P<exam_id>[\w.@+-]+)/$',views.create_test1, name='create_test1'),
+        r'/(?P<comments>[\w.@,&\ ]+)/(?P<exam_id>[\w.@+-]+)/$', views.create_test1, name='create_test1'),
 
     url(r'^get_co_cscholastics/(?P<teacher>[\w.@+-]+)/(?P<class>[\w.@+-]+)/(?P<section>[\w.@+-]+)/(?P<term>[\w\ ]+)/$',
         views.TheCoScholastics.as_view(), name='coscholastic'),

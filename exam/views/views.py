@@ -37,8 +37,8 @@ from academics.models import Class, Section, Subject, ThirdLang, ClassTest, \
     Exam, TermTestResult, TestResults, CoScholastics, ClassTeacher
 from attendance.models import IndividualAttendance
 
-from .models import Scheme, HigherClassMapping, NPromoted, Marksheet, Stream, StreamMapping, Wing
-from .forms import TermResultForm, ResultSheetForm
+from exam.models import Scheme, HigherClassMapping, NPromoted, Marksheet, Stream, StreamMapping, Wing
+from exam.forms import TermResultForm, ResultSheetForm
 
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):

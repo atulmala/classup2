@@ -11,7 +11,7 @@ urlpatterns = patterns(
 
     url(r'^att_summary_school_device/$', views.att_summary_school_device, name='att_summary_school_device'),
 
-    url(r'^att_register_class/$', views.att_register_class, name='att_register_class'),
+    url(r'^att_register_class/$', views.AttRegisterClass.as_view(), name='att_register_class'),
 
     url(r'^test_results/$', views.test_result, name='test_results'),
 

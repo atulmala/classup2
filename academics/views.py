@@ -21,6 +21,7 @@ from rest_framework import generics
 import Queue
 
 from attendance.models import Attendance, AttendanceTaken
+from exam.views import get_wings
 from teacher.models import Teacher
 from student.models import Student
 from setup.models import Configurations, School
@@ -469,46 +470,51 @@ def create_test1(request, school_id, the_class, section, subject,
     the_date = date(int(y), int(m), int(d))
     print (the_date)
 
-    try:
-        jc = Wing.objects.get(school=school, wing='junior_classes')
-        junior_classes = ast.literal_eval(jc.classes)
-        print('junior_classes for %s are: ' % school)
-        print(junior_classes)
-    except Exception as e:
-        print('exception 26092019-A from academics views.py %s %s' % (e.message, type(e)))
-        print('junior_classes not defined for %s' % school)
-        junior_classes = ['not defined']
+    wings = get_wings(school)
+    junior_classes = wings['junior_classes']
+    middle_classes = wings['middle_classes']
+    ninth_tenth = wings['ninth_tenth']
+    higher_classes = wings['higher_classes']
+    # try:
+    #     jc = Wing.objects.get(school=school, wing='junior_classes')
+    #     junior_classes = ast.literal_eval(jc.classes)
+    #     print('junior_classes for %s are: ' % school)
+    #     print(junior_classes)
+    # except Exception as e:
+    #     print('exception 26092019-A from academics views.py %s %s' % (e.message, type(e)))
+    #     print('junior_classes not defined for %s' % school)
+    #     junior_classes = ['not defined']
+    #
+    # try:
+    #     mc = Wing.objects.get(school=school, wing='middle_classes')
+    #     print('raw middle_classes retrieved for %s: %s. Will be converted to proper string now' %
+    #           (school, mc.classes))
+    #     middle_classes = ast.literal_eval(mc.classes)
+    #     print('middle_classes for %s are: ' % school)
+    #     print(middle_classes)
+    # except Exception as e:
+    #     print('exception 26092019-B from academics views.py %s %s' % (e.message, type(e)))
+    #     print('middle_classes not defined for %s' % school)
+    #     middle_classes = ['not defined']
 
-    try:
-        mc = Wing.objects.get(school=school, wing='middle_classes')
-        print('raw middle_classes retrieved for %s: %s. Will be converted to proper string now' %
-              (school, mc.classes))
-        middle_classes = ast.literal_eval(mc.classes)
-        print('middle_classes for %s are: ' % school)
-        print(middle_classes)
-    except Exception as e:
-        print('exception 26092019-B from academics views.py %s %s' % (e.message, type(e)))
-        print('middle_classes not defined for %s' % school)
-        middle_classes = ['not defined']
-
-    try:
-        nt = Wing.objects.get(school=school, wing='ninth_tenth')
-        ninth_tenth = ast.literal_eval(nt.classes)
-        print('ninth_tenth for %s are: ' % school)
-        print(ninth_tenth)
-    except Exception as e:
-        print('exception 26092019-C from academics views.py %s %s' % (e.message, type(e)))
-        print('ninth_tenth not defined for %s' % school)
-        ninth_tenth = ['not defined']
-
-    try:
-        hc = Wing.objects.get(school=school, wing='higher_classes')
-        higher_classes = ast.literal_eval(hc.classes)
-        print('higher_classes for %s are: ' % school)
-        print(higher_classes)
-    except Exception as e:
-        print('exception 26092019-D from academics views.py %s %s' % (e.message, type(e)))
-        print('higher_classes not defined for %s' % school)
+    # try:
+    #     nt = Wing.objects.get(school=school, wing='ninth_tenth')
+    #     ninth_tenth = ast.literal_eval(nt.classes)
+    #     print('ninth_tenth for %s are: ' % school)
+    #     print(ninth_tenth)
+    # except Exception as e:
+    #     print('exception 26092019-C from academics views.py %s %s' % (e.message, type(e)))
+    #     print('ninth_tenth not defined for %s' % school)
+    #     ninth_tenth = ['not defined']
+    #
+    # try:
+    #     hc = Wing.objects.get(school=school, wing='higher_classes')
+    #     higher_classes = ast.literal_eval(hc.classes)
+    #     print('higher_classes for %s are: ' % school)
+    #     print(higher_classes)
+    # except Exception as e:
+    #     print('exception 26092019-D from academics views.py %s %s' % (e.message, type(e)))
+    #     print('higher_classes not defined for %s' % school)
 
     exam = Exam.objects.get(pk=exam_id)
 

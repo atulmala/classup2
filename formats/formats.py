@@ -26,7 +26,7 @@ class Formats():
 
     cell_normal = {
                 'align': 'left',
-                'valign': 'top',
+                'valign': 'vcenter',
                 'text_wrap': True
             }
 
@@ -36,7 +36,7 @@ class Formats():
     cell_bold = {
                 'bold': True,
                 'align': 'left',
-                'valign': 'top',
+                'valign': 'vcenter',
                 'text_wrap': True
             }
 
@@ -63,6 +63,25 @@ class Formats():
 
     def get_cell_center(self):
         return self.cell_center
+
+    cell_total = {
+                'align': 'center',
+                'valign': 'vcenter',
+                'text_wrap': True,
+                'bold': True,
+                'border': 1
+            }
+
+    def get_cell_total(self):
+        return self.cell_total
+
+    cell_left = {
+        'align': 'left',
+        'valign': 'vcenter'
+        }
+
+    def get_cell_left(self):
+        return self.cell_left
 
     vertical_text = {
                 'bold': True,
@@ -108,3 +127,30 @@ class Formats():
 
     def get_cell_small(self):
         return self.cell_small
+
+    present_format = {
+        'align': 'center',
+        'valign': 'vcenter',
+        'font_color': 'green'
+        }
+
+    def get_present_format(self):
+        return self.present_format
+
+    absent_format = {
+        'align': 'center',
+        'valign': 'vcenter',
+        'font_color': '#FF0000'
+        }
+
+    def get_absent_format(self):
+        return self.absent_format
+
+    holiday_format = {
+        'align': 'center',
+        'valign': 'vcenter',
+        'font_color': 'blue'
+    }
+
+    def get_holiday_format(self):
+        return self.holiday_format

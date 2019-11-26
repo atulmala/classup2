@@ -25,6 +25,7 @@ class SubjectSerializer(serializers.ModelSerializer):
 
 
 class TestSerializer(serializers.ModelSerializer):
+    exam = serializers.StringRelatedField()
     subject = serializers.StringRelatedField()
     the_class = serializers.StringRelatedField()
     section = serializers.StringRelatedField()

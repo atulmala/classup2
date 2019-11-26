@@ -22,6 +22,7 @@ from django.contrib import messages
 from django.core.files.base import ContentFile
 
 from rest_framework import generics
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 
 from authentication.views import JSONResponse, log_entry, LoginRecord
 from academics.models import Class, Section, Subject, ClassTest, TestResults, ClassTeacher
@@ -31,6 +32,8 @@ from attendance.models import Attendance, AttendanceTaken, DailyAttendanceSummar
 from parents.models import ParentCommunication
 from setup.models import Configurations, School, GlobalConf
 from pic_share.models import ImageVideo, ShareWithStudents, SharedWithTeacher
+
+from formats.formats import Formats as format
 
 from .models import SMSRecord, ClassUpAdmin
 from .serializers import SMSDetailSerializer
@@ -44,6 +47,12 @@ import sms
 
 def operations_index():
     pass
+
+
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    def enforce_csrf(self, request):
+        return  # To not perform the csrf check previously happening
+
 
 
 class CommitBulkSMS(generics.ListCreateAPIView):
@@ -599,39 +608,32 @@ def sms_summary(request):
     return render(request, 'classup/sms_summary.html', context_dict)
 
 
-def att_register_class(request):
+class AttRegisterClass(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     context_dict = {
     }
-
-    # first see whether the cancel button was pressed
-    context_dict['school_name'] = request.session['school_name']
-
-    if request.session['user_type'] == 'school_admin':
-        context_dict['user_type'] = 'school_admin'
-
-    # first see whether the cancel button was pressed
-    if "cancel" in request.POST:
-        return render(request, 'classup/setup_index.html', context_dict)
-
     context_dict['header'] = 'Download Monthly Attendance'
-    if request.method == 'POST':
-        school_id = request.session['school_id']
-        school = School.objects.get(id=school_id)
-        form = AttendanceRegisterForm(request.POST, school_id=school_id)
 
-        if form.is_valid():
-            the_class = form.cleaned_data['the_class']
-            section = form.cleaned_data['section']
-            the_subject = form.cleaned_data['subject']
-            the_date = form.cleaned_data['date']
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.body)
+        print(data)
+        school_id = data['school_id']
+        school = School.objects.get(pk=school_id)
 
-        else:
-            error = 'You have missed to select either Date, or Class, or Section, or Subject'
-            form = AttendanceRegisterForm(request)
-            context_dict['form'] = form
-            form.errors['__all__'] = form.error_class([error])
-            return render(request, 'classup/att_register.html', context_dict)
+        try:
+            standard = data['the_class']
+            the_class = Class.objects.get(school=school, standard=standard)
 
+            sec = data['section']
+            section = Section.objects.get(school=school, section=sec)
+
+            the_subject = data['subject']
+
+            the_date = data['date']
+        except Exception as e:
+            print('exception 17112019-A from operations views.py %s %s' % (e.message, type(e)))
+            print('failed to decode json')
+        print(the_date)
         m = the_date.split('-')[1]
         month_int = int(m)
         month = calendar.month_name[month_int]
@@ -640,67 +642,38 @@ def att_register_class(request):
 
         excel_file_name = 'Attendance_Resigter_' + str(the_class.standard) + '_' + str(section.section)
         excel_file_name += '_' + str(the_subject) + '_' + str(month) + '_' + str(y) + '.xlsx'
+        print('excel file to be generated with name = %s' % excel_file_name)
 
         output = StringIO.StringIO(excel_file_name)
         workbook = xlsxwriter.Workbook(output)
         attendance_sheet = workbook.add_worksheet("Attendance")
 
-        title = workbook.add_format({
-            'bold': True,
-            'font_size': 14,
-            'align': 'center',
-            'valign': 'vcenter'
-        })
-        header = workbook.add_format({
-            'bold': True,
-            'bg_color': '#F7F7F7',
-            'color': 'black',
-            'align': 'center',
-            'valign': 'top',
-            'border': 1
-        })
-        cell_center = workbook.add_format({
-            'align': 'center',
-            'valign': 'top'
-        })
-        cell_left = workbook.add_format({
-            'align': 'left',
-            'valign': 'top'
-        })
-        present_format = workbook.add_format({
-            'align': 'center',
-            'valign': 'top',
-            'font_color': 'green'
-        })
-        absent_format = workbook.add_format({
-            'align': 'center',
-            'valign': 'top',
-            'font_color': '#FF0000'
-        })
-        holiday_format = workbook.add_format({
-            'align': 'center',
-            'valign': 'top',
-            'font_color': 'blue'
-        })
-        perc_format = workbook.add_format({
-            'num_format': '0.00%',
-            'align': 'center',
-            'valign': 'top'
-        })
+        fmt = format()
+        title = workbook.add_format(fmt.get_title())
+        header = workbook.add_format(fmt.get_header())
+        cell_normal = workbook.add_format(fmt.get_cell_normal())
+        cell_center = workbook.add_format(fmt.get_cell_center())
+        cell_left = workbook.add_format(fmt.get_cell_left())
+        cell_total = workbook.add_format(fmt.get_cell_total())
+        present_format = workbook.add_format(fmt.get_present_format())
+        absent_format = workbook.add_format(fmt.get_absent_format())
+        holiday_format = workbook.add_format(fmt.get_holiday_format())
+        perc_format = workbook.add_format(fmt.get_perc_format())
 
         title_text = 'Monthly Attendance for Class ' + the_class.standard + '-' + section.section + \
                      ', Subject: ' + str(the_subject)
         title_text += ' for ' + month + '/' + y
         attendance_sheet.merge_range('A2:Q2', title_text, title)
-        attendance_sheet.set_column('A:A', 4)
+        attendance_sheet.set_column('A:A', 7)
         attendance_sheet.set_column('B:B', 7)
         attendance_sheet.set_column('C:C', 15)
         attendance_sheet.set_column('D:AG', 3)
         attendance_sheet.set_column('AH:AI', 5)
 
-        attendance_sheet.write(3, 0, ugettext("S No."), header)
-        attendance_sheet.write(3, 1, ugettext("Roll No."), header)
+        attendance_sheet.write(3, 0, ugettext("Roll No."), header)
+        attendance_sheet.write(3, 1, ugettext("Reg No."), header)
         attendance_sheet.write(3, 2, ugettext("Name"), header)
+        attendance_sheet.set_default_row(14, hide_unused_rows=True)
 
         # Next 28/29/30/31 columns will be for dates. We need to get the number fo days in the month
         DayL = ['M', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su']
@@ -716,7 +689,6 @@ def att_register_class(request):
         attendance_sheet.write(3, days + 4, ugettext("%"), header)
         attendance_sheet.write(3, days + 5, ugettext("Till Date"), header)
         attendance_sheet.write(3, days + 6, ugettext("Till Date %"), header)
-        attendance_sheet.write(3, days + 7, ugettext("Student Reg No"), header)
 
         idx = 0
         row = 4 + idx
@@ -734,7 +706,9 @@ def att_register_class(request):
                                         current_section=section, active_status=True).order_by('fist_name'):
             print('\ndealing with: %s %s' % (s.fist_name, s.last_name))
             attendance_sheet.write_number(row, 0, idx + 1, cell_center)
-            attendance_sheet.write_number(row, 1, idx + 1, cell_center)
+            reg_no = s.student_erp_id
+            print(reg_no)
+            attendance_sheet.write_string(row, 1, reg_no, cell_center)
             attendance_sheet.write_string(row, 2, ugettext(s.fist_name + ' ' + s.last_name), cell_left)
 
             db_hit += 1
@@ -763,7 +737,6 @@ def att_register_class(request):
                             holidays.append(d)
                             holiday_count += 1
                             attendance_sheet.write(row, d + 2, ugettext("NA"), holiday_format)
-
                     except Exception as e:
                         print ('exception occured while doing lookup in the AttendanceTaken table')
                         print ('Exception2 from operations views.py = %s (%s)' % (e.message, type(e)))
@@ -772,7 +745,7 @@ def att_register_class(request):
 
                 working_days = days - holiday_count
                 attendance_sheet.write_string(row, d + 3,
-                                              ugettext(str(present_count) + '/' + str(working_days)), cell_center)
+                                              ugettext(str(present_count) + '/' + str(working_days)), cell_total)
                 try:
                     perc_present = float(float(present_count) / float(working_days))
                     attendance_sheet.write_number(row, d + 4, perc_present, perc_format)
@@ -787,7 +760,6 @@ def att_register_class(request):
                 print('the session start month is %i' % session_start_month)
                 if month_int < session_start_month:
                     start = date(year_int - 1, session_start_month, 1)
-
                 else:
                     start = date(year_int, session_start_month, 1)
                 print('start = ')
@@ -809,7 +781,7 @@ def att_register_class(request):
                 print('present days till date: %i' % present_days_till_date)
                 attendance_sheet.write(row, d + 5,
                                        ugettext(str(present_days_till_date) + '/' + str(working_days_till_date)),
-                                       cell_center)
+                                       cell_total)
                 if int(working_days_till_date) < 1:
                     present_perc_till_date = 'N/A'
                     attendance_sheet.write_string(row, d + 6, present_perc_till_date)
@@ -819,7 +791,6 @@ def att_register_class(request):
             except Exception as e:
                 print ('unable to calculate attendance till date')
                 print ('Exception4 from operations views.py = %s (%s)' % (e.message, type(e)))
-            attendance_sheet.write(row, d + 7, ugettext(s.student_erp_id), cell_left)
 
             row += 1
             idx += 1
@@ -830,13 +801,6 @@ def att_register_class(request):
         response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
         response.write(output.getvalue())
         return response
-
-    if request.method == 'GET':
-        school_id = request.session['school_id']
-        form = AttendanceRegisterForm(school_id=school_id)
-        context_dict['form'] = form
-
-    return render(request, 'classup/att_register.html', context_dict)
 
 
 @csrf_exempt
