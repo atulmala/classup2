@@ -584,6 +584,7 @@ class ProcessFee(generics.ListCreateAPIView):
             try:
                 c = CollectAdmFee.objects.get(student=student)
                 c.whehter_paid = True
+                c.save()
                 print('%s of %s has paid admission fee' % (student, school))
             except Exception as e:
                 print('exception 31032019-B from fee_processing views.py %s %s' % (e.message, type(e)))
@@ -618,7 +619,7 @@ class ProcessFee(generics.ListCreateAPIView):
                 w.save()
 
             if discount > 0.0:
-                disc = HeadWiseFee(FeePaymentHistory=fee, school=school,
+                disc = HeadWiseFee(PaymentHistory=fee, school=school,
                                    student=student, head='Discount', amount=float(discount))
                 disc.save()
 

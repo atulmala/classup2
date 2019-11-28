@@ -136,7 +136,7 @@ class ClassSectionForTestSerializer(serializers.ModelSerializer):
 class ExamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Exam
-        fields = ('id', 'title', 'exam_type', 'start_date', 'end_date',)
+        fields = ('id', 'title', 'exam_type', 'start_date', 'end_date', 'start_class', 'end_class',)
 
 
 class WorkingDaysSerializer(serializers.ModelSerializer):
