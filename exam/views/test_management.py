@@ -15,6 +15,7 @@ from student.models import Student
 from teacher.models import Teacher
 
 from academics.serializers import TestSerializer
+from exam.serializers import TestMarksSerializer
 
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
@@ -32,6 +33,17 @@ class JSONResponse(HttpResponse):
         content = JSONRenderer().render(data)
         kwargs['content_type'] = 'application/json'
         super(JSONResponse, self).__init__(content, **kwargs)
+
+
+class MarksListForTest(generics.ListCreateAPIView):
+    serializer_class = TestMarksSerializer
+
+    def get_queryset(self):
+        test_id = self.request.query_params.get('test_id')
+        t = ClassTest.objects.get(id=test_id)
+
+        q = TestResults.objects.filter(class_test=t).order_by('student__fist_name', 'student__last_name')
+        return q
 
 
 class TestList(generics.ListAPIView):
@@ -87,6 +99,8 @@ class ScheduleTest(generics.ListCreateAPIView):
             grade_based = data['grade_based']
             max_marks = data['max_marks']
             pass_marks = data['passing_marks']
+            if max_marks == 'N/A':
+                max_marks = pass_marks = 0.0
             syllabus = data['syllabus']
         except Exception as e:
             print('exception 20112019-A from exam test_management.py %s %s' % (e.message, type(e)))
@@ -121,6 +135,12 @@ class ScheduleTest(generics.ListCreateAPIView):
             test.section = section
             test.subject = subject
             test.teacher = teacher
+            if grade_based == 'true' or grade_based == 'grade_based':
+                test.grade_based = True
+                test.max_marks = 0.0
+                test.passing_marks = 0.0
+            else:
+                test.grade_based = False
             test.max_marks = float(max_marks)  # max_marks and pass_marks are passed as strings
             test.passing_marks = float(pass_marks)
 
@@ -132,17 +152,14 @@ class ScheduleTest(generics.ListCreateAPIView):
                     test.passing_marks = 0.0
 
             test.test_type = exam.exam_type
-
-            if grade_based == 'true' or grade_based:
-                test.grade_based = True
-            else:
-                test.grade_based = False
-
             test.syllabus = syllabus
             test.is_completed = False
             test.save()
             print('successfully scheduled test for %s class %s-%s for %s' %
                   (subject, the_class, section, exam))
+            test_id = test.id
+            context_dict['id'] = test_id
+            context_dict['type'] = exam.exam_type
         except Exception as e:
             print('exception 20112019-B from exam test_management.py %s %s' % (e.message, type(e)))
             outcome = 'failed to create test for %s class %s-%s for %s' % (subject, the_class, section, exam)
