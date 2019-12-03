@@ -92,6 +92,7 @@ class TestResultsAdmin(admin.ModelAdmin):
 
     list_display = ('get_school_name', 'get_class', 'get_subject', 'get_date', 'student', 'get_max_marks',
                     'marks_obtained', 'grade',)
+    list_filter = ('class_test__the_class__school',)
 
 
 admin.site.register(TestResults, TestResultsAdmin)

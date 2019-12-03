@@ -1221,6 +1221,7 @@ def prepare_results(request, school_id, the_class, section):
                     print('Looks like the scheme for class %s is not yet set' % the_class)
                     print('exception 10022018-A from exam views.py %s %s' % (e.message, type(e)))
                 if the_class in middle_classes:
+                    print('%s is in middle classes' % the_class)
                     end_class = 'VIII'
                     # 29/09/2019 - uncomment when generting final exam result
                     # data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', '', '',
@@ -1266,13 +1267,13 @@ def prepare_results(request, school_id, the_class, section):
                             # if idx == 0 and the_class in ninth_tenth and school_id == 20:
                             #     continue
                             try:
-                                if sub.subject_name != 'GK':
+                                if sub.subject_name not in ['GK', 'Moral Science', 'Drawing']:
                                     test = ClassTest.objects.get(subject=sub, the_class=standard,
                                                                  section=sec, exam=term)
                                     print(test)
                                     tr = TestResults.objects.get(class_test=test, student=s)
 
-                                if sub.subject_name == 'GK':
+                                if sub.subject_name in ['GK', 'Moral Science', 'Drawing']:
                                     test = ClassTest.objects.filter(subject=sub,
                                                                     the_class=standard, section=sec)[idx]
 
@@ -1293,6 +1294,15 @@ def prepare_results(request, school_id, the_class, section):
                                     notebook = ttr.note_book_marks
                                     sub_enrich = ttr.sub_enrich_marks
                                     main = tr.marks_obtained
+
+                                    # 03/12/2019 - for Lord Krishna Public school, for classes III to VIII
+                                    # max marks were 80 and for classes I & II max marks were from 50.
+                                    # These need to be converted to be from 80. Only for term I
+                                    if school_name == 'Lord Krishna Public School':
+                                        if the_class in ['III', 'IV', 'V', 'VI', 'VII', 'VIII']:
+                                            main = float(main) * 1.14
+                                        if the_class in ['I', 'II']:
+                                            main = float(main) * 1.6
                                     total = float(main) + float(pa) + float(multi_assess) + float(notebook) + float(
                                         sub_enrich)
                                     print(total)
@@ -1416,7 +1426,6 @@ def prepare_results(request, school_id, the_class, section):
                 except Exception as e:
                     print('failed to retrieve Co-scholastic grades for %s %s for ' % (s.fist_name, s.last_name))
                     print('exception 07022018-B from exam views.py %s %s' % (e.message, type(e)))
-
                 try:
                     data2.append(work_array)
                     data2.append(art_array)
