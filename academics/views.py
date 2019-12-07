@@ -687,14 +687,21 @@ def save_marks(request):
 
         }
         print ('request.body=')
-        print (request.body)
+        # print (request.body)
         # convert the raw data received to json
-        data = json.loads(request.body)
-        print ('json=')
-        print (data)
+        the_json = json.loads(request.body)
 
         # determine whether this test is marks based or grade based
         grade_based = False
+        for key in the_json:
+            if key == 'params':
+                print('request has come from vue.js web admin interface')
+                data = the_json['params']
+            else:
+                data = the_json
+        print('data = ')
+        print(data)
+
         for key in data:
             test = ClassTest.objects.get(testresults__id=key)
             break  # because we can get the test object with the first key only
@@ -716,13 +723,14 @@ def save_marks(request):
                     print('term test')
                     ttr = TermTestResult.objects.get(test_result=tr)
                     print(ttr)
-                    ttr.periodic_test_marks = float(data[key]['pa'])
-                    ttr.multi_asses_marks = float(data[key]['multi_assess'])
-                    ttr.note_book_marks = float(data[key]['notebook'])
-                    ttr.sub_enrich_marks = float(data[key]['subject_enrich'])
+                    if test.the_class.standard not in ['XI', 'XII']:
+                        ttr.periodic_test_marks = float(data[key]['pa'])
+                        ttr.multi_asses_marks = float(data[key]['multi_assess'])
+                        ttr.note_book_marks = float(data[key]['notebook'])
+                        ttr.sub_enrich_marks = float(data[key]['subject_enrich'])
 
                     # 25/12/2017 practical marks to be saved
-                    if test.the_class.standard == 'XI' or test.the_class.standard == 'XII':
+                    if test.the_class.standard in ['XI', 'XII']:
                         print ('term test for higher classes. May need to save the practical marks')
                         # if test.subject.subject_name in prac_subjects:
                         if test.subject.subject_prac:
@@ -730,6 +738,10 @@ def save_marks(request):
                             ttr.prac_marks = float(data[key]['prac_marks'])
                         else:
                             print ('no need to save practical marks for %s' % test.subject.subject_name)
+                        ttr.periodic_test_marks = 0.0
+                        ttr.multi_asses_marks = 0.0
+                        ttr.note_book_marks = 0.0
+                        ttr.sub_enrich_marks = 0.0
                     try:
                         ttr.save()
                         print ('saved Term Test Results for %s %s' % (tr.student.fist_name, tr.student.last_name))

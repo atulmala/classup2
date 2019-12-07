@@ -860,8 +860,8 @@ def prepare_results(request, school_id, the_class, section):
             c.drawString(152, session_top + 2, session)
             print('heading created')
 
-            heading = 'Performance Analysis Sheet '
-            c.drawString(146, report_card_top + 2, heading)
+            # heading = 'Performance Analysis Sheet '
+            # c.drawString(146, report_card_top + 2, heading)
 
             c.setFont(font, 10)
             c.drawString(left_margin, stu_detail_top, adm_no_lbl)
@@ -1300,7 +1300,8 @@ def prepare_results(request, school_id, the_class, section):
                                     # These need to be converted to be from 80. Only for term I
                                     if school_name == 'Lord Krishna Public School':
                                         if the_class in ['III', 'IV', 'V', 'VI', 'VII', 'VIII']:
-                                            main = float(main) * 1.14
+                                            # main = float(main) * 1.14
+                                            main = float(main) * 1.0
                                         if the_class in ['I', 'II']:
                                             main = float(main) * 1.6
                                     total = float(main) + float(pa) + float(multi_assess) + float(notebook) + float(
