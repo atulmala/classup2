@@ -297,7 +297,6 @@ class ScheduleTest(generics.ListCreateAPIView):
                                           'entered for any test' % (student.fist_name, sub))
                                     print('exception 13032018-A from academics views.py %s %s' % (e.message, type(e)))
                                     pa_marks = -5000.0
-
                             term_test_result = TermTestResult(test_result=test_result, periodic_test_marks=pa_marks,
                                                               multi_asses_marks=-5000.0, note_book_marks=-5000.0,
                                                               sub_enrich_marks=-5000.0)

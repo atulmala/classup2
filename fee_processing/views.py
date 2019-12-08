@@ -263,7 +263,7 @@ class DefaulterReport(generics.ListCreateAPIView):
 
         try:
             # how many months have passed since the sessio start
-            first_april = datetime(2019, 4, 1)
+            first_april = datetime.datetime(2019, 4, 1)
             today = datetime.datetime.today()
             diff = relativedelta.relativedelta(today, first_april)
             months_count = diff.months
@@ -284,8 +284,8 @@ class DefaulterReport(generics.ListCreateAPIView):
                     due_this_term = 0.0
                     due_till_now = 0.0
 
-
-                    # 02/04/2019 - the outstanding will be calcualted as follows: we will determine the fee due till date
+                    # 02/04/2019 - the outstanding will be calcualted as follows:
+                    # we will determine the fee due till date
                     # for example if today is 7th of Jul and fee payment is monthly we will calculate the fee
                     # due by addidng monthly fee for april, may, june and july.
                     # then we will add any outstanding (means and shortfall in fee paid last time)
@@ -322,9 +322,10 @@ class DefaulterReport(generics.ListCreateAPIView):
                             print('%s is one time fees. checking whether it has been paid or not' % h)
                             try:
                                 c = CollectAdmFee.objects.get(student=student)
-                                print('%s has NOT paid one time fees %s' % (student, h))
-                                due_this_term += amt
-                                due_till_now += amt
+                                if not c.whehter_paid:
+                                    print('%s has NOT paid one time fees %s' % (student, h))
+                                    due_this_term += amt
+                                    due_till_now += amt
                             except Exception as e:
                                 print('exception 21032019-A from fee_processing views.py %s %s' % (e.message, type(e)))
                                 print('%s has paid one time fees %s' % (student, h))
@@ -375,8 +376,6 @@ class DefaulterReport(generics.ListCreateAPIView):
                     print('due_till_now = %.2f' % due_till_now)
                     print('due_this_term = %.2f' % due_this_term)
                     print('outstanding = %.2f' %  outstanding)
-
-
                     print('paid_till_date = %.2f' % paid_till_date)
 
                     net_due = float(due_till_now) + float(due_this_term) + float(outstanding) - float(paid_till_date)
@@ -1134,6 +1133,7 @@ class UploadFee(generics.ListCreateAPIView):
         try:
             print ('now starting to process the uploaded file for fee upload...')
             fileToProcess_handle = request.FILES['fee_deposit_detail.xlsx']
+            print(fileToProcess_handle)
 
             # check that the file uploaded should be a valid excel
             # file with .xls or .xlsx
@@ -1179,8 +1179,8 @@ class UploadFee(generics.ListCreateAPIView):
                             print ('exception 04072019-X from fee_processing views.py %s %s ' % (e.message, type(e)))
                             continue
                         receipt_no = sheet.cell(row, 4).value
-                        composit_fee = sheet.cell(row, 5).value
-                        data['Composit Fee'] = composit_fee
+                        tuition_fee = sheet.cell(row, 5).value
+                        data['Tuition Fee'] = tuition_fee
                         amount_paid = sheet.cell(row, 5).value
                         # transport_fee = sheet.cell(row, 4).value
                         # data['Transportation Fee'] = transport_fee
@@ -1201,13 +1201,13 @@ class UploadFee(generics.ListCreateAPIView):
 
                     # if one time fee such as admission fee was taken set whether_paid to true
                     # if excess_payment > 0.0:
-                    #     try:
-                    #         c = CollectAdmFee(school=school, student=student, whether_paid=True)
-                    #         c.save()
-                    #         print('%s of %s has paid admission fee' % (student, school))
-                    #     except Exception as e:
-                    #         print('exception 13062019-DB from fee_processing views.py %s %s' % (e.message, type(e)))
-                    #         print('failed to enter one time Collectadmin fee from %s of %s' % (student, school))
+                    try:
+                        c = CollectAdmFee(school=school, student=student, whether_paid=True)
+                        c.save()
+                        print('%s of %s has paid admission fee' % (student, school))
+                    except Exception as e:
+                        print('exception 13062019-DB from fee_processing views.py %s %s' % (e.message, type(e)))
+                        print('failed to enter one time Collectadmin fee from %s of %s' % (student, school))
 
                     # save head-wise fee
                     print('now store head wise fee for %s with erp_id %s' % (student, erp_id))
