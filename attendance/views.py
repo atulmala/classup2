@@ -256,7 +256,8 @@ def process_attendance1(request, school_id, the_class, section, subject, d, m, y
                                     log_entry(teacher, action, "Normal", True)
                         else:
                             # for schools
-                            # if this subject is NOT the main subject, then we will send sms only if the student was present
+                            # if this subject is NOT the main subject, then we will
+                            # send sms only if the student was present
                             # in main attendance (means the student has BUNKED this class :)
                             if subject != 'Main' and subject != 'main' and subject != 'MAIN':
                                 try:
@@ -427,7 +428,5 @@ class StudentAttendance(generics.ListCreateAPIView):
                     entry.absent_days = absent_days
                     entry.save()
                     print('successfully created individual attendance for %s  of %s' % (student, school))
-
-
         context_dict['status'] = 'success'
         return JSONResponse(context_dict, status=200)

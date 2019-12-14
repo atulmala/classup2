@@ -281,8 +281,6 @@ class ImageVideoList(generics.ListCreateAPIView):
                 print('could not retrieve student with id %s' % user)
 
 
-
-
 class Oauth2CallbackView(View):
 
     def get(self, request, *args, **kwargs):

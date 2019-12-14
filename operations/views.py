@@ -54,7 +54,6 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
         return  # To not perform the csrf check previously happening
 
 
-
 class CommitBulkSMS(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         print('Starting to send bulk sms')
@@ -116,7 +115,7 @@ class CommitBulkSMS(generics.ListCreateAPIView):
                     except Exception as e:
                         print('Error while trying to update the delivery status of sms with message_id = ' + message_id)
                         print ('Exception3 from operations get_sms_dlvry_status.py = %s (%s) %s' % (
-                        e.message, type(e), e.args))
+                            e.message, type(e), e.args))
                 except Exception as e:
                     print ('Exception1 from send_bulk_sms.py = %s (%s)' % (e.message, type(e)))
                     print('failed to send message: ' + message + ' to mobile number: ' + str(mobile))
@@ -862,8 +861,7 @@ def send_bulk_sms(request):
                 print(type(image_file))
                 print('image_file = %s' % image_file)
                 print(image_file)
-                image = request.POST.get('image')
-                image_name  = request.POST.get('image_name').replace(' ', '_')
+                image_name = request.POST.get('image_name').replace(' ', '_')
 
         school = School.objects.get(id=school_id)
         if whole_school == "true":
@@ -1101,206 +1099,301 @@ def send_bulk_sms(request):
 
 @csrf_exempt
 def send_message(request, school_id):
-    if request.method == 'POST':
-        response = {
+    response = {
 
-        }
-        message_type = 'Teacher Communication'
+    }
+    message_type = 'Teacher Communication'
+    school = School.objects.get(id=school_id)
+    configuration = Configurations.objects.get(school=school)
+    include_link = False
+    try:
+        data = json.loads(request.body)
+        print(data)
+        print("originated from device")
+        from_device = True
+
+        message_content = data['message']
+        whole_class = data['whole_class']
+        if whole_class == "true":
+            the_class = data["class"]
+            the_section = data["section"]
+            c = Class.objects.get(school=school, standard=the_class)
+            sec = Section.objects.get(school=school, section=the_section)
+
+        email = data['teacher']
+        t = Teacher.objects.get(email=email)
+
         try:
-            school = School.objects.get(id=school_id)
-            configuration = Configurations.objects.get(school=school)
-            data = json.loads(request.body)
-            print(data)
+            coming_from = data['coming_from']
+            print ('coming_from = %s' % coming_from)
+        except Exception as e:
+            print ('exception 261117-B from operations views.py %s %s' % (e.message, type(e)))
+            print ('coming_from not set. This means this is a Teacher Communication')
+            coming_from = 'TeacherCommunication'
+    except Exception as e:
+        print('exception 14122019-A from operations views.py %s %s' % (e.message, type(e)))
+        print("json not present. This message triggered from vue.js web teacher interface")
+        from_device = False
+        coming_from = request.POST.get('coming_from')
+        message_content = request.POST.get('message')
+        email = request.POST.get('teacher')
+        t = Teacher.objects.get(email=email)
+        whole_class = request.POST.get('whole_class')
+        the_class = request.POST.get('class')
+        the_section = request.POST.get('section')
+        c = Class.objects.get(school=school, standard=the_class)
+        sec = Section.objects.get(school=school, section=the_section)
+        image_included = request.POST.get('image_included')
+        if image_included == 'true' or image_included == 'yes':
+            include_link = True
+            image_file = request.FILES['file']
+            print(type(image_file))
+            print('image_file = %s' % image_file)
+            print(image_file)
+            image_name = request.POST.get('image_name').replace(' ', '_')
+            long_link = 'https://storage.cloud.google.com/classup/classup2/media/prod/image_video/%s' % \
+                        image_name.replace('@', '')
+            print('long_link = %s' % long_link)
+            short_link = long_link
 
-            message_content = data['message']
-            email = data['teacher']
-            t = Teacher.objects.get(email=email)
-
-            # create record for Teacher messages history
-            teacher_record = TeacherMessageRecord(teacher=t, message=message_content)
-            teacher_name = t.first_name + ' ' + t.last_name
-            school_name = school.school_name
-            message_trailer = '. Regards, ' + teacher_name + ', ' + configuration.school_short_name
+            # prepare short link
+            global_conf = GlobalConf.objects.get(pk=1)
+            key = global_conf.short_link_api
+            url = 'https://cutt.ly/api/api.php?'
+            url += 'key=%s&short=%s' % (key, long_link)
+            print('url for generating short link = %s' % url)
+            try:
+                response = urllib2.urlopen(url)
+                print('response for generating short link = %s' % response)
+                outcome = json.loads(response.read())
+                print('ouctome = ')
+                print(outcome)
+                status = outcome['url']['status']
+                print('status = %i' % status)
+                if status == 7:
+                    short_link = outcome['url']['shortLink']
+                    print('short_lint = %s' % short_link)
+            except Exception as e:
+                print('exception 14122019-B-A from operations views.py %s %s' % (e.message, type(e)))
+                print('failed to generate short link  for the image/video uploaded by %s' % email)
 
             try:
-                coming_from = data['coming_from']
-                print ('coming_from = %s' % coming_from)
+                image_video = ImageVideo()
+                print('image_file = ')
+                print(image_file)
+                image_video.location = image_file
+                image_video.descrition = message_content
+                image_video.the_class = c
+                image_video.section = sec
+                image_video.short_link = short_link
+                image_video.save()
             except Exception as e:
-                print ('exception 261117-B from operations views.py %s %s' % (e.message, type(e)))
-                print ('coming_from not set. This means this is a Teacher Communication')
-                coming_from = 'TeacherCommunication'
+                print('exception 20082019-E from operations views.py %s %s' % (e.message, type(e)))
+                print('error in saving image/video for admin broadcast')
 
-            if coming_from == 'TeacherCommunication':
-                # check if the message is to be sent to all the parents
-                if data["whole_class"] == "true":
-                    teacher_record.sent_to = 'Whole Class'
-                    the_class = data["class"]
-                    c = Class.objects.get(school=school, standard=the_class)
-                    the_section = data["section"]
-                    sec = Section.objects.get(school=school, section=the_section)
-                    teacher_record.the_class = the_class
-                    teacher_record.section = the_section
-                    teacher_record.save()
+    # create record for Teacher messages history
+    teacher_record = TeacherMessageRecord(teacher=t, message=message_content)
+    teacher_name = t.first_name + ' ' + t.last_name
+    message_trailer = '. Regards, ' + teacher_name + ', ' + configuration.school_short_name
 
+    if coming_from == 'TeacherCommunication':
+        # check if the message is to be sent to all the parents
+        if whole_class == "true":
+            teacher_record.sent_to = 'Whole Class'
+            teacher_record.the_class = the_class
+            teacher_record.section = the_section
+            teacher_record.save()
+
+            try:
+                action = 'Sending message to whole class ' + the_class + '-' + the_section
+                action += ', Message: ' + message_content
+                log_entry(email, action, 'Normal', True)
+            except Exception as e:
+                print('unable to create logbook entry')
+                print ('Exception 500 from operations views.py %s %s' % (e.message, type(e)))
+
+            # get the list of all students in this class/section
+            try:
+                student_list = Student.objects.filter(current_class=c, current_section=sec, active_status=True)
+                print(student_list)
+                for s in student_list:
+                    p = s.parent
+                    m1 = p.parent_mobile1
+                    m2 = p.parent_mobile2
+                    the_name = s.fist_name
+
+                    if ' ' in s.fist_name:
+                        (f_name, l_name) = the_name.split(' ')
+                    else:
+                        f_name = the_name
+                    message_header = 'Dear ' + p.parent_name + ', message regarding ' + \
+                                     f_name + ': '
+                    if include_link:
+                        message_content += '. link: %s  ' % short_link
+                        try:
+                            shared = ShareWithStudents(image_video=image_video,
+                                                       student=s, the_class=c, section=sec)
+                            shared.save()
+                        except Exception as e:
+                            print('exception 14122019-C from operations views.py %s %s' %
+                                  (e.message, type(e)))
+                        print('failed to save SharedWithStudent object')
+                    message = message_header + message_content + message_trailer
+                    print ('message = ' + message)
+                    message_receiver = MessageReceivers(teacher_record=teacher_record,
+                                                        student=s, full_message=message)
+                    sms.send_sms1(school, email, m1, message, message_type, receiver=message_receiver)
+                    message_receiver.save()
+
+                    if configuration.send_absence_sms_both_to_parent:
+                        if m2 != '':
+                            sms.send_sms1(school, email, m2, message, message_type)
+            except Exception as e:
+                print ('Unable to send message while trying for whole class')
+                print ('Exception11 from operations views.py = %s (%s)' % (e.message, type(e)))
+            response["status"] = "success"
+
+        # the message is to be sent to parents of selected students only
+        else:
+            if not from_device:
+                print('from vue.js web interface to selected students')
+                data = {
+
+                }
+                recepients = request.POST.get('recepients')
+                recepients = recepients.split(',')
+                print(recepients)
+
+                for recepient in recepients:
+                    print(recepient)
+                    data[recepient] = recepient
+                print(data)
+
+            teacher_record.sent_to = 'Selected Students'
+            for key in data:
+                if (key != 'message') and (key != 'teacher') \
+                        and (key != 'whole_class') and (key != 'coming_from'):
                     try:
-                        action = 'Sending message to whole class ' + the_class + '-' + the_section
-                        action += ', Message: ' + message_content
+                        action = 'Sending message to Selected Students. Message:  '
+                        action += message_content
                         log_entry(email, action, 'Normal', True)
                     except Exception as e:
                         print('unable to create logbook entry')
-                        print ('Exception 500 from operations views.py %s %s' % (e.message, type(e)))
+                        print ('Exception 501 from operations views.py %s %s' % (e.message, type(e)))
+                    student_id = data[key]
 
-                    # get the list of all students in this class/section
+                    s = Student.objects.get(pk=student_id)
                     try:
-                        student_list = Student.objects.filter(current_class=c, current_section=sec, active_status=True)
-                        for s in student_list:
-                            p = s.parent
-                            m1 = p.parent_mobile1
-                            m2 = p.parent_mobile2
-                            the_name = s.fist_name
-
-                            if ' ' in s.fist_name:
-                                (f_name, l_name) = the_name.split(' ')
-                            else:
-                                f_name = the_name
-                            message_header = 'Dear ' + p.parent_name + ', message regarding ' + \
-                                             f_name + ': '
-                            message = message_header + message_content + message_trailer
-                            print ('message = ' + message)
-                            message_receiver = MessageReceivers(teacher_record=teacher_record,
-                                                                student=s, full_message=message)
-                            sms.send_sms1(school, email, m1, message, message_type, receiver=message_receiver)
-                            message_receiver.save()
-
-                            if configuration.send_absence_sms_both_to_parent:
-                                if m2 != '':
-                                    sms.send_sms1(school, email, m2, message, message_type)
+                        teacher_record.the_class = s.current_class.standard
+                        teacher_record.section = s.current_section.section
+                        teacher_record.save()
                     except Exception as e:
-                        print ('Unable to send message while trying for whole class')
-                        print ('Exception11 from operations views.py = %s (%s)' % (e.message, type(e)))
-                    response["status"] = "success"
+                        print ('exception 291117-B from operations views.py %s %s' % e.message, type(e))
+                        print ('error occured while trying to save teacher_record')
+                    p = s.parent
+                    m1 = p.parent_mobile1
+                    print (m1)
+                    m2 = p.parent_mobile2
+                    print (m2)
 
-                # the message is to be sent to parents of selected students only
-                else:
-                    teacher_record.sent_to = 'Selected Students'
-                    for key in data:
-                        if (key != 'message') and (key != 'teacher') \
-                                and (key != 'whole_class') and (key != 'coming_from'):
-                            try:
-                                action = 'Sending message to Selected Students. Message:  '
-                                action += message_content
-                                log_entry(email, action, 'Normal', True)
-                            except Exception as e:
-                                print('unable to create logbook entry')
-                                print ('Exception 501 from operations views.py %s %s' % (e.message, type(e)))
-                            student_id = data[key]
+                    try:
+                        the_name = s.fist_name
+                        if ' ' in s.fist_name:
+                            (f_name, l_name) = the_name.split(' ')
+                        else:
+                            f_name = the_name
+                    except Exception as e:
+                        print('exception 16082018 from operations views.py %s (%s)' % (e.message, type(e)))
+                        print('unable to extract firts name for %s %s' % (s.fist_name, s.last_name))
+                        f_name = s.fist_name
 
-                            s = Student.objects.get(pk=student_id)
-                            try:
-                                teacher_record.the_class = s.current_class.standard
-                                teacher_record.section = s.current_section.section
-                                teacher_record.save()
-                            except Exception as e:
-                                print ('exception 291117-B from operations views.py %s %s' % e.message, type(e))
-                                print ('error occured while trying to save teacher_record')
-                            p = s.parent
-                            m1 = p.parent_mobile1
-                            print (m1)
-                            m2 = p.parent_mobile2
-                            print (m2)
+                    if configuration.type == 'Collage':
+                        student_name = '%s %s' % (s.fist_name, s.last_name)
+                        message_header = 'Dear %s, ' % student_name
+                    else:
+                        message_header = 'Dear ' + p.parent_name + ', message regarding ' + \
+                                         f_name + ': '
 
-                            try:
-                                the_name = s.fist_name
-                                if ' ' in s.fist_name:
-                                    (f_name, l_name) = the_name.split(' ')
-                                else:
-                                    f_name = the_name
-                            except Exception as e:
-                                print('exception 16082018 from operations views.py %s (%s)' % (e.message, type(e)))
-                                print('unable to extract firts name for %s %s' % (s.fist_name, s.last_name))
-                                f_name = s.fist_name
+                    if include_link:
+                        message_content += '. link: %s  ' % short_link
+                        try:
+                            shared = ShareWithStudents(image_video=image_video,
+                                                       student=s, the_class=c, section=sec)
+                            shared.save()
+                        except Exception as e:
+                            print('exception 14122019-D from operations views.py %s %s' %
+                                  (e.message, type(e)))
+                    message = message_header + message_content + message_trailer
+                    print ('message = ' + message)
 
-                            if configuration.type == 'Collage':
-                                student_name = '%s %s' % (s.fist_name, s.last_name)
-                                message_header = 'Dear %s, ' % student_name
-                            else:
-                                message_header = 'Dear ' + p.parent_name + ', message regarding ' + \
-                                                 f_name + ': '
-                            message = message_header + message_content + message_trailer
-                            print ('message = ' + message)
-
-                            try:
-                                message_receiver = MessageReceivers(teacher_record=teacher_record,
-                                                                    student=s, full_message=message)
-                                sms.send_sms1(school, email, m1, message, message_type, receiver=message_receiver)
-                                message_receiver.save()
+                    try:
+                        message_receiver = MessageReceivers(teacher_record=teacher_record,
+                                                            student=s, full_message=message)
+                        sms.send_sms1(school, email, m1, message, message_type, receiver=message_receiver)
+                        message_receiver.save()
+                        try:
+                            action = 'SMS sent to ' + p.parent_name + ' (' + p.parent_mobile1 + ')'
+                            action += ', Message: ' + message_content
+                            log_entry(email, action, 'Normal', True)
+                        except Exception as e:
+                            print('unable to create logbook entry')
+                            print ('Exception 502 from operations views.py %s %s' % (e.message, type(e)))
+                        if configuration.send_absence_sms_both_to_parent:
+                            if m2 != '':
+                                sms.send_sms1(school, email, m2, message, message_type)
                                 try:
-                                    action = 'SMS sent to ' + p.parent_name + ' (' + p.parent_mobile1 + ')'
+                                    action = 'SMS sent to ' + p.parent_name + ' (' + p.parent_mobile2 + ')'
                                     action += ', Message: ' + message_content
                                     log_entry(email, action, 'Normal', True)
                                 except Exception as e:
                                     print('unable to create logbook entry')
-                                    print ('Exception 502 from operations views.py %s %s' % (e.message, type(e)))
-                                if configuration.send_absence_sms_both_to_parent:
-                                    if m2 != '':
-                                        sms.send_sms1(school, email, m2, message, message_type)
-                                        try:
-                                            action = 'SMS sent to ' + p.parent_name + ' (' + p.parent_mobile2 + ')'
-                                            action += ', Message: ' + message_content
-                                            log_entry(email, action, 'Normal', True)
-                                        except Exception as e:
-                                            print('unable to create logbook entry')
-                                            print ('Exception 503 from operations views.py %s %s' %
-                                                   (e.message, type(e)))
-                            except Exception as e:
-                                print ('Unable to send message to ' + p.parent_name + 'with mobile number: ' + m1)
-                                print ('Exception12 from operations views.py = %s (%s)' % (e.message, type(e)))
+                                    print ('Exception 503 from operations views.py %s %s' %
+                                           (e.message, type(e)))
+                    except Exception as e:
+                        print ('Unable to send message to ' + p.parent_name + 'with mobile number: ' + m1)
+                        print ('Exception12 from operations views.py = %s (%s)' % (e.message, type(e)))
 
-                    response["status"] = "success"
-            if coming_from == 'ActivityGroup':
-                print('Activity Group communication')
-                from activity_groups.models import ActivityGroup, ActivityMembers
-                group_id = data['group_id']
-                print('group_id = %s' % group_id)
-                try:
-                    group = ActivityGroup.objects.get(id=group_id)
-                    teacher_record.sent_to = group.group_name
-                    teacher_record.activity_group = group.group_name
-                    teacher_record.save()
-                except Exception as e:
-                    print('exception 09092019-A from operations view.py %s %s' % (e.message, type(e)))
-                    print('failed to save teacher record')
-                try:
-                    members_list = ActivityMembers.objects.filter(group=group)
-                    print(members_list)
-                    for member in members_list:
-                        p = member.student.parent
-                        m1 = p.parent_mobile1
-                        m2 = p.parent_mobile2
-                        the_name = member.student.fist_name
-
-                        if ' ' in member.student.fist_name:
-                            (f_name, l_name) = the_name.split(' ')
-                        else:
-                            f_name = the_name
-                        message_header = 'Dear ' + p.parent_name + ', message regarding ' + \
-                                         f_name + ': '
-                        message = message_header + message_content + message_trailer
-                        print ('message = ' + message)
-                        message_receiver = MessageReceivers(teacher_record=teacher_record,
-                                                            student=member.student, full_message=message)
-                        sms.send_sms1(school, email, m1, message, message_type, receiver=message_receiver)
-                        if configuration.send_absence_sms_both_to_parent:
-                            if m2 != '':
-                                sms.send_sms1(school, email, m2, message, message_type)
-                except Exception as e:
-                    print ('Unable to send message while trying for Group')
-                    print ('Exception 251117-A from operations views.py = %s (%s)' % (e.message, type(e)))
-                response["status"] = "success"
+            response["status"] = "success"
+    if coming_from == 'ActivityGroup':
+        print('Activity Group communication')
+        from activity_groups.models import ActivityGroup, ActivityMembers
+        group_id = data['group_id']
+        print('group_id = %s' % group_id)
+        try:
+            group = ActivityGroup.objects.get(id=group_id)
+            teacher_record.sent_to = group.group_name
+            teacher_record.activity_group = group.group_name
+            teacher_record.save()
         except Exception as e:
-            print ('Unable to send message')
-            print ('Exception13 from operations views.py = %s (%s)' % (e.message, type(e)))
+            print('exception 09092019-A from operations view.py %s %s' % (e.message, type(e)))
+            print('failed to save teacher record')
+        try:
+            members_list = ActivityMembers.objects.filter(group=group)
+            print(members_list)
+            for member in members_list:
+                p = member.student.parent
+                m1 = p.parent_mobile1
+                m2 = p.parent_mobile2
+                the_name = member.student.fist_name
 
+                if ' ' in member.student.fist_name:
+                    (f_name, l_name) = the_name.split(' ')
+                else:
+                    f_name = the_name
+                message_header = 'Dear ' + p.parent_name + ', message regarding ' + \
+                                 f_name + ': '
+                message = message_header + message_content + message_trailer
+                print ('message = ' + message)
+                message_receiver = MessageReceivers(teacher_record=teacher_record,
+                                                    student=member.student, full_message=message)
+                sms.send_sms1(school, email, m1, message, message_type, receiver=message_receiver)
+                if configuration.send_absence_sms_both_to_parent:
+                    if m2 != '':
+                        sms.send_sms1(school, email, m2, message, message_type)
+        except Exception as e:
+            print ('Unable to send message while trying for Group')
+            print ('Exception 251117-A from operations views.py = %s (%s)' % (e.message, type(e)))
+        response["status"] = "success"
     return JSONResponse(response, status=200)
 
 
@@ -1840,5 +1933,3 @@ def parents_communication_details(request):
         context_dict['form'] = form
 
     return render(request, 'classup/parents_communication_details.html', context_dict)
-
-

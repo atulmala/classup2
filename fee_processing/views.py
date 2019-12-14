@@ -523,6 +523,8 @@ class ProcessFee(generics.ListCreateAPIView):
                 actual_paid = data['actual_paid']
                 previous_dues = data['previous_due']
                 print('previous dues = %.2f' % previous_dues)
+                paid_till_date = data['paid_till_date']
+                print('paid_till_date = %.2f' % paid_till_date)
                 one_time = data['one_time']
                 print('one_time = %.2f' % float(one_time))
 
@@ -786,7 +788,14 @@ class ProcessFee(generics.ListCreateAPIView):
             c.drawString(amt_pos2, top_position, str(waiver))
 
             top_position -= 15
-            text = 'F. Net Payable (A + B + C + D - E): '
+            text = 'F. Paid till date: '
+            c.drawString(r1_border, top_position, text)
+            c.drawString(r2_border, top_position, text)
+            c.drawString(amt_pos1, top_position, str(paid_till_date))
+            c.drawString(amt_pos2, top_position, str(paid_till_date))
+
+            top_position -= 15
+            text = 'G. Net Payable (A + B + C + D - E -F): '
             c.drawString(r1_border, top_position, text)
             c.drawString(r2_border, top_position, text)
             c.drawString(amt_pos1, top_position, str(net_payable))
@@ -794,7 +803,7 @@ class ProcessFee(generics.ListCreateAPIView):
 
             top_position -= 20
             c.setFont('Times-Bold', 14)
-            text = 'G. Actual Paid: '
+            text = 'H. Actual Paid: '
             c.drawString(r1_border, top_position, text)
             c.drawString(r2_border, top_position, text)
             c.drawString(amt_pos1, top_position, str(actual_paid))
@@ -802,7 +811,7 @@ class ProcessFee(generics.ListCreateAPIView):
 
             top_position -= 20
             c.setFont(font, 10)
-            text = 'H. Balance (F - G): '
+            text = 'I. Balance (F - G): '
             c.drawString(r1_border, top_position, text)
             c.drawString(r2_border, top_position, text)
             if balance < 0.0:
