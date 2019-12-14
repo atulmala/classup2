@@ -1143,6 +1143,7 @@ def send_message(request, school_id):
         the_section = request.POST.get('section')
         c = Class.objects.get(school=school, standard=the_class)
         sec = Section.objects.get(school=school, section=the_section)
+
         image_included = request.POST.get('image_included')
         if image_included == 'true' or image_included == 'yes':
             include_link = True
@@ -1183,6 +1184,7 @@ def send_message(request, school_id):
                 print(image_file)
                 image_video.location = image_file
                 image_video.descrition = message_content
+                image_video.teacher = t
                 image_video.the_class = c
                 image_video.section = sec
                 image_video.short_link = short_link
