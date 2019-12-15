@@ -426,43 +426,28 @@ def att_summary_school(request):
     return render(request, 'classup/daily_att_summary.html', context_dict)
 
 
-def sms_summary(request):
-    context_dict = {
-    }
+class MonthlySMSReport(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+    context_dict = {'header': 'Monthly SMS Report'}
 
-    context_dict['header'] = 'Monthly SMS Summary'
-    context_dict['school_name'] = request.session['school_name']
-    context_dict['user_type'] = request.session['user_type']
-
-    # first see whether the cancel button was pressed
-    if "cancel" in request.POST:
-        return render(request, 'classup/setup_index.html', context_dict)
-
-    context_dict['header'] = 'Download Monthly SMS Summary'
-
-    if request.method == 'POST':
-        school_id = request.session['school_id']
-        school = School.objects.get(id=school_id)
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.body)
+        print(data)
+        school_id = data['school_id']
+        school = School.objects.get(pk=school_id)
         school_name = school.school_name
-        form = SMSSummaryForm(request.POST)
 
-        if form.is_valid():
-            the_date = form.cleaned_data['date']
-
-        else:
-            error = 'You have missed to select the Date'
-            form = SMSSummaryForm()
-            context_dict['form'] = form
-            form.errors['__all__'] = form.error_class([error])
-            return render(request, 'classup/sms_summary.html', context_dict)
+        the_date = data['date']
 
         m = the_date.split('-')[1]
         month_int = int(m)
+        print('month_int = %d' % month_int)
         month = calendar.month_name[month_int]
         y = the_date.split('-')[0]
         year_int = int(y)
+        print('year_int = %d' % year_int)
 
-        excel_file_name = 'SMS_Summary_' + '_' + str(month) + '_' + str(y) + '.xlsx'
+        excel_file_name = 'SMS_Report_' + '_' + str(month) + '_' + str(y) + '.xlsx'
 
         output = StringIO.StringIO(excel_file_name)
         workbook = xlsxwriter.Workbook(output)
@@ -482,13 +467,10 @@ def sms_summary(request):
             'valign': 'top',
             'border': 1
         })
-        date_format = workbook.add_format({
-            'num_format': 'dd/mm/yy'
-        })
         text_format = workbook.add_format({
             'text_wrap': True})
 
-        title_text = 'Monthly SMS Summary for ' + school_name
+        title_text = 'Monthly SMS Report for ' + school_name
         title_text += ' for ' + month + '/' + y
 
         f = workbook.add_format()
@@ -523,6 +505,8 @@ def sms_summary(request):
                                                 date__year=year_int).order_by('-date')
             print('successfully retrieved the monthly sms queryset for %s for the month of %s-%s' %
                   (school_name, str(month), str(y)))
+            print('sms_list = ')
+            print(sms_list)
             sr_no = 1
             for s in sms_list:
                 current_row += 1
@@ -599,12 +583,6 @@ def sms_summary(request):
         response.write(output.getvalue())
 
         return response
-
-    if request.method == 'GET':
-        form = SMSSummaryForm()
-        context_dict['form'] = form
-
-    return render(request, 'classup/sms_summary.html', context_dict)
 
 
 class AttRegisterClass(generics.ListCreateAPIView):
@@ -1796,37 +1774,26 @@ def result_sms(request):
     return render(request, 'classup/test_results.html', context_dict)
 
 
-def parents_communication_details(request):
-    context_dict = {
-    }
-    context_dict['header'] = 'Download Parents Communications'
-    context_dict['user_type'] = request.session['user_type']
-    context_dict['school_name'] = request.session['school_name']
+class ParentCommunicationReport(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+    context_dict = {'header': 'Parent Communication Report'}
 
-    school = School.objects.get(school_name=request.session['school_name'])
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.body)
+        print(data)
+        school_id = data['school_id']
+        school = School.objects.get(pk=school_id)
+        school_name = school.school_name
 
-    # first see whether the cancel button was pressed
-    if "cancel" in request.POST:
-        return render(request, 'classup/setup_index.html', context_dict)
-
-    if request.method == 'POST':
-        form = ParentsCommunicationDetailsForm(request.POST)
-
-        if form.is_valid():
-            the_date = form.cleaned_data['date']
-        else:
-            print ('form could not be validated')
-            error = 'You have missed to select the Month/Year'
-            form = ParentsCommunicationDetailsForm()
-            context_dict['form'] = form
-            form.errors['__all__'] = form.error_class([error])
-            return render(request, 'classup/parents_communication_details.html', context_dict)
+        the_date = data['date']
 
         m = the_date.split('-')[1]
         month_int = int(m)
+        print('month_int = %d' % month_int)
         month = calendar.month_name[month_int]
         y = the_date.split('-')[0]
         year_int = int(y)
+        print('year_int = %d' % year_int)
 
         excel_file_name = 'Parents_Communication' + '_' + str(month) + '_' + str(y) + '.xlsx'
 
@@ -1930,8 +1897,3 @@ def parents_communication_details(request):
         response.write(output.getvalue())
         return response
 
-    if request.method == 'GET':
-        form = ParentsCommunicationDetailsForm()
-        context_dict['form'] = form
-
-    return render(request, 'classup/parents_communication_details.html', context_dict)

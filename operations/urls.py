@@ -19,9 +19,10 @@ urlpatterns = patterns(
 
     url(r'^send_message/(?P<school_id>\w+)/$', views.send_message, name='send_message'),
 
-    url(r'^parents_communication_details/$', views.parents_communication_details, name='parents_communication_details'),
+    url(r'^parents_communication_report/$', views.ParentCommunicationReport.as_view(),
+        name='parents_communication_report'),
 
-    url(r'^sms_summary_school/$', views.sms_summary, name='sms_summmary_school'),
+    url(r'^monthly_sms_report/$', views.MonthlySMSReport.as_view(), name='sms_summmary_school'),
 
     url(r'send_bulk_sms/$', views.send_bulk_sms, name='send_bulk_sms'),
 
