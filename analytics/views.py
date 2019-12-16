@@ -236,8 +236,17 @@ class GenerateSubAnalysis(generics.ListCreateAPIView):
                                 marks_array.append(total)
                                 total = 0.0
                         print(marks_array)
-                        average = statistics.mean(marks_array)
-                        highest = max(marks_array)
+
+                        # 16/12/2019- some stupid teachers create tests even for the junior classes like Nursery, KG
+                        # but does not enter marks
+                        try:
+                            average = statistics.mean(marks_array)
+                            highest = max(marks_array)
+                        except Exception as e:
+                            print('exception 16122019-A from analytics views.py %s %s' % (e.message, type(e)))
+                            print('marks not entered for this test')
+                            average = 0.0
+                            highest = 0.0
 
                         try:
                             sub_high_avg = SubjectHighestAverage.objects.get(exam=exam, the_class=a_class,

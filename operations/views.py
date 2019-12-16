@@ -14,6 +14,7 @@ import json
 import xlsxwriter
 
 from django.contrib.auth.models import User
+from django.db import DataError
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.translation import ugettext
 from django.shortcuts import render
@@ -816,7 +817,6 @@ def send_bulk_sms(request):
                 image_name = data['image_name']
                 print('image_name = %s' % image_name)
                 image_file = ContentFile(base64.b64decode(image), name=image_name.replace('@', '').replace(' ', '_'))
-                # print(image_file)
         except Exception as e:
             print('exception 13112019-A from operations views.py %s %s' % (e.message, type(e)))
             print('json not present, means this is request from vue.js web admin interface')
@@ -898,12 +898,17 @@ def send_bulk_sms(request):
                             print('image_file = ')
                             print(image_file)
                             image_video.location = image_file
-                            image_video.descrition = message_body
+                            if len(message_body) > 200:
+                                image_video.descrition = message_body[0:190]
+                            else:
+                                image_video.descrition = message_body
                             image_video.the_class = the_class
                             image_video.section = section
+                            print('short_link = %s' % short_link)
                             image_video.short_link = short_link
                             image_video.save()
-                        except Exception as e:
+
+                        except DataError as e:
                             print('exception 20082019-B from operations views.py %s %s' % (e.message, type(e)))
                             print('error in saving image/video for admin broadcast')
                     student_list = Student.objects.filter(current_class=the_class, current_section=section,
