@@ -690,6 +690,7 @@ def save_marks(request):
         # print (request.body)
         # convert the raw data received to json
         the_json = json.loads(request.body)
+        print(the_json)
 
         # determine whether this test is marks based or grade based
         grade_based = False

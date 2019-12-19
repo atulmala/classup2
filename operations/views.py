@@ -1096,12 +1096,18 @@ def send_message(request, school_id):
         from_device = True
 
         message_content = data['message']
-        whole_class = data['whole_class']
-        if whole_class == "true":
-            the_class = data["class"]
-            the_section = data["section"]
-            c = Class.objects.get(school=school, standard=the_class)
-            sec = Section.objects.get(school=school, section=the_section)
+
+        # 19/12/2019 - if coming from Activity Group Communication the json may not contain whole_class key
+        try:
+            whole_class = data['whole_class']
+            if whole_class == "true":
+                the_class = data["class"]
+                the_section = data["section"]
+                c = Class.objects.get(school=school, standard=the_class)
+                sec = Section.objects.get(school=school, section=the_section)
+        except Exception as e:
+            print('exception 19122019-A from operations views.py %s %s' % (e.message, type(e)))
+            print('this message might have originated from Activity Group communication')
 
         email = data['teacher']
         t = Teacher.objects.get(email=email)
@@ -1749,7 +1755,6 @@ def result_sms(request):
                                 print ('error occured while fetching grade for ' +
                                        str(s) + ' for test.subject.subject_name')
                                 print ('Exception8 from operations views.py = %s (%s)' % (e.message, type(e)))
-
                 except Exception as e:
                     print ('error occured while fetching the list of tests')
                     print ('Exception9 from operations views.py = %s (%s)' % (e.message, type(e)))
