@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from academics.models import ThirdLang
-from .models import Scheme, HigherClassMapping, NPromoted, Marksheet, Stream, StreamMapping, Wing
+from .models import Scheme, HigherClassMapping, NPromoted, Marksheet, Stream, StreamMapping, Wing, ExamResult
 
 # Register your models here.
 
@@ -110,5 +110,18 @@ class WingAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Wing, WingAdmin)
+
+
+@admin.register(ExamResult)
+class ExamResultAdmin(admin.ModelAdmin):
+    def get_school_name(self, obj):
+        return obj.student.school
+
+    list_display = ('get_school_name', 'student', 'status', 'detain_reason',)
+    list_filter = ('student__school',)
+    search_fields = ('student__fist_name', 'student__last_name', )
+
+
+
 
 

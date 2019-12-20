@@ -4,6 +4,7 @@ from setup.models import School
 from academics.models import Class, Subject
 from student.models import Student
 
+
 # Create your models here.
 
 
@@ -60,7 +61,6 @@ class Marksheet(models.Model):
     board_logo_path = models.CharField(max_length=100,
                                        default='classup2/media/dev/cbse_logo/Logo/cbse-logo.png')
 
-
     def __unicode__(self):
         return self.school.school_name
 
@@ -71,5 +71,7 @@ class Wing(models.Model):
     classes = models.CharField(max_length=100)
 
 
-
-
+class ExamResult(models.Model):
+    student = models.ForeignKey(Student)
+    status = models.BooleanField(default=True)
+    detain_reason = models.CharField(max_length=200, default='N/A')

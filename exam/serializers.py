@@ -1,13 +1,21 @@
 from rest_framework import serializers
 
 from academics.models import TermTestResult, TestResults
-from .models import Wing
+from .models import Wing, ExamResult
 
 
 class WingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Wing
         fields = ('school', 'wing', 'classes')
+
+
+class ExamResultSerializer(serializers.ModelSerializer):
+    student = serializers.StringRelatedField()
+
+    class Meta:
+        model = ExamResult
+        fields = ('id', 'student', 'status', 'detain_reason',)
 
 
 class TestMarksSerializer(serializers.ModelSerializer):

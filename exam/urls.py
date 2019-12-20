@@ -26,4 +26,6 @@ urlpatterns = patterns(
     url(r'get_wings/(?P<school_id>\w+)/$', views.GetWings.as_view(), name='get_wings'),
     url(r'get_tests/$', views.TestList.as_view(), name='get_tests'),
     url(r'^get_test_marks_list/$', views.MarksListForTest.as_view()),
+    url(r'^initialize_promotion_list/$', views.InitializePromotionList.as_view(), name='initialize_promotion_list'),
+    url(r'^get_promotion_list/$', views.GetPromotionList.as_view(), name='get_promotion_list'),
 )

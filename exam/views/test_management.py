@@ -7,7 +7,7 @@ from rest_framework import generics
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.renderers import JSONRenderer
 
-from exam.models import HigherClassMapping, Wing
+from exam.models import HigherClassMapping, Wing, ExamResult
 from setup.models import School
 from academics.models import Class, Section, Subject, Exam, ClassTest, TestResults, TermTestResult, ThirdLang
 from exam.views import get_wings
@@ -15,7 +15,7 @@ from student.models import Student
 from teacher.models import Teacher
 
 from academics.serializers import TestSerializer
-from exam.serializers import TestMarksSerializer
+from exam.serializers import TestMarksSerializer, ExamResultSerializer
 
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
@@ -33,6 +33,49 @@ class JSONResponse(HttpResponse):
         content = JSONRenderer().render(data)
         kwargs['content_type'] = 'application/json'
         super(JSONResponse, self).__init__(content, **kwargs)
+
+
+class InitializePromotionList(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def post(self, request, *args, **kwargs):
+        context_dict = {
+
+        }
+        school_id = self.request.query_params.get('school_id')
+        school = School.objects.get(id=school_id)
+
+        students = Student.objects.filter(school=school, active_status=True)
+        for student in students:
+            print('dealing with %s of class %s-%s' % (student, student.current_class, student.current_section))
+            try:
+                result = ExamResult.objects.get(student=student)
+                print(result)
+                print('entry exist in the ExamResult table no need to do any further processing')
+            except Exception as e:
+                print('exception 20122019-A from test_management.py %s %s' % (e.message, type(e)))
+                print('entry does not exist ExamResult table. Creating now...')
+                result = ExamResult(student=student)
+                result.save()
+                print('created entry in the ExamResult table')
+        context_dict['status'] = 'success'
+        return JSONResponse(context_dict, status=200)
+
+
+class GetPromotionList(generics.ListAPIView):
+    serializer_class = ExamResultSerializer
+
+    def get_queryset(self):
+        school_id = self.request.query_params.get('school_id')
+        school = School.objects.get(id=school_id)
+        cls = self.request.query_params.get('the_class')
+        the_class = Class.objects.get(school=school, standard=cls)
+        sec = self.request.query_params.get('section')
+        section = Section.objects.get(school=school, section=sec)
+
+        q = ExamResult.objects.filter(student__current_class=the_class,
+                                      student__current_section=section).order_by('student__fist_name')
+        return q
 
 
 class MarksListForTest(generics.ListCreateAPIView):
