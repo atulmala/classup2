@@ -15,6 +15,8 @@ from student.models import Student
 from teacher.models import Teacher
 
 from academics.serializers import TestSerializer
+from analytics.models import SubjectAnalysis
+from analytics.serializers import SubjectAnalysisSerializer
 from exam.serializers import TestMarksSerializer, ExamResultSerializer
 
 
@@ -76,6 +78,29 @@ class GetPromotionList(generics.ListAPIView):
         q = ExamResult.objects.filter(student__current_class=the_class,
                                       student__current_section=section).order_by('student__fist_name')
         return q
+
+
+class ProcessPromotion(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def post(self, request, *args, **kwargs):
+        promotion_list = json.loads(request.body)
+        for promotee in promotion_list:
+            print(promotee)
+            results = promotion_list[promotee]
+            entry = ExamResult.objects.get(id=promotee)
+            promotion_status = results['promotion_status']
+            if promotion_status == 'promoted':
+                entry.status = True
+            else:
+                entry.status = False
+            entry.detain_reason = results["detain_reason"]
+            entry.save()
+        context_dict = {'outcome': 'success'}
+
+
+
+        return JSONResponse(context_dict, status=200)
 
 
 class MarksListForTest(generics.ListCreateAPIView):
@@ -351,5 +376,15 @@ class ScheduleTest(generics.ListCreateAPIView):
         return JSONResponse(context_dict, status=200)
 
 
+class StudentMarks(generics.ListAPIView):
+    serializer_class = SubjectAnalysisSerializer
 
+    def get_queryset(self):
+        result_id = self.request.query_params.get('result_id')
+        exam_result = ExamResult.objects.get(id=result_id)
+        print(exam_result)
+        student = exam_result.student
+        print('retrieving marks for %s of %s' % (student, student.school))
 
+        q = SubjectAnalysis.objects.filter(student=student)
+        return q

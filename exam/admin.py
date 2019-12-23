@@ -118,7 +118,7 @@ class ExamResultAdmin(admin.ModelAdmin):
         return obj.student.school
 
     list_display = ('get_school_name', 'student', 'status', 'detain_reason',)
-    list_filter = ('student__school',)
+    list_filter = ('student__school', 'status',)
     search_fields = ('student__fist_name', 'student__last_name', )
 
 
