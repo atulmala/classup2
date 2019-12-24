@@ -1,8 +1,10 @@
 import json
+import StringIO
 from datetime import date
 from decimal import Decimal
 
 from django.http import HttpResponse
+from django.utils.translation import ugettext
 from rest_framework import generics
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.renderers import JSONRenderer
@@ -10,9 +12,10 @@ from rest_framework.renderers import JSONRenderer
 from exam.models import HigherClassMapping, Wing, ExamResult
 from setup.models import School
 from academics.models import Class, Section, Subject, Exam, ClassTest, TestResults, TermTestResult, ThirdLang
-from exam.views import get_wings
+from exam.views import get_wings, xlsxwriter
 from student.models import Student
 from teacher.models import Teacher
+from formats.formats import Formats as format
 
 from academics.serializers import TestSerializer
 from analytics.models import SubjectAnalysis
@@ -386,5 +389,94 @@ class StudentMarks(generics.ListAPIView):
         student = exam_result.student
         print('retrieving marks for %s of %s' % (student, student.school))
 
-        q = SubjectAnalysis.objects.filter(student=student)
+        q = SubjectAnalysis.objects.filter(student=student).order_by('subject__subject_name')
         return q
+
+
+class PromotionReport(generics.ListAPIView):
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.body)
+        scl = data['school_id']
+        cls = data['the_class']
+        sec = data['section']
+        school = School.objects.get(id=scl)
+        the_class = Class.objects.get(school=school, standard=cls)
+        section = Section.objects.get(school=school, section=sec)
+
+        excel_file_name = 'Promotion_List_%s_%s.xlsx' % (str(the_class.standard), str(section.section))
+
+        output = StringIO.StringIO(excel_file_name)
+        workbook = xlsxwriter.Workbook(output)
+        sheet = workbook.add_worksheet('Promotion List')
+        fmt = format()
+        title = workbook.add_format(fmt.get_title())
+        header = workbook.add_format(fmt.get_header())
+        cell_normal = workbook.add_format(fmt.get_cell_normal())
+        cell_center = workbook.add_format(fmt.get_cell_center())
+        cell_left = workbook.add_format(fmt.get_cell_left())
+        absent_format = workbook.add_format(fmt.get_absent_format())
+
+        title_text = 'Student Promotion List for class %s-%s for Academic session 2019-20' % (cls, sec)
+        sheet.merge_range('A1:F1', title_text, title)
+        sheet.set_column('A:A', 4)
+        sheet.set_column('B:B', 8)
+        sheet.set_column('C:C', 15)
+        sheet.set_column('D:D', 15)
+        sheet.set_column('E:E', 25)
+
+        start_col = 0
+        row = 3
+        col = start_col
+        sheet.write(row, col, ugettext("S No."), header)
+        col += 1
+        sheet.write(row, col, ugettext("Reg No"), header)
+        col += 1
+        sheet.write(row, col, ugettext("Student"), header)
+        col += 1
+        sheet.write(row, col, ugettext("Promotion Status"), header)
+        col += 1
+        sheet.write(row, col, ugettext("Not Promotion Reason"), header)
+
+        row += 1
+        col = start_col
+        s_no = 1
+
+        students = Student.objects.filter(current_class=the_class,
+                                          current_section=section, active_status=True).order_by('fist_name')
+        for student in students:
+            print('\ndealing with: %s' % student)
+            sheet.write_number(row, col, s_no, cell_center)
+            col += 1
+            reg_no = student.student_erp_id
+            print(reg_no)
+            sheet.write_string(row, col, reg_no, cell_center)
+            col += 1
+            sheet.write_string(row, col, ugettext(student.fist_name + ' ' + student.last_name), cell_left)
+            col += 1
+            try:
+                result = ExamResult.objects.get(student=student)
+                promotion_status = result.status
+                if promotion_status:
+                    sheet.write_string(row, col, 'Promoted', cell_normal)
+                else:
+                    sheet.write_string(row, col, 'Not Promoted', absent_format)
+                col += 1
+
+                no_promotion_reason = result.detain_reason
+                sheet.write_string(row, col, no_promotion_reason, cell_normal)
+                col += 1
+            except Exception as e:
+                print('exception 23122019-A from test_management.py %s %s' % (e.message, type(e)))
+                print('failed to retrieve promotion status for %s' % student)
+            row += 1
+            s_no += 1
+            col = start_col
+
+        row += 2
+        sheet.write_string(row, start_col + 2, 'Principal', cell_center)
+        sheet.write_string(row, start_col + 4, 'Class Teacher', cell_center)
+        workbook.close()
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
+        response.write(output.getvalue())
+        return response
