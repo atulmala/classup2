@@ -154,3 +154,13 @@ class Formats():
 
     def get_holiday_format(self):
         return self.holiday_format
+
+    bold_italics = {
+        'align': 'center',
+        'font_size': 11,
+        'bold': True,
+        'italic': True
+    }
+
+    def get_bold_italics(self):
+        return self.bold_italics
