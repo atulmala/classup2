@@ -33,6 +33,18 @@ class Formats():
     def get_cell_normal(self):
         return self.cell_normal
 
+    cell_right_border = {
+        'align': 'center',
+        'valign': 'vcenter',
+        'bold': True,
+        'border': 1,
+        'right': 6,
+        'text_wrap': True
+    }
+
+    def get_cell_right_border(self):
+        return self.cell_right_border
+
     cell_bold = {
                 'bold': True,
                 'align': 'left',
@@ -84,6 +96,7 @@ class Formats():
         return self.cell_left
 
     vertical_text = {
+                'font_size': 8,
                 'bold': True,
                 'bg_color': '#F7F7F7',
                 'align': 'center',
@@ -115,6 +128,16 @@ class Formats():
 
     def get_cell_grade(self):
         return self.cell_grade
+
+    cell_grade2 = {
+        'align': 'center',
+        'valign': 'vcenter',
+        'bold': True,
+        'border': 1
+    }
+
+    def get_cell_grade2(self):
+        return self.cell_grade2
 
     cell_small = {
                 'align': 'left',

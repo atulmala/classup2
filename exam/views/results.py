@@ -46,10 +46,13 @@ class ResultSheet(generics.ListCreateAPIView):
 
         output = StringIO.StringIO(excel_file_name)
         workbook = xlsxwriter.Workbook(output)
+
         t1_sheet = workbook.add_worksheet('Term I')
         t1_sheet.set_landscape()
+        t1_sheet.set_paper(9)   # A4 paper
         t2_sheet = workbook.add_worksheet('Term II')
         t2_sheet.set_landscape()
+        t2_sheet.set_paper(9) # A4 paper
         t1_sheet.repeat_rows(1, 2)
         t2_sheet.repeat_rows(1, 2)
         t1_sheet.fit_to_pages(1, 0)
@@ -60,9 +63,6 @@ class ResultSheet(generics.ListCreateAPIView):
         border.set_border()
 
         fmt = format()
-        title = workbook.add_format(fmt.get_title())
-        header = workbook.add_format(fmt.get_header())
-
         title_format = workbook.add_format(fmt.get_title())
         title_format.set_bg_color('#CFD8DC')
         title_format.set_border()
@@ -73,17 +73,22 @@ class ResultSheet(generics.ListCreateAPIView):
         cell_bold.set_border()
         bold_italics = workbook.add_format(fmt.get_bold_italics())
         bold_italics.set_border()
+        bold_italics.set_bg_color('#E0E0E0')
         cell_component = workbook.add_format(fmt.get_cell_component())
         cell_component.set_border()
         cell_center = workbook.add_format(fmt.get_cell_center())
         cell_center.set_border()
         vertical_text = workbook.add_format(fmt.get_vertical_text())
         vertical_text.set_border()
-        perc_format = workbook.add_format(fmt.get_perc_format())
         cell_grade = workbook.add_format(fmt.get_cell_grade())
-        cell_small = workbook.add_format(fmt.get_cell_small())
-        fail_format = workbook.add_format()
-        fail_format.set_bg_color('yellow')
+        cell_grade.set_bg_color('#BDBDBD')
+        cell_grade2 = workbook.add_format(fmt.get_cell_grade2())
+        cell_grade2.set_bg_color('#E0E0E0')
+        cell_grade2.set_right(6)
+        cell_right_border = workbook.add_format(fmt.get_cell_right_border())
+        cell_right_border.set_right(6)
+
+
 
         # get the name of the class teacher
         class_teacher = 'N/A'
@@ -100,25 +105,28 @@ class ResultSheet(generics.ListCreateAPIView):
         term2 = 'Term II'
         title_text = '%s \n %s Result Analysis Sheet Session 2019-20 Class %s-%s Class Teacher: %s' % \
                      (school, term1, the_class, section, class_teacher)
-        t1_sheet.merge_range('A1:AL1', title_text, title_format)
+        t1_sheet.merge_range('A1:AM1', title_text, title_format)
         title_text = '%s \n %s Result Analysis Sheet Session 2019-20 Class %s-%s Class Teacher: %s' % \
                      (school, term2, the_class, section, class_teacher)
-        t2_sheet.merge_range('A1:AL1', title_text, title_format)
+        t2_sheet.merge_range('A1:AM1', title_text, title_format)
         t1_sheet.set_row(0, 35)
         t2_sheet.set_row(0, 35)
-        t1_sheet.set_column('A:A', 4)
-        t2_sheet.set_column('A:A', 4)
+        t1_sheet.set_column('A:A', 2.5)
+        t2_sheet.set_column('A:A', 2.5)
         t1_sheet.set_column('B:B', 8)
         t2_sheet.set_column('B:B', 8)
-        t1_sheet.set_column('C:AS', 3)
-        t2_sheet.set_column('C:AL', 3)
+        t1_sheet.set_column('C:C', 2)
+        t2_sheet.set_column('C:C', 2)
+        t1_sheet.set_column('D:AM', 3)
+        t2_sheet.set_column('D:AM', 3)
 
-        t1_sheet.merge_range('A2:A3', 'S No.', cell_bold)
-        t2_sheet.merge_range('A2:A3', 'S No.', cell_bold)
-        t1_sheet.merge_range('B2:B3', 'Student', cell_bold)
-        t2_sheet.merge_range('B2:B3', 'Student', cell_bold)
 
-        if standard in middle_classes:
+        t1_sheet.merge_range('A2:A3', 'S No', cell_bold)
+        t2_sheet.merge_range('A2:A3', 'S No', cell_bold)
+        t1_sheet.merge_range('B2:C3', 'Student', cell_bold)
+        t2_sheet.merge_range('B2:C3', 'Student', cell_bold)
+
+        if standard in middle_classes or standard in ninth_tenth:
             scheme = Scheme.objects.filter(school=school, the_class=the_class)
             components = ['PA', 'NB', 'PF', 'SE', 'Mn']
             subject_list = []
@@ -136,16 +144,20 @@ class ResultSheet(generics.ListCreateAPIView):
 
             # prepare subject heading
             row = 1
-            col = 2
+            col = 3
             for subject in subject_list:
                 if subject != 'GK':
-                    t1_sheet.merge_range(row, col, row, col + 4, subject, cell_center)
-                    t2_sheet.merge_range(row, col, row, col + 4, subject, cell_center)
+                    t1_sheet.merge_range(row, col, row, col + 4, subject, cell_right_border)
+                    t2_sheet.merge_range(row, col, row, col + 4, subject, cell_right_border)
 
                     comp_col = col
                     for comp in components:
-                        t1_sheet.write_string(row + 1, comp_col, comp, cell_bold)
-                        t2_sheet.write_string(row + 1, comp_col, comp, cell_bold)
+                        if comp == 'Mn':
+                            t1_sheet.write_string(row + 1, comp_col, comp, cell_right_border)
+                            t2_sheet.write_string(row + 1, comp_col, comp, cell_right_border)
+                        else:
+                            t1_sheet.write_string(row + 1, comp_col, comp, cell_bold)
+                            t2_sheet.write_string(row + 1, comp_col, comp, cell_bold)
                         comp_col += 1
                     col += 4
                 col += 1
@@ -159,6 +171,9 @@ class ResultSheet(generics.ListCreateAPIView):
             col = 0
             s_no = 1
             students = Student.objects.filter(current_class=the_class, current_section=section)
+            student_count = students.count()
+            last_row = student_count + 3
+
             for student in students:
                 t1_sheet.merge_range(row, col, row + 1, col, s_no, cell_normal)
                 t2_sheet.merge_range(row, col, row + 1, col, s_no, cell_normal)
@@ -168,7 +183,7 @@ class ResultSheet(generics.ListCreateAPIView):
                 full_name = '%s %s' % (student.fist_name, student.last_name)
                 t1_sheet.merge_range(row, col, row + 1, col, full_name, cell_bold)
                 t2_sheet.merge_range(row, col, row + 1, col, full_name, cell_bold)
-                col += 1
+                col += 2
 
                 for sub in subject_list:
                     if sub != 'GK':
@@ -179,6 +194,8 @@ class ResultSheet(generics.ListCreateAPIView):
                         if sub == 'Third Language':
                             third_lang = ThirdLang.objects.get(student=student)
                             subject = third_lang.third_lang
+                            t1_sheet.merge_range(row, 2, row + 1, 2, subject.subject_name, vertical_text)
+                            t2_sheet.merge_range(row, 2, row + 1, 2, subject.subject_name, vertical_text)
 
                         t1_marks = SubjectAnalysis.objects.get(student=student, exam=exams[0], subject=subject)
                         t2_marks = SubjectAnalysis.objects.get(student=student, exam=exams[0], subject=subject)
@@ -204,31 +221,45 @@ class ResultSheet(generics.ListCreateAPIView):
                         col += 1
 
                         # Mn
-                        t1_sheet.write_number(row, col, t1_marks.marks, cell_normal)
-                        t2_sheet.write_number(row, col, t2_marks.marks, cell_normal)
+                        main_marks = t1_marks.marks
+                        if main_marks == -1000.00:
+                            main_marks = 'AB'
+                        if main_marks == -5000.00:
+                            main_marks = 'NE'
+                        t1_sheet.write(row, col, main_marks, cell_right_border)
+
+                        main_marks = t2_marks.marks
+                        if main_marks == -1000.00:
+                            main_marks = 'AB'
+                        if main_marks == -5000.00:
+                            main_marks = 'NE'
+                        t2_sheet.write(row, col, main_marks, cell_right_border)
                         col += 1
 
                         # Total & Grade
-                        # col -= 5
-                        # row += 1
                         t1_sheet.write_string(row + 1, col - 5, 'Tot', bold_italics)
                         t2_sheet.write_string(row + 1, col - 5, 'Tot', bold_italics)
-                        # col += 1
                         t1_sheet.merge_range(row + 1, col - 4, row + 1, col - 3, t1_marks.total_marks, bold_italics)
                         t2_sheet.merge_range(row + 1, col - 4, row + 1, col - 3, t2_marks.total_marks, bold_italics)
 
                         cell = xl_rowcol_to_cell(row + 1, col - 4, row_abs=True, col_abs=True)
-                        grade_formula = '=IF(%s > 90, "A1", IF(%s > 80, "A2", IF(%s > 70, "B1", ' \
-                                        'IF(%s > 60, "B2", ' \
+                        grade_formula = '=IF(%s > 90, "A1", IF(%s > 80, "A2", IF(%s > 70, "B1", IF(%s > 60, "B2", ' \
                                         'IF(%s > 50, "C1", IF(%s > 40, "C2", IF(%s > 32, "D", "E")))))))' % \
                                         (cell, cell, cell, cell, cell, cell, cell)
-                        print('grade_formula = %s' % grade_formula)
-                        # col += 2
-                        t1_sheet.merge_range(row + 1, col - 2, row + 1, col - 1, grade_formula, cell_grade)
-                        t2_sheet.merge_range(row + 1, col - 2, row + 1, col - 1, grade_formula, cell_grade)
-                        # col += 2
+                        t1_sheet.merge_range(row + 1, col - 2, row + 1, col - 1, grade_formula, cell_grade2)
+                        t2_sheet.merge_range(row + 1, col - 2, row + 1, col - 1, grade_formula, cell_grade2)
+                    if sub == 'GK':
+                        gk = Subject.objects.get(school=school, subject_name='GK')
+                        gk_tests = ClassTest.objects.filter(the_class=the_class, section=section, subject=gk)
+                        t1_grade = TestResults.objects.get(class_test=gk_tests[0], student=student).grade
+                        t1_sheet.merge_range(row, col, row + 1, col, t1_grade, cell_grade)
+                        # t2_grade = TestResults.objects.get(class_test=gk_tests[1], student=student).grade
+                        # t2_sheet.merge_range(row, col, row + 1, col, t2_grade, cell_grade)
 
                 row += 2
+                t1_sheet.set_row(row, 1.2)
+                t2_sheet.set_row(row, 1.2)
+                row += 1
                 col = 0
 
         # if the_class.standard in higher_classes:
