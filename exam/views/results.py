@@ -1,6 +1,5 @@
 import StringIO
-import json
-from decimal import Decimal
+
 from formats.formats import Formats as format
 
 import xlsxwriter
@@ -49,10 +48,10 @@ class ResultSheet(generics.ListCreateAPIView):
 
         t1_sheet = workbook.add_worksheet('Term I')
         t1_sheet.set_landscape()
-        t1_sheet.set_paper(9)   # A4 paper
+        t1_sheet.set_paper(9)  # A4 paper
         t2_sheet = workbook.add_worksheet('Term II')
         t2_sheet.set_landscape()
-        t2_sheet.set_paper(9) # A4 paper
+        t2_sheet.set_paper(9)  # A4 paper
         t1_sheet.repeat_rows(1, 2)
         t2_sheet.repeat_rows(1, 2)
         t1_sheet.fit_to_pages(1, 0)
@@ -88,8 +87,6 @@ class ResultSheet(generics.ListCreateAPIView):
         cell_right_border = workbook.add_format(fmt.get_cell_right_border())
         cell_right_border.set_right(6)
 
-
-
         # get the name of the class teacher
         class_teacher = 'N/A'
         try:
@@ -103,12 +100,19 @@ class ResultSheet(generics.ListCreateAPIView):
 
         term1 = 'Term I'
         term2 = 'Term II'
+        if standard in middle_classes:
+            title_range = 'A1:AM1'
+        if standard in ninth_tenth:
+            title_range = 'A1:AG1'
+        if standard in higher_classes:
+            title_range = 'A1:AH1'
         title_text = '%s \n %s Result Analysis Sheet Session 2019-20 Class %s-%s Class Teacher: %s' % \
                      (school, term1, the_class, section, class_teacher)
-        t1_sheet.merge_range('A1:AM1', title_text, title_format)
+        t1_sheet.merge_range(title_range, title_text, title_format)
         title_text = '%s \n %s Result Analysis Sheet Session 2019-20 Class %s-%s Class Teacher: %s' % \
                      (school, term2, the_class, section, class_teacher)
-        t2_sheet.merge_range('A1:AM1', title_text, title_format)
+        t2_sheet.merge_range(title_range, title_text, title_format)
+
         t1_sheet.set_row(0, 35)
         t2_sheet.set_row(0, 35)
         t1_sheet.set_column('A:A', 2.5)
@@ -119,7 +123,6 @@ class ResultSheet(generics.ListCreateAPIView):
         t2_sheet.set_column('C:C', 2)
         t1_sheet.set_column('D:AM', 3)
         t2_sheet.set_column('D:AM', 3)
-
 
         t1_sheet.merge_range('A2:A3', 'S No', cell_bold)
         t2_sheet.merge_range('A2:A3', 'S No', cell_bold)
@@ -132,8 +135,8 @@ class ResultSheet(generics.ListCreateAPIView):
             subject_list = []
             for a_subject in scheme:
                 subject_list.append(a_subject.subject.subject_name)
-                print('subject_list for class %s = ' % the_class)
-                print(subject_list)
+            print('subject_list for class %s = ' % the_class)
+            print(subject_list)
 
             # GK should be at the end of subject list as it is grade based and does not have breakup components
             if 'GK' in subject_list:
@@ -164,15 +167,15 @@ class ResultSheet(generics.ListCreateAPIView):
             t1_sheet.write_string(row, col - 1, subject, cell_bold)
             t2_sheet.write_string(row, col - 1, subject, cell_bold)
             row += 1
-            t1_sheet.write_string(row, col - 1, 'Gr', cell_bold)
-            t2_sheet.write_string(row, col - 1, 'Gr', cell_bold)
+            if standard in middle_classes:
+                t1_sheet.write_string(row, col - 1, 'Gr', cell_bold)
+                t2_sheet.write_string(row, col - 1, 'Gr', cell_bold)
 
             row += 1
             col = 0
             s_no = 1
             students = Student.objects.filter(current_class=the_class, current_section=section)
             student_count = students.count()
-            last_row = student_count + 3
 
             for student in students:
                 t1_sheet.merge_range(row, col, row + 1, col, s_no, cell_normal)
@@ -189,8 +192,10 @@ class ResultSheet(generics.ListCreateAPIView):
                     if sub != 'GK':
                         print('now retrieving marks of subject %s for %s' % (sub, student))
                         subject = Subject.objects.get(school=school, subject_name=sub)
-                        exams = Exam.objects.filter(school=school, exam_type='term')
-
+                        if standard in middle_classes:
+                            exams = Exam.objects.filter(school=school, exam_type='term', start_class=middle_classes[0])
+                        if standard in ninth_tenth:
+                            exams = Exam.objects.filter(school=school, exam_type='term', start_class=ninth_tenth[0])
                         if sub == 'Third Language':
                             third_lang = ThirdLang.objects.get(student=student)
                             subject = third_lang.third_lang
@@ -231,7 +236,7 @@ class ResultSheet(generics.ListCreateAPIView):
                         main_marks = t2_marks.marks
                         if main_marks == -1000.00:
                             main_marks = 'AB'
-                        if main_marks == -5000.00:
+                        if main_marks == -5000.00 or main_marks == -5000.0 or main_marks == -5000:
                             main_marks = 'NE'
                         t2_sheet.write(row, col, main_marks, cell_right_border)
                         col += 1
@@ -262,12 +267,13 @@ class ResultSheet(generics.ListCreateAPIView):
                 row += 1
                 col = 0
 
-        # if the_class.standard in higher_classes:
-        #     maths_stream = ['English', 'Mathematics', 'Physics', 'Chemistry', 'Elective']
-        #     bio_stream = ['English', 'Biology', 'Physics', 'Chemistry', 'Elective']
-        #     commerce_stream = ['English', 'Economics', 'Accountancy', 'Business Studies', 'Elective']
-        #     humanities_stream = ['English', 'Economics', 'History', 'Sociology', 'Elective']
-        #     components = ['UT', 'Half Yearly', 'Final Exam', 'Cumulative']
+        if the_class.standard in higher_classes:
+            maths_stream = ['English', 'Mathematics', 'Physics', 'Chemistry', 'Elective']
+            bio_stream = ['English', 'Biology', 'Physics', 'Chemistry', 'Elective']
+            commerce_stream = ['English', 'Economics', 'Accountancy', 'Business Studies', 'Elective']
+            humanities_stream = ['English', 'Economics', 'History', 'Sociology', 'Elective']
+            components = ['UT', 'Half Yearly', 'Final Exam', 'Cumulative']
+
 
         workbook.close()
         response = HttpResponse(content_type='application/vnd.ms-excel')
