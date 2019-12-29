@@ -2326,8 +2326,7 @@ class ResultSheet(generics.ListCreateAPIView):
             humanities_stream = ['English', 'Economics', 'History', 'Sociology', 'Elective']
             components = ['UT', 'Half Yearly', 'Final Exam', 'Cumulative']
             try:
-                students = Student.objects.filter(school=school, current_class=the_class,
-                                                  current_section=section,
+                students = Student.objects.filter(school=school, current_class=the_class, current_section=section,
                                                   active_status=True).order_by('fist_name')
                 print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
                 print (students)

@@ -25,7 +25,7 @@ class Formats():
         return self.header
 
     cell_normal = {
-                'align': 'left',
+                'align': 'center',
                 'valign': 'vcenter',
                 'text_wrap': True
             }
@@ -101,6 +101,7 @@ class Formats():
                 'bg_color': '#F7F7F7',
                 'align': 'center',
                 'valign': 'vcenter',
+                'text_wrap': True,
                 'rotation': 90
             }
 
