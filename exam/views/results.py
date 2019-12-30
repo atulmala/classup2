@@ -35,7 +35,6 @@ class ResultSheet(generics.ListCreateAPIView):
         print ('result sheet will be generated for %s-%s' % (the_class.standard, section.section))
 
         wings = get_wings(school)
-        junior_classes = wings['junior_classes']
         middle_classes = wings['middle_classes']
         ninth_tenth = wings['ninth_tenth']
         higher_classes = wings['higher_classes']
@@ -59,9 +58,10 @@ class ResultSheet(generics.ListCreateAPIView):
             t2_sheet.repeat_rows(1, 2)
             t2_sheet.fit_to_pages(1, 0)
             cons_sheet = workbook.add_worksheet('Consolidated')
-
-        border = workbook.add_format()
-        border.set_border()
+            cons_sheet.set_portrait()
+            cons_sheet.set_paper(9)
+            cons_sheet.repeat_rows(1, 2)
+            cons_sheet.fit_to_pages(1, 1)
 
         fmt = format()
         title_format = workbook.add_format(fmt.get_title())
@@ -88,7 +88,6 @@ class ResultSheet(generics.ListCreateAPIView):
         cell_grade2.set_right(6)
         cell_right_border = workbook.add_format(fmt.get_cell_right_border())
         cell_right_border.set_right(6)
-        cell_small = workbook.add_format(fmt.get_cell_small())
         perc_format = workbook.add_format(fmt.get_perc_format())
         rank_format = workbook.add_format(fmt.get_rank_format())
 
@@ -114,11 +113,16 @@ class ResultSheet(generics.ListCreateAPIView):
         title_text = '%s \n %s Result Analysis Sheet Session 2019-20 Class %s-%s Class Teacher: %s' % \
                      (school, term1, the_class, section, class_teacher)
         t1_sheet.merge_range(title_range, title_text, title_format)
-        footer_text = 'Result Analysis Sheet Class %s-%s' % (the_class, section)
-        t1_sheet.set_header('&L%s&RPage &P of &N' % footer_text)
-        weightage = 'Wieghtages - Unit Tests: 25%, Half Yearly: 25% (Theory Only), Final Exam: 50% (Theory Only)'
-        weightage += '. Unit test marks have been converted from out of 25'
-        t1_sheet.set_footer('&LClass Teacher Signature&R%s' % weightage)
+        header_text = 'Result Analysis Sheet Class %s-%s' % (the_class, section)
+        t1_sheet.set_header('&L%s&RPage &P of &N' % header_text)
+
+        if the_class.standard in higher_classes:
+            weightage = 'Wieghtages - Unit Tests: 25%, Half Yearly: 25% (Theory Only), Final Exam: 50% (Theory Only)'
+            weightage += '. Unit test marks have been converted from out of 25'
+            t1_sheet.set_footer('&LClass Teacher Signature&R%s' % weightage)
+        else:
+            t1_sheet.set_footer('&LClass Teacher Signature')
+
         t1_sheet.set_row(0, 35)
         t1_sheet.set_column('A:A', 2.5)
         t1_sheet.set_column('B:B', 8)
@@ -128,10 +132,12 @@ class ResultSheet(generics.ListCreateAPIView):
             title_text = '%s \n %s Result Analysis Sheet Session 2019-20 Class %s-%s Class Teacher: %s' % \
                          (school, term2, the_class, section, class_teacher)
             t1_sheet.set_column('D:AM', 3)
-            t2_sheet.set_footer('&LClass Teacher Signature&RPage &P of &N')
-            t2_sheet.merge_range(title_range, title_text, title_format)
             t1_sheet.merge_range('A2:A3', 'S No', cell_bold)
             t1_sheet.merge_range('B2:C3', 'Student', cell_bold)
+
+            t2_sheet.set_header('&L%s&RPage &P of &N' % header_text)
+            t2_sheet.set_footer('&LClass Teacher Signature&RPage &P of &N')
+            t2_sheet.merge_range(title_range, title_text, title_format)
             t2_sheet.set_row(0, 35)
             t2_sheet.set_column('A:A', 2.5)
             t2_sheet.set_column('B:B', 8)
@@ -139,6 +145,32 @@ class ResultSheet(generics.ListCreateAPIView):
             t2_sheet.set_column('D:AM', 3)
             t2_sheet.merge_range('A2:A3', 'S No', cell_bold)
             t2_sheet.merge_range('B2:C3', 'Student', cell_bold)
+
+            cons_title = '%s\n Consolidated Sheet for Term I & Term II Class %s-%s Class Teacher: %s' % \
+                         (school, the_class, section, class_teacher)
+            cons_sheet.merge_range('A1:K1', cons_title, title_format)
+
+            cons_sheet.set_footer('&LClass Teacher Signature&RPage &P of &N')
+            cons_sheet.set_row(0, 35)
+            cons_sheet.set_column('A:A', 3)
+            cons_sheet.set_column('B:B', 22)
+            cons_sheet.set_column('C:K', 5)
+            cons_sheet.merge_range('A2:A3', 'S No', cell_center)
+            cons_sheet.merge_range('B2:B3', 'Student', cell_center)
+            cons_sheet.merge_range('C2:E2', 'Term I', cell_right_border)
+            cons_sheet.merge_range('F2:H2', 'Term II', cell_right_border)
+            cons_sheet.merge_range('I2:K2', 'Consolidated', cell_center)
+
+            # we can use loop but who does it for just 9 iterations. Sometimes you just write it! :) :)
+            cons_sheet.write_string('C3', 'Total', cell_bold)
+            cons_sheet.write_string('D3', '%', cell_bold)
+            cons_sheet.write_string('E3', 'Rank', cell_right_border)
+            cons_sheet.write_string('F3', 'Total', cell_bold)
+            cons_sheet.write_string('G3', '%', cell_bold)
+            cons_sheet.write_string('H3', 'Rank', cell_right_border)
+            cons_sheet.write_string('I3', 'Total', cell_bold)
+            cons_sheet.write_string('J3', '%', cell_bold)
+            cons_sheet.write_string('K3', 'Rank', cell_bold)
 
         if standard in middle_classes or standard in ninth_tenth:
             scheme = Scheme.objects.filter(school=school, the_class=the_class)
@@ -185,27 +217,75 @@ class ResultSheet(generics.ListCreateAPIView):
             row += 1
             col = 0
             s_no = 1
+            cons_row = 3  # starting row for consolidated sheet
+            cons_col = 0  # starting column for consolidated sheet
             students = Student.objects.filter(current_class=the_class, current_section=section, active_status=True)
 
             for student in students:
                 t1_sheet.merge_range(row, col, row + 1, col, s_no, cell_normal)
                 t2_sheet.merge_range(row, col, row + 1, col, s_no, cell_normal)
+                cons_sheet.write_number(cons_row, cons_col, s_no, cell_normal)
                 s_no += 1
                 col += 1
+                cons_col += 1
 
                 full_name = '%s %s' % (student.fist_name, student.last_name)
                 t1_sheet.merge_range(row, col, row + 1, col, full_name, cell_bold)
                 t2_sheet.merge_range(row, col, row + 1, col, full_name, cell_bold)
                 col += 2
 
+                if standard in middle_classes:
+                    exams = Exam.objects.filter(school=school, exam_type='term', start_class=middle_classes[0])
+                if standard in ninth_tenth:
+                    exams = Exam.objects.filter(school=school, exam_type='term', start_class=ninth_tenth[0])
+
+                cons_sheet.write_string(cons_row, cons_col, full_name, cell_bold)
+                cons_col += 1
+
+                t1_summary = StudentTotalMarks.objects.get(student=student, exam=exams[0])
+                t1_total = t1_summary.total_marks
+                cons_sheet.write_number(cons_row, cons_col, t1_total, cell_normal)
+                cons_col += 1
+                t1_perc = float(t1_summary.percentage)/100.00
+                cons_sheet.write_number(cons_row, cons_col, t1_perc, perc_format)
+                cons_col += 1
+                t1_rank = t1_summary.rank
+                cons_sheet.write_number(cons_row, cons_col, t1_rank, cell_right_border)
+                cons_col += 1
+
+                t2_summary = StudentTotalMarks.objects.get(student=student, exam=exams[0])  # todo change to exams[1]
+                t2_total = t2_summary.total_marks
+                cons_sheet.write_number(cons_row, cons_col, t2_total, cell_normal)
+                cons_col += 1
+                t2_perc = float(t2_summary.percentage)/100.00
+                cons_sheet.write_number(cons_row, cons_col, t2_perc, perc_format)
+                cons_col += 1
+                t2_rank = t2_summary.rank
+                cons_sheet.write_number(cons_row, cons_col, t2_rank, cell_right_border)
+                cons_col += 1
+
+                t1_t2_total = t1_total + t2_total
+                cons_sheet.write_number(cons_row, cons_col, t1_t2_total, cell_normal)
+                cons_col += 1
+                t1_t2_perc = float(t1_t2_total)/1400.00
+                cons_sheet.write_number(cons_row, cons_col, t1_t2_perc, perc_format)
+                cons_col += 1
+
+                # rank for both term consolidated will have to be calculated via inserting excel formula
+                count = students.count()
+                start_row = 4
+                formula = '=RANK(I%s, $I$%s:$I$%s)' % (str(cons_row + 1), str(start_row), str(count + 4))
+                print('formula for rank: %s', formula)
+                cons_sheet.write_formula(cons_row, cons_col, formula, rank_format)
+
+                cons_row += 1
+                cons_col = 0
+
                 for sub in subject_list:
                     if sub != 'GK':
                         print('now retrieving marks of subject %s for %s' % (sub, student))
                         subject = Subject.objects.get(school=school, subject_name=sub)
-                        if standard in middle_classes:
-                            exams = Exam.objects.filter(school=school, exam_type='term', start_class=middle_classes[0])
-                        if standard in ninth_tenth:
-                            exams = Exam.objects.filter(school=school, exam_type='term', start_class=ninth_tenth[0])
+
                         if sub == 'Third Language':
                             third_lang = ThirdLang.objects.get(student=student)
                             subject = third_lang.third_lang
@@ -411,9 +491,9 @@ class ResultSheet(generics.ListCreateAPIView):
                     ut1_marks = ut1_result.marks_obtained
                     if ut1_marks > -1000.0:
                         max_marks = ut1.max_marks
-                        out_of_25 = (25.0 * float(ut1_marks))/float(max_marks)
+                        out_of_25 = (25.0 * float(ut1_marks)) / float(max_marks)
                         t1_sheet.merge_range(row, col, row + 1, col, out_of_25, cell_normal)
-                        cumul += out_of_25/2.0
+                        cumul += out_of_25 / 2.0
                     else:
                         if ut1_marks == -1000.0 or ut1_marks == -1000.00:
                             t1_sheet.merge_range(row, col, row + 1, col, 'ABS', vertical_text)
@@ -443,7 +523,7 @@ class ResultSheet(generics.ListCreateAPIView):
                     # UT II marks
                     ut2 = ClassTest.objects.get(the_class=the_class, section=section, subject=subject, exam=ut_list[0])
                     ut2_result = TestResults.objects.get(class_test=ut2, student=student)
-                    ut2_marks = ut1_result.marks_obtained       # todo - change to ut2 later
+                    ut2_marks = ut1_result.marks_obtained  # todo - change to ut2 later
                     if ut2_marks > -1000.0:
                         max_marks = ut1.max_marks
                         out_of_25 = (25.0 * float(ut2_marks)) / float(max_marks)
@@ -482,7 +562,7 @@ class ResultSheet(generics.ListCreateAPIView):
                     col += 1
                 t1_sheet.merge_range(row, col, row + 1, col, grand_total, cell_bold)
                 col += 1
-                percentage = (grand_total/500.00)
+                percentage = (grand_total / 500.00)
                 t1_sheet.merge_range(row, col, row + 1, col, percentage, perc_format)
                 col += 1
 
