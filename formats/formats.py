@@ -6,7 +6,8 @@ class Formats():
                 'bold': True,
                 'font_size': 14,
                 'align': 'center',
-                'valign': 'vcenter'
+                'valign': 'vcenter',
+                'text_wrap': True
             }
 
     def get_title(self):
@@ -18,7 +19,8 @@ class Formats():
                 'color': 'black',
                 'align': 'center',
                 'valign': 'top',
-                'border': 1
+                'border': 1,
+                'text_wrap': True
             }
 
     def get_header(self):
@@ -181,6 +183,7 @@ class Formats():
 
     bold_italics = {
         'align': 'center',
+        'valign': 'vcenter',
         'font_size': 11,
         'bold': True,
         'italic': True
@@ -188,3 +191,15 @@ class Formats():
 
     def get_bold_italics(self):
         return self.bold_italics
+
+    rank_format = {
+        'align': 'center',
+        'valign': 'vcenter',
+        'font_size': 14,
+        'border': 1,
+        'bold': True,
+        'italic': True
+    }
+
+    def get_rank_format(self):
+        return self.rank_format

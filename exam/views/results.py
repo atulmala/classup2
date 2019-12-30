@@ -89,6 +89,8 @@ class ResultSheet(generics.ListCreateAPIView):
         cell_right_border = workbook.add_format(fmt.get_cell_right_border())
         cell_right_border.set_right(6)
         cell_small = workbook.add_format(fmt.get_cell_small())
+        perc_format = workbook.add_format(fmt.get_perc_format())
+        rank_format = workbook.add_format(fmt.get_rank_format())
 
         # get the name of the class teacher
         class_teacher = 'N/A'
@@ -113,7 +115,10 @@ class ResultSheet(generics.ListCreateAPIView):
                      (school, term1, the_class, section, class_teacher)
         t1_sheet.merge_range(title_range, title_text, title_format)
         footer_text = 'Result Analysis Sheet Class %s-%s' % (the_class, section)
-        t1_sheet.set_footer('&LClass Teacher Signature&C%s&RPage &P of &N' % footer_text)
+        t1_sheet.set_header('&L%s&RPage &P of &N' % footer_text)
+        weightage = 'Wieghtages - Unit Tests: 25%, Half Yearly: 25% (Theory Only), Final Exam: 50% (Theory Only)'
+        weightage += '. Unit test marks have been converted from out of 25'
+        t1_sheet.set_footer('&LClass Teacher Signature&R%s' % weightage)
         t1_sheet.set_row(0, 35)
         t1_sheet.set_column('A:A', 2.5)
         t1_sheet.set_column('B:B', 8)
@@ -286,7 +291,7 @@ class ResultSheet(generics.ListCreateAPIView):
             mapping = HigherClassMapping.objects.filter(student=students[0])
             for m in mapping:
                 sub_dict.append(m.subject.subject_name)
-            print('subjects chosen by %s are = ' % (students[0]))
+            # print('subjects chosen by %s are = ' % (students[0]))
             print(sub_dict)
             try:
                 print('now determining the stream for this class %s-%s...' %
@@ -317,10 +322,12 @@ class ResultSheet(generics.ListCreateAPIView):
                 t1_sheet.set_row(i, 23)
 
             # show 15 students one page when printed
-            t1_sheet.set_h_pagebreaks([48])
+            t1_sheet.set_h_pagebreaks([39])
 
             t1_sheet.set_column('C:C', 4)
-            t1_sheet.set_column('D:AO', 4)
+            t1_sheet.set_column('D:AL', 3)
+            t1_sheet.set_column('AM:AN', 5)
+            t1_sheet.set_column('AO:AO', 4)
             row = 1
             col = 0
             t1_sheet.merge_range(row, col, row + 2, col, 'S No', cell_bold)
@@ -332,13 +339,13 @@ class ResultSheet(generics.ListCreateAPIView):
 
             for subject in chosen_stream:
                 t1_sheet.merge_range(row, col, row, col + 6, subject, cell_right_border)
-                t1_sheet.merge_range(row + 1, col, row + 2, col, 'UT I', cell_bold)
+                t1_sheet.merge_range(row + 1, col, row + 2, col, 'UT I\n25', cell_bold)
                 col += 1
                 t1_sheet.merge_range(row + 1, col, row + 1, col + 1, 'Half Yearly', cell_bold)
                 t1_sheet.write_string(row + 2, col, 'Th', cell_bold)
                 t1_sheet.write_string(row + 2, col + 1, 'Pr', cell_bold)
                 col += 2
-                t1_sheet.merge_range(row + 1, col, row + 2, col, 'UT II', cell_bold)
+                t1_sheet.merge_range(row + 1, col, row + 2, col, 'UT II\n25', cell_bold)
                 col += 1
                 t1_sheet.merge_range(row + 1, col, row + 1, col + 1, 'Final', cell_bold)
                 t1_sheet.write_string(row + 2, col, 'Th', cell_bold)
@@ -372,8 +379,8 @@ class ResultSheet(generics.ListCreateAPIView):
                 print('mapping for %s is %s' % (full_name, mapping))
                 for m in mapping:
                     sub_dict.append(m.subject.subject_name)
-                print('subjects chosen by %s are = ' % full_name)
-                print(sub_dict)
+                # print('subjects chosen by %s are = ' % full_name)
+                # print(sub_dict)
 
                 # now find the elective subject
                 chosen_stream.pop()
@@ -384,10 +391,11 @@ class ResultSheet(generics.ListCreateAPIView):
 
                 # complete the list of all subjects chosen by this student
                 chosen_stream.append(elective_sub)
-                print('complete list of subjects chosen by %s: ' % student)
-                print(chosen_stream)
+                # print('complete list of subjects chosen by %s: ' % student)
+                # print(chosen_stream)
 
                 # retrieve the marks for each subject and populate the excel
+                grand_total = 0.0
                 ut_list = Exam.objects.filter(school=school, exam_type='unit', start_class='XI')
 
                 term_list = Exam.objects.filter(school=school, exam_type='term', start_class='XI')
@@ -395,17 +403,36 @@ class ResultSheet(generics.ListCreateAPIView):
                     print('a_subject = %s' % a_subject)
                     subject = Subject.objects.get(school=school, subject_name=a_subject)
 
+                    cumul = 0.0
 
                     # UT I marks
-                    ct1 = ClassTest.objects.get(the_class=the_class, section=section, subject=subject, exam=ut_list[0])
-                    ct1_result = TestResults.objects.get(class_test=ct1, student=student)
-                    t1_sheet.merge_range(row, col, row + 1, col, ct1_result.marks_obtained, cell_normal)
+                    ut1 = ClassTest.objects.get(the_class=the_class, section=section, subject=subject, exam=ut_list[0])
+                    ut1_result = TestResults.objects.get(class_test=ut1, student=student)
+                    ut1_marks = ut1_result.marks_obtained
+                    if ut1_marks > -1000.0:
+                        max_marks = ut1.max_marks
+                        out_of_25 = (25.0 * float(ut1_marks))/float(max_marks)
+                        t1_sheet.merge_range(row, col, row + 1, col, out_of_25, cell_normal)
+                        cumul += out_of_25/2.0
+                    else:
+                        if ut1_marks == -1000.0 or ut1_marks == -1000.00:
+                            t1_sheet.merge_range(row, col, row + 1, col, 'ABS', vertical_text)
+                        if ut1_marks == -5000.0 or ut1_marks == -5000.00:
+                            t1_sheet.merge_range(row, col, row + 1, col, 'TBE', vertical_text)
                     col += 1
 
                     # half Yearly marks
                     half_yearly = SubjectAnalysis.objects.get(student=student, exam=term_list[0], subject=subject)
                     theory = half_yearly.marks
-                    t1_sheet.write_number(row, col, theory, cell_normal)
+                    if theory > -1000.0:
+                        t1_sheet.write_number(row, col, theory, cell_normal)
+                        max_marks = subject.theory_marks
+                        cumul += (float(theory) * 25.0) / float(max_marks)  # 25% weightage of half yearly theory marks
+                    else:
+                        if theory == -1000.0 or theory == -1000.00:
+                            t1_sheet.write_string(row, col, 'ABS', vertical_text)
+                        if theory == -5000.0 or theory == -5000.00:
+                            t1_sheet.write_string(row, col, 'TBE', vertical_text)
                     col += 1
                     prac = half_yearly.prac_marks
                     t1_sheet.write_number(row, col, prac, cell_normal)
@@ -414,15 +441,34 @@ class ResultSheet(generics.ListCreateAPIView):
                     col += 1
 
                     # UT II marks
-                    ct2 = ClassTest.objects.get(the_class=the_class, section=section, subject=subject, exam=ut_list[0])
-                    ct2_result = TestResults.objects.get(class_test=ct2, student=student)
-                    t1_sheet.merge_range(row, col, row + 1, col, ct2_result.marks_obtained, cell_normal)
+                    ut2 = ClassTest.objects.get(the_class=the_class, section=section, subject=subject, exam=ut_list[0])
+                    ut2_result = TestResults.objects.get(class_test=ut2, student=student)
+                    ut2_marks = ut1_result.marks_obtained       # todo - change to ut2 later
+                    if ut2_marks > -1000.0:
+                        max_marks = ut1.max_marks
+                        out_of_25 = (25.0 * float(ut2_marks)) / float(max_marks)
+                        t1_sheet.merge_range(row, col, row + 1, col, out_of_25, cell_normal)
+                        cumul += out_of_25 / 2.0
+                    else:
+                        if ut2_marks == -1000.0 or ut2_marks == -1000.00:
+                            t1_sheet.merge_range(row, col, row + 1, col, 'ABS', vertical_text)
+                        if ut2_marks == -5000.0 or ut2_marks == -5000.00:
+                            t1_sheet.merge_range(row, col, row + 1, col, 'TBE', vertical_text)
                     col += 1
 
                     # final exam marks
                     final = SubjectAnalysis.objects.get(student=student, exam=term_list[0], subject=subject)
                     theory = final.marks
-                    t1_sheet.write_number(row, col, theory, cell_normal)
+                    if theory > -1000.0:
+                        t1_sheet.write_number(row, col, theory, cell_normal)
+                        max_marks = subject.theory_marks
+                        cumul += (float(theory) * 50.0) / float(max_marks)  # 50% weightage of final exam theory marks
+
+                    else:
+                        if theory == -1000.0 or theory == -1000.00:
+                            t1_sheet.write_string(row, col, 'ABS', vertical_text)
+                        if theory == -5000.0 or theory == -5000.00:
+                            t1_sheet.write_string(row, col, 'TBE', vertical_text)
                     col += 1
                     prac = final.prac_marks
                     t1_sheet.write_number(row, col, prac, cell_normal)
@@ -430,9 +476,22 @@ class ResultSheet(generics.ListCreateAPIView):
                     t1_sheet.merge_range(row + 1, col - 1, row + 1, col, total, bold_italics)
                     col += 1
 
-                    # cumulative marksp
-                    t1_sheet.merge_range(row, col, row + 1, col, ' ', cell_right_border)
+                    # cumulative marks
+                    t1_sheet.merge_range(row, col, row + 1, col, cumul, cell_right_border)
+                    grand_total += cumul
                     col += 1
+                t1_sheet.merge_range(row, col, row + 1, col, grand_total, cell_bold)
+                col += 1
+                percentage = (grand_total/500.00)
+                t1_sheet.merge_range(row, col, row + 1, col, percentage, perc_format)
+                col += 1
+
+                # determine the rank. Two rows are consumed by each student plus a blank narrow row for margin
+                count = students.count()
+                start_row = 3
+                formula = '=RANK(AM%s, $AM$%s:$AM$%s)' % (str(row + 1), str(start_row), str(count * 3 + 3))
+                print('formula for rank: %s', formula)
+                t1_sheet.merge_range(row, col, row + 1, col, formula, rank_format)
 
                 row += 2
                 t1_sheet.set_row(row, 1.2)
