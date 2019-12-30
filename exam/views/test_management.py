@@ -423,9 +423,12 @@ class PromotionReport(generics.ListAPIView):
         sheet.set_column('C:C', 15)
         sheet.set_column('D:D', 15)
         sheet.set_column('E:E', 25)
+        sheet.set_footer('&LClass Teacher Signature&RPrincipal Signature')
+        sheet.set_paper(9)
+        sheet.fit_to_pages(1, 1)
 
         start_col = 0
-        row = 3
+        row = 2
         col = start_col
         sheet.write(row, col, ugettext("S No."), header)
         col += 1
@@ -472,9 +475,6 @@ class PromotionReport(generics.ListAPIView):
             s_no += 1
             col = start_col
 
-        row += 2
-        sheet.write_string(row, start_col + 2, 'Principal', cell_center)
-        sheet.write_string(row, start_col + 4, 'Class Teacher', cell_center)
         workbook.close()
         response = HttpResponse(content_type='application/vnd.ms-excel')
         response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
