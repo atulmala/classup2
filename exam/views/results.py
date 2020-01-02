@@ -105,7 +105,11 @@ class ResultSheet(generics.ListCreateAPIView):
         term1 = 'Term I'
         term2 = 'Term II'
         if standard in middle_classes:
-            title_range = 'A1:AM1'
+            scheme = Scheme.objects.filter(school=school, the_class=the_class)
+            sub_count = scheme.count() - 1
+            col_count = (sub_count * 5) + 3 # each subject 5 column, 1 each for s_no, name, elective and GK grade
+            last_row_col = xl_rowcol_to_cell(0, col_count)
+            title_range = 'A1:%s' % last_row_col
         if standard in ninth_tenth:
             title_range = 'A1:AG1'
         if standard in higher_classes:
@@ -192,7 +196,7 @@ class ResultSheet(generics.ListCreateAPIView):
             row = 1
             col = 3
             for subject in subject_list:
-                if subject != 'GK':
+                if subject not in ['GK', 'Moral Science']:
                     t1_sheet.merge_range(row, col, row, col + 4, subject, cell_right_border)
                     t2_sheet.merge_range(row, col, row, col + 4, subject, cell_right_border)
 
@@ -282,10 +286,9 @@ class ResultSheet(generics.ListCreateAPIView):
                 cons_col = 0
 
                 for sub in subject_list:
-                    if sub != 'GK':
+                    subject = Subject.objects.get(school=school, subject_name=sub)
+                    if not subject.grade_based:
                         print('now retrieving marks of subject %s for %s' % (sub, student))
-                        subject = Subject.objects.get(school=school, subject_name=sub)
-
                         if sub == 'Third Language':
                             third_lang = ThirdLang.objects.get(student=student)
                             subject = third_lang.third_lang
@@ -343,9 +346,9 @@ class ResultSheet(generics.ListCreateAPIView):
                                         (cell, cell, cell, cell, cell, cell, cell)
                         t1_sheet.merge_range(row + 1, col - 2, row + 1, col - 1, grade_formula, cell_grade2)
                         t2_sheet.merge_range(row + 1, col - 2, row + 1, col - 1, grade_formula, cell_grade2)
-                    if sub == 'GK':
-                        gk = Subject.objects.get(school=school, subject_name='GK')
-                        gk_tests = ClassTest.objects.filter(the_class=the_class, section=section, subject=gk)
+                    else:
+                        # gk = Subject.objects.get(school=school, subject_name='GK')
+                        gk_tests = ClassTest.objects.filter(the_class=the_class, section=section, subject=subject)
                         t1_grade = TestResults.objects.get(class_test=gk_tests[0], student=student).grade
                         t1_sheet.merge_range(row, col, row + 1, col, t1_grade, cell_grade)
                         # t2_grade = TestResults.objects.get(class_test=gk_tests[1], student=student).grade
@@ -419,13 +422,13 @@ class ResultSheet(generics.ListCreateAPIView):
 
             for subject in chosen_stream:
                 t1_sheet.merge_range(row, col, row, col + 6, subject, cell_right_border)
-                t1_sheet.merge_range(row + 1, col, row + 2, col, 'UT I\n25', cell_bold)
+                t1_sheet.merge_range(row + 1, col, row + 2, col, 'UT I\n30', cell_bold)
                 col += 1
                 t1_sheet.merge_range(row + 1, col, row + 1, col + 1, 'Half Yearly', cell_bold)
                 t1_sheet.write_string(row + 2, col, 'Th', cell_bold)
                 t1_sheet.write_string(row + 2, col + 1, 'Pr', cell_bold)
                 col += 2
-                t1_sheet.merge_range(row + 1, col, row + 2, col, 'UT II\n25', cell_bold)
+                t1_sheet.merge_range(row + 1, col, row + 2, col, 'UT II\n80', cell_bold)
                 col += 1
                 t1_sheet.merge_range(row + 1, col, row + 1, col + 1, 'Final', cell_bold)
                 t1_sheet.write_string(row + 2, col, 'Th', cell_bold)
@@ -492,7 +495,8 @@ class ResultSheet(generics.ListCreateAPIView):
                     if ut1_marks > -1000.0:
                         max_marks = ut1.max_marks
                         out_of_25 = (25.0 * float(ut1_marks)) / float(max_marks)
-                        t1_sheet.merge_range(row, col, row + 1, col, out_of_25, cell_normal)
+                        # t1_sheet.merge_range(row, col, row + 1, col, out_of_25, cell_normal)
+                        t1_sheet.merge_range(row, col, row + 1, col, ut1_marks, cell_normal)
                         cumul += out_of_25 / 2.0
                     else:
                         if ut1_marks == -1000.0 or ut1_marks == -1000.00:
@@ -521,13 +525,14 @@ class ResultSheet(generics.ListCreateAPIView):
                     col += 1
 
                     # UT II marks
-                    ut2 = ClassTest.objects.get(the_class=the_class, section=section, subject=subject, exam=ut_list[0])
+                    ut2 = ClassTest.objects.get(the_class=the_class, section=section, subject=subject, exam=ut_list[1])
                     ut2_result = TestResults.objects.get(class_test=ut2, student=student)
-                    ut2_marks = ut1_result.marks_obtained  # todo - change to ut2 later
+                    ut2_marks = ut2_result.marks_obtained  # todo - change to ut2 later
                     if ut2_marks > -1000.0:
-                        max_marks = ut1.max_marks
+                        max_marks = ut2.max_marks
                         out_of_25 = (25.0 * float(ut2_marks)) / float(max_marks)
-                        t1_sheet.merge_range(row, col, row + 1, col, out_of_25, cell_normal)
+                        # t1_sheet.merge_range(row, col, row + 1, col, out_of_25, cell_normal)
+                        t1_sheet.merge_range(row, col, row + 1, col, ut2_marks, cell_normal)
                         cumul += out_of_25 / 2.0
                     else:
                         if ut2_marks == -1000.0 or ut2_marks == -1000.00:

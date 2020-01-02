@@ -582,46 +582,6 @@ def prepare_results(request, school_id, the_class, section):
     middle_classes = wings['middle_classes']
     ninth_tenth = wings['ninth_tenth']
     higher_classes = wings['higher_classes']
-    # try:
-    #     jc = Wing.objects.get(school=school, wing='junior_classes')
-    #     junior_classes = ast.literal_eval(jc.classes)
-    #     print('junior_classes for %s are: ' % school)
-    #     print(junior_classes)
-    # except Exception as e:
-    #     print('exception 26092019-A from exam views.py %s %s' % (e.message, type(e)))
-    #     print('junior_classes not defined for %s' % school)
-    #     junior_classes = ['not defined']
-    #
-    # try:
-    #     mc = Wing.objects.get(school=school, wing='middle_classes')
-    #     print('raw middle_classes retrieved for %s: %s. Will be converted to proper string now' %
-    #           (school, mc.classes))
-    #     middle_classes = ast.literal_eval(mc.classes)
-    #     print('middle_classes for %s are: ' % school)
-    #     print(middle_classes)
-    # except Exception as e:
-    #     print('exception 26092019-B from exam views.py %s %s' % (e.message, type(e)))
-    #     print('middle_classes not defined for %s' % school)
-    #     middle_classes = ['not defined']
-    #
-    # try:
-    #     nt = Wing.objects.get(school=school, wing='ninth_tenth')
-    #     ninth_tenth = ast.literal_eval(nt.classes)
-    #     print('ninth_tenth for %s are: ' % school)
-    #     print(ninth_tenth)
-    # except Exception as e:
-    #     print('exception 26092019-C from exam views.py %s %s' % (e.message, type(e)))
-    #     print('ninth_tenth not defined for %s' % school)
-    #     ninth_tenth = ['not defined']
-    #
-    # try:
-    #     hc = Wing.objects.get(school=school, wing='higher_classes')
-    #     higher_classes = ast.literal_eval(hc.classes)
-    #     print('higher_classes for %s are: ' % school)
-    #     print(higher_classes)
-    # except Exception as e:
-    #     print('exception 26092019-D from exam views.py %s %s' % (e.message, type(e)))
-    #     print('higher_classes not defined for %s' % school)
 
     if request.method == 'GET':
         print(request.body)
@@ -631,7 +591,7 @@ def prepare_results(request, school_id, the_class, section):
         print (selected_student)
 
         if whole_class == 'true':
-            pdf_name = '%s-%s%s' % (the_class, section, '_Term1_Results.pdf')
+            pdf_name = '%s-%s%s' % (the_class, section, '_Term2_Results.pdf')
             # pdf_name = the_class + '-' + section + '_Term1_Results.pdf'
         else:
             adm_no = selected_student.partition('(')[-1].rpartition(')')[0]
@@ -705,12 +665,12 @@ def prepare_results(request, school_id, the_class, section):
                       ('TOPPADDING', (0, 0), (-1, -1), 1),
                       ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
                       ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                      ('ALIGN', (1, 0), (7, 0), 'CENTER'),
+                      ('ALIGN', (1, 0), (8, 0), 'CENTER'),
                       ('ALIGN', (10, 0), (11, 0), 'CENTER'),
-                      ('SPAN', (1, 0), (7, 0)),
-                      ('SPAN', (8, 0), (11, 0)),
-                      ('SPAN', (2, 1), (4, 1)),
-                      ('SPAN', (5, 1), (7, 1)),
+                      ('SPAN', (1, 0), (8, 0)),
+                      ('SPAN', (9, 0), (12, 0)),
+                      ('SPAN', (3, 1), (5, 1)),
+                      ('SPAN', (6, 1), (8, 1)),
                       ('LINEABOVE', (0, 1), (0, 1), 1, colors.white),
                       ('LINEABOVE', (0, 2), (0, 2), 1, colors.white),
                       ('FONTSIZE', (0, 0), (-1, -1), 7),
@@ -928,9 +888,9 @@ def prepare_results(request, school_id, the_class, section):
                 #          ['', '25', '25', '25', 'Th', 'Pr', 'Tot', 'Th', 'Pr', 'Tot', '25', '25', '50', '100']]
 
                 data1 = [['', 'TERM RESULT', '', '', '', '', '', '', 'CUMULATIVE RESULT', '', '', ''],
-                         ['\nSUBJECT', 'UT-I', 'Half Yearly\nExam', '', '',
+                         ['\nSUBJECT', 'UT-I', 'UT-II', 'Half Yearly\nExam', '', '',
                           'Final Exam', '', '', 'Unit\nTest', 'Half Yearly\nExam', 'Final\nExam', 'Total'],
-                         ['', '25', 'Th', 'Pr', 'Tot', 'Th', 'Pr', 'Tot', '25', '25', '50', '100']]
+                         ['', '25', '25', 'Th', 'Pr', 'Tot', 'Th', 'Pr', 'Tot', '25', '25', '50', '100']]
                 print('class %s is a higher class. Subject list will come from the student/subject mapping' % the_class)
                 sequence = 0
                 mapping = HigherClassMapping.objects.filter(student=s)
@@ -1029,7 +989,7 @@ def prepare_results(request, school_id, the_class, section):
                                     if prac_marks < 0.0:
                                         #     if index == 0 and subject.subject_name in commerce_sub:
                                         #         prac_marks = 'NA'
-                                        #     else:
+                                        #     else: 888
                                         prac_marks = ' '
                                         tot_marks = marks
                                     else:
@@ -1090,10 +1050,10 @@ def prepare_results(request, school_id, the_class, section):
                         #  & final exam weightage is 50%
                         grand_total = 0.0
                         try:
-                            ut_cumul = round(ut_total / float(3), 2)
+                            ut_cumul = round(ut_total / float(2), 2)
                             grand_total += ut_cumul
                             # 29/09/2019 - uncomment when preparing result for final exam
-                            # sub_row.append(ut_cumul)
+                            sub_row.append(ut_cumul)
 
                             # 20/02/2019 cumulative for half yearly to be calculated out of 70 if the subject
                             # has practical component
@@ -1111,7 +1071,7 @@ def prepare_results(request, school_id, the_class, section):
                             #     half_year_cumul = round(half_yearly_marks/float(4), 2)
 
                             # 29/09/2019 - uncomment when preparing result for final exam
-                            # sub_row.append(half_year_cumul)
+                            sub_row.append(half_year_cumul)
 
                             if final_marks != 'ABS':
                                 final_cumul = round(final_marks * float(50) / float(subject.theory_marks), 2)
