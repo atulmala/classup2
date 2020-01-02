@@ -561,6 +561,7 @@ def prepare_results(request, school_id, the_class, section):
         logo_left = ms.logo_left_margin
         logo_width = ms.logo_width
         affiliation = ms.affiliation
+        affiliation_start = ms.affiliation_start
         board_logo_path = ms.board_logo_path
         print('board_logo_path = %s' % board_logo_path)
     except Exception as e:
@@ -812,7 +813,7 @@ def prepare_results(request, school_id, the_class, section):
             c.setFont(font, 10)
             c.drawString(address_start, top + 7, school_address)
             c.setFont(font, 8)
-            c.drawString(180, top - 4, '(%s)' % affiliation)
+            c.drawString(affiliation_start, top - 4, '(%s)' % affiliation)
             c.setFont(font, 10)
             c.line(-30, line_top, 6.75 * inch, line_top)
 
