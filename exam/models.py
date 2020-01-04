@@ -60,6 +60,7 @@ class Marksheet(models.Model):
     affiliation = models.CharField(max_length=200, default='Affiliated to CBSE')
     affiliation_start = models.IntegerField(default=180)
     board_logo_path = models.CharField(max_length=100, default='classup2/media/dev/cbse_logo/Logo/cbse-logo.png')
+    two_page = models.BooleanField(default=False)
 
     def __unicode__(self):
         return self.school.school_name

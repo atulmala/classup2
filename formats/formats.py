@@ -2,6 +2,15 @@ class Formats():
     def __init__(self):
         pass
 
+    comments = {
+        'text_wrap': True,
+        'valign': 'top',
+        'border': 1
+    }
+
+    def get_comments(self):
+        return self.comments
+
     title = {
                 'bold': True,
                 'font_size': 14,

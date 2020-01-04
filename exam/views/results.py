@@ -22,7 +22,7 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
         return  # To not perform the csrf check previously happening
 
 
-class ResultSheet(generics.ListCreateAPIView):
+class ResultAnalysisSheet(generics.ListCreateAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
     def get(self, request, *args, **kwargs):
@@ -39,7 +39,7 @@ class ResultSheet(generics.ListCreateAPIView):
         ninth_tenth = wings['ninth_tenth']
         higher_classes = wings['higher_classes']
 
-        excel_file_name = 'Result_Sheet_%s-%s.xlsx' % (str(the_class.standard), str(section.section))
+        excel_file_name = 'Result_Analysis_Sheet_%s-%s.xlsx' % (str(the_class.standard), str(section.section))
         print('excel_file_name = %s' % excel_file_name)
 
         output = StringIO.StringIO(excel_file_name)
@@ -57,11 +57,16 @@ class ResultSheet(generics.ListCreateAPIView):
             t2_sheet.set_paper(9)  # A4 paper
             t2_sheet.repeat_rows(1, 2)
             t2_sheet.fit_to_pages(1, 0)
+            co_schol_sheet = workbook.add_worksheet('Co-scholastic Grades')
+            co_schol_sheet.set_landscape()
+            co_schol_sheet.set_paper(9)
+            co_schol_sheet.repeat_rows(1, 0)
+            co_schol_sheet.fit_to_pages(1, 0)
             cons_sheet = workbook.add_worksheet('Consolidated')
             cons_sheet.set_portrait()
             cons_sheet.set_paper(9)
             cons_sheet.repeat_rows(1, 2)
-            cons_sheet.fit_to_pages(1, 1)
+            cons_sheet.fit_to_pages(1, 0)
 
         fmt = format()
         title_format = workbook.add_format(fmt.get_title())
@@ -90,6 +95,7 @@ class ResultSheet(generics.ListCreateAPIView):
         cell_right_border.set_right(6)
         perc_format = workbook.add_format(fmt.get_perc_format())
         rank_format = workbook.add_format(fmt.get_rank_format())
+        comments_format = workbook.add_format(fmt.get_comments())
 
         # get the name of the class teacher
         class_teacher = 'N/A'
@@ -150,10 +156,31 @@ class ResultSheet(generics.ListCreateAPIView):
             t2_sheet.merge_range('A2:A3', 'S No', cell_bold)
             t2_sheet.merge_range('B2:C3', 'Student', cell_bold)
 
+            co_schol_title = '%s\n Co-scholastic Grades & Class Teacher Comments Class %s-%s Class Teacher: %s' % \
+                         (school, the_class, section, class_teacher)
+            co_schol_header = 'Co-scholastic Grades class %s-%s' % (the_class, section)
+            co_schol_sheet.set_header('&L%s&RPage &P of &N' % co_schol_header)
+            co_schol_sheet.set_footer('&LClass Teacher Signature&RPage &P of &N')
+            co_schol_sheet.merge_range('A1:H1', co_schol_title, title_format)
+            co_schol_sheet.set_row(0, 35)
+            co_schol_sheet.set_column('A:A', 2.5)
+            co_schol_sheet.set_column('B:B', 22)
+            co_schol_sheet.set_column('G:H', 50)
+            co_schol_sheet.write_string('A2', 'S No', cell_center)
+            co_schol_sheet.write_string('B2', 'Student', cell_center)
+            co_schol_sheet.write_string('C2', 'Work Education', cell_center)
+            co_schol_sheet.write_string('D2', 'Art Education', cell_center)
+            co_schol_sheet.write_string('E2','Health & PE', cell_center)
+            co_schol_sheet.write_string('F2', 'Discipline', cell_center)
+            co_schol_sheet.write_string('G2', 'Term I Class Teacher Comments', cell_center)
+            co_schol_sheet.write_string('H2', 'Term II Class Teacher Comments', cell_center)
+
             cons_title = '%s\n Consolidated Sheet for Term I & Term II Class %s-%s Class Teacher: %s' % \
                          (school, the_class, section, class_teacher)
             cons_sheet.merge_range('A1:K1', cons_title, title_format)
 
+            cons_header = 'Consolidated sheet class %s-%s' % (the_class, section)
+            cons_sheet.set_header('&L%s' % cons_header)
             cons_sheet.set_footer('&LClass Teacher Signature&RPage &P of &N')
             cons_sheet.set_row(0, 35)
             cons_sheet.set_column('A:A', 3)
@@ -221,6 +248,8 @@ class ResultSheet(generics.ListCreateAPIView):
             row += 1
             col = 0
             s_no = 1
+            co_schol_row = 2
+            co_schol_col = 0
             cons_row = 3  # starting row for consolidated sheet
             cons_col = 0  # starting column for consolidated sheet
             students = Student.objects.filter(current_class=the_class, current_section=section, active_status=True)
@@ -228,15 +257,20 @@ class ResultSheet(generics.ListCreateAPIView):
             for student in students:
                 t1_sheet.merge_range(row, col, row + 1, col, s_no, cell_normal)
                 t2_sheet.merge_range(row, col, row + 1, col, s_no, cell_normal)
+                co_schol_sheet.write_number(co_schol_row, co_schol_col, s_no, cell_normal)
                 cons_sheet.write_number(cons_row, cons_col, s_no, cell_normal)
                 s_no += 1
                 col += 1
+                co_schol_col += 1
                 cons_col += 1
 
                 full_name = '%s %s' % (student.fist_name, student.last_name)
                 t1_sheet.merge_range(row, col, row + 1, col, full_name, cell_bold)
                 t2_sheet.merge_range(row, col, row + 1, col, full_name, cell_bold)
                 col += 2
+
+                co_schol_sheet.write_string(co_schol_row, co_schol_col, full_name, cell_bold)
+                co_schol_col += 1
 
                 if standard in middle_classes:
                     exams = Exam.objects.filter(school=school, exam_type='term', start_class=middle_classes[0])
@@ -271,7 +305,7 @@ class ResultSheet(generics.ListCreateAPIView):
                 t1_t2_total = t1_total + t2_total
                 cons_sheet.write_number(cons_row, cons_col, t1_t2_total, cell_normal)
                 cons_col += 1
-                t1_t2_perc = float(t1_t2_total)/1400.00
+                t1_t2_perc = float((t1_perc + t2_perc)/2)
                 cons_sheet.write_number(cons_row, cons_col, t1_t2_perc, perc_format)
                 cons_col += 1
 
@@ -353,12 +387,58 @@ class ResultSheet(generics.ListCreateAPIView):
                         t1_sheet.merge_range(row, col, row + 1, col, t1_grade, cell_grade)
                         # t2_grade = TestResults.objects.get(class_test=gk_tests[1], student=student).grade
                         # t2_sheet.merge_range(row, col, row + 1, col, t2_grade, cell_grade)
-
                 row += 2
                 t1_sheet.set_row(row, 1.2)
                 t2_sheet.set_row(row, 1.2)
                 row += 1
                 col = 0
+
+                # 04/04/2020 - co-scholastic grades and teacher comments
+                work_ed = ''
+                art_ed = ''
+                health = ''
+                discipline = ''
+                t1_remarks = ''
+                t2_remarks = ''
+
+                try:
+                    t1_co_schol = CoScholastics.objects.get(student=student, term='term1')
+                    work_ed = t1_co_schol.work_education
+                    art_ed = t1_co_schol.art_education
+                    health = t1_co_schol.health_education
+                    discipline = t1_co_schol.discipline
+                    t1_remarks = t1_co_schol.teacher_remarks
+                except Exception as e:
+                    print('exception 04042020-A from exam results.py %s %s' % (e.message, type(e)))
+                    print('could not retrieve term I co-scholastic grades for %s of %s-%s' %
+                          (student, the_class, section))
+
+                try:
+                    t2_co_schol = CoScholastics.objects.get(student=student, term='term2')
+                    work_ed += ' / %s' % t2_co_schol.work_education
+                    art_ed += ' / %s' % t2_co_schol.art_education
+                    health += ' / %s' % t2_co_schol.health_education
+                    discipline += ' / %s' % t2_co_schol.discipline
+                    t2_remarks = t2_co_schol.teacher_remarks
+                except Exception as e:
+                    print('exception 04042020-A from exam results.py %s %s' % (e.message, type(e)))
+                    print('could not retrieve term II co-scholastic grades for %s of %s-%s' %
+                          (student, the_class, section))
+
+                co_schol_sheet.write_string(co_schol_row, co_schol_col, work_ed, cell_bold)
+                co_schol_col += 1
+                co_schol_sheet.write_string(co_schol_row, co_schol_col, art_ed, cell_bold)
+                co_schol_col += 1
+                co_schol_sheet.write_string(co_schol_row, co_schol_col, health, cell_bold)
+                co_schol_col += 1
+                co_schol_sheet.write_string(co_schol_row, co_schol_col, discipline, cell_bold)
+                co_schol_col += 1
+                co_schol_sheet.write_string(co_schol_row, co_schol_col, t1_remarks, comments_format)
+                co_schol_col += 1
+                co_schol_sheet.write_string(co_schol_row, co_schol_col, t2_remarks, comments_format)
+
+                co_schol_row += 1
+                co_schol_col = 0
 
         if the_class.standard in higher_classes:
             maths_stream = ['English', 'Mathematics', 'Physics', 'Chemistry', 'Elective']

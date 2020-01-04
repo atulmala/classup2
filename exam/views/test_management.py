@@ -3,6 +3,7 @@ import StringIO
 from datetime import date
 from decimal import Decimal
 
+import xlsxwriter
 from django.http import HttpResponse
 from django.utils.translation import ugettext
 from rest_framework import generics
@@ -12,7 +13,7 @@ from rest_framework.renderers import JSONRenderer
 from exam.models import HigherClassMapping, Wing, ExamResult
 from setup.models import School
 from academics.models import Class, Section, Subject, Exam, ClassTest, TestResults, TermTestResult, ThirdLang
-from exam.views import get_wings, xlsxwriter
+from exam.views import get_wings
 from student.models import Student
 from teacher.models import Teacher
 from formats.formats import Formats as format
