@@ -8,13 +8,13 @@ from rest_framework import generics
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from xlsxwriter.utility import xl_rowcol_to_cell, xl_range
 
-from academics.models import Class, Section, ClassTeacher, ThirdLang, Exam, Subject, ClassTest, TestResults, \
-    TermTestResult, CoScholastics
-from exam.models import Scheme, NPromoted, HigherClassMapping
+from academics.models import Class, Section, ClassTeacher, ThirdLang, Exam, Subject, ClassTest, \
+    TestResults, CoScholastics
+from exam.models import Scheme, HigherClassMapping
 from analytics.models import SubjectAnalysis, StudentTotalMarks
 from exam.views import get_wings
 from setup.models import School
-from student.models import Student, House
+from student.models import Student
 
 
 class CsrfExemptSessionAuthentication(SessionAuthentication):
@@ -110,10 +110,25 @@ class ResultAnalysisSheet(generics.ListCreateAPIView):
 
         term1 = 'Term I'
         term2 = 'Term II'
-        if standard in middle_classes:
+        if standard in middle_classes or standard in ninth_tenth:
             scheme = Scheme.objects.filter(school=school, the_class=the_class)
-            sub_count = scheme.count() - 1
-            col_count = (sub_count * 5) + 3 # each subject 5 column, 1 each for s_no, name, elective and GK grade
+
+            # to determine upto which column stretch title, we need to know the
+            # number of components based & grade based subjects in the scheme
+            subject_list = []
+            comp_subjects = 0
+            grade_subjects = 0
+            for a_subject in scheme:
+                if not a_subject.subject.grade_based:
+                    comp_subjects += 1
+                    subject_list.append(a_subject.subject)
+                else:
+                    grade_subjects += 1
+            print('subject_list for class %s = ' % the_class)
+            print(subject_list)
+            # sub_count = scheme.count() - 1
+            # col_count = (sub_count * 5) + 3 # each subject 5 column, 1 each for s_no, name, elective and GK grade
+            col_count = (comp_subjects * 5) + (grade_subjects * 1) + 2
             last_row_col = xl_rowcol_to_cell(0, col_count)
             title_range = 'A1:%s' % last_row_col
         if standard in ninth_tenth:
@@ -178,7 +193,6 @@ class ResultAnalysisSheet(generics.ListCreateAPIView):
             cons_title = '%s\n Consolidated Sheet for Term I & Term II Class %s-%s Class Teacher: %s' % \
                          (school, the_class, section, class_teacher)
             cons_sheet.merge_range('A1:K1', cons_title, title_format)
-
             cons_header = 'Consolidated sheet class %s-%s' % (the_class, section)
             cons_sheet.set_header('&L%s' % cons_header)
             cons_sheet.set_footer('&LClass Teacher Signature&RPage &P of &N')
@@ -204,29 +218,21 @@ class ResultAnalysisSheet(generics.ListCreateAPIView):
             cons_sheet.write_string('K3', 'Rank', cell_bold)
 
         if standard in middle_classes or standard in ninth_tenth:
-            scheme = Scheme.objects.filter(school=school, the_class=the_class)
-            components = ['PA', 'NB', 'PF', 'SE', 'Mn']
-            subject_list = []
             for a_subject in scheme:
-                subject_list.append(a_subject.subject.subject_name)
+                if a_subject.subject.grade_based:
+                    subject_list.append(a_subject.subject)
             print('subject_list for class %s = ' % the_class)
             print(subject_list)
-
-            # GK should be at the end of subject list as it is grade based and does not have breakup components
-            if 'GK' in subject_list:
-                subject_list.remove('GK')  # remove GK from whichever position it was in the list
-                subject_list.append('GK')  # append at the end
-                print('now GK should be at the end of subject list')
-                print(subject_list)
 
             # prepare subject heading
             row = 1
             col = 3
             for subject in subject_list:
-                if subject not in ['GK', 'Moral Science']:
-                    t1_sheet.merge_range(row, col, row, col + 4, subject, cell_right_border)
-                    t2_sheet.merge_range(row, col, row, col + 4, subject, cell_right_border)
+                if not subject.grade_based:
+                    t1_sheet.merge_range(row, col, row, col + 4, subject.subject_name, cell_right_border)
+                    t2_sheet.merge_range(row, col, row, col + 4, subject.subject_name, cell_right_border)
 
+                    components = ['PA', 'NB', 'PF', 'SE', 'Mn']
                     comp_col = col
                     for comp in components:
                         if comp == 'Mn':
@@ -236,16 +242,15 @@ class ResultAnalysisSheet(generics.ListCreateAPIView):
                             t1_sheet.write_string(row + 1, comp_col, comp, cell_bold)
                             t2_sheet.write_string(row + 1, comp_col, comp, cell_bold)
                         comp_col += 1
-                    col += 4
-                col += 1
-            t1_sheet.write_string(row, col - 1, subject, cell_bold)
-            t2_sheet.write_string(row, col - 1, subject, cell_bold)
-            row += 1
-            if standard in middle_classes:
-                t1_sheet.write_string(row, col - 1, 'Gr', cell_bold)
-                t2_sheet.write_string(row, col - 1, 'Gr', cell_bold)
+                    col += 5
+                else:
+                    t1_sheet.write_string(row, col, subject.subject_name, cell_bold)
+                    t1_sheet.write_string(row + 1, col, 'Gr', cell_bold)
+                    t2_sheet.write_string(row, col, subject.subject_name, cell_bold)
+                    t2_sheet.write_string(row + 1, col, 'Gr', cell_bold)
+                    col += 1
 
-            row += 1
+            row += 2
             col = 0
             s_no = 1
             co_schol_row = 2
@@ -323,7 +328,7 @@ class ResultAnalysisSheet(generics.ListCreateAPIView):
                     subject = Subject.objects.get(school=school, subject_name=sub)
                     if not subject.grade_based:
                         print('now retrieving marks of subject %s for %s' % (sub, student))
-                        if sub == 'Third Language':
+                        if sub.subject_name == 'Third Language':
                             third_lang = ThirdLang.objects.get(student=student)
                             subject = third_lang.third_lang
                             t1_sheet.merge_range(row, 2, row + 1, 2, subject.subject_name, vertical_text)
@@ -385,6 +390,7 @@ class ResultAnalysisSheet(generics.ListCreateAPIView):
                         gk_tests = ClassTest.objects.filter(the_class=the_class, section=section, subject=subject)
                         t1_grade = TestResults.objects.get(class_test=gk_tests[0], student=student).grade
                         t1_sheet.merge_range(row, col, row + 1, col, t1_grade, cell_grade)
+                        col += 1
                         # t2_grade = TestResults.objects.get(class_test=gk_tests[1], student=student).grade
                         # t2_sheet.merge_range(row, col, row + 1, col, t2_grade, cell_grade)
                 row += 2

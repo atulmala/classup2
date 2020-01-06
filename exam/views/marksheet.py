@@ -196,44 +196,44 @@ class GenerateMarksheet(generics.ListAPIView):
             #           ('FONT', (0, 1), (0, 1), 'Times-Bold')]
 
             # 29/09/2019 - uncomment when generating result for final exam
-            # style1 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-            #           ('BOX', (0, 0), (-1, -1), 1, colors.black),
-            #           ('TOPPADDING', (0, 0), (-1, -1), 1),
-            #           ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
-            #           ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            #           ('ALIGN', (1, 0), (7, 0), 'CENTER'),
-            #           ('ALIGN', (8, 0), (14, 0), 'CENTER'),
-            #           ('SPAN', (1, 0), (7, 0)),
-            #           ('SPAN', (8, 0), (14, 0)),
-            #           ('FONTSIZE', (0, 0), (-1, -1), 7),
-            #           ('FONT', (0, 0), (13, 0), 'Times-Bold'),
-            #           ('FONT', (0, 1), (0, 1), 'Times-Bold')]
-
-            # 29/09/2019 - comment when generating results for fianl exam
             style1 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
                       ('BOX', (0, 0), (-1, -1), 1, colors.black),
                       ('TOPPADDING', (0, 0), (-1, -1), 1),
                       ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
                       ('VALIGN', (0, 0), (-1, -1), 'TOP'),
                       ('ALIGN', (1, 0), (7, 0), 'CENTER'),
+                      ('ALIGN', (8, 0), (14, 0), 'CENTER'),
                       ('SPAN', (1, 0), (7, 0)),
-
+                      ('SPAN', (8, 0), (14, 0)),
                       ('FONTSIZE', (0, 0), (-1, -1), 7),
-                      ('FONT', (0, 0), (7, 0), 'Times-Bold'),
+                      ('FONT', (0, 0), (13, 0), 'Times-Bold'),
                       ('FONT', (0, 1), (0, 1), 'Times-Bold')]
+
+            # 29/09/2019 - comment when generating results for fianl exam
+            # style1 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+            #           ('BOX', (0, 0), (-1, -1), 1, colors.black),
+            #           ('TOPPADDING', (0, 0), (-1, -1), 1),
+            #           ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+            #           ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+            #           ('ALIGN', (1, 0), (7, 0), 'CENTER'),
+            #           ('SPAN', (1, 0), (7, 0)),
+            #
+            #           ('FONTSIZE', (0, 0), (-1, -1), 7),
+            #           ('FONT', (0, 0), (7, 0), 'Times-Bold'),
+            #           ('FONT', (0, 1), (0, 1), 'Times-Bold')]
             # 29/09/2019  - uncomment when generating result for final exam
-            # style2 = style3 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-            #                     ('BOX', (0, 0), (-1, -1), 1, colors.black),
-            #                     ('TOPPADDING', (0, 0), (-1, -1), 1),
-            #                     ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
-            #                     ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-            #                     ('ALIGN', (0, 0), (1, 0), 'RIGHT'),
-            #                     ('ALIGN', (2, 0), (3, 0), 'RIGHT'),
-            #                     ('SPAN', (0, 0), (1, 0)),
-            #                     ('SPAN', (2, 0), (3, 0)),
-            #                     ('FONTSIZE', (0, 0), (-1, -1), 8),
-            #                     ('FONT', (0, 0), (1, 0), 'Times-Bold'),
-            #                     ('FONT', (2, 0), (3, 0), 'Times-Bold')]
+            style2 = style3 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+                                ('BOX', (0, 0), (-1, -1), 1, colors.black),
+                                ('TOPPADDING', (0, 0), (-1, -1), 1),
+                                ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+                                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                                ('ALIGN', (0, 0), (1, 0), 'RIGHT'),
+                                ('ALIGN', (2, 0), (3, 0), 'RIGHT'),
+                                ('SPAN', (0, 0), (1, 0)),
+                                ('SPAN', (2, 0), (3, 0)),
+                                ('FONTSIZE', (0, 0), (-1, -1), 8),
+                                ('FONT', (0, 0), (1, 0), 'Times-Bold'),
+                                ('FONT', (2, 0), (3, 0), 'Times-Bold')]
 
             # 29/09/2019 - comment while generating result for final exam
             style2 = style3 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
@@ -246,8 +246,7 @@ class GenerateMarksheet(generics.ListAPIView):
                                ('FONTSIZE', (0, 0), (-1, -1), 8),
                                ('FONT', (0, 0), (1, 0), 'Times-Bold')]
         if the_class in ninth_tenth:
-            print(
-                    'result being prepared for class %s, hence only final Term Results will be prepared' % the_class)
+            print('result being prepared for class %s, hence only final Term Results will be prepared' % the_class)
             style1 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
                       ('BOX', (0, 0), (-1, -1), 1, colors.black),
                       ('TOPPADDING', (0, 0), (-1, -1), 1),
@@ -313,9 +312,6 @@ class GenerateMarksheet(generics.ListAPIView):
             c.drawString(152, session_top + 2, session)
             print('heading created')
 
-            # heading = 'Performance Analysis Sheet '
-            # c.drawString(146, report_card_top + 2, heading)
-
             c.setFont(font, 10)
             c.drawString(left_margin, stu_detail_top, adm_no_lbl)
             c.drawString(tab, stu_detail_top, s.student_erp_id)
@@ -362,23 +358,9 @@ class GenerateMarksheet(generics.ListAPIView):
 
             print('report heading prepared')
 
-            # # 06/02/2019 - calculate the attendance
-            # att_taken_t1 = AttendanceTaken.objects.filter(date__gte='2018-04-01', date__lte='2018-10-30',
-            #                                               the_class=s.current_class, section=s.current_section).count()
-            # print('total working days in term I = %i' % att_taken_t1)
-            #
-            # att_taken_t2 = AttendanceTaken.objects.filter(date__gte='2018-11-01', date__lte='2019-03-15',
-            #                                               the_class=s.current_class, section=s.current_section).count()
-            # print('total working days in term II = %i' % att_taken_t2)
-
             c.setFont(font, 8)
             if the_class in higher_classes:
                 print('result being prepared for class %s. This will be in school own format' % the_class)
-
-                # data1 = [['', 'TERM RESULT', '', '', '', '', '', '', '', '', 'CUMULATIVE RESULT', '', '', ''],
-                #          ['\nSUBJECT', 'UT-I', 'UT-II', 'UT-III', 'Half Yearly\nExam', '', '',
-                #            'Final Exam', '', '', 'Unit\nTest', 'Half Yearly\nExam', 'Final\nExam', 'Total'],
-                #          ['', '25', '25', '25', 'Th', 'Pr', 'Tot', 'Th', 'Pr', 'Tot', '25', '25', '50', '100']]
 
                 data1 = [['', 'TERM RESULT', '', '', '', '', '', '', '', 'CUMULATIVE RESULT', '', '', ''],
                          ['\nSUBJECT', 'UT-I', 'UT-II', 'Half Yearly\nExam', '', '',
@@ -451,7 +433,10 @@ class GenerateMarksheet(generics.ListAPIView):
                                 marks = float(result.marks_obtained)
 
                                 if marks < 0.0:
-                                    marks = 'ABS'
+                                    if marks < -1000.0:
+                                        marks = 'TBE'
+                                    else:
+                                        marks = 'ABS'
                                 else:
                                     if float(test.max_marks) != 25.0:
                                         print('max marks for %s in %s were %f. Conversion is required' %
@@ -469,7 +454,10 @@ class GenerateMarksheet(generics.ListAPIView):
                                 analysis = SubjectAnalysis.objects.get(student=s, exam=a_term_exam, subject=subject)
                                 marks = float(analysis.marks)
                                 if marks < 0.0:
-                                    marks = 'ABS'
+                                    if marks < -1000.0:
+                                        marks = 'TBE'
+                                    else:
+                                        marks = 'ABS'
 
                                 prac_marks = float(analysis.prac_marks)
                                 if prac_marks < 0.0:
@@ -515,7 +503,7 @@ class GenerateMarksheet(generics.ListAPIView):
                             sub_row.append(ut_cumul)
 
                             if half_yearly_marks != 'ABS':
-                                half_year_cumul = round((half_yearly_marks * float(25)) / 100.00, 2)
+                                half_year_cumul = round((half_yearly_marks * float(25)) / float(subject.theory_marks), 2)
                                 grand_total += half_year_cumul
                             else:
                                 half_year_cumul = 'ABS'
@@ -528,9 +516,9 @@ class GenerateMarksheet(generics.ListAPIView):
                                 final_cumul = 'ABS'
 
                             # 29/09/2019 - uncomment while generating result for final exam
-                            # sub_row.append(final_cumul)
-                            # grand_total = ut_cumul + half_year_cumul + final_cumul
-                            # sub_row.append(grand_total)
+                            sub_row.append(final_cumul)
+                            grand_total = ut_cumul + half_year_cumul + final_cumul
+                            sub_row.append(grand_total)
                         except Exception as e:
                             print(
                                 'failed to enter Cumulative Result. This may be because certain marks not entered')
@@ -619,8 +607,7 @@ class GenerateMarksheet(generics.ListAPIView):
                 # 02/11/2017 - get the scheme for this class. The scheme will provide the subjects of this class and
                 # the sequence. Subjects in the Marksheet would appear in the order of sequence
                 try:
-                    print(
-                            'class %s is not a higher class. Hence subject list will be as per scheme' % the_class)
+                    print('class %s is not a higher class. Hence subject list will be as per scheme' % the_class)
                     scheme = Scheme.objects.filter(school=school, the_class=standard)
                     sub_count = scheme.count()
                     for sc in scheme:
@@ -629,23 +616,23 @@ class GenerateMarksheet(generics.ListAPIView):
                     print (sub_dict)
                 except Exception as e:
                     print('Looks like the scheme for class %s is not yet set' % the_class)
-                    print('exception 10022018-A from exam views.py %s %s' % (e.message, type(e)))
+                    print('exception 10022018-A from exam marksheet.py %s %s' % (e.message, type(e)))
                 if the_class in middle_classes:
                     print('%s is in middle classes' % the_class)
                     end_class = 'VIII'
                     # 29/09/2019 - uncomment when generting final exam result
-                    # data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', '', '',
-                    #           'Term-2 (100 Marks)', '', '', '', '', '', ''],
-                    #          ['Sub Name', 'Per\n Test\n(5)', 'Mult\nAssess\n(5)', 'Portfolio\n(5)', 'Sub\nEnrich\n(5)',
-                    #           'Half\nYearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade',
-                    #           'Per\n Test\n(5)', 'Mult\nAssess\n(5)', 'Portfolio\n(5)', 'Sub\nEnrich\n(5)',
-                    #           'Yearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
+                    data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', '', '',
+                              'Term-2 (100 Marks)', '', '', '', '', '', ''],
+                             ['Sub Name', 'Per\n Test\n(5)', 'Mult\nAssess\n(5)', 'Portfolio\n(5)', 'Sub\nEnrich\n(5)',
+                              'Half\nYearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade',
+                              'Per\n Test\n(5)', 'Mult\nAssess\n(5)', 'Portfolio\n(5)', 'Sub\nEnrich\n(5)',
+                              'Yearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
 
                     # 29/09/2019 - comment when generating final exam result
-                    data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', '', ''],
-                             ['Sub Name', 'Per\n Test\n(5)', 'Mult\nAssess\n(5)', 'Portfolio\n(5)',
-                              'Sub\nEnrich\n(5)',
-                              'Half\nYearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
+                    # data1 = [['Scholastic\nAreas', 'Term-1 (100 Marks)', '', '', '', '', '', ''],
+                    #          ['Sub Name', 'Per\n Test\n(5)', 'Mult\nAssess\n(5)', 'Portfolio\n(5)',
+                    #           'Sub\nEnrich\n(5)',
+                    #           'Half\nYearly\nExam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
                 if the_class in ninth_tenth:
                     end_class = 'X'
                     data1 = [['Scholastic\nAreas', 'Academic Year (100 Marks)', '', '', '', '', '', ''],
