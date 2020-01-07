@@ -11,6 +11,7 @@ urlpatterns = [
         views.CalculateStudentTotalMarks.as_view(), name='student_total_marks'),
     url(r'performance_sheet/$', views.StudentPerformanceAnalysis.as_view(), name='performance_sheet'),
     url(r'get_ranks/(?P<school_id>\w+)/$', views.CalculateStudentRank.as_view(), name='get_ranks'),
+    url(r'master_data/$', views.MasterData.as_view(), name='master_data'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

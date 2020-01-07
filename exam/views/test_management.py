@@ -102,8 +102,6 @@ class ProcessPromotion(generics.ListCreateAPIView):
             entry.save()
         context_dict = {'outcome': 'success'}
 
-
-
         return JSONResponse(context_dict, status=200)
 
 

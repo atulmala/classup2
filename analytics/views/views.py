@@ -29,7 +29,7 @@ from academics.models import Class, Section, Subject, Exam, ClassTest, TestResul
 from exam.models import Wing, Marksheet, Scheme, NPromoted, HigherClassMapping
 from exam.views import get_wings
 from formats.formats import Formats as format
-from .models import SubjectAnalysis, SubjectHighestAverage, ExamHighestAverage, StudentTotalMarks
+from analytics.models import SubjectAnalysis, SubjectHighestAverage, ExamHighestAverage, StudentTotalMarks
 
 
 # Create your views here.
