@@ -1128,6 +1128,8 @@ class FeeDetails(generics.ListCreateAPIView):
 
 from rest_framework.decorators import parser_classes
 from rest_framework.parsers import MultiPartParser
+
+
 @parser_classes((MultiPartParser, ))
 class UploadFee(generics.ListCreateAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
@@ -1181,7 +1183,7 @@ class UploadFee(generics.ListCreateAPIView):
                         d = sheet.cell(row, 3).value
                         try:
                             date = datetime.datetime(*xlrd.xldate_as_tuple(d, fileToProcess.datemode))
-                            print ('date of birth is in acceptable format')
+                            print ('fee payment date is in acceptable format')
                             print (date)
                         except Exception as e:
                             print ('problem with fee deposit date for %s' % student)

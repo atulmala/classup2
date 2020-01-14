@@ -125,7 +125,7 @@ class MasterData(generics.ListAPIView):
                     try:
                         analysis1 = SubjectAnalysis.objects.get(student=student, exam=exams[0], subject=subject)
                         marks = analysis1.total_marks
-                        subject_total += marks
+                        subject_total += float(marks)
                         t1_sheet.write_number(row, col, marks, cell_normal)
                     except Exception as e:
                         print('exception 07012020-A from analytics master_data.py %s %s' % (e.message, type(e)))
@@ -135,7 +135,7 @@ class MasterData(generics.ListAPIView):
                     try:
                         analysis2 = SubjectAnalysis.objects.get(student=student, exam=exams[1], subject=subject)
                         marks = analysis2.total_marks
-                        subject_total += marks
+                        subject_total += float(marks)
                         t2_sheet.write_number(row, col, marks, cell_normal)
                     except Exception as e:
                         print('exception 07012020-B from analytics master_data.py %s %s' % (e.message, type(e)))
@@ -145,23 +145,21 @@ class MasterData(generics.ListAPIView):
                     cons_sheet.write_number(row, col, subject_total, cell_normal)
                     col += 1
 
-                    try:
-                        total_marks1 = StudentTotalMarks.objects.get(student=student, exam=exams[0]).total_marks
-                        t1_sheet.write_number(row, col, total_marks1)
-                    except Exception as e:
-                        print('exception 07012020-C from analytics master_data.py %s %s' % (e.message, type(e)))
-                        print('cound not retrieve total marks for %s  in %s exam for %s of %s-%s' %
-                              (student, exams[0], student, the_class, student.current_section))
+                try:
+                    total_marks1 = StudentTotalMarks.objects.get(student=student, exam=exams[0]).total_marks
+                    t1_sheet.write_number(row, col, total_marks1)
+                except Exception as e:
+                    print('exception 07012020-C from analytics master_data.py %s %s' % (e.message, type(e)))
+                    print('cound not retrieve total marks for %s  in %s exam for %s of %s-%s' %
+                          (student, exams[0], student, the_class, student.current_section))
 
-                    try:
-                        total_marks2 = StudentTotalMarks.objects.get(student=student, exam=exams[1]).total_marks
-                        t2_sheet.write_number(row, col, total_marks2)
-                    except Exception as e:
-                        print('exception 07012020-D from analytics master_data.py %s %s' % (e.message, type(e)))
-                        print('cound not retrieve total marks for %s  in %s exam for %s of %s-%s' %
-                              (student, exams[1], student, the_class, student.current_section))
-
-                    col += 1
+                try:
+                    total_marks2 = StudentTotalMarks.objects.get(student=student, exam=exams[1]).total_marks
+                    t2_sheet.write_number(row, col, total_marks2)
+                except Exception as e:
+                    print('exception 07012020-D from analytics master_data.py %s %s' % (e.message, type(e)))
+                    print('cound not retrieve total marks for %s  in %s exam for %s of %s-%s' %
+                          (student, exams[1], student, the_class, student.current_section))
 
                 row += 1
                 col = 0

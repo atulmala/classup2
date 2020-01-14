@@ -1,6 +1,7 @@
 from django.contrib import admin
 from student.models import AdditionalDetails, House
 from .models import CollectAdmFee, FeePaymentHistory, PreviousBalance, ReceiptNumber, HeadWiseFee, FeeCorrection
+from .models import CollectTransportFee
 
 # Register your models here.
 
@@ -21,6 +22,18 @@ class AdditionalDetailsAdmin(admin.ModelAdmin):
 
 
 admin.site.register(AdditionalDetails, AdditionalDetailsAdmin)
+
+
+@admin.register(CollectTransportFee)
+class CollectTransportFeeAdmin(admin.ModelAdmin):
+    def get_school_name(self, obj):
+        return obj.school.school_name
+
+    get_school_name.short_description = 'School'
+
+    list_display = ('get_school_name', 'student', 'bus_fee', 'slab',)
+    search_fields = ('student__fist_name', 'student__last_name')
+    list_filter = ('student__school',)
 
 
 class CollectAdmFeeAdmin(admin.ModelAdmin):
