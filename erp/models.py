@@ -26,6 +26,12 @@ class CollectTransportFee(models.Model):
     slab = models.CharField(max_length=2, default='X')
 
 
+class TransportSlab(models.Model):
+    school = models.ForeignKey(School)
+    slab = models.CharField(max_length=2, default='X')
+    amount = models.DecimalField(decimal_places=2, max_digits=8, default=0.0)
+
+
 class FeePaymentHistory(models.Model):
     school = models.ForeignKey(School)
     student = models.ForeignKey(Student)
@@ -75,6 +81,8 @@ class PreviousBalance(models.Model):
 
     # we will extract parent from student
     def save(self, *args, **kwargs):
+        s = self.student.school
+        self.school = s
         p = self.student.parent
         self.parent = p
         super(PreviousBalance, self).save(*args, **kwargs)
