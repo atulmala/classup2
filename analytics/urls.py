@@ -12,6 +12,7 @@ urlpatterns = [
     url(r'performance_sheet/$', views.StudentPerformanceAnalysis.as_view(), name='performance_sheet'),
     url(r'get_ranks/(?P<school_id>\w+)/$', views.CalculateStudentRank.as_view(), name='get_ranks'),
     url(r'master_data/$', views.MasterData.as_view(), name='master_data'),
+    url(r'generate_analytics/$', views.GenerateAnalytics.as_view(), name='generate_analytics'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

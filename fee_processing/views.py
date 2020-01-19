@@ -26,7 +26,6 @@ from rest_framework import generics
 from setup.models import School, Configurations
 from student.models import Student, Parent
 from exam.models import StreamMapping
-from bus_attendance.models import Student_Rout
 from erp.models import CollectAdmFee, FeePaymentHistory, PreviousBalance, ReceiptNumber, HeadWiseFee, FeeCorrection
 from erp.models import CollectTransportFee, TransportSlab
 from erp.serializers import FeeHistorySerialzer
@@ -947,6 +946,7 @@ class FeeDetails(generics.ListCreateAPIView):
 
             due_this_term = 0.0
             due_till_now = 0.0
+            new_admission = False
             for row in range(sheet.nrows):
                 if row == 0:
                     fee_frequency = sheet.cell(row, 1).value
@@ -966,16 +966,18 @@ class FeeDetails(generics.ListCreateAPIView):
                         c = CollectAdmFee.objects.get(student=student)
                         if not c.whether_paid:
                             print('%s has NOT paid one time fees %s' % (student, h))
+                            new_admission = True
                             due_this_term += amt
                         else:
                             print('%s has already paid one time fees %s' % (student, h))
+                            amt = 'N/A'
                             # due_till_now += amt
                     except Exception as e:
                         print('exception 21032019-A from fee_processing views.py %s %s' % (e.message, type(e)))
                         print('%s has paid one time fees %s' % (student, h))
                         amt = 'N/A'
                     print('due_till_now = %.2f' % due_till_now)
-                    continue
+                    # continue
 
                 if int(freq) == 12:
                     # this is once in a year fee like annual fee, exam fee etc. this is to be charge in April
@@ -985,7 +987,8 @@ class FeeDetails(generics.ListCreateAPIView):
                         due_this_term += amt
                     else:
                         due_till_now += amt
-                        amt = 'N/A'
+                        if not new_admission:
+                            amt = 'N/A'
                     print('due_till_now = %.2f' % due_till_now)
 
                 if int(freq) == 1:
@@ -993,7 +996,8 @@ class FeeDetails(generics.ListCreateAPIView):
                     print('%s is monthly fees' % h)
                     due_this_term += amt
                     # how much of this fee is accumulated month before
-                    due_till_now += amt * (months_count)
+                    if not new_admission:
+                        due_till_now += amt * (months_count)
                     print('due_till_now = %.2f' % due_till_now)
 
                 if int(freq) == 3:
@@ -1017,11 +1021,12 @@ class FeeDetails(generics.ListCreateAPIView):
                     print('not charging transportation fee for June')
 
                 # after june, it should be one month less
-                if months_count > 2:
-                    print('calculations past june. Reducing one month of June')
-                    due_till_now += float(transport_fee) * (months_count - 1)
-                else:
-                    due_till_now += float(transport_fee) * (months_count)
+                if not new_admission:
+                    if months_count > 2:
+                        print('calculations past june. Reducing one month of June')
+                        due_till_now += float(transport_fee) * (months_count - 1)
+                    else:
+                        due_till_now += float(transport_fee) * (months_count)
                 head['head'] = 'Transport'
                 head['amount'] = transport_fee
                 heads_array.append(head)
@@ -1067,7 +1072,10 @@ class FeeDetails(generics.ListCreateAPIView):
                   (student, current_class, school))
         context_dict['payment_history'] = payment_history
         context_dict['Paid till date'] = paid_till_date
-        context_dict['Previous Outstanding'] = due_till_now - paid_till_date
+        if new_admission:
+            context_dict['Previous Outstanding'] = 0.0
+        else:
+            context_dict['Previous Outstanding'] = due_till_now - paid_till_date
         print(context_dict)
 
         # check if there is a delay in paying fee

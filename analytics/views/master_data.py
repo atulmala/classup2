@@ -1,6 +1,8 @@
 import StringIO
 
 import xlsxwriter
+from google.cloud import storage
+
 from django.http import HttpResponse
 
 from rest_framework import generics
@@ -11,7 +13,6 @@ from formats.formats import Formats as format
 from setup.models import School
 from student.models import Student
 from academics.models import Class, Section, Subject, Exam
-from exam.models import Scheme
 from analytics.models import StudentTotalMarks, SubjectAnalysis
 
 from exam.views import get_wings
@@ -31,10 +32,12 @@ class MasterData(generics.ListAPIView):
         standard = request.query_params.get('standard')
         the_class = Class.objects.get(school=school, standard=standard)
 
-        excel_file_name = 'Analytics_master_%s.xlsx' % str(standard)
+        excel_file_name = '%s_%s_master_data.xlsx' % (str(school_id), the_class)
+
         print('excel_file_name = %s' % excel_file_name)
 
         output = StringIO.StringIO(excel_file_name)
+
         workbook = xlsxwriter.Workbook(output)
         fmt = format()
         cell_bold = workbook.add_format(fmt.get_cell_bold())
@@ -163,8 +166,20 @@ class MasterData(generics.ListAPIView):
 
                 row += 1
                 col = 0
-
         workbook.close()
+
+        # 17/01/2019 - upload file to cloud storage
+        try:
+            storage_client = storage.Client()
+            bucket = storage_client.get_bucket('classup')
+            file_path = 'classup2/Analytics/school/%s/%s' % (str(school_id), excel_file_name)
+            blob = bucket.blob(file_path)
+            blob.upload_from_string(output.getvalue())
+            print('successfully uploaded %s master data file to cloud storage' % file_path)
+        except Exception as e:
+            print('exception 17012020-A from analytics master_data.py %s %s' % (e.message, type(e)))
+            print('failed to upload %s to cloud storage' % file_path)
+
         response = HttpResponse(content_type='application/vnd.ms-excel')
         response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
         response.write(output.getvalue())
