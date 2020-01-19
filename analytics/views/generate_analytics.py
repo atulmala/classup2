@@ -310,14 +310,40 @@ class GenerateAnalytics(generics.ListCreateAPIView):
             slab_values.append(round(float(below_50) / float(total_students), 2))
             print(slab_values)
 
-            row += 5
+            row += 3
             col = 0
-            wb_sheet.merge_range(row, col, row, col + 3, 'Total Marks Slab wise distribution', medium_font)
+            wb_sheet.merge_range(row, col, row, col + 2, 'Total Marks Slab wise', medium_font)
             col += 1
             row += 2
             wb_sheet.write_column(row, col, slabs)
             col += 1
             wb_sheet.write_column(row, col, slab_values, perc_format)
+            col = 1
+
+            categories = [a_sheet, row, col, row + 3, col]
+            chart = analytics.add_chart({'type': 'pie'})
+            chart.set_legend({'position': 'bottom'})
+            col +=1
+            values = [a_sheet, row, col, row + 3, col]
+            chart.add_series({
+                'categories': categories,
+                'values': values,
+                'data_labels': {
+                    'value': True,
+                    'position': 'outside_end',
+                    'leader_line': True
+                },
+                'points':   [
+                    {'gradient': {'colors': ['#1B5E20', '#A5D6A7']}},
+                    {'gradient': {'colors': ['#01579B', '#039BE5']}},
+                    {'gradient': {'colors': ['#9E9D24', '#D4E157']}},
+                    {'gradient': {'colors': ['#D84315', '#FF8A65']}},
+                ],
+            })
+
+            row -= 1
+            col = 0
+            wb_sheet.insert_chart(row, col, chart)
 
         os.remove(local_path)
         try:
