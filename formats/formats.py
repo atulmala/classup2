@@ -207,6 +207,32 @@ class Formats():
     def get_cell_small(self):
         return self.cell_small
 
+    cell_green = {
+        'align': 'left',
+        'valign': 'top',
+        'font_size': 8,
+        'font_color': '#1B5E20',
+        'bold': True,
+        'border': 1,
+        'text_wrap': True
+    }
+
+    def get_cell_green(self):
+        return self.cell_green
+
+    cell_red = {
+        'align': 'left',
+        'valign': 'top',
+        'font_size': 8,
+        'font_color': '#E53935',
+        'bold': True,
+        'border': 1,
+        'text_wrap': True
+    }
+
+    def get_cell_red(self):
+        return self.cell_red
+
     present_format = {
         'align': 'center',
         'valign': 'vcenter',
@@ -256,3 +282,11 @@ class Formats():
 
     def get_rank_format(self):
         return self.rank_format
+
+    colors = [
+        '#C62828', '#6A1B9A', '#880E4F', '#311B92', '#1A237E', '#2962FF',
+        '#1B5E20', '#33691E', '#3E2723', '#263238', '#4E342E', '#004D40'
+    ]
+
+    def get_colors(self):
+        return self.colors
