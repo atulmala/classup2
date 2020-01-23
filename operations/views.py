@@ -274,32 +274,11 @@ def att_summary_school(request):
         summary_sheet = workbook.add_worksheet("Summary")
         absentee_sheet = workbook.add_worksheet("Absentee List")
 
-        title = workbook.add_format({
-            'bold': True,
-            'font_size': 14,
-            'align': 'center',
-            'valign': 'vcenter'
-        })
-        header = workbook.add_format({
-            'bold': True,
-            'bg_color': '#F7F7F7',
-            'color': 'black',
-            'align': 'center',
-            'valign': 'top',
-            'border': 1
-        })
-        cell_center = workbook.add_format({
-            'align': 'center',
-            'valign': 'top'
-        })
-        cell_left = workbook.add_format({
-            'align': 'left',
-            'valign': 'top'
-        })
-        perc_format = workbook.add_format({
-            'num_format': '0.00%',
-            'align': 'center'
-        })
+        title = workbook.add_format(format.get_title())
+        header = workbook.add_format(format.get_header())
+        cell_center = workbook.add_format(format.get_cell_center())
+        cell_left = workbook.add_format(format.get_cell_left())
+        perc_format = workbook.add_format(format.get_perc_format())
         grand_perc_format = workbook.add_format({
             'num_format': '0.00%',
             'align': 'center',
@@ -625,6 +604,10 @@ class AttRegisterClass(generics.ListCreateAPIView):
         output = StringIO.StringIO(excel_file_name)
         workbook = xlsxwriter.Workbook(output)
         attendance_sheet = workbook.add_worksheet("Attendance")
+        attendance_sheet.set_landscape()
+        attendance_sheet.set_paper(9)  # A4 paper
+        attendance_sheet.fit_to_pages(1, 0)
+        attendance_sheet.set_footer('&L%s' % 'Class Teacher Signature......................')
 
         fmt = format()
         title = workbook.add_format(fmt.get_title())

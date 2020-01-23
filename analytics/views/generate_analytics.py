@@ -74,30 +74,32 @@ class GenerateAnalytics(generics.ListCreateAPIView):
                                  title_format)
             student_df = sheet['Student']
             total_students = student_df.count()
-            wb_sheet.set_column('C:C', 10)
+            wb_sheet.set_column('B:B', 4)
+            wb_sheet.set_column('C:C', 14)
             wb_sheet.set_column('D:D', 10)
             wb_sheet.set_column('E:E', 12)
             wb_sheet.set_column('F:F', 12)
-            wb_sheet.set_column('G:G', 12)
-            wb_sheet.set_column('H:H', 11)
-            wb_sheet.set_column('I:I', 12)
-            wb_sheet.set_column('J:J', 12)
-            row = 1
+            wb_sheet.set_column('G:G', 10)
+            wb_sheet.set_column('H:H', 14)
+            wb_sheet.set_column('I:I', 10)
+            wb_sheet.set_column('J:J', 14)
+            wb_sheet.set_column('K:K', 7)
+            row = 2
             col = 3
-            wb_sheet.write_string(row, col, 'Class', medium_font)
+            wb_sheet.merge_range(row, col, row + 1, col,  'Class', medium_font)
             col += 1
-            wb_sheet.write_string(row, col, the_class.standard, big_font)
+            wb_sheet.merge_range(row, col, row + 1, col, the_class.standard, big_font)
             col += 1
-            wb_sheet.write_string(row, col, 'Students', medium_font)
+            wb_sheet.merge_range(row, col, row + 1, col, 'Students', medium_font)
             col += 1
-            wb_sheet.write_number(row, col, total_students, big_font)
+            wb_sheet.merge_range(row, col, row + 1, col, total_students, big_font)
             col += 1
 
             sections_df = sheet['Section']
             sections = sections_df.unique()
-            wb_sheet.write_string(row, col, 'Sections', medium_font)
+            wb_sheet.merge_range(row, col, row + 1, col, 'Sections', medium_font)
             col += 1
-            wb_sheet.write_number(row, col, sections_df.nunique(), big_font)
+            wb_sheet.merge_range(row, col, row + 1, col, sections_df.nunique(), big_font)
 
             # student section wise distribution analytics
             section_wise_students = sections_df.value_counts()
@@ -105,7 +107,7 @@ class GenerateAnalytics(generics.ListCreateAPIView):
             for section in sections:
                 student_in_section.append(section_wise_students[section])
 
-            row += 1
+            row += 4
             col = 4
             categories = [a_sheet, row, col, row + sections_df.nunique() - 1, col]
             wb_sheet.write_column(row, col, sections, cell_bold)
@@ -125,7 +127,7 @@ class GenerateAnalytics(generics.ListCreateAPIView):
                 'categories': categories,
                 'values': values,
                 'marker': {'type': 'automatic'},
-                'gradient': {'colors': ['#D1C4E9', '#311B92']},
+                'gradient': {'colors': ['#311B92', '#7986CB']},
                 'data_labels': {'value': True},
             })
             chart.set_title({
@@ -135,32 +137,32 @@ class GenerateAnalytics(generics.ListCreateAPIView):
                     'color': colors[random.randrange(len(colors))]
                 }
             })
-            wb_sheet.insert_chart('D3', chart, {'x_offset': 10, 'y_offset': 0})
+            wb_sheet.insert_chart('D6', chart, {'x_offset': 10, 'y_offset': 0})
 
             # total marks analytics for all sections
             row = 20
             col = 3
-            wb_sheet.merge_range(row, col, row, col + 2, 'Total Marks Analysis', section_heading)
+            wb_sheet.merge_range(row, col, row + 1, col + 2, 'Total Marks Analysis', section_heading)
             total_marks_df = sheet[['Student', 'Section', 'Total']]
             max_marks = 700.00
-            row += 1
-            wb_sheet.write_string(row, col, 'Highest', medium_font)
+            row += 2
+            wb_sheet.merge_range(row, col, row + 1, col, 'Highest', medium_font)
             col += 1
             highest = round(total_marks_df['Total'].max(), 2) / max_marks
-            wb_sheet.write_number(row, col, highest, big_perc_format)
+            wb_sheet.merge_range(row, col, row + 1, col, highest, big_perc_format)
             col += 1
-            wb_sheet.write_string(row, col, 'Average', medium_font)
+            wb_sheet.merge_range(row, col, row + 1, col, 'Average', medium_font)
             col += 1
             average = round(total_marks_df['Total'].mean(), 2) / max_marks
-            wb_sheet.write_number(row, col, average, big_perc_format)
+            wb_sheet.merge_range(row, col, row + 1, col, average, big_perc_format)
             col += 1
-            wb_sheet.write_string(row, col, 'Min', medium_font)
+            wb_sheet.merge_range(row, col, row + 1, col, 'Min', medium_font)
             col += 1
             min = round(total_marks_df['Total'].min(), 2) / max_marks
-            wb_sheet.write_number(row, col, min, big_perc_format)
+            wb_sheet.merge_range(row, col, row + 1, col, min, big_perc_format)
 
             # analytics for each section separate - highest, average and min
-            row += 1
+            row += 4
             col = 4
             wb_sheet.write_string(row, col, 'Section', cell_bold)
             col += 1
@@ -264,7 +266,7 @@ class GenerateAnalytics(generics.ListCreateAPIView):
                     'size': 12
                 }
             })
-            row = 31
+            row = 36
             col = 0
             wb_sheet.insert_chart(row, col, chart, {'x_offset': 20, 'y_offset': 10})
 
@@ -320,7 +322,7 @@ class GenerateAnalytics(generics.ListCreateAPIView):
 
             row += 5
             col = 5
-            wb_sheet.merge_range(row, col, row, col + 2, 'Total Marks Slab wise', medium_font)
+            wb_sheet.merge_range(row, col, row + 1, col + 2, 'Total Marks Slab wise', medium_font)
             col += 1
             row += 2
             wb_sheet.write_column(row, col, slabs)
@@ -363,7 +365,7 @@ class GenerateAnalytics(generics.ListCreateAPIView):
             # Show slab wise distribution of marks for each section separately
             row += 17
             col = 0
-            wb_sheet.merge_range(row, col, row, col + 5, 'Slab Wise Total Marks for Each Section', medium_font)
+            wb_sheet.merge_range(row, col, row + 1, col + 5, 'Slab Wise Total Marks for Each Section', medium_font)
             idx1 = 0
             for section in sections:
                 print('total marks slab wise for section: %s' % section)
@@ -432,9 +434,9 @@ class GenerateAnalytics(generics.ListCreateAPIView):
                 # besides this pie chart show the toppers (> 85%) & trailers (< 50%) students
                 toppers = this_section_df[this_section_df['Total'] > (max_marks * .85)].nlargest(20, 'Total')
                 trailers = this_section_df[this_section_df['Total'] < (max_marks * .5)].nsmallest(20, 'Total')
-                col = 6
-                wb_sheet.merge_range(row, col, row, col + 1, 'Students securing above 85%', header)
-                wb_sheet.merge_range(row, col + 2, row, col + 3, 'Student securing below 50%', header)
+                col = 7
+                wb_sheet.merge_range(row, col, row, col + 1, 'Students in Top Slab', header)
+                wb_sheet.merge_range(row, col + 2, row, col + 3, 'Students in Bottom Slab', header)
                 row += 1
                 topper_row = row
                 trailers_row = row
@@ -443,25 +445,23 @@ class GenerateAnalytics(generics.ListCreateAPIView):
                     col += 1
                     wb_sheet.write_number(topper_row, col, toppers['Total'][idx] / max_marks, perc_format)
                     topper_row += 1
-                    col = 6
-                col = 8
+                    col = 7
+                col = 9
                 for idx in trailers.index:
                     wb_sheet.write_string(trailers_row, col, trailers['Student'][idx], cell_red)
                     col += 1
                     wb_sheet.write_number(trailers_row, col, trailers['Total'][idx] / max_marks, perc_format)
                     trailers_row += 1
-                    col = 8
+                    col = 9
                 row += 15
                 col = 0
-            wb_sheet.set_h_pagebreaks([row - 1])
 
             subject_list = [
-                'English', 'Hindi', 'Sanskrit', 'French',
-                'Mathematics', 'Science', 'Social Studies', 'Computer'
+                'English', 'Hindi', 'Mathematics', 'Science', 'Social Studies', 'Computer'
             ]
-
+            row += 1
             for subject in subject_list:
-                wb_sheet.merge_range(row, col, row, col + 4, 'Subject Analysis: %s' % subject, section_heading)
+                wb_sheet.merge_range(row, col, row + 1, col + 4, 'Subject Analysis: %s' % subject, section_heading)
                 subject_df = sheet[['Student', 'Section', subject]]
                 max_marks = 100.00
                 highest = round(subject_df[subject].max(), 2) / max_marks
@@ -589,7 +589,7 @@ class GenerateAnalytics(generics.ListCreateAPIView):
                 wb_sheet.merge_range(row, col, row, col + 3,
                                      'Class %s Top 10 students in %s' % (the_class, subject), header)
                 wb_sheet.merge_range(row, col + 5, row, col + 8,
-                                     'Class %s Top 10 students in %s' % (the_class, subject), header)
+                                     'Class %s Bottom 10 students in %s' % (the_class, subject), header)
                 row += 1
                 wb_sheet.write_string(row, col, 'Rank', cell_bold)
                 wb_sheet.write_string(row, col + 5, 'Rank', cell_bold)
@@ -637,7 +637,7 @@ class GenerateAnalytics(generics.ListCreateAPIView):
                 # student distribution in percentage segments (> 85, 85-70, 70-50, < 50)
                 col = 0
                 row += 2
-                wb_sheet.merge_range(row, col, row, col + 2, '%s - Marks slab wise' % subject, medium_font)
+                wb_sheet.merge_range(row, col, row + 1, col + 5, '%s - Marks slab wise' % subject, medium_font)
                 idx1 = 0
                 for section in sections:
                     if section == 'A':
@@ -673,10 +673,7 @@ class GenerateAnalytics(generics.ListCreateAPIView):
                     below_50 = this_section_df[this_section_df[subject] <= (max_marks * .5)][subject].count()
                     print('below_50=%d' % below_50)
                     slab_values.append(round(float(below_50) / float(student_count), 2))
-                    print(slab_values)
 
-                    # row += 2
-                    # col = 1
                     wb_sheet.write_column(row, col, slabs)
                     categories = [a_sheet, row, col, row + 3, col]
                     col += 1
@@ -718,8 +715,9 @@ class GenerateAnalytics(generics.ListCreateAPIView):
                     else:
                         col = 6
                     wb_sheet.insert_chart(row, col, chart, {'x_offset': 0, 'y_offset': 0})
-
-                row += 4
+                wb_sheet.set_h_pagebreaks([row + 15])
+                row += 19
+                col = 0
 
         os.remove(local_path)
         try:
