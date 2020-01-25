@@ -572,6 +572,7 @@ class AttRegisterClass(generics.ListCreateAPIView):
     context_dict['header'] = 'Download Monthly Attendance'
 
     def post(self, request, *args, **kwargs):
+        print("IP Address for debug-toolbar: " + request.META['REMOTE_ADDR'])
         data = json.loads(request.body)
         print(data)
         school_id = data['school_id']
