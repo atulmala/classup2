@@ -61,7 +61,9 @@ class CommitBulkSMS(generics.ListCreateAPIView):
         try:
             # connect to the database
             try:
-                db = MySQLdb.connect('35.194.43.14', 'classup', 'classup', 'classup2')
+                # db = MySQLdb.connect('35.194.43.14', 'classup', 'classup', 'classup2')
+                db = MySQLdb.connect('classup-mysql.ce7idolzs1jo.us-east-2.rds.amazonaws.com',
+                                     'classup', 'classup#1', 'classup2')
                 cursor1 = db.cursor()
 
                 # extract the list of all sms for which api_called = false
