@@ -837,11 +837,12 @@ def send_bulk_sms(request):
 
         if image_included == 'true' or image_included == 'yes':
             # 14/11/2019 - need to make sure that 'dev' to be changed to 'prod' when this code is pushed to production
-            long_link = 'https://storage.cloud.google.com/classup/classup2/media/prod/image_video/%s' % \
-                        image_name.replace('@', '')
+            # long_link = 'https://storage.cloud.google.com/classup/classup2/media/prod/image_video/%s' % \
+            #             image_name.replace('@', '')
             # long_link = 'https://storage.cloud.google.com/classup/classup2/media/dev/image_video/%s' % \
             #             image_name.replace('@', '')
-
+            long_link = 'https://classup2.s3.us-east-2.amazonaws.com/media/prod/image_video/%s' % \
+                        image_name.replace('@', '')
             print('long_link = %s' % long_link)
             short_link = long_link
 
