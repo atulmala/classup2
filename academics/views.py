@@ -86,7 +86,7 @@ class ExamListTeacher(generics.ListAPIView):
         print('retrieving exam list for %s of %s' % (teacher_name, school.school_name))
         q = Exam.objects.filter(school=school).order_by('start_date')
         return q
-        
+
 
 class ExamList(generics.ListCreateAPIView):
     serializer_class = ExamSerializer
@@ -133,8 +133,8 @@ class CompletedTestList(generics.ListCreateAPIView):
 
         the_teacher = Teacher.objects.get(email=t)
         q = ClassTest.objects.filter(teacher=the_teacher, exam=exam, is_completed=True).order_by('the_class__sequence',
-                                                                                      'section__section',
-                                                                                      'date_conducted')
+                                                                                                 'section__section',
+                                                                                                 'date_conducted')
         try:
             action = 'Retrieving completed test list for ' + the_teacher.first_name + ' ' + the_teacher.last_name
             log_entry(t, action, 'Normal', True)
@@ -156,8 +156,8 @@ class PendingTestList(generics.ListCreateAPIView):
         the_teacher = Teacher.objects.get(email=t)
 
         q = ClassTest.objects.filter(teacher=the_teacher, exam=exam, is_completed=False).order_by('the_class__sequence',
-                                                                                      'section__section',
-                                                                                      'date_conducted')
+                                                                                                  'section__section',
+                                                                                                  'date_conducted')
         try:
             action = 'Retrieving pending test list for ' + the_teacher.first_name + ' ' + the_teacher.last_name
             log_entry(t, action, 'Normal', True)
@@ -341,7 +341,7 @@ class HWList(generics.ListCreateAPIView):
 
 
 def get_hw_image(request, hw_id):
-    context_dict =  {
+    context_dict = {
 
     }
     context_dict['header'] = 'Send HW Image'
@@ -369,6 +369,7 @@ def get_hw_image(request, hw_id):
             print('Exception 330 from academics views.py %s %s' % (e.message, type(e)))
             response = HttpResponse(status=201)
             return response
+
 
 @csrf_exempt
 def create_hw(request):
@@ -450,7 +451,7 @@ def create_hw(request):
 
 @csrf_exempt
 def create_test1(request, school_id, the_class, section, subject,
-                teacher, d, m, y, max_marks, pass_marks, grade_based, comments, exam_id):
+                 teacher, d, m, y, max_marks, pass_marks, grade_based, comments, exam_id):
     print(request.method)
     context_dict = {
 
@@ -540,7 +541,7 @@ def create_test1(request, school_id, the_class, section, subject,
     # of the class associated with this test
 
     student_list = Student.objects.filter(school=school, current_section__section=section,
-                                          current_class__standard=the_class, active_status=True).\
+                                          current_class__standard=the_class, active_status=True). \
         order_by('fist_name', 'last_name')
     for student in student_list:
         # 15/11/2017 - for higher classes (XI & XII) we need to look into the student subject mapping
@@ -591,7 +592,7 @@ def create_test1(request, school_id, the_class, section, subject,
             else:
                 print ('this is a regular subject. Hence test results will be created for all students')
                 test_result = TestResults(class_test=test, roll_no=student.roll_number,
-                                              student=student, marks_obtained=-5000.00, grade='')
+                                          student=student, marks_obtained=-5000.00, grade='')
                 try:
                     test_result.save()
                     print ('test results successfully created for %s %s' % (student.fist_name, student.last_name))
@@ -633,7 +634,7 @@ def create_test1(request, school_id, the_class, section, subject,
                                                                   date_conducted__lt=term1_date)
 
                         print('%i unit tests have been conducted for in class %s-%s for %s' %
-                                (unit_tests.count(), the_class, s, sub))
+                              (unit_tests.count(), the_class, s, sub))
                         print(unit_tests)
                         marks_array = []
                         for ut in unit_tests:
@@ -658,15 +659,15 @@ def create_test1(request, school_id, the_class, section, subject,
                             print('average of best of two tests = %f' % pa_marks)
                         except Exception as e:
                             print('looks only one cycle test has been conducted for %s in '
-                                    'class %s-%s between Term1 & Terms 2'% (sub.subject_name, the_class, s))
+                                  'class %s-%s between Term1 & Terms 2' % (sub.subject_name, the_class, s))
                             print('exception 11022018-Z from academics views.py %s %s' % (e.message, type(e)))
                             print('hence, taking the single unit/cycle test marks as PA marks')
                             try:
                                 pa_marks = marks_array[0]
                             except Exception as e:
                                 print('looks that marks for % s in %s have not been '
-                                        'entered for any test' % (student.fist_name, sub))
-                                print('exception 13032018-A from academics views.py %s %s' %(e.message, type(e)))
+                                      'entered for any test' % (student.fist_name, sub))
+                                print('exception 13032018-A from academics views.py %s %s' % (e.message, type(e)))
                                 pa_marks = -5000.0
 
                         term_test_result = TermTestResult(test_result=test_result, periodic_test_marks=pa_marks,
@@ -846,7 +847,7 @@ def submit_marks(request, school_id):
 
                     # 27/12/2017 practical marks to be saved
                     if test.the_class.standard in higher_classes:
-                    # if test.the_class.standard == 'XI' or test.the_class.standard == 'XII':
+                        # if test.the_class.standard == 'XI' or test.the_class.standard == 'XII':
                         print ('term test for higher classes. May need to save the practical marks')
                         if test.subject.subject_prac:
                             print ('need to save practical marks for %s' % test.subject.subject_name)
@@ -1337,7 +1338,7 @@ def delete_test(request, test_id):
             teacher = t.teacher.email
             t.delete()
             try:
-                action = 'Deleted test '  + t.the_class.standard + '-' + t.section.section
+                action = 'Deleted test ' + t.the_class.standard + '-' + t.section.section
                 action += ', Subject' + t.subject.subject_name
                 log_entry(teacher, action, 'Normal', True)
             except Exception as e:
@@ -1363,7 +1364,7 @@ def delete_hw(request, hw_id):
             teacher = t.teacher
             t.delete()
             try:
-                action = 'Deleted HW '  + t.the_class + '-' + t.section + ', Subject: ' + t.subject
+                action = 'Deleted HW ' + t.the_class + '-' + t.section + ', Subject: ' + t.subject
                 log_entry(teacher, action, 'Normal', True)
             except Exception as e:
                 print('unable to create logbook entry')

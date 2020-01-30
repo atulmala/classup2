@@ -1127,7 +1127,9 @@ def send_message(request, school_id):
             print('image_file = %s' % image_file)
             print(image_file)
             image_name = request.POST.get('image_name').replace(' ', '_')
-            long_link = 'https://storage.cloud.google.com/classup/classup2/media/prod/image_video/%s' % \
+            # long_link = 'https://storage.cloud.google.com/classup/classup2/media/prod/image_video/%s' % \
+            #             image_name.replace('@', '')
+            long_link = 'https://classup2.s3.us-east-2.amazonaws.com/media/prod/image_video/%s' % \
                         image_name.replace('@', '')
             print('long_link = %s' % long_link)
             short_link = long_link
