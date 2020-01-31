@@ -54,6 +54,7 @@ class AdditionalDetails(models.Model):
     blood_group = models.CharField(max_length=20, default='NA')
     father_occupation = models.CharField(max_length=100, default='Not Available')
     mother_occupation = models.CharField(max_length=100, default='Not Available')
+    date_of_admission = models.DateField(null=True)
 
 
 class House(models.Model):

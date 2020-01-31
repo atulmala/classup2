@@ -1,4 +1,3 @@
-
 # Create your views here.
 
 import StringIO
@@ -6,7 +5,6 @@ import xlsxwriter
 import xlrd
 import json
 import datetime
-
 
 from rest_framework import generics
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
@@ -141,7 +139,7 @@ class ParentInquiry(generics.ListCreateAPIView):
             if not found:
                 found = False
                 print('parent %s with mobile number %s is not associated with any student' %
-                        (p.parent_name, p.parent_mobile1))
+                      (p.parent_name, p.parent_mobile1))
                 print('hence, this parent and associated user will be delted')
 
                 # delete the user & parent
@@ -198,7 +196,7 @@ def get_parent(request, student_id):
 
 
 def get_student_detail(request, student_id):
-    student_detail =    {
+    student_detail = {
 
     }
     if request.method == 'GET':
@@ -246,7 +244,7 @@ class PromoteStudents(generics.ListCreateAPIView):
         return render(request, 'classup/setup_data.html', context_dict)
 
 
-class StudentListDownload (generics.ListAPIView):
+class StudentListDownload(generics.ListAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
     def get(self, request, *args, **kwargs):
@@ -328,16 +326,16 @@ class StudentListDownload (generics.ListAPIView):
 
                 row = 0
                 col = 0
-                sheet.write_string (row, col, 'S No', title)
+                sheet.write_string(row, col, 'S No', title)
                 col = col + 1
-                sheet.set_column ('B:B', 8)
-                sheet.write_string (row, col, 'Admission No', title)
+                sheet.set_column('B:B', 8)
+                sheet.write_string(row, col, 'Admission No', title)
                 col = col + 1
-                sheet.set_column ('C:D', 12)
-                sheet.write_string (row, col, 'First Name', title)
+                sheet.set_column('C:D', 12)
+                sheet.write_string(row, col, 'First Name', title)
                 col += 1
-                sheet.write_string (row, col, 'SurName', title)
-                col +=1
+                sheet.write_string(row, col, 'SurName', title)
+                col += 1
                 sheet.set_column('E:F', 8)
                 sheet.write_string(row, col, 'Class', title)
                 col += 1
@@ -377,11 +375,11 @@ class StudentListDownload (generics.ListAPIView):
                     col = 0
                     s_no = 1
                     for student in students:
-                        sheet.write_number (row, col, s_no, cell_normal)
+                        sheet.write_number(row, col, s_no, cell_normal)
                         col += 1
-                        sheet.write_string (row, col, student.student_erp_id, cell_normal)
+                        sheet.write_string(row, col, student.student_erp_id, cell_normal)
                         col += 1
-                        sheet.write_string (row, col, student.fist_name, cell_normal)
+                        sheet.write_string(row, col, student.fist_name, cell_normal)
                         col += 1
                         sheet.write_string(row, col, student.last_name, cell_normal)
                         col += 1
@@ -453,9 +451,7 @@ class StudentListDownload (generics.ListAPIView):
                             col += 1
                             sheet.write_string(row, col, 'Not Entered', cell_normal)
 
-
                         # current class & section
-
 
                         # promoted class & section
                         # current_class_seq = student.current_class.sequence
@@ -511,7 +507,7 @@ class StudentListDownload (generics.ListAPIView):
                 return render(request, 'classup/result_sheet.html', context_dict)
 
 
-class MidTermAdmission (generics.ListCreateAPIView):
+class MidTermAdmission(generics.ListCreateAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
     def get(self, request, *args, **kwargs):
@@ -565,7 +561,7 @@ class MidTermAdmission (generics.ListCreateAPIView):
                     section = student.current_section
 
                     # get the list of all tests created for this class
-                    tests = ClassTest.objects.filter (the_class=the_class, section=section)
+                    tests = ClassTest.objects.filter(the_class=the_class, section=section)
                     print('total %i test results to be created for %s' % (tests.count(), student_name))
                     print(tests)
                     for test in tests:
@@ -592,7 +588,7 @@ class MidTermAdmission (generics.ListCreateAPIView):
                                     print(third_lang)
                                     print ('%s has chosen %s as third language' % (student_name, subject.subject_name))
                                     test_result = TestResults(class_test=test, roll_no=student.roll_number,
-                                                              student=student, marks_obtained=-5000.00,grade='')
+                                                              student=student, marks_obtained=-5000.00, grade='')
                                     try:
                                         test_result.save()
                                         print ('test results successfully created for subject %s for %s' %
@@ -622,7 +618,7 @@ class MidTermAdmission (generics.ListCreateAPIView):
                                 except Exception as e:
                                     print ('Exception 22010218-D from student views.py %s %s' % (e.message, type(e)))
                                     print ('%s has not chosen %s as third language' % (
-                                    student_name, subject.subject_name))
+                                        student_name, subject.subject_name))
                             else:
                                 print ('this is a regular subject. Mapping will be considered for higher class only')
 
@@ -695,7 +691,7 @@ class MidTermAdmission (generics.ListCreateAPIView):
                                                        (e.message, type(e)))
                                         except Exception as e:
                                             print ('Exception 23012018-C from student views.py %s %s' % (
-                                            e.message, type(e)))
+                                                e.message, type(e)))
                                             print ('%s has not chosen %s as second language' %
                                                    (student_name, subject.subject_name))
                                     else:
@@ -729,7 +725,7 @@ class MidTermAdmission (generics.ListCreateAPIView):
                                                    the_class.standard)
                                             if the_class.standard in middle_classes:
                                                 print ('%s is a middle class. Hence creating PA, '
-                                                       'Notebook Sub & Sub Enrich'% the_class.standard)
+                                                       'Notebook Sub & Sub Enrich' % the_class.standard)
                                                 term_test_result = TermTestResult(test_result=test_result,
                                                                                   periodic_test_marks=-5000.0,
                                                                                   note_book_marks=-5000.0,
@@ -750,7 +746,7 @@ class MidTermAdmission (generics.ListCreateAPIView):
                     for term in terms:
                         try:
                             coscholastic = CoScholastics.objects.get(term=term, the_class=the_class,
-                                                         section=section, student=student)
+                                                                     section=section, student=student)
                             print('coscholastic for %s already exist for %s. Hence not creating' % (term, student))
                         except Exception as e:
                             print('exception 04042019-A from student views.py %s %s' % (e.message, type(e)))
@@ -758,7 +754,8 @@ class MidTermAdmission (generics.ListCreateAPIView):
                             coscholastic = CoScholastics(term=term, the_class=the_class,
                                                          section=section, student=student)
                             coscholastic.save()
-                            print('coscholastic for %s for %s successfully created mid term admission' % (term, student))
+                            print('coscholastic for %s for %s successfully created mid term admission' % (
+                            term, student))
 
                     messages.success(request._request, 'successfully created tests for %s' % student_name)
                     return render(request, 'classup/mid_term_admission.html', context_dict)
@@ -846,7 +843,6 @@ class StudentPromotion(generics.ListCreateAPIView):
 
         return render(request, 'classup/setup_index.html', context_dict)
 
-
         form = ExcelFileUploadForm()
         context_dict['form'] = form
         return render(request, 'classup/setup_data.html', context_dict)
@@ -924,7 +920,7 @@ class StudentPromotion(generics.ListCreateAPIView):
                                         message += 'Jagarn Public School welcomes all students to new session 2018-19. '
                                         message += 'Regards, Dr D.K. Sinha, Principal, JPS Noida'
                                         print(message)
-                                        #sms.send_sms1(school, 'admin@jps.com', mobile, message, 'Student Promotion')
+                                        # sms.send_sms1(school, 'admin@jps.com', mobile, message, 'Student Promotion')
                                         print('sent Student promotion message to %s, parent of %s' %
                                               (parent, student_name))
                                     except Exception as e:
@@ -1162,6 +1158,7 @@ class AddStudent(generics.ListCreateAPIView):
                 print('exception 07082019-E from student views.py %s %s' % (e.message, type(e)))
                 print('failed in setting up date of birth for %s of %s' % (student, school))
 
+            date_of_admission = data['date_of_admission']
             gender = data['gender']
             mother_name = data['mother_name']
             adhar = data['adhar']
@@ -1172,9 +1169,10 @@ class AddStudent(generics.ListCreateAPIView):
             address = data['address']
             try:
                 additional_details = AdditionalDetails(student=student, gender=gender,
-                                                      mother_name=mother_name, adhar=adhar, blood_group=blood_group,
-                                                      father_occupation=father_occupation,
-                                                      mother_occupation=mother_occupation, address=address)
+                                                       date_of_admission=date_of_admission, mother_name=mother_name,
+                                                       adhar=adhar, blood_group=blood_group,
+                                                       father_occupation=father_occupation,
+                                                       mother_occupation=mother_occupation, address=address)
                 additional_details.save()
                 print('saved additional details for %s' % student)
             except Exception as e:
@@ -1306,7 +1304,6 @@ class UpdateStudent(generics.ListCreateAPIView):
                 dob.save()
                 print('date of birth for %s of %s is not set to %s' % (student, school, date_of_birth))
 
-
             gender = data['gender']
             mother_name = data['mother_name']
             adhar = data['adhar']
@@ -1325,7 +1322,7 @@ class UpdateStudent(generics.ListCreateAPIView):
             additional_details.mother_name = mother_name
             additional_details.adhar = adhar
             additional_details.blood_group = blood_group
-            additional_details.father_occupation=father_occupation
+            additional_details.father_occupation = father_occupation
             additional_details.mother_occupation = mother_occupation
             additional_details.address = address
             additional_details.save()

@@ -76,3 +76,8 @@ class ExamResult(models.Model):
     student = models.ForeignKey(Student)
     status = models.BooleanField(default=True)
     detain_reason = models.CharField(max_length=200, default='N/A')
+
+
+class CBSERollNo(models.Model):
+    student = models.ForeignKey(Student)
+    cbse_roll_no = models.CharField(max_length=10)

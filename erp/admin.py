@@ -16,7 +16,7 @@ class AdditionalDetailsAdmin(admin.ModelAdmin):
             print('house for %s not yet set' % obj.student.student_erp_id)
             na = 'Not Available'
             return na
-    list_display = ('student', 'mother_name', 'address', 'get_house')
+    list_display = ('student', 'date_of_admission', 'mother_name', 'address', 'get_house')
     search_fields = ('student__fist_name', 'student__last_name')
     list_filter = ('student__school',)
 
