@@ -2,6 +2,7 @@ from django.contrib import admin
 
 from academics.models import ThirdLang
 from .models import Scheme, HigherClassMapping, NPromoted, Marksheet, Stream, StreamMapping, Wing, ExamResult
+from .models import CBSERollNo
 
 # Register your models here.
 
@@ -120,6 +121,16 @@ class ExamResultAdmin(admin.ModelAdmin):
     list_display = ('get_school_name', 'student', 'status', 'detain_reason',)
     list_filter = ('student__school', 'status',)
     search_fields = ('student__fist_name', 'student__last_name', )
+
+
+@admin.register(CBSERollNo)
+class CBSERollNoAdmin(admin.ModelAdmin):
+    def get_school_name(self, obj):
+        return obj.student.school
+
+    list_display = ('get_school_name', 'student', 'cbse_roll_no')
+    list_filter = ('student__school',)
+    search_fields = ('student__fist_name', 'student__last_name',)
 
 
 
