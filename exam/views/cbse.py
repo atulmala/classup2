@@ -225,9 +225,9 @@ class GenerateCBSESheet(generics.ListCreateAPIView):
                                     sheet.write_number(row, col, marks, cell_normal)
                                     cell = xl_rowcol_to_cell(row, col)
                                     if index == 1:
-                                        formula = '=ROUND(%s/5,0)' % cell
+                                        formula = '=ROUND(%s/6,0)' % cell
                                     else:
-                                        formula = '=ROUND(%s/8,0)' % cell
+                                        formula = '=ROUND(%s/16,0)' % cell
                                     sheet.write_formula(row, col + 3, formula, cell_normal)
                                     index += 1
 

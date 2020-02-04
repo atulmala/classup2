@@ -24,6 +24,10 @@ urlpatterns = [
 
     url(r'^update_teacher/$', views.update_teacher, name='update_teacher'),
 
+    url(r'^set_class_teacher/$', views.SetClassTeacher.as_view(), name='set_class_teacher'),
+
+    url(r'^download_class_teacher_list/$', views.ClassTeacherList.as_view(), name='download_class_teacher_list'),
+
     url(r'^retrieve_attendance/$', views.TheTeacherAttendance1.as_view(), name='retrieve_attendance1'),
 
     url(r'^retrieve_attendance/(?P<school_id>\w+)/(?P<d>\w+)/(?P<m>\w+)/(?P<y>\w+)/$',

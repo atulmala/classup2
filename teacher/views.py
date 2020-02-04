@@ -1,6 +1,8 @@
+import StringIO
 import json
 from datetime import date
 
+import xlsxwriter
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
@@ -12,11 +14,13 @@ from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
 
+from formats.formats import Formats as format
 from operations import sms
 from authentication.views import log_entry
 from academics.models import Subject, ClassTeacher, Class, Section, TeacherSubjects
 from setup.models import School, UserSchoolMapping, Configurations
 from operations.models import SMSRecord
+from student.models import Student
 from .models import Teacher, TeacherAttendance, TeacherAttendnceTaken, TeacherMessageRecord, MessageReceivers
 
 from operations.serializers import SMSDetailSerializer
@@ -333,6 +337,148 @@ def delete_teacher(request):
             return JSONResponse(response_dict, status=201)
 
 
+class ClassTeacherList(generics.ListCreateAPIView):
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.body)
+        school_id = data['school_id']
+        school = School.objects.get(id=school_id)
+
+        file_name = 'class_teacher.xlsx'
+        output = StringIO.StringIO(file_name)
+        file = xlsxwriter.Workbook(output)
+        fmt = format()
+        title_format = file.add_format(fmt.get_title())
+        title_format.set_border()
+        header = file.add_format(fmt.get_header())
+        cell_bold = file.add_format(fmt.get_cell_bold())
+        cell_bold.set_border()
+        cell_center = file.add_format(fmt.get_cell_center())
+        cell_center.set_border()
+        cell_left = file.add_format(fmt.get_cell_left())
+        cell_left.set_border()
+        cell_normal = file.add_format(fmt.get_cell_normal())
+        cell_normal.set_border()
+        sheet_name = 'Class Teacher List'
+        sheet = file.add_worksheet(sheet_name)
+        sheet.set_portrait()
+        sheet.set_paper(9)
+        sheet.fit_to_pages(1, 0)
+        sheet.set_footer('&L%s&R%s' % (school.school_name, 'Class Teacher List'))
+        sheet.set_column('A:A', 5)
+        sheet.set_column('B:B', 8)
+        sheet.set_column('C:C', 8)
+        sheet.set_column('D:D', 20)
+        sheet.set_column('E:E', 15)
+
+        sheet.merge_range('A1:E1', school.school_name, header)
+        sheet.merge_range('A2:E2', 'Class Teacher List', header)
+
+        row = 2
+        col = 0
+        s_no = 1
+        sheet.write_string(row, col, 'S No', cell_bold)
+        col += 1
+        sheet.write_string(row, col, 'Class', cell_bold)
+        col += 1
+        sheet.write_string(row, col, 'Section', cell_bold)
+        col += 1
+        sheet.write_string(row, col, 'Class Teacher', cell_bold)
+        col += 1
+        sheet.write_string(row, col, 'Mobile Number', cell_bold)
+        row += 1
+        col = 0
+
+        classes = Class.objects.filter(school=school).order_by('sequence')
+        sections = Section.objects.filter(school=school).order_by('section')
+
+        for a_class in classes:
+            for section in sections:
+                students = Student.objects.filter(current_class=a_class, current_section=section)
+                if students.count() < 1:
+                    print('class %s-%s of %s is empty. skipping...' % (a_class, section, school))
+                    continue
+                print('determining the class teacher for class %s-%s in %s' % (a_class, section, school))
+                sheet.write_number(row, col, s_no, cell_normal)
+                s_no += 1
+                col += 1
+                sheet.write_string(row, col, a_class.standard, cell_normal)
+                col += 1
+                sheet.write_string(row, col, section.section, cell_normal)
+                col += 1
+
+                try:
+                    ct = ClassTeacher.objects.get(school=school, standard=a_class, section=section)
+                    class_teacher = ct.class_teacher
+                    name = '%s %s' % (class_teacher.first_name, class_teacher.last_name)
+                    sheet.write_string(row, col, name, cell_left)
+                    col += 1
+
+                    mobile = class_teacher.mobile
+                    sheet.write_string(row, col, mobile, cell_normal)
+                except Exception as e:
+                    print('exception 04022020-D from teacher views.py %s %s' % (e.message, type(e)))
+                    print('class teacher for class %s-%s of %s not set' % (a_class, section, school))
+                    sheet.write_string(row, col, 'Not Set', cell_bold)
+                    col += 1
+                    sheet.write_string(row, col, 'Not Set', cell_bold)
+                row += 1
+                col = 0
+        file.close()
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=%s' % file_name
+        response.write(output.getvalue())
+        return response
+
+
+class SetClassTeacher(generics.ListCreateAPIView):
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.body)
+        school_id = data['school_id']
+        school = School.objects.get(id=school_id)
+        the_class = data['the_class']
+        c = Class.objects.get(school=school, standard=the_class)
+        section = data['section']
+        s = Section.objects.get(school=school, section=section)
+        teacher_id = data['teacher_id']
+        t = Teacher.objects.get(id=teacher_id)
+
+        try:
+            ct = ClassTeacher.objects.get(school=school, standard=c, section=s)
+            cct = ct.class_teacher  # current class teacher?
+            ct.class_teacher = t
+            ct.save()
+            message = cct.first_name + ' ' + cct.last_name + ' was the Class Teacher for class '
+            message += the_class + ' ' + section + '. Now the new Class Teacher is '
+            message += '%s %s' % (t.first_name, t.last_name)
+            print(message)
+            response_dict = {'message': message}
+            response_dict['status'] = 'success'
+            return JSONResponse(response_dict, status=200)
+        except Exception as e:
+            print('Exception 04022020-A from teachers views.py = %s (%s) ' % (e.message, type(e)))
+            print('no Class Teacher was set for class ' + the_class + ' ' + section + '. Setting now...')
+            try:
+                ct = ClassTeacher()
+                ct.school = school
+                ct.standard = c
+                ct.section = s
+                ct.class_teacher = t
+                ct.save()
+                message = '%s is now assigned as Class Teacher for class ' % t
+                message += the_class + ' ' + section
+                print(message)
+                response_dict['message'] = message
+                response_dict['status'] = 'success'
+                return JSONResponse(response_dict, status=200)
+            except Exception as e:
+                print ('Exception 04022020-B from teachers views.py = %s (%s) ' % (e.message, type(e)))
+                error_message = 'failed to set %s as Class Teacher for class: ' % t
+                error_message += the_class + ' ' + section
+                print(error_message)
+                response_dict['error_message'] = error_message
+                return JSONResponse(response_dict, status=201)
+
+
 @csrf_exempt
 def update_teacher(request):
     response_dict = {
@@ -343,11 +489,21 @@ def update_teacher(request):
             data = json.loads(request.body)
             print(data)
             teacher_id = data['teacher_id']
-            teacher_name = data['teacher_name']
             teacher_login = data['teacher_login']
             teacher_mobile = data['teacher_mobile']
+            teacher_name = data['teacher_name']
+            first_name = teacher_name.split()[0]
+            last_name = ' '
+            try:
+                last_name += teacher_name.split()[1]
+                last_name += ' %s' % teacher_name.split()[2]
+            except Exception as e:
+                print('exception 03022020-B from teacher views.py %s %s' % (e.message, type(e)))
+                print('last name of teacher not mentioned completely')
+
             teacher = Teacher.objects.get(id=teacher_id)
-            teacher.first_name = teacher_name
+            teacher.first_name = first_name
+            teacher.last_name = last_name
             teacher.email = teacher_login
             teacher.mobile = teacher_mobile
             teacher.save()
@@ -426,8 +582,15 @@ def add_teacher(request):
             #employee_id = data['employee_id']
             email = data['email']
             mobile = data['mobile']
-            first_name = data['full_name']
+            full_name = data['full_name']
+            first_name = full_name.split()[0]
             last_name = ' '
+            try:
+                last_name += full_name.split()[1]
+                last_name += ' %s' % full_name.split()[2]
+            except Exception as e:
+                print('exception 03022020-A from teacher views.py %s %s' % (e.message, type(e)))
+                print('last name of teacher not mentioned completely')
 
             school = School.objects.get(id=school_id)
 
@@ -447,6 +610,7 @@ def add_teacher(request):
                 t = Teacher()
                 t.school = school
                 t.first_name = first_name
+                t.last_name = last_name
                 t.email = email
                 t.mobile = mobile
                 t.active_status = True
