@@ -208,7 +208,7 @@ def auth_login(request):
                             login_form.errors['__all__'] = login_form.error_class([error])
                             return render(request, 'classup/auth_login.html', context_dict)
                 except Exception as e:
-                    print ('unable to retrieve schoo_id for ' + user.username)
+                    print ('unable to retrieve school_id for ' + user.username)
                     print('Exception 8 from authentication views.py = %s (%s)' % (e.message, type(e)))
                     log_entry(the_user, "Unable to retrieve School Id. Exception 8 authentication views.py",
                               "Normal", True)

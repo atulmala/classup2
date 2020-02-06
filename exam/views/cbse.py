@@ -95,7 +95,7 @@ class GenerateCBSESheet(generics.ListCreateAPIView):
         cell_normal.set_border()
 
         sections = Section.objects.filter(school=school)
-        subject_list = ['English', 'Hindi', 'French', 'Mathematics', 'Science', 'Social Studies']
+        subject_list = ['English', 'Hindi', 'Sanskrit', 'French', 'Mathematics', 'Science', 'Social Studies']
         for section in sections:
             students = Student.objects.filter(current_class=the_class, current_section=section)
             if students.count() > 0:
