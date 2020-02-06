@@ -76,7 +76,7 @@ class StudentList(generics.ListAPIView):
 
                 try:
                     q1 = Student.objects.filter(school=school, fist_name__icontains=first_name,
-                                                current_class=current_class)
+                                                current_class=current_class, active_status=True)
                     q2 = q1.order_by('fist_name')
                     return q2
                 except Exception as e:
