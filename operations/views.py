@@ -894,13 +894,14 @@ def send_bulk_sms(request):
                             print('short_link = %s' % short_link)
                             image_video.short_link = short_link
                             image_video.save()
-
-                        except DataError as e:
+                            print('image saved ')
+                        except Exception as e:
                             print('exception 20082019-B from operations views.py %s %s' % (e.message, type(e)))
                             print('error in saving image/video for admin broadcast')
                     student_list = Student.objects.filter(current_class=the_class, current_section=section,
                                                           active_status=True)
                     start_time = time.time()
+                    print('now sending to students of class %s-%s of %s' % (the_class, section, school))
                     for student in student_list:
                         student_name = '%s %s' % (student.fist_name, student.last_name)
                         parent = student.parent
