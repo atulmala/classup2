@@ -132,7 +132,8 @@ class Formats():
 
     cell_left = {
         'align': 'left',
-        'valign': 'vcenter'
+        'valign': 'vcenter',
+        'text_wrap': True
     }
 
     def get_cell_left(self):

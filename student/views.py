@@ -14,6 +14,7 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 from django.db.models import Max
 
+from formats.formats import Formats as format
 from setup.models import School, Configurations
 from academics.models import ClassTest, TestResults, TermTestResult, ThirdLang, Class, Section, CoScholastics
 from exam.models import HigherClassMapping, NPromoted
@@ -244,267 +245,198 @@ class PromoteStudents(generics.ListCreateAPIView):
         return render(request, 'classup/setup_data.html', context_dict)
 
 
-class StudentListDownload(generics.ListAPIView):
+class StudentListDownload(generics.ListCreateAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
-
-    def get(self, request, *args, **kwargs):
-        context_dict = {
-
-        }
-        context_dict['school_name'] = request.session['school_name']
-        context_dict['header'] = 'Download Student List for a Class'
-
-        if request.session['user_type'] == 'school_admin':
-            context_dict['user_type'] = 'school_admin'
-
-        school_id = request.session['school_id']
-        form = ResultSheetForm(school_id=school_id)
-        context_dict['form'] = form
-        return render(request, 'classup/student_list.html', context_dict)
 
     def post(self, request, *args, **kwargs):
         context_dict = {
 
         }
-        context_dict['school_name'] = request.session['school_name']
-        context_dict['header'] = 'Download Result Sheets'
+        data = json.loads(request.body)
+        print(data)
+        school_id = data['school_id']
+        school = School.objects.get(id=school_id)
+        whole_school = data['whole_school']
+        print(whole_school)
+        standard = data['the_class']
+        if standard != '':
+            the_class = Class.objects.get(school=school, standard=standard)
+        sec = data['section']
+        if sec != '':
+            section = Section.objects.get(school=school, section=sec)
+        all_sections = data['all_sections']
+        print(all_sections)
 
-        if request.session['user_type'] == 'school_admin':
-            context_dict['user_type'] = 'school_admin'
-        if "cancel" in request.POST:
-            return render(request, 'classup/student_list.html', context_dict)
+        if whole_school:
+            excel_file_name = 'Student_List.xlsx'
+            students = Student.objects.filter(school=school,
+                                              active_status=True).order_by('current_class__sequence',
+                                                                           'current_section', 'fist_name', 'last_name')
         else:
-            school_id = request.session['school_id']
-            school = School.objects.get(id=school_id)
-            school_name = school.school_name
-            school_name = school_name.replace(' ', '_')
-            form = ResultSheetForm(request.POST, school_id=school_id)
-
-            if form.is_valid():
-                the_class = form.cleaned_data['the_class']
-                section = form.cleaned_data['section']
-                print (' sheet will be generated for %s-%s' % (the_class.standard, section.section))
-
-                excel_file_name = '%s_Student_List_%s-%s.xlsx' % (str(school_name),
-                                                                  str(the_class.standard), str(section.section))
-                output = StringIO.StringIO(excel_file_name)
-                workbook = xlsxwriter.Workbook(output)
-                sheet = workbook.add_worksheet('Student List %s-%s' % (str(the_class.standard), section.section))
-                sheet.freeze_panes(1, 0)
-                border = workbook.add_format()
-                border.set_border()
-
-                title = workbook.add_format({
-                    'bold': True,
-                    'font_size': 14,
-                    'align': 'center',
-                    'valign': 'vcenter'
-                })
-
-                cell_normal = workbook.add_format({
-                    'align': 'left',
-                    'valign': 'top',
-                    'text_wrap': True
-                })
-                cell_normal.set_border()
-                cell_center = workbook.add_format({
-                    'align': 'center',
-                    'valign': 'vcenter',
-                    'text_wrap': True,
-                    'bold': True
-                })
-                cell_center.set_border()
-                vertical_text = workbook.add_format({
-                    'align': 'center',
-                    'valign': 'vcenter',
-                    'bold': True,
-                    'rotation': 90
-                })
-                vertical_text.set_border()
-                fail_format = workbook.add_format()
-                fail_format.set_bg_color('yellow')
-
-                row = 0
-                col = 0
-                sheet.write_string(row, col, 'S No', title)
-                col = col + 1
-                sheet.set_column('B:B', 8)
-                sheet.write_string(row, col, 'Admission No', title)
-                col = col + 1
-                sheet.set_column('C:D', 12)
-                sheet.write_string(row, col, 'First Name', title)
-                col += 1
-                sheet.write_string(row, col, 'SurName', title)
-                col += 1
-                sheet.set_column('E:F', 8)
-                sheet.write_string(row, col, 'Class', title)
-                col += 1
-                sheet.write_string(row, col, 'Section', title)
-                col += 1
-                sheet.set_column('G:G', 10)
-                sheet.write_string(row, col, 'DOB(dd/mm/yy)', title)
-                col += 1
-                sheet.set_column('H:K', 15)
-                sheet.write_string(row, col, 'Father Name', title)
-                col += 1
-                sheet.write_string(row, col, 'Father Mobile', title)
-                col += 1
-                sheet.write_string(row, col, 'Mother Name', title)
-                col += 1
-                sheet.write_string(row, col, 'Mother Mobile', title)
-                col += 1
-                sheet.set_column('L:L', 45)
-                sheet.write_string(row, col, 'Address', title)
-                col += 1
-                sheet.write_string(row, col, 'House', title)
-                col += 1
-                sheet.set_column('N:N', 10)
-                sheet.write_string(row, col, 'Bus Rout', title)
-                col += 1
-                sheet.set_column('O:O', 16)
-                sheet.write_string(row, col, 'Bus Stop', title)
-                col += 1
-
-                try:
-                    students = Student.objects.filter(school=school,
-                                                      active_status=True).order_by('current_class__sequence',
-                                                                                   'current_section', 'fist_name')
-                    print ('retrieved the list of students for %s-%s' % (the_class.standard, section.section))
-                    print (students.count())
-                    row = row + 1
-                    col = 0
-                    s_no = 1
-                    for student in students:
-                        sheet.write_number(row, col, s_no, cell_normal)
-                        col += 1
-                        sheet.write_string(row, col, student.student_erp_id, cell_normal)
-                        col += 1
-                        sheet.write_string(row, col, student.fist_name, cell_normal)
-                        col += 1
-                        sheet.write_string(row, col, student.last_name, cell_normal)
-                        col += 1
-                        current_class = student.current_class.standard
-                        sheet.write_string(row, col, current_class, cell_normal)
-                        col += 1
-                        current_section = student.current_section.section
-                        sheet.write_string(row, col, current_section, cell_normal)
-                        col += 1
-                        try:
-                            d = DOB.objects.get(student=student)
-                            dob = d.dob
-                            sheet.write_string(row, col, dob.strftime('%d/%m/%Y'), cell_normal)
-                        except Exception as e:
-                            print('exception 03072019-A from student views.py %s %s' % (e.message, type(e)))
-                            print('dob for %s not entered' % student)
-                            sheet.write_string(row, col, 'Not Entered', cell_normal)
-                        col += 1
-                        parent = student.parent.parent_name
-                        sheet.write_string(row, col, parent, cell_normal)
-                        col += 1
-                        mobile = student.parent.parent_mobile1
-                        sheet.write_string(row, col, mobile, cell_normal)
-                        col += 1
-                        try:
-                            a = AdditionalDetails.objects.get(student=student)
-                            mother_name = a.mother_name
-                            sheet.write_string(row, col, mother_name, cell_normal)
-                        except Exception as e:
-                            print('exception 03072019-B from student views.py %s %s' % (e.message, type(e)))
-                            print('mother name not entered for %s' % student)
-                            sheet.write_string(row, col, 'Not Entered', cell_normal)
-                        col += 1
-                        mobile2 = student.parent.parent_mobile2
-                        if mobile2 == '1234567890':
-                            mobile2 = 'Not Entered'
-                        sheet.write_string(row, col, mobile2, cell_normal)
-                        col += 1
-                        try:
-                            a = AdditionalDetails.objects.get(student=student)
-                            address = a.address
-                            sheet.write_string(row, col, address, cell_normal)
-                        except Exception as e:
-                            print('exception 03072019-C from student views.py %s %s' % (e.message, type(e)))
-                            print('address name not entered for %s' % student)
-                            sheet.write_string(row, col, 'Not Entered', cell_normal)
-                        col += 1
-                        try:
-                            h = House.objects.get(student=student)
-                            house = h.house
-                            sheet.write_string(row, col, house, cell_normal)
-                        except Exception as e:
-                            print('exception 03072019-D from student views.py %s %s' % (e.message, type(e)))
-                            print('house not entered for %s' % student)
-                            sheet.write_string(row, col, 'Not Entered', cell_normal)
-                        col += 1
-                        try:
-                            sr = Student_Rout.objects.get(student=student)
-                            bus_rout = sr.bus_root.bus_root
-                            sheet.write_string(row, col, bus_rout, cell_normal)
-                            col += 1
-                            bus_stop = sr.bus_stop.stop_name
-                            sheet.write_string(row, col, bus_stop, cell_normal)
-                            col += 1
-                        except Exception as e:
-                            print('exception 03072019-E from student views.py %s %s' % (e.message, type(e)))
-                            print('bus rout or bus stop not entered for %s' % student)
-                            sheet.write_string(row, col, 'Not Entered', cell_normal)
-                            col += 1
-                            sheet.write_string(row, col, 'Not Entered', cell_normal)
-
-                        # current class & section
-
-                        # promoted class & section
-                        # current_class_seq = student.current_class.sequence
-                        # next_class_seq = current_class_seq + 1
-                        # next = Class.objects.get(school=student.school, sequence=next_class_seq)
-
-                        # 15/03/2019 0 student will be promoted only if the name is NOT in NPromoted table
-                        # try:
-                        #     failed = NPromoted.objects.get(student=student)
-                        #     print('%s has failed in class %s. Hence not promoting' % (student, current_class))
-                        #     next_class = current_class
-                        #     sheet.write_string(row, col, next_class, cell_normal)
-                        #     col += 1
-                        #     sheet.write_string(row, col, current_section, cell_normal)
-                        #     sheet.conditional_format(row, 0, row, col + 1, {'type': 'no_blanks',
-                        #                                                                'format': fail_format})
-                        # except Exception as e:
-                        #     print('exception 15030219-A from student views.py %s %s' % (e.message, type(e)))
-                        #     print('%s has passed in class %s. Hence, promoting to next class' %
-                        #           (student, current_class))
-                        #
-                        #     try:
-                        #         next_class = next.standard
-                        #         print('determined the next class for %s: %s-%s' %
-                        #               (student_name, next_class, current_section))
-                        #         sheet.write_string(row, col, next_class, cell_normal)
-                        #         col += 1
-                        #         sheet.write_string(row, col, current_section, cell_normal)
-                        #     except Exception as e:
-                        #         print('failed to determine the next class for %s' % student_name)
-                        #         print('exception 06032018-A from student views.py %s %s' % (e.message, type(e)))
-                        row = row + 1
-                        s_no = s_no + 1
-                        col = 0
-                    workbook.close()
-                    response = HttpResponse(content_type='application/vnd.ms-excel')
-                    response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
-                    response.write(output.getvalue())
-                    return response
-                except Exception as e:
-                    print ('exception 21010218-A from student views.py %s %s' % (e.message, type(e)))
-                    print ('failed to retrieve the list of students for %s-%s' % (the_class.standard, section.section))
-                    workbook.close()
-                    response = HttpResponse(content_type='application/vnd.ms-excel')
-                    response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
-                    response.write(output.getvalue())
-                    return response
+            if all_sections:
+                excel_file_name = '%s_Student_List.xlsx' % (the_class)
+                students = Student.objects.filter(school=school, current_class=the_class,
+                                                  active_status=True).order_by('current_class__sequence',
+                                                                               'current_section', 'fist_name',
+                                                                               'last_name')
             else:
-                error = 'You have missed to select either Class, or Section'
-                form = ResultSheetForm(request)
-                context_dict['form'] = form
-                form.errors['__all__'] = form.error_class([error])
-                return render(request, 'classup/result_sheet.html', context_dict)
+                excel_file_name = '%s_%s_Student_List.xlsx' % (the_class, section)
+                students = Student.objects.filter(school=school, current_class=the_class, current_section=section,
+                                                  active_status=True).order_by('fist_name', 'last_name')
+
+        print (students.count())
+
+        output = StringIO.StringIO(excel_file_name)
+        workbook = xlsxwriter.Workbook(output)
+        sheet = workbook.add_worksheet('Student List')
+        sheet.set_paper(9)
+        sheet.set_landscape()
+        sheet.fit_to_pages(1, 0)
+        sheet.repeat_rows(0)
+        header_text = '%s Student List as on &D(mm/dd/yy)' % (school)
+        sheet.set_header('&C%s' % header_text, {'font_size': 22})
+        sheet.set_footer('&RPage of &P of &N')
+
+        fmt = format()
+        title = workbook.add_format(fmt.get_title())
+        title.set_border()
+        cell_left = workbook.add_format(fmt.get_cell_normal())
+        cell_left.set_border()
+        cell_left = workbook.add_format(fmt.get_cell_left())
+        cell_left.set_border()
+        cell_center = workbook.add_format(fmt.get_cell_center())
+        cell_center.set_border()
+        small_cell = workbook.add_format(fmt.get_cell_small())
+
+        row = 0
+        col = 0
+        sheet.write_string(row, col, 'S No', title)
+        col = col + 1
+        sheet.set_column('A:A', 5)
+        sheet.set_column('B:B', 12)
+        sheet.write_string(row, col, 'Admission No', title)
+        col = col + 1
+        sheet.set_column('C:D', 10)
+        sheet.write_string(row, col, 'First Name', title)
+        col += 1
+        sheet.write_string(row, col, 'SurName', title)
+        col += 1
+        sheet.set_column('E:F', 8)
+        sheet.write_string(row, col, 'Class', title)
+        col += 1
+        sheet.write_string(row, col, 'Section', title)
+        col += 1
+        sheet.set_column('G:G', 10)
+        sheet.write_string(row, col, 'DOB(dd/mm/yy)', title)
+        col += 1
+        sheet.set_column('H:K', 15)
+        sheet.write_string(row, col, 'Father Name', title)
+        col += 1
+        sheet.write_string(row, col, 'Father Mobile', title)
+        col += 1
+        sheet.write_string(row, col, 'Mother Name', title)
+        col += 1
+        sheet.write_string(row, col, 'Mother Mobile', title)
+        col += 1
+        sheet.set_column('L:L', 30)
+        sheet.write_string(row, col, 'Address', title)
+        col += 1
+        sheet.write_string(row, col, 'House', title)
+        col += 1
+        sheet.set_column('N:N', 10)
+        sheet.write_string(row, col, 'Bus Rout', title)
+        col += 1
+        sheet.set_column('O:O', 16)
+        sheet.write_string(row, col, 'Bus Stop', title)
+        col += 1
+
+        row = row + 1
+        col = 0
+        s_no = 1
+        for student in students:
+            sheet.write_number(row, col, s_no, cell_left)
+            col += 1
+            sheet.write_string(row, col, student.student_erp_id, cell_left)
+            col += 1
+            sheet.write_string(row, col, student.fist_name, cell_left)
+            col += 1
+            sheet.write_string(row, col, student.last_name, cell_left)
+            col += 1
+            current_class = student.current_class.standard
+            sheet.write_string(row, col, current_class, cell_center)
+            col += 1
+            current_section = student.current_section.section
+            sheet.write_string(row, col, current_section, cell_center)
+            col += 1
+            try:
+                d = DOB.objects.get(student=student)
+                dob = d.dob
+                sheet.write_string(row, col, dob.strftime('%d/%m/%Y'), cell_left)
+            except Exception as e:
+                print('exception 03072019-A from student views.py %s %s' % (e.message, type(e)))
+                print('dob for %s not entered' % student)
+                sheet.write_string(row, col, 'Not Entered', cell_left)
+            col += 1
+            parent = student.parent.parent_name
+            sheet.write_string(row, col, parent, cell_left)
+            col += 1
+            mobile = student.parent.parent_mobile1
+            sheet.write_string(row, col, mobile, cell_left)
+            col += 1
+            try:
+                a = AdditionalDetails.objects.get(student=student)
+                mother_name = a.mother_name
+                sheet.write_string(row, col, mother_name, cell_left)
+            except Exception as e:
+                print('exception 03072019-B from student views.py %s %s' % (e.message, type(e)))
+                print('mother name not entered for %s' % student)
+                sheet.write_string(row, col, 'Not Entered', cell_left)
+            col += 1
+            mobile2 = student.parent.parent_mobile2
+            if mobile2 == '1234567890':
+                mobile2 = 'Not Entered'
+            sheet.write_string(row, col, mobile2, cell_left)
+            col += 1
+            try:
+                a = AdditionalDetails.objects.get(student=student)
+                address = a.address
+                sheet.write_string(row, col, address, small_cell)
+            except Exception as e:
+                print('exception 03072019-C from student views.py %s %s' % (e.message, type(e)))
+                print('address name not entered for %s' % student)
+                sheet.write_string(row, col, 'Not Entered', cell_left)
+            col += 1
+            try:
+                h = House.objects.get(student=student)
+                house = h.house
+                sheet.write_string(row, col, house, cell_left)
+            except Exception as e:
+                print('exception 03072019-D from student views.py %s %s' % (e.message, type(e)))
+                print('house not entered for %s' % student)
+                sheet.write_string(row, col, 'Not Entered', cell_left)
+            col += 1
+            try:
+                sr = Student_Rout.objects.get(student=student)
+                bus_rout = sr.bus_root.bus_root
+                sheet.write_string(row, col, bus_rout, cell_left)
+                col += 1
+                bus_stop = sr.bus_stop.stop_name
+                sheet.write_string(row, col, bus_stop, cell_left)
+                col += 1
+            except Exception as e:
+                print('exception 03072019-E from student views.py %s %s' % (e.message, type(e)))
+                print('bus rout or bus stop not entered for %s' % student)
+                sheet.write_string(row, col, 'Not Entered', cell_left)
+                col += 1
+                sheet.write_string(row, col, 'Not Entered', cell_left)
+            row = row + 1
+            s_no = s_no + 1
+            col = 0
+        workbook.close()
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
+        response.write(output.getvalue())
+        return response
 
 
 class MidTermAdmission(generics.ListCreateAPIView):
@@ -755,7 +687,7 @@ class MidTermAdmission(generics.ListCreateAPIView):
                                                          section=section, student=student)
                             coscholastic.save()
                             print('coscholastic for %s for %s successfully created mid term admission' % (
-                            term, student))
+                                term, student))
 
                     messages.success(request._request, 'successfully created tests for %s' % student_name)
                     return render(request, 'classup/mid_term_admission.html', context_dict)
