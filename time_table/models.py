@@ -48,7 +48,7 @@ class Period(models.Model):
     symbol = models.CharField(max_length=6, null=True)
 
     def __unicode__(self):
-        return self.period
+        return self.symbol
 
 
 class TimeTable(models.Model):
