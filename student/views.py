@@ -293,7 +293,7 @@ class StudentListDownload(generics.ListCreateAPIView):
         sheet.set_landscape()
         sheet.fit_to_pages(1, 0)
         sheet.repeat_rows(0)
-        header_text = '%s Student List as on &D(mm/dd/yy)' % (school)
+        header_text = '%s Student List as on &D' % (school)
         sheet.set_header('&C%s' % header_text, {'font_size': 22})
         sheet.set_footer('&RPage of &P of &N')
 

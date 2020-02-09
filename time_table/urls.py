@@ -30,6 +30,9 @@ urlpatterns = [
     url(r'^get_time_table/(?P<school_id>\w+)/(?P<for>\w+)/(?P<id>[\w.@+-]+)/(?P<day>\w+)/$', views.PeriodList.as_view(),
         name='get_time_table'),
 
+    url(r'^get_periods/(?P<school_id>\w+)/$', views.Periods.as_view(), name='get_periods'),
+    url(r'^set_period/$', views.SetPeriod.as_view(), name='set_period')
+
 
 ]
 

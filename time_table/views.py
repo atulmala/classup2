@@ -14,6 +14,7 @@ from django.utils.translation import ugettext
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework import generics
 
+from authentication.views import JSONResponse
 from setup.forms import ExcelFileUploadForm
 from exam.forms import ResultSheetForm
 from setup.views import validate_excel_extension
@@ -26,6 +27,7 @@ from operations import sms
 from .serializers import *
 from .models import *
 
+
 # Create your views here.
 
 
@@ -34,13 +36,24 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
         return  # To not perform the csrf check previously happening
 
 
-class ArrangementListForTeachers (generics.ListAPIView):
+class ArrangementListForTeachers(generics.ListAPIView):
     serializer_class = ArrangementSerializer
 
     def get_queryset(self):
         email = self.kwargs['teacher']
-        teacher = Teacher.objects.get (email=email)
-        q = Arrangements.objects.filter (teacher=teacher, date=datetime.datetime.today()).order_by ('period')
+        teacher = Teacher.objects.get(email=email)
+        q = Arrangements.objects.filter(teacher=teacher, date=datetime.datetime.today()).order_by('period')
+        return q
+
+
+class Periods(generics.ListAPIView):
+    serializer_class = PeriodSerializer
+
+    def get_queryset(self):
+        print('inside get_queryset')
+        school_id = self.kwargs['school_id']
+        school = School.objects.get(id=school_id)
+        q = Period.objects.filter(school=school)
         return q
 
 
@@ -72,6 +85,104 @@ class PeriodList(generics.ListAPIView):
             section = student.current_section
             q = CTimeTable.objects.filter(the_class=the_class, section=section, day=day).order_by('period__period')
             return q
+
+
+class SetPeriod(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def post(self, request, *args, **kwargs):
+        data = json.loads(request.body)
+        print(data)
+        school_id = data['school_id']
+        school = School.objects.get(id=school_id)
+
+        d = data['day']
+        day = DaysOfWeek.objects.get(day=d)
+
+        standard = data['the_class']
+        the_class = Class.objects.get(school=school, standard=standard)
+        sec = data['section']
+        section = Section.objects.get(school=school, section=sec)
+
+        symbol = data['period']
+        period = Period.objects.get(school=school, symbol=symbol)
+
+        sub = data['subject']
+        subject = Subject.objects.get(school=school, subject_name=sub)
+
+        teacher_id = data['teacher_id']
+        teacher = Teacher.objects.get(pk=teacher_id)
+
+        # set the TimeTable table
+        print('setting up inside the main time table')
+        try:
+            tt = TimeTable.objects.get(school=school, day=day, the_class=the_class, section=section, period=period)
+            print('%s class %s-%s period # %s is already. '
+                  'This will be updated' % (day, the_class, section, period))
+            tt.subject = subject
+            tt.teacher = teacher
+            tt.save()
+            message = '%s class %s-%s period # %s is now updated to %s and reassigned to %s. ' % (day, the_class,
+                                                                                                  section, period,
+                                                                                                  subject,
+                                                                                                  teacher)
+        except Exception as e:
+            print('exception 09022020-A from timetable views.py %s %s' % (e.message, type(e)))
+            print('%s class %s-%s period # %s is not yet assigned. Will be assigned now '
+                  'This will be updated' % (day, the_class, section, period))
+            tt = TimeTable(school=school, day=day, the_class=the_class, section=section, period=period)
+            tt.subject = subject
+            tt.teacher = teacher
+            tt.save()
+            message = '%s class %s-%s period # %s is now set to %s and assigned to %s. ' % (day, the_class,
+                                                                                            section, period, subject,
+                                                                                            teacher)
+        print(message)
+
+        # same entries in the Class Time Table ie CTimeTable
+        print('repeating for the CTimeTable')
+        try:
+            ctt = CTimeTable.objects.get(school=school, day=day, the_class=the_class, section=section, period=period)
+            print('%s class %s-%s period # %s is already set to %s and assigned to %s (in CTimeTable). '
+                  'This will be updated' % (day, the_class, section, period, subject, teacher))
+            ctt.subject = subject
+            ctt.teacher = teacher
+            ctt.save()
+            message = '%s class %s-%s period # %s is now updated to %s and reassigned to %s. ' % (day, the_class,
+                                                                                                  section, period,
+                                                                                                  subject,
+                                                                                                  teacher)
+        except Exception as e:
+            print('exception 09022020-B from timetable views.py %s %s' % (e.message, type(e)))
+            print('%s class %s-%s period # %s is not yet assigned (in CTimeTable). Will be assigned now '
+                  'This will be updated' % (day, the_class, section, period))
+            ctt = CTimeTable(school=school, day=day, the_class=the_class, section=section, period=period)
+            ctt.subject = subject
+            ctt.teacher = teacher
+            ctt.save()
+            message = '%s class %s-%s period # %s is now set to %s and assigned to %s. ' % (day, the_class,
+                                                                                            section, period, subject,
+                                                                                            teacher)
+        print(message)
+
+        # set teacher period table
+        try:
+            tp = TeacherPeriods.objects.get(teacher=teacher, day=day, period=period)
+            print('period %s for %s on %s is already set. This will be updated' % (period, teacher, day))
+            tp.the_class = the_class
+            tp.section = section
+            tp.save()
+            print('period %s for %s on %s is now updated' % (period, teacher, day))
+        except Exception as e:
+            print('exception 09022020-C from time_table views.py %s %s' % (e.message, type(e)))
+            print('period %s for %s on %s is not yet set. This will be set' % (period, teacher, day))
+            tp = TeacherPeriods(teacher=teacher, day=day, period=period)
+            tp.the_class = the_class
+            tp.section = section
+            tp.save()
+            print('period %s for %s on %s is now set' % (period, teacher, day))
+        context_dict = {'message': message}
+        return JSONResponse(context_dict, status=200)
 
 
 class TheTimeTable(generics.ListCreateAPIView):
@@ -293,7 +404,6 @@ class TheTimeTable(generics.ListCreateAPIView):
                                             print('assigned period %s on %s for teacher %s to subject %s, '
                                                   'class %s-%s' % (prd, d, teacher_name, sub, cls, sec))
 
-
                                     # make entries in TeacherPeriod table
                                     # part II - each teacher's period assignment for every day
                                     try:
@@ -323,7 +433,7 @@ class TheTimeTable(generics.ListCreateAPIView):
                                             print ('failed to set period %s for %s %s ' %
                                                    (str(period), teacher.first_name, teacher.last_name))
                                 else:
-                                    if sub == '':   # because this can be a designated period for other work
+                                    if sub == '':  # because this can be a designated period for other work
                                         try:
                                             at = AvailableTeachers.objects.get(school=school,
                                                                                day=day, period=period, teacher=teacher)
@@ -444,7 +554,7 @@ class TheTimeTable(generics.ListCreateAPIView):
 
                                 # part II - each teacher's period assignment for every day
                                 try:
-                                    tp = TeacherPeriods.objects.get(teacher=teacher, day=day, period=period) # third
+                                    tp = TeacherPeriods.objects.get(teacher=teacher, day=day, period=period)  # third
                                     print ('period %s for %s %s is already set. This will be updated' %
                                            (str(the_period), teacher.first_name, teacher.last_name))
                                     tp.the_class = c
@@ -482,7 +592,7 @@ class TheTimeTable(generics.ListCreateAPIView):
                 return render(request, 'classup/setup_data.html', context_dict)
 
 
-class TheTeacherPeriod (generics.ListAPIView):
+class TheTeacherPeriod(generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         context_dict = {
 
@@ -528,7 +638,7 @@ class TheTeacherPeriod (generics.ListAPIView):
         school_id = request.session['school_id']
         school = School.objects.get(id=school_id)
 
-        teachers = Teacher.objects.filter (school=school).order_by('first_name')
+        teachers = Teacher.objects.filter(school=school).order_by('first_name')
         row = 3
         s_no = 1
         days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
@@ -544,12 +654,12 @@ class TheTeacherPeriod (generics.ListAPIView):
                 for i in range(1, 9):
                     period = Period.objects.get(school=school, period=str(i))
                     try:
-                        tt = TimeTable.objects.get(teacher=t, day=day, period=period) # first occurrence
+                        tt = TimeTable.objects.get(teacher=t, day=day, period=period)  # first occurrence
                         the_class = tt.the_class.standard
                         section = tt.section.section
                         subject = tt.subject.subject_name
                         class_sec_sub = '%s-%s \n(%s)' % (the_class, section, subject)
-                        sheet.write_string (row, i+2, class_sec_sub, cell_center)
+                        sheet.write_string(row, i + 2, class_sec_sub, cell_center)
                         day_total = day_total + 1
                         week_total = week_total + 1
 
@@ -560,9 +670,9 @@ class TheTeacherPeriod (generics.ListAPIView):
                             sheet.write_string(row, i + 2, "N/A")
                         else:
                             sheet.write_string(row, i + 2, "Free")
-                    sheet.write_number (row, i+2+1, day_total)
+                    sheet.write_number(row, i + 2 + 1, day_total)
                 row = row + 1
-            sheet.write_number (row, i+2+1, week_total, header)
+            sheet.write_number(row, i + 2 + 1, week_total, header)
             row += 2
             sheet.write(row, 1, ugettext("Teacher"), header)
             sheet.write(row, 2, ugettext("Day"), header)
@@ -586,7 +696,7 @@ class TheTeacherPeriod (generics.ListAPIView):
         return response
 
 
-class TheTeacherWingMapping (generics.ListCreateAPIView):
+class TheTeacherWingMapping(generics.ListCreateAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
     serializer_class = TeacherWingMappingSerializer
 
@@ -642,16 +752,16 @@ class TheTeacherWingMapping (generics.ListCreateAPIView):
                         continue
                     print ('Processing a new row')
                     login = sheet.cell(row, 0).value
-                    w = sheet.cell (row, 1).value
+                    w = sheet.cell(row, 1).value
                     print ('teacher login  = %s' % login)
                     try:
-                        teacher = Teacher.objects.get (email=login)
+                        teacher = Teacher.objects.get(email=login)
                         print ('teacher = %s %s' % (teacher.first_name, teacher.last_name))
-                        wing = Wing.objects.get (school=school, wing=w)
+                        wing = Wing.objects.get(school=school, wing=w)
                         print ('wing = %s' % wing.wing)
 
                         try:
-                            mapping = TeacherWingMapping.objects.get (teacher=teacher, wing=wing)
+                            mapping = TeacherWingMapping.objects.get(teacher=teacher, wing=wing)
                             print ('teacher %s %s was already mapped to %s. This will be updated' %
                                    (teacher.first_name, teacher.last_name, wing.wing))
                             mapping.teacher = teacher
@@ -681,8 +791,9 @@ class TheTeacherWingMapping (generics.ListCreateAPIView):
                 return render(request, 'classup/setup_data.html', context_dict)
 
 
-class AbsentTeacherPeriods (generics.ListAPIView):
+class AbsentTeacherPeriods(generics.ListAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
     def get(self, request, *args, **kwargs):
         start_time = time.time()
         context_dict = {
@@ -727,7 +838,7 @@ class AbsentTeacherPeriods (generics.ListAPIView):
                 # get the period list that this teacher was supposed to take today
                 try:
                     teacher_periods = TimeTable.objects.filter(teacher=absent_teacher,
-                                                               day=day).order_by ('period__period')
+                                                               day=day).order_by('period__period')
                     print ('periods = ')
                     print (teacher_periods)
                     for tp in teacher_periods:
@@ -742,8 +853,8 @@ class AbsentTeacherPeriods (generics.ListAPIView):
 
                         # 05/01/2018 - check if any arrangement has already been made for this period
                         try:
-                            record = Arrangements.objects.get (school=school, date=datetime.date.today(),
-                                                               the_class=the_class, section=section, period=period)
+                            record = Arrangements.objects.get(school=school, date=datetime.date.today(),
+                                                              the_class=the_class, section=section, period=period)
                             substitute_teacher = record.teacher.first_name + ' ' + record.teacher.last_name
                             # print ('substitute teacher %s has already been assigned for period %s of class %s-%s' %
                             #       (substitute_teacher, str(period.period), the_class.standard, section.section))
@@ -760,7 +871,7 @@ class AbsentTeacherPeriods (generics.ListAPIView):
                 except Exception as e:
                     print ('exception 211117-A from time_table views.py %s %s' % (e.message, type(e)))
                     print ('looks like %s %s had no periods today' % (absent_teacher.first_name,
-                                                                          absent_teacher.last_name))
+                                                                      absent_teacher.last_name))
             context_dict['arrangements_required'] = arrangements_required
 
             # get the list of available teachers from first to last period
@@ -805,7 +916,7 @@ class AbsentTeacherPeriods (generics.ListAPIView):
             return response
 
 
-class GenerateEntrySheet (generics.ListAPIView):
+class GenerateEntrySheet(generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         school_id = request.session['school_id']
         school = School.objects.get(id=school_id)
@@ -850,7 +961,7 @@ class GenerateEntrySheet (generics.ListAPIView):
         row = row + 1
         col = 0
         sr_no = 1
-        teacher_list = Teacher.objects.filter(school=school, active_status=True).order_by ('first_name')
+        teacher_list = Teacher.objects.filter(school=school, active_status=True).order_by('first_name')
         for teacher in teacher_list:
             sheet.write_string(row, col, str(sr_no))
             col = col + 1
@@ -875,7 +986,7 @@ class GenerateEntrySheet (generics.ListAPIView):
         return response
 
 
-class GetArrangements (generics.ListAPIView):
+class GetArrangements(generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         context_dict = {
 
@@ -941,14 +1052,14 @@ class GetArrangements (generics.ListAPIView):
         try:
             row = row + 1
 
-            ta = TeacherAttendance.objects.filter(school=school, date=today).order_by ('teacher__first_name')
+            ta = TeacherAttendance.objects.filter(school=school, date=today).order_by('teacher__first_name')
             print (ta)
             s_no = 1
             for t in ta:
-                sheet.write_number (row, 0, s_no)
+                sheet.write_number(row, 0, s_no)
                 d = calendar.day_name[today.weekday()]
                 print ('day = %s' % d)
-                day = DaysOfWeek.objects.get (day=d)
+                day = DaysOfWeek.objects.get(day=d)
                 absent_teacher = t.teacher
                 teacher_name = absent_teacher.first_name + ' ' + absent_teacher.last_name
                 sheet.write_string(row, 1, teacher_name)
@@ -956,7 +1067,7 @@ class GetArrangements (generics.ListAPIView):
                 # get the period list that this teacher was supposed to take today
                 try:
                     teacher_periods = CTimeTable.objects.filter(teacher=absent_teacher,
-                                                                    day=day).order_by ('period__period') # second
+                                                                day=day).order_by('period__period')  # second
                     print ('periods = ')
                     print (teacher_periods)
                     for tp in teacher_periods:
@@ -1002,7 +1113,7 @@ class GetArrangements (generics.ListAPIView):
 
         try:
             s_no = 1
-            arrangements = Arrangements.objects.filter(school=school, date=today).order_by ('teacher__first_name')
+            arrangements = Arrangements.objects.filter(school=school, date=today).order_by('teacher__first_name')
             for arrangement in arrangements:
                 substitute_teacher = arrangement.teacher.first_name + ' ' + arrangement.teacher.last_name
                 sheet2.write_string(row, 0, str(s_no))
@@ -1028,7 +1139,7 @@ class GetArrangements (generics.ListAPIView):
             return response
 
 
-class SetArrangements (generics.ListCreateAPIView):
+class SetArrangements(generics.ListCreateAPIView):
     # we will be reading the excel file which will be uploaded and store the arrangements in the db.
     # We will also write to an excel file which will contain the details of each arrangement periods.
     # School will download this file and paste at various notice boards and also keep in file for record purpose
@@ -1137,22 +1248,22 @@ class NotifyArrangements(generics.ListCreateAPIView):
 
                 # get the teacher assigned for arrangement for this period/class/section
                 try:
-                    arrangement = Arrangements.objects.get (school=school, date = datetime.date.today(),
-                                                        period=period, the_class=the_class, section=section)
+                    arrangement = Arrangements.objects.get(school=school, date=datetime.date.today(),
+                                                           period=period, the_class=the_class, section=section)
                     teacher = arrangement.teacher
                     name = teacher.first_name + ' ' + teacher.last_name
                     message = 'Dear %s, today you have to take arrangement for period no %s in class %s-%s' % \
                               (name, p, tc, s)
                     print (message)
                     sms.send_sms1(school, "admin (web interface)", teacher.mobile, message, "Arrangment Notification")
-                    return HttpResponse (status=200)
+                    return HttpResponse(status=200)
                 except Exception as e:
                     print ('exception 06012018-B from time_table views.py %s %s' % (e.message, type(e)))
                     print ('failed to retrieve arrangement details for period # %s in class %s-%s' % (p, tc, s))
-                    return HttpResponse (status=201)
+                    return HttpResponse(status=201)
             else:
                 try:
-                    arrangements = Arrangements.objects.filter (school=school, date = datetime.date.today())
+                    arrangements = Arrangements.objects.filter(school=school, date=datetime.date.today())
                     for arrangement in arrangements:
                         teacher = arrangement.teacher
                         p = arrangement.period.period
@@ -1165,12 +1276,12 @@ class NotifyArrangements(generics.ListCreateAPIView):
                         print (message)
                         sms.send_sms1(school, "admin (web interface)", teacher.mobile,
                                       message, "Arrangment Notification")
-                    return HttpResponse (status=200)
+                    return HttpResponse(status=200)
                 except Exception as e:
                     print ('exception 06012018-C from time_table views.py %s %s' % (e.message, type(e)))
                     print ('failed to retrieve arrangement details for school: %s in class %s-%s' %
                            (school.school_name))
-                    return HttpResponse (status=201)
+                    return HttpResponse(status=201)
         except Exception as e:
             print ('failed to load json from request')
             print ('Exception 06012018-A from time_table views.py %s %s' % (e.message, type(e)))
@@ -1223,7 +1334,7 @@ class ClassTimeTable(generics.ListAPIView):
                 print ('Time Table will be generated for %s-%s' % (the_class.standard, section.section))
 
                 excel_file_name = '%s_Time_Table_%s-%s.xlsx' % (str(school_name),
-                                                                  str(the_class.standard), str(section.section))
+                                                                str(the_class.standard), str(section.section))
                 output = StringIO.StringIO(excel_file_name)
                 workbook = xlsxwriter.Workbook(output)
                 sheet = workbook.add_worksheet('Time Table %s-%s' % (str(the_class.standard), section.section))
@@ -1272,7 +1383,7 @@ class ClassTimeTable(generics.ListAPIView):
                 col += 1
                 for p in period:
                     sheet.write_string(row, col, p, cell_center)
-                    col +=1
+                    col += 1
                 row += 1
                 col = 1
                 for d in days:
@@ -1283,7 +1394,7 @@ class ClassTimeTable(generics.ListAPIView):
                         try:
                             period = Period.objects.filter(school=school, period=seq)
                             tt = CTimeTable.objects.get(school=school, day=day, period=period,
-                                                       the_class=the_class, section=section)
+                                                        the_class=the_class, section=section)
                             subject = tt.subject.subject_name
                             teacher = '%s %s' % (tt.teacher.first_name, tt.teacher.last_name)
                             print('on %s, period %s in class %s-%s is of subject %s taken by %s' %
@@ -1298,7 +1409,7 @@ class ClassTimeTable(generics.ListAPIView):
                             # see if multiple teachers are assigned (in case of subjects like music)
                             try:
                                 tt = CTimeTable.objects.filter(school=school, day=day, period=period,
-                                                        the_class=the_class, section=section)
+                                                               the_class=the_class, section=section)
 
                                 if tt.count() > 0:
                                     print(tt)

@@ -3,6 +3,11 @@ from rest_framework import serializers
 from .models import *
 
 
+class PeriodSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Period
+
+
 class TimeTableSerializer(serializers.ModelSerializer):
     class Meta:
         model = TimeTable
