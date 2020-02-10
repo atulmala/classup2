@@ -703,6 +703,50 @@ class MidTermAdmission(generics.ListCreateAPIView):
                     return render(request, 'classup/mid_term_admission.html', context_dict)
 
 
+class StudentDemotion(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def post(self, request, *args, **kwargs):
+        print ('now starting to demote the students who were accidentally promoted')
+        fileToProcess_handle = request.FILES['rts_students.xlsx']
+        print(fileToProcess_handle)
+
+        fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
+        sheet = fileToProcess.sheet_by_index(0)
+        for row in range(sheet.nrows):
+            # first two rows are header rows
+            if row == 0:
+                school_id = sheet.cell(row, 0).value
+                school = School.objects.get(pk=school_id)
+                print('school = %s' % school)
+                continue
+            print ('Processing a new row')
+            try:
+                erp_id = sheet.cell(row, 1).value
+                decimal = '.'
+                if decimal in erp_id:
+                    print('student id contains a decimal followed by zero. This has to be removed')
+                    erp_id = erp_id[:-2]
+                    print('decimal and following zero removed. Now student_id = %s' % erp_id)
+            except Exception as e:
+                print('exception 10022020-A from student views.py. %s %s' % (e.message, type(e)))
+
+            try:
+                student = Student.objects.get(school=school, student_erp_id=erp_id)
+                print('demoting %s with erp_id %s' % (student, erp_id))
+                demoted_standard = sheet.cell(row, 6).value
+                try:
+                    demoted_class = Class.objects.get(school=school, standard=demoted_standard)
+                    student.current_class = demoted_class
+                    student.save()
+                    print('demoted %s' % student)
+                except Exception as e:
+                    print('exception 10022020-B from exam student views.py %s %s' % (e.message, type(e)))
+            except Exception as e:
+                print('could not retrieve student associated with erp_id %s' % str(erp_id))
+        return JSONResponse({'status': 'ok'}, status=200)
+
+
 class StudentPromotion(generics.ListCreateAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
@@ -732,7 +776,7 @@ class StudentPromotion(generics.ListCreateAPIView):
                 return render(request, 'classup/setup_index.html', context_dict)
             else:
                 print('Student promotion for %s has not been done. Will do now...' % school.school_name)
-                classes = Class.objects.filter(school=school).order_by('-sequence')
+                classes = Class.objects.filter(school=school).order_by('sequence')
                 print('retrieved classes for %s' % school.school_name)
                 sections = Section.objects.filter(school=school).order_by('section')
                 print(sections)

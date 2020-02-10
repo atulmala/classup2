@@ -24,4 +24,5 @@ urlpatterns = patterns('',
                        url(r'update_student_web/$', views.UpdateStudent.as_view(), name='update_student_web'),
                        url(r'single_student_details/(?P<school_id>\w+)/$', views.SingleStudentDetails.as_view(),
                            name='single_student_details'),
+                       url(r'^demote_students/$', views.StudentDemotion.as_view(), name='demotes_students')
             )
