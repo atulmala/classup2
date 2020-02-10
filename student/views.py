@@ -703,11 +703,10 @@ class MidTermAdmission(generics.ListCreateAPIView):
                     return render(request, 'classup/mid_term_admission.html', context_dict)
 
 
-class StudentDemotion(generics.ListCreateAPIView):
+class StudentPromotion(generics.ListCreateAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
     def post(self, request, *args, **kwargs):
-        print ('now starting to demote the students who were accidentally promoted')
         fileToProcess_handle = request.FILES['rts_students.xlsx']
         print(fileToProcess_handle)
 
@@ -733,194 +732,21 @@ class StudentDemotion(generics.ListCreateAPIView):
 
             try:
                 student = Student.objects.get(school=school, student_erp_id=erp_id)
-                print('demoting %s with erp_id %s' % (student, erp_id))
-                demoted_standard = sheet.cell(row, 6).value
+                print('promoting %s with erp_id %s' % (student, erp_id))
+                promoted_standard = sheet.cell(row, 6).value
+                promoted_sec = sheet.cell(row, 7).value
                 try:
-                    demoted_class = Class.objects.get(school=school, standard=demoted_standard)
-                    student.current_class = demoted_class
+                    promoted_class = Class.objects.get(school=school, standard=promoted_standard)
+                    student.current_class = promoted_class
+                    promoted_section = Section.objects.get(school=school, section=promoted_sec)
+                    student.current_section = promoted_section
                     student.save()
-                    print('demoted %s' % student)
+                    print('promoted %s' % student)
                 except Exception as e:
                     print('exception 10022020-B from exam student views.py %s %s' % (e.message, type(e)))
             except Exception as e:
                 print('could not retrieve student associated with erp_id %s' % str(erp_id))
         return JSONResponse({'status': 'ok'}, status=200)
-
-
-class StudentPromotion(generics.ListCreateAPIView):
-    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
-
-    def get(self, request, *args, **kwargs):
-        print ('from class based view')
-        context_dict = {
-
-        }
-        context_dict['user_type'] = 'school_admin'
-        context_dict['school_name'] = request.session['school_name']
-        context_dict['header'] = 'Upload Student Promotion List'
-        school_id = request.session['school_id']
-        print(school_id)
-        school = School.objects.get(id=school_id)
-        highest_class_dict = Class.objects.filter(school=school).aggregate(Max('sequence'))
-        print(highest_class_dict['sequence__max'])
-        highest_class = Class.objects.get(school=school, sequence=highest_class_dict['sequence__max'])
-        print(highest_class)
-        try:
-            students = Student.objects.filter(school=school, current_class=highest_class)
-            if students.count() > 0:
-                print(students)
-                print('Student promotion for %s has already been done. Hence not doing again' % school.school_name)
-                error = 'Student promotion has already been done'
-                messages.error(request._request, 'Promotion has already been carried out.')
-                print (error)
-                return render(request, 'classup/setup_index.html', context_dict)
-            else:
-                print('Student promotion for %s has not been done. Will do now...' % school.school_name)
-                classes = Class.objects.filter(school=school).order_by('sequence')
-                print('retrieved classes for %s' % school.school_name)
-                sections = Section.objects.filter(school=school).order_by('section')
-                print(sections)
-                print(classes)
-
-                for a_class in classes:
-                    if a_class.sequence == highest_class_dict['sequence__max']:
-                        continue
-                    for a_section in sections:
-                        students = Student.objects.filter(current_class=a_class, current_section=a_section)
-                        for student in students:
-                            try:
-                                student_name = '%s %s' % (student.fist_name, student.last_name)
-                                try:
-                                    # the student should not be in the not promoted list.
-                                    #  Only then he/she will be promoted
-                                    entry = NPromoted.objects.get(student=student)
-                                    print('%s is  in the not_promoted. Hence not promoting...' % (student_name))
-                                    print(entry)
-                                except Exception as e:
-                                    print('exception 04042018-B from student views.py %s %s' % (e.message, type(e)))
-                                    print('%s was not in not_promoted. Promoting now...' % (student_name))
-                                    promoted_to_class = Class.objects.get(school=school, sequence=a_class.sequence + 1)
-                                    print('%s is going to be promoted to %s-%s' %
-                                          (student_name, promoted_to_class.standard, a_section.section))
-                                    print('%s current class is %s-%s' %
-                                          (student_name, student.current_class.standard,
-                                           student.current_section.section))
-                                    student.current_class = promoted_to_class
-                                    student.save()
-                                    print('%s now promoted to %s-%s' %
-                                          (student_name, promoted_to_class.standard, a_section.section))
-                            except Exception as e:
-                                print('failed to promote student %s' % student.fist_name)
-                                print('exception 04042018-A from student views.py %s %s' % (e.message, type(e)))
-                messages.success(request._request, 'students promoted.')
-                return render(request, 'classup/setup_index.html', context_dict)
-        except Exception as e:
-            print('exception 04042018-C from student views.py %s %s' % (e.message, type(e)))
-
-        return render(request, 'classup/setup_index.html', context_dict)
-
-        form = ExcelFileUploadForm()
-        context_dict['form'] = form
-        return render(request, 'classup/setup_data.html', context_dict)
-
-    def post(self, request, *args, **kwargs):
-        print ('from class based view')
-        context_dict = {
-
-        }
-        context_dict['user_type'] = 'school_admin'
-        context_dict['school_name'] = request.session['school_name']
-        context_dict['header'] = 'Setup Time Table'
-
-        # first see whether the cancel button was pressed
-        if "cancel" in request.POST:
-            return render(request, 'classup/setup_index.html', context_dict)
-
-        school_id = request.session['school_id']
-        school = School.objects.get(id=school_id)
-
-        # get the file uploaded by the user
-        form = ExcelFileUploadForm(request.POST, request.FILES)
-        context_dict['form'] = form
-
-        if form.is_valid():
-            try:
-                print ('now starting to process the uploaded file for student promotion...')
-                fileToProcess_handle = request.FILES['excelFile']
-
-                # check that the file uploaded should be a valid excel
-                # file with .xls or .xlsx
-                if not validate_excel_extension(fileToProcess_handle, form, context_dict):
-                    return render(request, 'classup/setup_data.html', context_dict)
-
-                # if this is a valid excel file - start processing it
-                fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
-                sheet = fileToProcess.sheet_by_index(0)
-                if sheet:
-                    print ('Successfully got hold of sheet!')
-                for row in range(sheet.nrows):
-                    if row == 0:
-                        continue
-                    print ('Processing a new row')
-                    erp_id = sheet.cell(row, 1).value
-                    try:
-                        student = Student.objects.get(school=school, student_erp_id=erp_id)
-                        student_name = '%s %s' % (student.fist_name, student.last_name)
-                        print('retrieved student associated with erp_id %s: %s of class %s-%s' %
-                              (erp_id, student_name, student.current_class.standard, student.current_section.section))
-                        try:
-                            # the student should not be in the not promoted list. Only then he/she will be promoted
-                            entry = NPromoted.objects.get(student=student)
-                            print('%s is  in the not_promoted. Hence not promoting...' % (student_name))
-                            print(entry)
-                        except Exception as e:
-                            print('exception 06032018-E from student views.py %s %s' % (e.message, type(e)))
-                            print('%s was not in not_promoted. Promoting now...' % (student_name))
-                            try:
-                                # get the new class
-                                new_class = sheet.cell(row, 5).value
-                                new_section = sheet.cell(row, 6).value
-                                print('%s is to be promoted to %s-%s' % (student_name, new_class, new_section))
-                                try:
-                                    student.current_class = Class.objects.get(school=school, standard=new_class)
-                                    student.current_section = Section.objects.get(school=school, section=new_section)
-                                    student.save()
-                                    print('successfully promoted %s to %s-%s' % (student_name, new_class, new_section))
-
-                                    # 03/04/208 - also send message to parents
-                                    try:
-                                        parent = student.parent.parent_name
-                                        mobile = student.parent.parent_mobile1
-                                        message = 'Dear %s, your ward %s is promoted to class %s-%s. ' % \
-                                                  (parent, student_name, new_class, new_section)
-                                        message += 'Jagarn Public School welcomes all students to new session 2018-19. '
-                                        message += 'Regards, Dr D.K. Sinha, Principal, JPS Noida'
-                                        print(message)
-                                        # sms.send_sms1(school, 'admin@jps.com', mobile, message, 'Student Promotion')
-                                        print('sent Student promotion message to %s, parent of %s' %
-                                              (parent, student_name))
-                                    except Exception as e:
-                                        print('failed to send Student Prmotion sms for %s' % student_name)
-                                        print('exception 03042018-A from student views.py %s (%s)' %
-                                              (e.message, type(e)))
-                                except Exception as e:
-                                    print('failed to promote %s to %s-%s' % (student_name, new_class, new_section))
-                                    print('exception 06032018-B from student views.py %s %s' % (e.message, type(e)))
-                            except Exception as e:
-                                print('failed to add %s (%s) to not_promoted' % (student_name, erp_id))
-                                print('exception 06032018-C from student views.py %s %s' % (e.message, type(e)))
-                    except Exception as e:
-                        print('failed to retrieve student with erp_id %s' % erp_id)
-                        print('exception 06032018-A from student views.py %s %s' % (e.message, type(e)))
-                messages.success(request._request, 'uploaded list of promoted students')
-                context_dict['status'] = 'success'
-                return render(request, 'classup/setup_index.html', context_dict)
-            except Exception as e:
-                error = 'invalid excel file uploaded.'
-                print (error)
-                print ('exception 04032018-G from student views.py %s %s ' % (e.message, type(e)))
-                form.errors['__all__'] = form.error_class([error])
-                return render(request, 'classup/setup_data.html', context_dict)
 
 
 class NotPromoted(generics.ListCreateAPIView):
