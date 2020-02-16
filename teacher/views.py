@@ -1,4 +1,5 @@
 import StringIO
+import datetime
 import json
 from datetime import date
 
@@ -215,7 +216,7 @@ class TheTeacherAttendance1(generics.ListCreateAPIView):
         return render(request, 'classup/teacher_attendance.html', context_dict)
 
     def post(self, request, *args, **kwargs):
-        print('starting to process teacher Attendance submitted from web portal')
+        print('starting to process teacher Attendance submitted from vue.js web admin interface')
         print('request=')
         print(request.body)
         try:
@@ -230,16 +231,19 @@ class TheTeacherAttendance1(generics.ListCreateAPIView):
         print(school_id)
         school = School.objects.get(pk=school_id)
         print (school)
+        the_date = data['date']
+        date = datetime.datetime.strptime(the_date, "%Y-%m-%d").strftime("%Y-%m-%d")
+        print(date)
 
         # record the attendance taken
         try:
-            q = TeacherAttendnceTaken.objects.filter(school=school, date=date.today())
+            q = TeacherAttendnceTaken.objects.filter(school=school, date=date)
             if 0 == q.count():
-                a = TeacherAttendnceTaken(school=school, date=date.today())
+                a = TeacherAttendnceTaken(school=school, date=date)
                 a.save()
             else:
                 try:
-                    TeacherAttendance.objects.filter(school=school, date=date.today()).delete()
+                    TeacherAttendance.objects.filter(school=school, date=date).delete()
                 except Exception as e:
                     print ('failed to delete Teacher attendance for today')
                     print ('Exception 23122017-A from techer view.py %s %s' % (e.message, type(e)))
@@ -247,8 +251,11 @@ class TheTeacherAttendance1(generics.ListCreateAPIView):
             print ('failed to create Teacher Attendance Taken record')
             print ('Exception 111117-A from teacher views.py %s %s' % (e.message, type(e)))
 
+        absentee_list = data['absentee_list']
+        for absentee in absentee_list:
+            print(absentee)
         for key in data:
-            absentee_id = data[key]
+
             print (absentee_id)
             try:
                 teacher = Teacher.objects.get(id=absentee_id)

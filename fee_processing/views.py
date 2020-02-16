@@ -997,7 +997,7 @@ class FeeDetails(generics.ListCreateAPIView):
                     due_this_term += amt
                     # how much of this fee is accumulated month before
                     if not new_admission:
-                        due_till_now += amt * (months_count)
+                        due_till_now += amt * months_count
                     print('due_till_now = %.2f' % due_till_now)
 
                 if int(freq) == 3:

@@ -302,7 +302,50 @@ class ScheduleTest(generics.ListCreateAPIView):
 
                 if check_for_term:
                     if exam.exam_type == 'term':
-                        if the_class.standard in middle_classes or the_class.standard in ninth_tenth:
+                        if the_class.standard in ninth_tenth:
+                            print('ninth class case')
+                            unit_tests = ClassTest.objects.filter(the_class=the_class,
+                                                                  section=section, subject=subject)
+                            marks_array = []
+                            for ut in unit_tests:
+                                ut_result = TestResults.objects.get(class_test=ut, student=student)
+
+                                # 23/09/2019 - as per new CBSE ut_marks should be out of 5.
+                                # Another 5 marks component would be Multiple Assesment
+                                # ut_marks = (ut_result.marks_obtained / ut.max_marks) * Decimal(10.0)
+                                ut_marks = (ut_result.marks_obtained / ut.max_marks) * Decimal(5.0)
+                                # 13/03/2018 - if the student was absent, then marks will be < 0
+                                if ut_marks < 0.0:
+                                    print('marks = %f' % ut_marks)
+                                    ut_marks = 0.0
+                                else:
+                                    marks_array.append(ut_marks)
+                                print('marks_array = ')
+                                print(marks_array)
+                            marks_array.sort(reverse=True)
+                            try:
+                                # average of best of two tests
+                                pa_marks = (marks_array[0] + marks_array[1]) / Decimal(2.0)
+                                print('average of best of two tests = %f' % pa_marks)
+                            except Exception as e:
+                                print('looks only one cycle test has been conducted for %s in '
+                                      'class %s-%s between Term1 & Terms 2' % (subject, the_class, section))
+                                print('exception 16022020-Z from academics views.py %s %s' % (e.message, type(e)))
+                                print('hence, taking the single unit/cycle test marks as PA marks')
+                                try:
+                                    pa_marks = marks_array[0]
+                                except Exception as e:
+                                    print('looks that marks for % s in %s have not been '
+                                          'entered for any test' % (student.fist_name, sub))
+                                    print('exception 13032018-A from academics views.py %s %s' % (e.message, type(e)))
+                                    pa_marks = -5000.0
+
+                            term_test_result = TermTestResult(test_result=test_result, periodic_test_marks=pa_marks,
+                                                              multi_asses_marks=-5000.0, note_book_marks=-5000.0,
+                                                              sub_enrich_marks=-5000.0)
+                            term_test_result.save()
+
+                        if the_class.standard in middle_classes:
                             # 01/02/2018 - If this is a second term test, ie the final exam for class
                             # V-VIII, then we need to auto fill the PA marks. The marks will be the
                             # average of all the unit test conducted between the first term test till now
