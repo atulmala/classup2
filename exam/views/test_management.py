@@ -71,6 +71,12 @@ class UnscheduledTestList(generics.ListAPIView):
                         'Mathematics', 'Social Studies', 'FIT'
                         ]
 
+        if start_class in higher_classes:
+            subjects = ['English', 'Mathematics', 'Biology', 'Physics', 'Chemistry', 'Economics', 'Accountancy',
+                        'Business Studies', 'Computer Science', 'Fine Arts', 'History', 'Informatics Practices',
+                        'Physical Education'
+                        ]
+
         file_name = 'Unscheduled_test.xlsx'
         output = StringIO.StringIO(file_name)
         file = xlsxwriter.Workbook(output)
