@@ -41,6 +41,110 @@ class JSONResponse(HttpResponse):
         super(JSONResponse, self).__init__(content, **kwargs)
 
 
+class UnscheduledTestList(generics.ListAPIView):
+    def get(self, request, *args, **kwargs):
+        school_id = self.request.query_params.get('school_id')
+        school = School.objects.get(id=school_id)
+
+        exam_title = self.request.query_params.get('exam_title')
+        exam = Exam.objects.get(school=school, title=exam_title)
+
+        classes = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII']
+        start_class = exam.start_class
+        end_class = exam.end_class
+        start = classes.index(start_class)
+        end = classes.index(end_class)
+
+        wings = get_wings(school)
+        junior_classes = wings['junior_classes']
+        middle_classes = wings['middle_classes']
+        ninth_tenth = wings['ninth_tenth']
+        higher_classes = wings['higher_classes']
+
+        if start_class in middle_classes:
+            subjects = ['English', 'Hindi', 'Sanskrit', 'French', 'Science',
+                        'Mathematics', 'Social Studies', 'Computer'
+                        ]
+
+        if start_class in ninth_tenth:
+            subjects = ['English', 'Hindi', 'Sanskrit', 'French', 'Science',
+                        'Mathematics', 'Social Studies', 'FIT'
+                        ]
+
+        file_name = 'Unscheduled_test.xlsx'
+        output = StringIO.StringIO(file_name)
+        file = xlsxwriter.Workbook(output)
+        sheet_name = 'Unscheduled_test.xlsx'
+        sheet = file.add_worksheet(sheet_name)
+        sheet.set_portrait()
+        sheet.set_paper(9)
+        sheet.fit_to_pages(1, 0)
+        fmt = format()
+        title_format = file.add_format(fmt.get_title())
+        title_format.set_border()
+        header = file.add_format(fmt.get_header())
+        big_font = file.add_format(fmt.get_large_font())
+        big_font.set_color('#33691E')
+        medium_font = file.add_format(fmt.get_medium_fong())
+        medium_font.set_color('#827717')
+        section_heading = file.add_format(fmt.get_section_heading())
+        section_heading.set_color('#4E342E')
+        cell_bold = file.add_format(fmt.get_cell_bold())
+        cell_bold.set_border()
+        cell_center = file.add_format(fmt.get_cell_center())
+        cell_center.set_border()
+        cell_left = file.add_format(fmt.get_cell_left())
+        cell_left.set_border()
+        cell_normal = file.add_format(fmt.get_cell_normal())
+        cell_normal.set_border()
+
+        sheet.merge_range('A1:D1', 'Unscheduled Tests for %s' % exam_title, header)
+        row = 1
+        col = 0
+        s_no = 1
+        sheet.write_string(row, col, "S No", cell_bold)
+        col += 1
+        sheet.write_string(row, col, "Class", cell_bold)
+        col += 1
+        sheet.write_string(row, col, "Subject",cell_bold)
+        row += 1
+        col = 0
+
+        for a_class in classes[start:end + 1]:
+            the_class = Class.objects.get(school=school, standard=a_class)
+            sections = Section.objects.filter(school=school)
+            for section in sections:
+                students = Student.objects.filter(current_class=the_class, current_section=section)
+                if students.count() > 0:
+                    for a_subject in subjects:
+                        subject = Subject.objects.get(school=school, subject_name=a_subject)
+                        try:
+                            test = ClassTest.objects.get(exam=exam, subject=subject,
+                                                         the_class=the_class, section=section)
+                            print('test for %s exam %s class %s-%s has been created' %
+                                  (subject, exam, the_class, section))
+                        except Exception as e:
+                            print('exception 21022020-A from exam test_management.py %s %s' % (e.message, type(e)))
+                            print('test for %s exam %s class %s-%s has not been created' %
+                                  (subject, exam, the_class, section))
+                            sheet.write_number(row, col, s_no, cell_normal)
+                            s_no += 1
+                            col += 1
+                            class_section = '%s-%s' % (the_class, section)
+                            sheet.write_string(row, col, class_section, cell_normal)
+                            col += 1
+                            sheet.write_string(row, col, a_subject, cell_normal)
+                            row += 1
+                            col = 0
+
+        file.close()
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=%s' % file_name
+        response.write(output.getvalue())
+        return response
+
+
+
 class InitializePromotionList(generics.ListCreateAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 

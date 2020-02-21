@@ -74,6 +74,19 @@ class SubjectList(generics.ListCreateAPIView):
         return q
 
 
+class ExamListSchool(generics.ListAPIView):
+    serializer_class = ExamSerializer
+
+    def get_queryset(self):
+        school_id = self.kwargs['school_id']
+
+        school = School.objects.get(id=school_id)
+
+        print('retrieving exam list of %s' % (school))
+        q = Exam.objects.filter(school=school).order_by('start_date')
+        return q
+
+
 class ExamListTeacher(generics.ListAPIView):
     serializer_class = ExamSerializer
 

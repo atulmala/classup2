@@ -51,6 +51,9 @@ urlpatterns = [
     url(r'^get_exam_list_teacher/(?P<teacher>[\w.@+-]+)/$', views.ExamListTeacher.as_view(),
         name='get_exam_list_teacher'),
 
+    url(r'^get_exam_list_school/(?P<school_id>\w+)/$', views.ExamListSchool.as_view(),
+        name='get_exam_list_school'),
+
     url(r'^create_hw/', views.create_hw, name='create_hw'),
 
     url(r'^retrieve_hw/(?P<user>[\w.@+-]+)/$', views.HWList.as_view(), name='retrieve_hw'),

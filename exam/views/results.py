@@ -296,7 +296,7 @@ class ResultAnalysisSheet(generics.ListCreateAPIView):
                 cons_sheet.write_number(cons_row, cons_col, t1_rank, cell_right_border)
                 cons_col += 1
 
-                t2_summary = StudentTotalMarks.objects.get(student=student, exam=exams[0])  # todo change to exams[1]
+                t2_summary = StudentTotalMarks.objects.get(student=student, exam=exams[1])  # todo change to exams[1]
                 t2_total = t2_summary.total_marks
                 cons_sheet.write_number(cons_row, cons_col, t2_total, cell_normal)
                 cons_col += 1
@@ -335,7 +335,7 @@ class ResultAnalysisSheet(generics.ListCreateAPIView):
                             t2_sheet.merge_range(row, 2, row + 1, 2, subject.subject_name, vertical_text)
 
                         t1_marks = SubjectAnalysis.objects.get(student=student, exam=exams[0], subject=subject)
-                        t2_marks = SubjectAnalysis.objects.get(student=student, exam=exams[0], subject=subject)
+                        t2_marks = SubjectAnalysis.objects.get(student=student, exam=exams[1], subject=subject)
 
                         # PA
                         t1_sheet.write_number(row, col, t1_marks.periodic_test_marks, cell_normal)

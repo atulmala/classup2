@@ -30,5 +30,6 @@ urlpatterns = patterns(
     url(r'^get_student_marks/$', views.StudentMarks.as_view(), name='get_student_marks'),
     url(r'^get_promotion_excel/$', views.PromotionReport.as_view(), name='get_promotion_excel'),
     url(r'^cbse_mapping/$', views.CBSEMapping.as_view(), name='cbse_mapping'),
-    url(r'^generate_cbse_sheet/$', views.GenerateCBSESheet.as_view(), name='generate_cbse_sheet')
+    url(r'^generate_cbse_sheet/$', views.GenerateCBSESheet.as_view(), name='generate_cbse_sheet'),
+    url(r'^unscheuled_test_list/$', views.UnscheduledTestList.as_view(), name='unscheuled_test_list'),
 )
