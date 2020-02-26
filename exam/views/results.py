@@ -391,8 +391,8 @@ class ResultAnalysisSheet(generics.ListCreateAPIView):
                         t1_grade = TestResults.objects.get(class_test=gk_tests[0], student=student).grade
                         t1_sheet.merge_range(row, col, row + 1, col, t1_grade, cell_grade)
                         col += 1
-                        # t2_grade = TestResults.objects.get(class_test=gk_tests[1], student=student).grade
-                        # t2_sheet.merge_range(row, col, row + 1, col, t2_grade, cell_grade)
+                        t2_grade = TestResults.objects.get(class_test=gk_tests[1], student=student).grade
+                        t2_sheet.merge_range(row, col, row + 1, col, t2_grade, cell_grade)
                 row += 2
                 t1_sheet.set_row(row, 1.2)
                 t2_sheet.set_row(row, 1.2)
