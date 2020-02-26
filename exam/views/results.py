@@ -390,7 +390,6 @@ class ResultAnalysisSheet(generics.ListCreateAPIView):
                         gk_tests = ClassTest.objects.filter(the_class=the_class, section=section, subject=subject)
                         t1_grade = TestResults.objects.get(class_test=gk_tests[0], student=student).grade
                         t1_sheet.merge_range(row, col, row + 1, col, t1_grade, cell_grade)
-                        # col += 1
                         t2_grade = TestResults.objects.get(class_test=gk_tests[1], student=student).grade
                         t2_sheet.merge_range(row, col, row + 1, col, t2_grade, cell_grade)
                 row += 2
@@ -628,7 +627,7 @@ class ResultAnalysisSheet(generics.ListCreateAPIView):
                     col += 1
 
                     # final exam marks
-                    final = SubjectAnalysis.objects.get(student=student, exam=term_list[0], subject=subject)
+                    final = SubjectAnalysis.objects.get(student=student, exam=term_list[1], subject=subject)
                     theory = final.marks
                     if theory > -1000.0:
                         t1_sheet.write_number(row, col, theory, cell_normal)
