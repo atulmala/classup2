@@ -711,17 +711,18 @@ class GenerateMarksheet(generics.ListAPIView):
                                     if the_class in ninth_tenth:
                                         if school_name == 'Jagran Public School':
                                             print('the_class in ninth_tenth and school is Jagran Public School')
-                                            if sub.subject_name == 'Computer':
+                                            if sub.subject_name == 'Computer Science':
                                                 print('suject is computer')
                                                 pa = 'NA'
                                                 multi_assess = 'NA'
                                                 sub_enrich = 'NA'
-                                                main = tr.marks_obtained
+                                                # main = tr.marks_obtained
                                                 notebook = 'NA'
                                                 ttr = TermTestResult.objects.get(test_result=tr)
                                                 theory = tr.marks_obtained
                                                 prac = ttr.prac_marks
                                                 total = float(theory) + float(prac)
+                                                main = 'Th: %.0f Pr: %.0f' % (float(theory), float(prac))
                                         else:
                                             print('this is not Jagran Public School')
                                     # in case the student was absent we need to show ABS in the marksheet.
@@ -775,11 +776,11 @@ class GenerateMarksheet(generics.ListAPIView):
                 try:
                     if the_class in middle_classes:
                         # 29/09/2019- uncomment when generating result for final exam
-                        # data2 = [['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale]', '',
-                        #         'Co-Scholastic Areas: Term-2[On a 3-point(A-C) grading scale]', '']]
+                        data2 = [['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale]', '',
+                                'Co-Scholastic Areas: Term-2[On a 3-point(A-C) grading scale]', '']]
 
                         # 29/09/2019 - comment while generating result for final exam
-                        data2 = [['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale]', '']]
+                        # data2 = [['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale]', '']]
                     if the_class in ninth_tenth:
                         data2 = [['Co-Scholastic Areas: Academic Year[On a 3-point(A-C) grading scale]', '']]
                     work_array = []
@@ -788,10 +789,10 @@ class GenerateMarksheet(generics.ListAPIView):
                     dscpln_array = []
 
                     # 29/09/2019 - uncomment while generating result for final exam
-                    # terms = ['term1', 'term2']
+                    terms = ['term1', 'term2']
 
                     # 29/09/2019 - comment while generating result for final exam
-                    terms = ['term1']
+                    # terms = ['term1']
                     if the_class in ninth_tenth:
                         # 29/09/2019 - uncomment while generating result for final exam
                         # terms = ['term2']

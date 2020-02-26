@@ -60,9 +60,9 @@ class UploadMarks(generics.ListCreateAPIView):
                     try:
                         student = Student.objects.get(school=school, student_erp_id=erp_id)
                         print('now dealing with %s' % student)
-                        theory = sheet.cell(row, 5).value
-                        practical = sheet.cell(row, 6).value
-                        subject = Subject.objects.get(school=school, subject_name='Computer')
+                        theory = sheet.cell(row, 3).value
+                        practical = sheet.cell(row, 4).value
+                        subject = Subject.objects.get(school=school, subject_name='Computer Science')
                         exam = Exam.objects.get(school=school, title='Term-I (IX - X)')
                         class_test = ClassTest.objects.get(subject=subject, exam=exam,
                                                            the_class=student.current_class,

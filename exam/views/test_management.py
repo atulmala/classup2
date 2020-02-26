@@ -541,7 +541,7 @@ class StudentMarks(generics.ListAPIView):
         student = exam_result.student
         print('retrieving marks for %s of %s' % (student, student.school))
 
-        q = SubjectAnalysis.objects.filter(student=student).order_by('subject__subject_name')
+        q = SubjectAnalysis.objects.filter(student=student).order_by('subject')
         return q
 
 
