@@ -593,7 +593,6 @@ class GenerateMarksheet(generics.ListAPIView):
                 table3_top = table2_top - 40
                 try:
                     data3 = [['Grade', '']]
-
                     data3.append(dscpln_array)
                     table3 = Table(data3)
                     table3.setStyle(TableStyle(style3))
@@ -658,8 +657,9 @@ class GenerateMarksheet(generics.ListAPIView):
                         for idx, term in enumerate(terms):
                             print(term)
                             # for class IX, only the result of Term2, ie the final exam is to be shown
-                            # if term == 'Term1' and the_class in ninth_tenth:
-                            # continue
+                            print('idx = %d' % idx)
+                            if idx == 0 and the_class in ninth_tenth:
+                                continue
 
                             # exam =  Exam.objects.get(school=school, title=term)
                             # print(exam)
@@ -712,7 +712,7 @@ class GenerateMarksheet(generics.ListAPIView):
                                         if school_name == 'Jagran Public School':
                                             print('the_class in ninth_tenth and school is Jagran Public School')
                                             if sub.subject_name == 'Computer Science':
-                                                print('suject is computer')
+                                                print('suject is Computer Science')
                                                 pa = 'NA'
                                                 multi_assess = 'NA'
                                                 sub_enrich = 'NA'
@@ -726,7 +726,7 @@ class GenerateMarksheet(generics.ListAPIView):
                                         else:
                                             print('this is not Jagran Public School')
                                     # in case the student was absent we need to show ABS in the marksheet.
-                                    if the_class not in ninth_tenth:
+                                    if the_class not in higher_classes:
                                         if float(main) < 0.0:
                                             main = 'ABS'
                                             total = float(pa) + float(multi_assess) + float(notebook) + float(
@@ -735,7 +735,7 @@ class GenerateMarksheet(generics.ListAPIView):
                                         print('grade obtained by %s in %s exam of %s: %s' %
                                               (s.fist_name, term, sub.subject_name, grade))
                                     if the_class in ninth_tenth:
-                                        if sub.subject_name == 'Computer':
+                                        if sub.subject_name == 'Computer Science':
                                             if school_id == 23:
                                                 main = 'NA'
                                     grade = get_grade(total)
@@ -795,14 +795,14 @@ class GenerateMarksheet(generics.ListAPIView):
                     # terms = ['term1']
                     if the_class in ninth_tenth:
                         # 29/09/2019 - uncomment while generating result for final exam
-                        # terms = ['term2']
+                        terms = ['term2']
                         # 29/09/2019 - comment while generating result for final exam
-                        terms = ['term1']
+                        # terms = ['term1']
 
                     for term in terms:
                         # for class IX, only the result of Term2, ie the final exam is to be shown
-                        # if term == 'Term1' and the_class in ninth_tenth:
-                        # continue
+                        if term == 'term1' and the_class in ninth_tenth:
+                            continue
                         try:
                             co_scl = CoScholastics.objects.get(term=term, student=s)
                             work_array.append('Work Education (or Pre-vocational Education)')
