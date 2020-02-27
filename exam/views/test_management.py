@@ -112,7 +112,7 @@ class UnscheduledTestList(generics.ListAPIView):
         col += 1
         sheet.write_string(row, col, "Class", cell_bold)
         col += 1
-        sheet.write_string(row, col, "Subject",cell_bold)
+        sheet.write_string(row, col, "Subject", cell_bold)
         row += 1
         col = 0
 
@@ -148,7 +148,6 @@ class UnscheduledTestList(generics.ListAPIView):
         response['Content-Disposition'] = 'attachment; filename=%s' % file_name
         response.write(output.getvalue())
         return response
-
 
 
 class InitializePromotionList(generics.ListCreateAPIView):

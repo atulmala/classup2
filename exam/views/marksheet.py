@@ -15,7 +15,7 @@ from reportlab.platypus import Table, TableStyle
 
 from analytics.models import SubjectAnalysis
 from attendance.models import IndividualAttendance
-from exam.models import Marksheet
+from exam.models import Marksheet, ExamResult
 from exam.views import get_wings, HigherClassMapping, Scheme, get_grade
 from setup.models import School, Configurations
 from academics.models import Class, Section, Exam, Subject, ClassTest, TestResults, TermTestResult, CoScholastics, \
@@ -181,7 +181,7 @@ class GenerateMarksheet(generics.ListAPIView):
                                ('FONT', (0, 0), (1, 0), 'Times-Bold')]
         if the_class in middle_classes:
             print('result being prepared for %s, a middle class. Hence both Term1 & Term2 results to be shown.' %
-                    the_class)
+                  the_class)
             # style1 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
             #           ('BOX', (0, 0), (-1, -1), 1, colors.black),
             #           ('TOPPADDING', (0, 0), (-1, -1), 1),
@@ -223,17 +223,17 @@ class GenerateMarksheet(generics.ListAPIView):
             #           ('FONT', (0, 1), (0, 1), 'Times-Bold')]
             # 29/09/2019  - uncomment when generating result for final exam
             style2 = style3 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-                                ('BOX', (0, 0), (-1, -1), 1, colors.black),
-                                ('TOPPADDING', (0, 0), (-1, -1), 1),
-                                ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
-                                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-                                ('ALIGN', (0, 0), (1, 0), 'RIGHT'),
-                                ('ALIGN', (2, 0), (3, 0), 'RIGHT'),
-                                ('SPAN', (0, 0), (1, 0)),
-                                ('SPAN', (2, 0), (3, 0)),
-                                ('FONTSIZE', (0, 0), (-1, -1), 8),
-                                ('FONT', (0, 0), (1, 0), 'Times-Bold'),
-                                ('FONT', (2, 0), (3, 0), 'Times-Bold')]
+                               ('BOX', (0, 0), (-1, -1), 1, colors.black),
+                               ('TOPPADDING', (0, 0), (-1, -1), 1),
+                               ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+                               ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                               ('ALIGN', (0, 0), (1, 0), 'RIGHT'),
+                               ('ALIGN', (2, 0), (3, 0), 'RIGHT'),
+                               ('SPAN', (0, 0), (1, 0)),
+                               ('SPAN', (2, 0), (3, 0)),
+                               ('FONTSIZE', (0, 0), (-1, -1), 8),
+                               ('FONT', (0, 0), (1, 0), 'Times-Bold'),
+                               ('FONT', (2, 0), (3, 0), 'Times-Bold')]
 
             # 29/09/2019 - comment while generating result for final exam
             style2 = style3 = [('GRID', (0, 0), (-1, -1), 0.5, colors.black),
@@ -367,7 +367,7 @@ class GenerateMarksheet(generics.ListAPIView):
                           'Final Exam', '', '', 'Unit\nTest', 'Half Yearly\nExam', 'Final\nExam', 'Total'],
                          ['', '30', '80', 'Th', 'Pr', 'Tot', 'Th', 'Pr', 'Tot', '25', '25', '50', '100']]
                 print('class %s is a higher class. Subject list will come from the student/subject mapping' %
-                        the_class)
+                      the_class)
                 sequence = 0
                 mapping = HigherClassMapping.objects.filter(student=s)
                 for m in mapping:
@@ -503,7 +503,8 @@ class GenerateMarksheet(generics.ListAPIView):
                             sub_row.append(ut_cumul)
 
                             if half_yearly_marks != 'ABS':
-                                half_year_cumul = round((half_yearly_marks * float(25)) / float(subject.theory_marks), 2)
+                                half_year_cumul = round((half_yearly_marks * float(25)) / float(subject.theory_marks),
+                                                        2)
                                 grand_total += half_year_cumul
                             else:
                                 half_year_cumul = 'ABS'
@@ -558,7 +559,7 @@ class GenerateMarksheet(generics.ListAPIView):
                         work_array.append(work_ed)
 
                         art_array.append('Work Experience (Work Exp.)')
-                        art_ed = co_scl.art_education
+                        art_ed = co_scl.discipline
                         art_array.append(art_ed)
 
                         health_array.append('Health & Physical Education')
@@ -777,7 +778,7 @@ class GenerateMarksheet(generics.ListAPIView):
                     if the_class in middle_classes:
                         # 29/09/2019- uncomment when generating result for final exam
                         data2 = [['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale]', '',
-                                'Co-Scholastic Areas: Term-2[On a 3-point(A-C) grading scale]', '']]
+                                  'Co-Scholastic Areas: Term-2[On a 3-point(A-C) grading scale]', '']]
 
                         # 29/09/2019 - comment while generating result for final exam
                         # data2 = [['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale]', '']]
@@ -881,30 +882,6 @@ class GenerateMarksheet(generics.ListAPIView):
                             print('exception 03012020-P from exam marksheet.py %s %s' % (e.message, type(e)))
                             print('attendance recored not available for %s' % s)
 
-                    if the_class not in ninth_tenth:
-                        c.drawString(left_margin, table3_top - 35, 'Promoted to Class: ')
-                        promoted_status = 'N/A'
-                        # get the class to which this student is promoted. Only if he has passed the exam
-                        # try:
-                        #     not_promoted = NPromoted.objects.get(student=s)
-                        #     print('student %s %s has failed in class %s.' % (s.fist_name, s.last_name, the_class))
-                        #     print(not_promoted)
-                        #     promoted_status = 'Not Promoted. %s' % not_promoted.details
-                        # except Exception as e:
-                        #     print('student %s %s has passed in class %s.' % (s.fist_name, s.last_name, the_class))
-                        #     print('exception 02032018-A from exam views.py %s %s' % (e.message, type(e)))
-                        #     try:
-                        #         current_class = Class.objects.get(school=school, standard=the_class)
-                        #         next_class_sequence = current_class.sequence + 1
-                        #         next_class = Class.objects.get(school=school, sequence=next_class_sequence)
-                        #         next_class_standard = next_class.standard
-                        #         promoted_status = next_class_standard
-                        #     except Exception as e:
-                        #         print('%s %s of class %s has passed. But failed to determine his next class' %
-                        #               (s.fist_name, s.last_name, the_class))
-                        #         print('exception 02032018-B from exam views.py %s %s' % (e.message, type(e)))
-                        c.drawString(tab - 20, table3_top - 35, promoted_status)
-
                     c.drawString(left_margin, table3_top - 55, 'Place & Date:')
                     # c.drawString(left_margin + 50, table3_top - 55, 'Noida   26/03/2018')
                     c.drawString(175, table3_top - 55, 'Signature of Class Teacher')
@@ -927,7 +904,7 @@ class GenerateMarksheet(generics.ListAPIView):
                         attendance = IndividualAttendance.objects.get(student=s)
                         total_days = attendance.total_days
                         present_days = attendance.present_days
-                        c.drawString(left_margin +50, table3_top - 25, '%s/%s' % (str(present_days), str(total_days)))
+                        c.drawString(left_margin + 50, table3_top - 25, '%s/%s' % (str(present_days), str(total_days)))
                     except Exception as e:
                         print('exception 03012020-R from exam marksheet.py %s %s' % (e.message, type(e)))
                         print('attendance recored not available for %s' % s)
@@ -935,27 +912,21 @@ class GenerateMarksheet(generics.ListAPIView):
                     c.drawString(left_margin, table3_top - 35, 'Promoted to Class: ')
                 else:
                     c.drawString(left_margin, table3_top - 35, 'Promoted to Class: ')
-                promoted_status = 'N/A'
-                # get the class to which this student is promoted. Only if he has passed the exam
-                # try:
-                #     not_promoted = NPromoted.objects.get(student=s)
-                #     print('student %s %s has failed in class %s.' % (s.fist_name, s.last_name, the_class))
-                #     print(not_promoted)
-                #     promoted_status = 'Not Promoted. %s' % not_promoted.details
-                # except Exception as e:
-                #     print('student %s %s has passed in class %s.' % (s.fist_name, s.last_name, the_class))
-                #     print('exception 02032018-C from exam views.py %s %s' % (e.message, type(e)))
-                #     try:
-                #         current_class = Class.objects.get(school=school, standard=the_class)
-                #         next_class_sequence = current_class.sequence + 1
-                #         next_class = Class.objects.get(school=school, sequence=next_class_sequence)
-                #         next_class_standard = next_class.standard
-                #         promoted_status = next_class_standard
-                #     except Exception as e:
-                #         print('%s %s of class %s has passed. But failed to determine his next class' %
-                #                 (s.fist_name, s.last_name, the_class))
-                #         print('exception 02032018-D from exam views.py %s %s' % (e.message, type(e)))
-                c.drawString(tab - 20, table3_top - 35, promoted_status)
+                try:
+                    exam_result = ExamResult.objects.get(student=s)
+                    if exam_result.status:
+                        current_class = Class.objects.get(school=school, standard=the_class)
+                        next_class_sequence = current_class.sequence + 1
+                        next_class = Class.objects.get(school=school, sequence=next_class_sequence)
+                        next_class_standard = next_class.standard
+                        promoted_to = next_class_standard
+                    else:
+                        detain_reason = exam_result.detain_reason
+                        promoted_to = 'Not Promoted. %s' % detain_reason
+                    c.drawString(tab - 20, table3_top - 35, promoted_to)
+                except Exception as e:
+                    print('exception 26022020-A from exam marksheet.py %s %s' % (e.message, type(e)))
+                    print('could not retrieve promotion status for %s' % s)
 
                 c.drawString(tab - 20, table3_top - 25, '')
                 c.drawString(left_margin, table3_top - 55, 'Place & Date:')
@@ -979,7 +950,7 @@ class GenerateMarksheet(generics.ListAPIView):
                 c.showPage()
                 c.drawString(260, 570, "Instructions")
                 c.drawString(30, 550, "Grading Scale for Scholastic Areas: "
-                                                  "Grades are awarded on a 8-point grading scales as follows - ")
+                                      "Grades are awarded on a 8-point grading scales as follows - ")
                 table4 = Table(data4)
                 table4.setStyle(TableStyle(style4))
                 table4.wrapOn(c, 0, 0)
