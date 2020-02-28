@@ -466,7 +466,7 @@ class StudentPerformanceAnalysis(generics.ListCreateAPIView):
             analytics_top = stu_detail_top - 60
             for exam in exams:
                 title = exam.title
-                subject_analysis = SubjectAnalysis.objects.filter(student=s, exam=exam)
+                subject_analysis = SubjectAnalysis.objects.filter(student=s, exam=exam).order_by('subject')
                 if subject_analysis.count() > 0:
                     subject_count = subject_analysis.count()
                     print('generating analytics for %s of %s-%s' % (s, s.current_class,
