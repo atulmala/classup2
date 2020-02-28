@@ -44,6 +44,8 @@ urlpatterns = [
 
     url(r'^circulars/(?P<teacher>[\w.@+-]+)/(?P<sender_type>\w+)/$', views.CircularList.as_view(),
         name='circular_list'),
+
+    url(r'^get_class_teacher/$', views.GetClassTeacher.as_view(), name='get_class_teacher'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

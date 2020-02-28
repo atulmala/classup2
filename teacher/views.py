@@ -821,3 +821,25 @@ def unset_subjects(request, teacher):
             print('unable to create logbook entry')
             print ('Exception 501 from teachers views.py %s %s' % (e.message, type(e)))
     return HttpResponse('OK')
+
+
+class GetClassTeacher(generics.ListAPIView):
+    def get(self, request, *args, **kwargs):
+        school_id = self.request.query_params.get('school_id')
+        school = School.objects.get(id=school_id)
+        standard = self.request.query_params.get('the_class')
+        the_class = Class.objects.get(school=school, standard=standard)
+        sec = request.query_params.get('section')
+        section = Section.objects.get(school=school, section=sec)
+
+        try:
+            ct = ClassTeacher.objects.get(standard=the_class, section=section)
+            class_teacher = '%s %s' % (ct.class_teacher.first_name, ct.class_teacher.last_name)
+        except Exception as e:
+            print('exception 28022020-A from teachers views.py %s %s' % (e.message, type(e)))
+            print('class teacher for %s-%s school %s is not set' % (the_class, section, school))
+            class_teacher = 'N/A'
+        context_dict = {
+            'class_teacher': class_teacher
+        }
+        return JSONResponse(context_dict, status=200)
