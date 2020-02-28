@@ -546,7 +546,7 @@ class GenerateMarksheet(generics.ListAPIView):
                 print('getting the Coscholastic grades for %s %s' % (s.fist_name, s.last_name))
                 table2_top = table1_top - 100
                 try:
-                    data2 = [['Co-Scholastic Areas: Term-1[On a 3-point(A-C) grading scale]', '']]
+                    data2 = [['Co-Scholastic Areas [On a 3-point(A-C) grading scale]', '']]
                     work_array = []
                     art_array = []
                     health_array = []
@@ -598,7 +598,7 @@ class GenerateMarksheet(generics.ListAPIView):
                     table3 = Table(data3)
                     table3.setStyle(TableStyle(style3))
                     table3.wrapOn(c, 0, 0)
-                    table3.drawOn(c, left_margin, table3_top)
+                    # table3.drawOn(c, left_margin, table3_top)
                     print('drawn table3 for %s %s' % (s.fist_name, s.last_name))
                 except Exception as e:
                     print('failed to draw table3 for %s %s' % (s.fist_name, s.last_name))

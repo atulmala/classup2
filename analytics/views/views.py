@@ -471,6 +471,7 @@ class StudentPerformanceAnalysis(generics.ListCreateAPIView):
                     subject_count = subject_analysis.count()
                     print('generating analytics for %s of %s-%s' % (s, s.current_class,
                                                                     s.current_section))
+                    c.setFont(font, 6)
                     c.drawString(left_margin, analytics_top, title)
                     c.drawString(left_margin, analytics_top - 10, 'Subject-wise comparative Analysis')
 
