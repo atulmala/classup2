@@ -11,7 +11,6 @@ from rest_framework import generics
 
 import xlrd
 
-
 from setup.forms import ExcelFileUploadForm
 from setup.models import School
 from setup.views import validate_excel_extension
@@ -466,7 +465,6 @@ def get_grade(marks):
     if marks <= 32:
         grade = 'E'
         return grade
-
 
 
 def get_wings(school):

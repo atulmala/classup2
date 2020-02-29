@@ -272,15 +272,27 @@ class GenerateMarksheet(generics.ListAPIView):
                   ('BOTTOMPADDING', (0, 0), (-1, -1), 1), ('FONT', (0, 0), (1, 0), 'Times-Bold'),
                   ('FONTSIZE', (0, 0), (-1, -1), 6)]
 
-        data4 = [['MARKS RANGE', 'GRADE'],
-                 ['91 - 100', 'A 1'],
-                 ['81 - 90', 'A 2'],
-                 ['71 - 80', 'B 1'],
-                 ['61 - 70', 'B 2'],
-                 ['51 - 60', 'C 1'],
-                 ['41 - 50', 'C 2'],
-                 ['33 - 40', 'D'],
-                 ['32 & Below', 'E (Needs improvement)']]
+        if the_class in middle_classes:
+            data4 = [['MARKS RANGE', 'GRADE'],
+                     ['91 - 100', 'A 1'],
+                     ['81 - 90', 'A 2'],
+                     ['71 - 80', 'B 1'],
+                     ['61 - 70', 'B 2'],
+                     ['51 - 60', 'C 1'],
+                     ['41 - 50', 'C 2'],
+                     ['33 - 40', 'D'],
+                     ['32 & Below', 'E (Needs improvement)']]
+        else:
+            data4 = [['MARKS RANGE', 'GRADE'],
+                     ['91 - 100', 'A 1'],
+                     ['81 - 90', 'A 2'],
+                     ['71 - 80', 'B 1'],
+                     ['61 - 70', 'B 2'],
+                     ['51 - 60', 'C 1'],
+                     ['41 - 50', 'C 2'],
+                     ['33 - 40', 'D'],
+                     ['32 & Below', 'E(Fail)']]
+
         session = 'Academic Session 2019-20'
         adm_no_lbl = 'Admission No:'
         stu_name_lbl = 'Student Name:'
@@ -946,7 +958,11 @@ class GenerateMarksheet(generics.ListAPIView):
                 table4.wrapOn(c, 0, 0)
                 table4.drawOn(c, 140, table3_top - 250)
             else:
-                c.drawString(170, -50, "Grading scheme on reverse")
+                if the_class not in higher_classes:
+                    c.drawString(170, -50, "Grading scheme on reverse")
+                else:
+                    c.drawString(170, -40, "Grading scheme on reverse")
+                    c.drawString(110, -50,  "Cumulative Results Calculations based on Theory marks only")
                 c.showPage()
                 c.drawString(260, 570, "Instructions")
                 c.drawString(30, 550, "Grading Scale for Scholastic Areas: "
