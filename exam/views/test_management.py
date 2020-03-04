@@ -123,14 +123,17 @@ class UnscheduledTestList(generics.ListAPIView):
                 students = Student.objects.filter(current_class=the_class, current_section=section)
                 if students.count() > 0:
                     for a_subject in subjects:
-                        subject = Subject.objects.get(school=school, subject_name=a_subject)
                         try:
+                            subject = Subject.objects.get(school=school, subject_name=a_subject)
                             test = ClassTest.objects.get(exam=exam, subject=subject,
                                                          the_class=the_class, section=section)
                             print('test for %s exam %s class %s-%s has been created' %
                                   (subject, exam, the_class, section))
                         except Exception as e:
                             print('exception 21022020-A from exam test_management.py %s %s' % (e.message, type(e)))
+                            if subject is None:
+                                print('%s does not exist in the scheme of %s' % (a_subject, school))
+                                continue
                             print('test for %s exam %s class %s-%s has not been created' %
                                   (subject, exam, the_class, section))
                             sheet.write_number(row, col, s_no, cell_normal)

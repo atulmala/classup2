@@ -856,7 +856,6 @@ class GenerateMarksheet(generics.ListAPIView):
                 except Exception as e:
                     print('failed to draw table2 for %s %s' % (s.fist_name, s.last_name))
                     print('exception 03012020-N from exam marksheet.py %s %s' % (e.message, type(e)))
-
                 print('preparing table3 for %s %s' % (s.fist_name, s.last_name))
                 table3_top = table2_top - 40
                 try:
