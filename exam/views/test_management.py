@@ -145,6 +145,7 @@ class UnscheduledTestList(generics.ListAPIView):
                             sheet.write_string(row, col, a_subject, cell_normal)
                             row += 1
                             col = 0
+                            subject = None
 
         file.close()
         response = HttpResponse(content_type='application/vnd.ms-excel')
