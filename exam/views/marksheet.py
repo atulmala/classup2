@@ -377,7 +377,7 @@ class GenerateMarksheet(generics.ListAPIView):
                 data1 = [['', 'TERM RESULT', '', '', '', '', '', '', '', 'CUMULATIVE RESULT', '', '', ''],
                          ['\nSUBJECT', 'UT-I', 'UT-II', 'Half Yearly\nExam', '', '',
                           'Final Exam', '', '', 'Unit\nTest', 'Half Yearly\nExam', 'Final\nExam', 'Total'],
-                         ['', '30', '80', 'Th', 'Pr', 'Tot', 'Th', 'Pr', 'Tot', '25', '25', '50', '100']]
+                         ['', '30', '80/70/30', 'Th', 'Pr', 'Tot', 'Th', 'Pr', 'Tot', '25', '25', '50', '100']]
                 print('class %s is a higher class. Subject list will come from the student/subject mapping' %
                       the_class)
                 sequence = 0
@@ -960,8 +960,13 @@ class GenerateMarksheet(generics.ListAPIView):
                 if the_class not in higher_classes:
                     c.drawString(170, -50, "Grading scheme on reverse")
                 else:
-                    c.drawString(170, -40, "Grading scheme on reverse")
-                    c.drawString(110, -50,  "Cumulative Results Calculations based on Theory marks only")
+                    c.drawString(170, -30, "Grading scheme on reverse")
+                    c.drawString(110, -40,  "Cumulative Results Calculations based on Theory marks only")
+                    split = 'Theory/Prac Split - English, Mathematics, Accountancy, B.St, Economics: (80/20). '
+                    split += 'Physics, Chemistry, Biology, Phy Ed, Comp Sc, IP: (70/30). '
+                    split += 'Painting/Fine Arts (40/60)'
+                    c.setFont(font, 6)
+                    c.drawString(0, -50, split)
                 c.showPage()
                 c.drawString(260, 570, "Instructions")
                 c.drawString(30, 550, "Grading Scale for Scholastic Areas: "
