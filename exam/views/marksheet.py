@@ -377,7 +377,7 @@ class GenerateMarksheet(generics.ListAPIView):
                 data1 = [['', 'TERM RESULT', '', '', '', '', '', '', '', 'CUMULATIVE RESULT', '', '', ''],
                          ['\nSUBJECT', 'UT-I', 'UT-II', 'Half Yearly\nExam', '', '',
                           'Final Exam', '', '', 'Unit\nTest', 'Half Yearly\nExam', 'Final\nExam', 'Total'],
-                         ['', '30', '80/70/30', 'Th', 'Pr', 'Tot', 'Th', 'Pr', 'Tot', '25', '25', '50', '100']]
+                         ['', '30', '80/70/30', 'Th', 'Pr/IA', 'Tot', 'Th', 'Pr/IA', 'Tot', '25', '25', '50', '100']]
                 print('class %s is a higher class. Subject list will come from the student/subject mapping' %
                       the_class)
                 sequence = 0

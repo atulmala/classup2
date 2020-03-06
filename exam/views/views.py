@@ -54,24 +54,41 @@ class UploadMarks(generics.ListCreateAPIView):
                 if row == 0:
                     continue
                 else:
-                    erp_id = str(sheet.cell(row, 0).value)
+                    erp_id = str(sheet.cell(row, 1).value)
                     school = School.objects.get(id=23)
                     try:
                         student = Student.objects.get(school=school, student_erp_id=erp_id)
                         print('now dealing with %s' % student)
-                        theory = sheet.cell(row, 3).value
-                        practical = sheet.cell(row, 4).value
+                        theory1 = sheet.cell(row, 3).value
+                        practical1 = sheet.cell(row, 4).value
                         subject = Subject.objects.get(school=school, subject_name='Computer Science')
-                        exam = Exam.objects.get(school=school, title='Term-I (IX - X)')
-                        class_test = ClassTest.objects.get(subject=subject, exam=exam,
+                        term1 = Exam.objects.get(school=school, title='Term-I (IX - X)')
+                        print(term1)
+                        class_test1 = ClassTest.objects.get(subject=subject, exam=term1,
                                                            the_class=student.current_class,
                                                            section=student.current_section)
-                        test_result = TestResults.objects.get(student=student, class_test=class_test)
-                        test_result.marks_obtained = float(theory)
-                        test_result.save()
-                        ttr = TermTestResult.objects.get(test_result=test_result)
-                        ttr.prac_marks = float(practical)
-                        ttr.save()
+                        print(class_test1)
+                        test_result1 = TestResults.objects.get(student=student, class_test=class_test1)
+                        test_result1.marks_obtained = float(theory1)
+                        test_result1.save()
+                        ttr1 = TermTestResult.objects.get(test_result=test_result1)
+                        ttr1.prac_marks = float(practical1)
+                        ttr1.save()
+                        print('term1: %s marks saved for %s' % (term1, student))
+
+                        theory2 = sheet.cell(row, 5).value
+                        practical2 = sheet.cell(row, 6).value
+                        term2 = Exam.objects.get(school=school, title='Term-II (IX)')
+                        class_test2 = ClassTest.objects.get(subject=subject, exam=term2,
+                                                            the_class=student.current_class,
+                                                            section=student.current_section)
+                        test_result2 = TestResults.objects.get(student=student, class_test=class_test2)
+                        test_result2.marks_obtained = float(theory2)
+                        test_result2.save()
+                        ttr2 = TermTestResult.objects.get(test_result=test_result2)
+                        ttr2.prac_marks = float(practical2)
+                        ttr2.save()
+                        print('term2: %s marks saved for %s' % (term2, student))
                     except Exception as e:
                         print('exception 02102019-A from exam views.py %s %s' % (e.message, type(e)))
         except Exception as e:
