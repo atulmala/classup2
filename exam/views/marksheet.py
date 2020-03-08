@@ -650,7 +650,7 @@ class GenerateMarksheet(generics.ListAPIView):
                     data1 = [['Scholastic\nAreas', 'Academic Year (100 Marks)', '', '', '', '', '', ''],
                              ['Sub Name', 'Per Test\n(5)', 'Multi\nAssess\n(5)',
                               'Portfolio\n(5)', 'Sub\nEnrich\n(5)',
-                              'Half\nYearly Exam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
+                              'Yearly Exam\n(80)', 'Marks\nObtained\n(100)', 'Grade']]
                 for i in range(0, sub_count):
                     sub = sub_dict.values()[i]
                     print ('sub = %s' % sub)
@@ -722,36 +722,37 @@ class GenerateMarksheet(generics.ListAPIView):
                                     print(total)
 
                                     if the_class in ninth_tenth:
-                                        if school_name == 'Jagran Public School':
-                                            print('the_class in ninth_tenth and school is Jagran Public School')
-                                            if sub.subject_name == 'Computer Science':
-                                                print('suject is Computer Science')
-                                                pa = 'NA'
-                                                multi_assess = 'NA'
-                                                sub_enrich = 'NA'
-                                                # main = tr.marks_obtained
-                                                notebook = 'NA'
-                                                ttr = TermTestResult.objects.get(test_result=tr)
-                                                theory = tr.marks_obtained
-                                                prac = ttr.prac_marks
-                                                total = float(theory) + float(prac)
-                                                main = 'Th: %.0f Pr: %.0f' % (float(theory), float(prac))
-                                        else:
-                                            print('this is not Jagran Public School')
+                                        if sub.subject_name == 'Computer':
+                                            print('suject is Computer and class is IX')
+                                            pa = 'NA'
+                                            multi_assess = 'NA'
+                                            sub_enrich = 'NA'
+                                            # main = tr.marks_obtained
+                                            notebook = 'NA'
+                                            ttr = TermTestResult.objects.get(test_result=tr)
+                                            theory = tr.marks_obtained
+                                            prac = ttr.prac_marks
+                                            total = float(theory) + float(prac)
+                                            main = 'Th: %.0f Pr: %.0f' % (float(theory), float(prac))
+                                            print('main = %s' % main)
+
                                     # in case the student was absent we need to show ABS in the marksheet.
                                     if the_class not in higher_classes:
-                                        if float(main) < 0.0:
-                                            main = 'ABS'
-                                            total = float(pa) + float(multi_assess) + float(notebook) + float(
-                                                sub_enrich)
+                                        try:
+                                            if float(main) < 0.0:
+                                                main = 'ABS'
+                                                total = float(pa) + float(multi_assess) + float(notebook) + float(
+                                                    sub_enrich)
+                                        except Exception as e:
+                                            print('exception 08032020-A from exam marksheet.py %s %s' %
+                                                  (e.message, type(e)))
+                                            print('looks like we were dealing with main of Computer in class IX')
+
                                         grade = get_grade(total)
                                         print('grade obtained by %s in %s exam of %s: %s' %
                                               (s.fist_name, term, sub.subject_name, grade))
-                                    if the_class in ninth_tenth:
-                                        if sub.subject_name == 'Computer Science':
-                                            if school_id == 23:
-                                                main = 'NA'
-                                    grade = get_grade(total)
+
+                                    # grade = get_grade(total)
                                 if total > -1000.0:
                                     sub_row.append(pa)
                                     sub_row.append(multi_assess)
@@ -961,7 +962,7 @@ class GenerateMarksheet(generics.ListAPIView):
                     c.drawString(170, -50, "Grading scheme on reverse")
                 else:
                     c.drawString(170, -30, "Grading scheme on reverse")
-                    c.drawString(110, -40,  "Cumulative Results Calculations based on Theory marks only")
+                    c.drawString(110, -40, "Cumulative Results Calculations based on Theory marks only")
                     split = 'Theory/Prac Split - English, Mathematics, Accountancy, B.St, Economics: (80/20). '
                     split += 'Physics, Chemistry, Biology, Phy Ed, Comp Sc, IP: (70/30). '
                     split += 'Painting/Fine Arts (40/60)'
