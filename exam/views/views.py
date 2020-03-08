@@ -55,14 +55,14 @@ class UploadMarks(generics.ListCreateAPIView):
                     continue
                 else:
                     erp_id = str(sheet.cell(row, 1).value)
-                    school = School.objects.get(id=20)
+                    school = School.objects.get(id=23)
                     try:
                         student = Student.objects.get(school=school, student_erp_id=erp_id)
                         print('now dealing with %s' % student)
                         theory1 = sheet.cell(row, 3).value
                         practical1 = sheet.cell(row, 4).value
                         subject = Subject.objects.get(school=school, subject_name='Computer')
-                        term1 = Exam.objects.get(school=school, title='Term I (IX-X)')
+                        term1 = Exam.objects.get(school=school, title='Term-I (IX - X)')
                         print(term1)
                         class_test1 = ClassTest.objects.get(subject=subject, exam=term1,
                                                            the_class=student.current_class,
@@ -78,7 +78,7 @@ class UploadMarks(generics.ListCreateAPIView):
 
                         theory2 = sheet.cell(row, 5).value
                         practical2 = sheet.cell(row, 6).value
-                        term2 = Exam.objects.get(school=school, title='Term II')
+                        term2 = Exam.objects.get(school=school, title='Term-II (IX)')
                         class_test2 = ClassTest.objects.get(subject=subject, exam=term2,
                                                             the_class=student.current_class,
                                                             section=student.current_section)
