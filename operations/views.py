@@ -67,8 +67,11 @@ class CommitBulkSMS(generics.ListCreateAPIView):
                 cursor1 = db.cursor()
 
                 # extract the list of all sms for which api_called = false
+                # sql1 = "select id, sender_code, recipient_number, message from operations_smsrecord " \
+                #        "where api_called = 0 and message_type = 'Bulk SMS (Web Interface)'"
+
                 sql1 = "select id, sender_code, recipient_number, message from operations_smsrecord " \
-                       "where api_called = 0 and message_type = 'Bulk SMS (Web Interface)'"
+                       "where api_called = 0"
                 cursor1.execute(sql1)
             except Exception as e:
                 print('exception 29032018-A from send_bulk_sms.py %s (%s)' % (e.message, type(e)))

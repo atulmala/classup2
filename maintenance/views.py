@@ -30,6 +30,30 @@ class JSONResponse(HttpResponse):
         super(JSONResponse, self).__init__(content, **kwargs)
 
 
+class ResendFailedMessages(generics.ListCreateAPIView):
+    def post(self, request, *args, **kwargs):
+        t1 = datetime.now()
+        context_dict = {'start_time': '%s' % t1}
+        time_threshold = datetime.now() - timedelta(hours=5)
+        last_date = datetime(2020, 2, 8)
+        print(time_threshold)
+        records = SMSRecord.objects.filter(api_called=True, status_extracted=True,
+                                           date__lt=time_threshold, date__gt=last_date)
+        print('total %i messages will be checked for delivery status' % records.count())
+        context_dict['message_count'] = records.count()
+        failed_count = 0
+        for record in records:
+            delivery_status = record.status
+            if 'Delivered' not in delivery_status:
+                failed_count += 1
+                print('delivery status = %s' % delivery_status)
+                record.api_called = False
+                record.status = 'Not Available'
+                record.save()
+        context_dict['failed_count'] = failed_count
+        return JSONResponse(context_dict, status=200)
+
+
 class DeDup(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         context_dict = {
@@ -116,10 +140,7 @@ class DeDup(generics.ListCreateAPIView):
 class SMSDeliveryStatus(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         t1 = datetime.now()
-        context_dict = {
-
-        }
-        context_dict['start_time'] = '%s' % t1
+        context_dict = {'start_time': '%s' % t1}
         time_threshold = datetime.now() - timedelta(hours=2.5)
         last_date = datetime(2019, 7, 8)
         print(time_threshold)
@@ -150,6 +171,13 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
                         response = urllib.urlopen(url)
                         status = response.read()
                         print('status = ' + str(status))
+                        if 'Delivered' not in status:
+                            print('this message has not been delivered will have to be re send')
+                            record.api_called = False
+                            record.status_extracted = False
+                            record.status = 'Not Available'
+                            record.save()
+                            continue
                     except Exception as e:
                         print('unable to get the staus of sms delivery. The url was: ')
                         print(url)
