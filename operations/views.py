@@ -90,10 +90,12 @@ class CommitBulkSMS(generics.ListCreateAPIView):
                 m2 = m1.replace("&", "%26")
                 print(m2)
 
-                url = 'http://softsms.in/app/smsapi/index.php?'
-                key = '58fc1def26489'
-                url += 'key=%s' % key
-                url += '&type=Text'
+                # 12/03/2020 new api from softsms they say its more robust and reliable
+                # url = 'http://softsms.in/app/smsapi/index.php?'
+                # key = '58fc1def26489'
+                # url += 'key=%s' % key
+                # url += '&type=Text'
+                url = 'http://softsms.in/app/smsuserapi/index.php?username=classup&userpassword=classup@123&type=text'
                 url += '&contacts=%s' % mobile
                 url += '&senderid=%s' % sender_id
                 url += '&msg=%s' % m2

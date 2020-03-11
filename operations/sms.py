@@ -186,9 +186,12 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
             except Exception as e:
                 print('exception 12072019-A from sms.py %s %s' % (e.message, type(e)))
                 print('could not retrieve the vendor object associated with %s' % vendor_name)
-            url = 'http://softsms.in/app/smsapi/index.php?'
-            url += 'key=%s' % key
-            url += '&type=Text'
+
+            # 12/03/2020 new api from softsms they say its more robust and reliable
+            # url = 'http://softsms.in/app/smsapi/index.php?'
+            # url += 'key=%s' % key
+            # url += '&type=Text'
+            url = 'http://softsms.in/app/smsuserapi/index.php?username=classup&userpassword=classup@123&type=text'
             url += '&contacts=%s' % mobile
             url += '&senderid=%s' % sender_id
             url += '&msg=%s' % m3
