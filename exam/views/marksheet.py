@@ -965,7 +965,7 @@ class GenerateMarksheet(generics.ListAPIView):
                     c.drawString(110, -40, "Cumulative Results Calculations based on Theory marks only")
                     split = 'Theory/Prac Split - English, Mathematics, Accountancy, B.St, Economics: (80/20). '
                     split += 'Physics, Chemistry, Biology, Phy Ed, Comp Sc, IP: (70/30). '
-                    split += 'Painting/Fine Arts (40/60)'
+                    split += 'Painting/Fine Arts (30/70)'
                     c.setFont(font, 6)
                     c.drawString(0, -50, split)
                 c.showPage()
