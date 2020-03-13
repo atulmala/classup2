@@ -1901,4 +1901,3 @@ class ParentCommunicationReport(generics.ListCreateAPIView):
         response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
         response.write(output.getvalue())
         return response
-

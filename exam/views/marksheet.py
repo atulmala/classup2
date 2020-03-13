@@ -701,6 +701,8 @@ class GenerateMarksheet(generics.ListAPIView):
                                 else:
                                     ttr = TermTestResult.objects.get(test_result=tr)
                                     pa = round(ttr.periodic_test_marks)
+                                    if pa < 0.0:
+                                        pa = 0.0
                                     multi_assess = ttr.multi_asses_marks
 
                                     notebook = ttr.note_book_marks
