@@ -10,7 +10,7 @@ from xlsxwriter.utility import xl_rowcol_to_cell, xl_range
 
 from academics.models import Class, Section, ClassTeacher, ThirdLang, Exam, Subject, ClassTest, \
     TestResults, CoScholastics
-from exam.models import Scheme, HigherClassMapping
+from exam.models import Scheme, HigherClassMapping, ExamResult
 from analytics.models import SubjectAnalysis, StudentTotalMarks
 from exam.views import get_wings
 from setup.models import School
@@ -20,6 +20,83 @@ from student.models import Student
 class CsrfExemptSessionAuthentication(SessionAuthentication):
     def enforce_csrf(self, request):
         return  # To not perform the csrf check previously happening
+
+
+class DetainList(generics.ListAPIView):
+    def get(self, request, *args, **kwargs):
+        school_id = request.query_params.get('school_id')
+        school = School.objects.get(id=school_id)
+
+        excel_file_name = 'DetainList.xlsx'
+        print('excel_file_name = %s' % excel_file_name)
+
+        output = StringIO.StringIO(excel_file_name)
+        workbook = xlsxwriter.Workbook(output)
+
+        t1_sheet = workbook.add_worksheet('DetainList')
+        t1_sheet.set_paper(9)  # A4 paper
+        t1_sheet.repeat_rows(1, 2)
+        t1_sheet.fit_to_pages(1, 0)
+        t1_sheet.set_row(0, 35)
+        t1_sheet.set_column('A:A', 3.5)
+        t1_sheet.set_column('B:B', 8)
+        t1_sheet.set_column('C:C', 20)
+        t1_sheet.set_column('D:D', 40)
+
+        fmt = format()
+        title_format = workbook.add_format(fmt.get_title())
+        title_format.set_bg_color('#CFD8DC')
+        title_format.set_border()
+        title_format.set_text_wrap()
+        cell_normal = workbook.add_format(fmt.get_cell_normal())
+        cell_normal.set_border()
+        cell_bold = workbook.add_format(fmt.get_cell_bold())
+        cell_bold.set_border()
+        cell_left = workbook.add_format(fmt.get_cell_left())
+        cell_left.set_border()
+
+        t1_sheet.merge_range('A1:D1', 'List of Detain/Compartment Cases', title_format)
+        row = 1
+        col = 0
+        t1_sheet.write_string(row, col, 'S No', cell_bold)
+        col += 1
+        t1_sheet.write_string(row, col, 'Class', cell_bold)
+        col += 1
+        t1_sheet.write_string(row, col, 'Student', cell_bold)
+        col += 1
+        t1_sheet.write_string(row, col, 'Status', cell_bold)
+        row += 1
+        col = 0
+
+        classes = Class.objects.filter(school=school).order_by('sequence')
+        sections = Section.objects.filter(school=school).order_by('section')
+
+        s_no = 1
+        for a_class in classes:
+            for section in sections:
+                students = Student.objects.filter(current_class=a_class, current_section=section)
+                for student in students:
+                    try:
+                        entry = ExamResult.objects.get(student=student, status=False)
+                        print('student %s of %s-%s is in Detainee list' % (student, a_class, section))
+                        t1_sheet.write_number(row, col, s_no)
+                        s_no += 1
+                        col += 1
+                        t1_sheet.write_string(row, col, '%s-%s' % (a_class.standard, section.section), cell_normal)
+                        col += 1
+                        t1_sheet.write_string(row, col, '%s %s' % (student.fist_name, student.last_name), cell_left)
+                        col += 1
+                        t1_sheet.write_string(row, col, entry.detain_reason, cell_left)
+                        row += 1
+                        col = 0
+                    except Exception as e:
+                        print('exception 13032020-A from exam results.py %s %s' % (e.message, type(e)))
+                        print('%s of %s-%s has passed' % (student, a_class, section))
+        workbook.close()
+        response = HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=' + excel_file_name
+        response.write(output.getvalue())
+        return response
 
 
 class ResultAnalysisSheet(generics.ListCreateAPIView):
@@ -172,7 +249,7 @@ class ResultAnalysisSheet(generics.ListCreateAPIView):
             t2_sheet.merge_range('B2:C3', 'Student', cell_bold)
 
             co_schol_title = '%s\n Co-scholastic Grades & Class Teacher Comments Class %s-%s Class Teacher: %s' % \
-                         (school, the_class, section, class_teacher)
+                             (school, the_class, section, class_teacher)
             co_schol_header = 'Co-scholastic Grades class %s-%s' % (the_class, section)
             co_schol_sheet.set_header('&L%s&RPage &P of &N' % co_schol_header)
             co_schol_sheet.set_footer('&LClass Teacher Signature&RPage &P of &N')
@@ -185,7 +262,7 @@ class ResultAnalysisSheet(generics.ListCreateAPIView):
             co_schol_sheet.write_string('B2', 'Student', cell_center)
             co_schol_sheet.write_string('C2', 'Work Education', cell_center)
             co_schol_sheet.write_string('D2', 'Art Education', cell_center)
-            co_schol_sheet.write_string('E2','Health & PE', cell_center)
+            co_schol_sheet.write_string('E2', 'Health & PE', cell_center)
             co_schol_sheet.write_string('F2', 'Discipline', cell_center)
             co_schol_sheet.write_string('G2', 'Term I Class Teacher Comments', cell_center)
             co_schol_sheet.write_string('H2', 'Term II Class Teacher Comments', cell_center)
@@ -289,7 +366,7 @@ class ResultAnalysisSheet(generics.ListCreateAPIView):
                 t1_total = t1_summary.total_marks
                 cons_sheet.write_number(cons_row, cons_col, t1_total, cell_normal)
                 cons_col += 1
-                t1_perc = float(t1_summary.percentage)/100.00
+                t1_perc = float(t1_summary.percentage) / 100.00
                 cons_sheet.write_number(cons_row, cons_col, t1_perc, perc_format)
                 cons_col += 1
                 t1_rank = t1_summary.rank
@@ -300,7 +377,7 @@ class ResultAnalysisSheet(generics.ListCreateAPIView):
                 t2_total = t2_summary.total_marks
                 cons_sheet.write_number(cons_row, cons_col, t2_total, cell_normal)
                 cons_col += 1
-                t2_perc = float(t2_summary.percentage)/100.00
+                t2_perc = float(t2_summary.percentage) / 100.00
                 cons_sheet.write_number(cons_row, cons_col, t2_perc, perc_format)
                 cons_col += 1
                 t2_rank = t2_summary.rank
@@ -310,7 +387,7 @@ class ResultAnalysisSheet(generics.ListCreateAPIView):
                 t1_t2_total = t1_total + t2_total
                 cons_sheet.write_number(cons_row, cons_col, t1_t2_total, cell_normal)
                 cons_col += 1
-                t1_t2_perc = float((t1_perc + t2_perc)/2)
+                t1_t2_perc = float((t1_perc + t2_perc) / 2)
                 cons_sheet.write_number(cons_row, cons_col, t1_t2_perc, perc_format)
                 cons_col += 1
 
