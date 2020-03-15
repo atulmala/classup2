@@ -454,7 +454,8 @@ def get_exam_result(request, student_id, exam_id):
                                     pa = ttr.periodic_test_marks
                                     notebook = ttr.note_book_marks
                                     sub_enrich = ttr.sub_enrich_marks
-                                    total = float(main) + float(pa) + float(notebook) + float(sub_enrich)
+                                    multi_asses = ttr.multi_asses_marks
+                                    total = float(main) + float(pa) + float(notebook) + float(sub_enrich) + float(multi_asses)
                                     exam_result['marks'] = round(total, 2)
                             else:
                                 print('this is a unit test')

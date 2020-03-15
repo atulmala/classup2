@@ -1,5 +1,6 @@
 import StringIO
 
+from analytics.serializers import SubjectAnalysisSerializer
 from formats.formats import Formats as format
 
 import xlsxwriter
@@ -22,6 +23,20 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
         return  # To not perform the csrf check previously happening
 
 
+class StudentSubjects(generics.ListAPIView):
+    serializer_class = SubjectAnalysisSerializer
+
+    def get_queryset(self):
+        result_id = self.request.query_params.get('result_id')
+        exam_result = ExamResult.objects.get(id=result_id)
+        print(exam_result)
+        student = exam_result.student
+        print('retrieving marks for %s of %s' % (student, student.school))
+
+        q = SubjectAnalysis.objects.filter(student=student).order_by('subject')
+        return q
+
+
 class DetainList(generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         school_id = request.query_params.get('school_id')
@@ -35,7 +50,7 @@ class DetainList(generics.ListAPIView):
 
         t1_sheet = workbook.add_worksheet('DetainList')
         t1_sheet.set_paper(9)  # A4 paper
-        t1_sheet.repeat_rows(1, 2)
+        t1_sheet.repeat_rows(1, 1)
         t1_sheet.fit_to_pages(1, 0)
         t1_sheet.set_row(0, 35)
         t1_sheet.set_column('A:A', 3.5)
@@ -55,7 +70,9 @@ class DetainList(generics.ListAPIView):
         cell_left = workbook.add_format(fmt.get_cell_left())
         cell_left.set_border()
 
-        t1_sheet.merge_range('A1:D1', 'List of Detain/Compartment Cases', title_format)
+        t1_sheet.merge_range('A1:D1',
+                             'Jagran Public School\n Session 2019-20 - List of Detain/Compartment Cases',
+                             title_format)
         row = 1
         col = 0
         t1_sheet.write_string(row, col, 'S No', cell_bold)
@@ -79,7 +96,7 @@ class DetainList(generics.ListAPIView):
                     try:
                         entry = ExamResult.objects.get(student=student, status=False)
                         print('student %s of %s-%s is in Detainee list' % (student, a_class, section))
-                        t1_sheet.write_number(row, col, s_no)
+                        t1_sheet.write_number(row, col, s_no, cell_left)
                         s_no += 1
                         col += 1
                         t1_sheet.write_string(row, col, '%s-%s' % (a_class.standard, section.section), cell_normal)

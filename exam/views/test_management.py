@@ -202,17 +202,23 @@ class ProcessPromotion(generics.ListCreateAPIView):
 
     def post(self, request, *args, **kwargs):
         promotion_list = json.loads(request.body)
+        print(promotion_list)
         for promotee in promotion_list:
-            print(promotee)
-            results = promotion_list[promotee]
-            entry = ExamResult.objects.get(id=promotee)
-            promotion_status = results['promotion_status']
-            if promotion_status == 'promoted':
-                entry.status = True
-            else:
-                entry.status = False
-            entry.detain_reason = results["detain_reason"]
-            entry.save()
+            try:
+                print(promotee)
+                results = promotion_list[promotee]
+                entry = ExamResult.objects.get(id=promotee)
+                promotion_status = results['promotion_status']
+                if promotion_status == 'promoted':
+                    entry.status = True
+                else:
+                    entry.status = False
+                entry.exact_status = results['exact_status']
+                entry.detain_reason = results["detain_reason"]
+                entry.save()
+            except Exception as e:
+                print('exception 15032020-A from  exam test_management.py %s %s' % (e.message, type(e)))
+                print('failed to process promotion')
         context_dict = {'outcome': 'success'}
 
         return JSONResponse(context_dict, status=200)

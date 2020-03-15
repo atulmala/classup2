@@ -15,7 +15,7 @@ class ExamResultSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ExamResult
-        fields = ('id', 'student', 'status', 'detain_reason',)
+        fields = ('id', 'student', 'status', 'detain_reason', 'exact_status',)
 
 
 class TestMarksSerializer(serializers.ModelSerializer):

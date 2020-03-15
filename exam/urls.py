@@ -33,4 +33,5 @@ urlpatterns = patterns(
     url(r'^generate_cbse_sheet/$', views.GenerateCBSESheet.as_view(), name='generate_cbse_sheet'),
     url(r'^unscheuled_test_list/$', views.UnscheduledTestList.as_view(), name='unscheuled_test_list'),
     url(r'^detain_list/$', views.DetainList.as_view(), name='detain_list'),
+    url(r'^student_subject_list/$', views.StudentSubjects.as_view(), name='student_subject_list'),
 )

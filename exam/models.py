@@ -75,7 +75,13 @@ class Wing(models.Model):
 class ExamResult(models.Model):
     student = models.ForeignKey(Student)
     status = models.BooleanField(default=True)
+    exact_status = models.CharField(max_length=50, default='Promoted')
     detain_reason = models.CharField(max_length=200, default='N/A')
+
+
+class Compartment(models.Model):
+    student = models.ForeignKey(Student)
+    subject = models.ForeignKey(Subject)
 
 
 class CBSERollNo(models.Model):
