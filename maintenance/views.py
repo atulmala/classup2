@@ -171,13 +171,16 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
                         response = urllib.urlopen(url)
                         status = response.read()
                         print('status = ' + str(status))
-                        if 'Delivered' not in status:
-                            print('this message has not been delivered will have to be re send')
-                            record.api_called = False
-                            record.status_extracted = False
-                            record.status = 'Not Available'
-                            record.save()
-                            continue
+
+                        # 15/03/2020 - the below code was added to attempt re deliver failed messages but not working
+                        # working as expected. Hence commenting it for the time being
+                        # if 'Delivered' not in status:
+                        #     print('this message has not been delivered will have to be re send')
+                        #     record.api_called = False
+                        #     record.status_extracted = False
+                        #     record.status = 'Not Available'
+                        #     record.save()
+                        #     continue
                     except Exception as e:
                         print('unable to get the staus of sms delivery. The url was: ')
                         print(url)
