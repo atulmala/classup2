@@ -72,6 +72,7 @@ class MasterData(generics.ListAPIView):
             cons_sheet.write_string(row, col, 'S No', cell_bold)
             col += 1
             t1_sheet.write_string(row, col, 'Student', cell_bold)
+            t2_sheet.write_string(row, col, 'Student', cell_bold)
             col += 1
             t1_sheet.write_string(row, col, 'Class', cell_bold)
             t2_sheet.write_string(row, col, 'Class', cell_bold)
