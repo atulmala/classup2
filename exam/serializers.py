@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from academics.models import TermTestResult, TestResults
-from .models import Wing, ExamResult
+from .models import Wing, ExamResult, Compartment
 
 
 class WingSerializer(serializers.ModelSerializer):
@@ -12,10 +12,24 @@ class WingSerializer(serializers.ModelSerializer):
 
 class ExamResultSerializer(serializers.ModelSerializer):
     student = serializers.StringRelatedField()
+    compartment_subjects = serializers.SerializerMethodField()
 
     class Meta:
         model = ExamResult
-        fields = ('id', 'student', 'status', 'detain_reason', 'exact_status',)
+        fields = ('id', 'student', 'status', 'detain_reason', 'exact_status', 'compartment_subjects')
+
+    def get_compartment_subjects(self, obj):
+        try:
+            compartments = Compartment.objects.filter(student=obj.student)
+            subjects = ''
+            if compartments.count() > 0:
+                for compartment in compartments:
+                    subjects += ' %s' % compartment.subject.subject_name
+            return subjects
+        except Exception as e:
+            print('exception 15032020-A from exam serializers.py %s %s' % (e.message, type(e)))
+            print('error in retrieving compartment')
+            return ''
 
 
 class TestMarksSerializer(serializers.ModelSerializer):

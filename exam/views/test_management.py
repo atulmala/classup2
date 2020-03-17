@@ -10,7 +10,7 @@ from rest_framework import generics
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.renderers import JSONRenderer
 
-from exam.models import HigherClassMapping, Wing, ExamResult
+from exam.models import HigherClassMapping, Wing, ExamResult, Compartment
 from setup.models import School
 from academics.models import Class, Section, Subject, Exam, ClassTest, TestResults, TermTestResult, ThirdLang
 from exam.views import get_wings
@@ -208,12 +208,45 @@ class ProcessPromotion(generics.ListCreateAPIView):
                 print(promotee)
                 results = promotion_list[promotee]
                 entry = ExamResult.objects.get(id=promotee)
+                student = entry.student
                 promotion_status = results['promotion_status']
                 if promotion_status == 'promoted':
                     entry.status = True
+
+                    # 17/03/2020 - there is a possibility that this student could have been in not promoted
+                    # status earlier and now promoted as a result of re-test
+                    entries = Compartment.objects.filter(student=student)
+                    if entries.count() > 0:
+                        print('%s was given compartment earlier. Now passed..' % student)
+                        for an_entry in entries:
+                            an_entry.delete()
                 else:
                     entry.status = False
-                entry.exact_status = results['exact_status']
+
+                exact_status = results['exact_status']
+                entry.exact_status = exact_status
+                if exact_status == 'compartment':
+                    print('this is compartment case')
+                    compartment_subjects = results['compartment_subjects']
+                    print(compartment_subjects)
+
+                    for a_subject in compartment_subjects:
+                        student = entry.student
+                        subject = Subject.objects.get(school=student.school, subject_name=a_subject)
+                        print('setting compartment in %s for %s' % (subject, student))
+
+                        try:
+                            compartment = Compartment.objects.get(student=student, subject=subject)
+                            print(compartment)
+                            print('compartment for %s in %s is already set')
+                        except Exception as e:
+                            print('exception 15032020-B from exam test_management.py %s %s' % (e.message, type(e)))
+                            print('compartment for %s in %s is not set. Doing it now...')
+                            compartment = Compartment(student=student)
+                            compartment.subject = subject
+                            compartment.save()
+                            print('compartment for %s in %s is now set')
+
                 entry.detain_reason = results["detain_reason"]
                 entry.save()
             except Exception as e:

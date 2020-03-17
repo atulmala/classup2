@@ -1,8 +1,10 @@
 from django.contrib import admin
 
 from academics.models import ThirdLang
-from .models import Scheme, HigherClassMapping, NPromoted, Marksheet, Stream, StreamMapping, Wing, ExamResult
+from .models import Scheme, HigherClassMapping, NPromoted, Marksheet, Stream, StreamMapping, Wing, ExamResult, \
+    Compartment
 from .models import CBSERollNo
+
 
 # Register your models here.
 
@@ -55,16 +57,18 @@ class SchemeAdmin(admin.ModelAdmin):
 admin.site.register(Scheme, SchemeAdmin)
 
 
-class HigherClassMappingAdmin (admin.ModelAdmin):
+class HigherClassMappingAdmin(admin.ModelAdmin):
     def get_school_name(self, obj):
         return obj.student.school
 
-    def get_class (self, obj):
+    def get_class(self, obj):
         return obj.student.current_class
+
     get_class.short_description = 'Class'
 
-    def get_section (self, obj):
+    def get_section(self, obj):
         return obj.student.current_section
+
     get_section.short_description = 'Section'
 
     get_school_name.short_description = 'School'
@@ -80,12 +84,14 @@ class NotPromotedAdmin(admin.ModelAdmin):
     def get_school_name(self, obj):
         return obj.student.school
 
-    def get_class (self, obj):
+    def get_class(self, obj):
         return obj.student.current_class
+
     get_class.short_description = 'Class'
 
-    def get_section (self, obj):
+    def get_section(self, obj):
         return obj.student.current_section
+
     get_section.short_description = 'Section'
 
     get_school_name.short_description = 'School'
@@ -113,6 +119,16 @@ class WingAdmin(admin.ModelAdmin):
 admin.site.register(Wing, WingAdmin)
 
 
+@admin.register(Compartment)
+class CompartmentAdmin(admin.ModelAdmin):
+    def get_school_name(self, obj):
+        return obj.student.school
+
+    list_display = ('get_school_name', 'student', 'subject',)
+    list_filter = ('student__school',)
+    search_fields = ('student__fist_name', 'student__last_name',)
+
+
 @admin.register(ExamResult)
 class ExamResultAdmin(admin.ModelAdmin):
     def get_school_name(self, obj):
@@ -120,7 +136,7 @@ class ExamResultAdmin(admin.ModelAdmin):
 
     list_display = ('get_school_name', 'student', 'status', 'detain_reason',)
     list_filter = ('student__school', 'status',)
-    search_fields = ('student__fist_name', 'student__last_name', )
+    search_fields = ('student__fist_name', 'student__last_name',)
 
 
 @admin.register(CBSERollNo)
@@ -131,8 +147,3 @@ class CBSERollNoAdmin(admin.ModelAdmin):
     list_display = ('get_school_name', 'student', 'cbse_roll_no')
     list_filter = ('student__school',)
     search_fields = ('student__fist_name', 'student__last_name',)
-
-
-
-
-
