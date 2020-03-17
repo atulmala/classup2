@@ -61,7 +61,7 @@ class GenerateAnalytics(generics.ListCreateAPIView):
         perc_format.set_color('#37474F')
         colors = fmt.get_colors()
 
-        sheets = ['Term I']
+        sheets = ['Term I', 'Term II']
         for a_sheet in sheets:
             sheet = pd.read_excel(local_path, sheet_name=a_sheet, index_col=0)
             wb_sheet = analytics.add_worksheet(a_sheet)
