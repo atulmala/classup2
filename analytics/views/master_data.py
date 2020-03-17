@@ -121,7 +121,7 @@ class MasterData(generics.ListAPIView):
                 cons_sheet.write_string(row, col, student.current_section.section, cell_normal)
                 col += 1
 
-                exams = Exam.objects.filter(exam_type='term', end_class='VIII')
+                exams = Exam.objects.filter(school=school, exam_type='term', end_class='VIII')
                 for a_subject in subject_list:
                     subject = Subject.objects.get(school=school, subject_name=a_subject)
                     subject_total = 0.0
