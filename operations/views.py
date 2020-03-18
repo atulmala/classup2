@@ -487,13 +487,12 @@ class MonthlySMSReport(generics.ListCreateAPIView):
         sms_sheet.write(3, 8, ugettext("Message Type"), header)
         sms_sheet.write(3, 9, ugettext("Status/Job ID"), header)
         sms_sheet.write(3, 10, ugettext("Credits Consumed"), header)
+        sms_sheet.write(3, 11, ugettext("api_id"), header)
         try:
             sms_list = SMSRecord.objects.filter(school=school, date__month=month_int,
                                                 date__year=year_int).order_by('-date')
             print('successfully retrieved the monthly sms queryset for %s for the month of %s-%s' %
                   (school_name, str(month), str(y)))
-            print('sms_list = ')
-            print(sms_list)
             sr_no = 1
             for s in sms_list:
                 current_row += 1
@@ -556,6 +555,10 @@ class MonthlySMSReport(generics.ListCreateAPIView):
                     sms_credits += 1
 
                 sms_sheet.write_number(current_row, 10, sms_credits)
+
+                # 18/03/2020 - also store the delivery id will help in investigating failed delivery status
+                delivery_id = s.outcome
+                sms_sheet.write_string(current_row, 11, delivery_id)
 
                 sr_no += 1
 
