@@ -375,6 +375,7 @@ class ResultAnalysisSheet(generics.ListCreateAPIView):
                     exams = Exam.objects.filter(school=school, exam_type='term', start_class=middle_classes[0])
                 if standard in ninth_tenth:
                     exams = Exam.objects.filter(school=school, exam_type='term', start_class=ninth_tenth[0])
+                print(exams)
 
                 cons_sheet.write_string(cons_row, cons_col, full_name, cell_bold)
                 cons_col += 1

@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from setup.models import School
 from teacher.models import Teacher
 
+
 # Create your models here.
 
 
@@ -40,12 +41,18 @@ class SMSRecord(models.Model):
 
     def save(self, *args, **kwargs):
         try:
-            self.sms_consumed = math.ceil(float(len(self.message))/160.0)
+            self.sms_consumed = math.ceil(float(len(self.message)) / 160.0)
             print('%i sms credits consumed by this sms' % self.sms_consumed)
             super(SMSRecord, self).save(*args, **kwargs)
         except Exception as e:
             print('exception 31082019-A from operations models.py %s %s' % (e.message, type(e)))
             print('failed to determine the sms credits consumed by this sms')
+
+
+class ResendSMS(models.Model):
+    sms_record = models.ForeignKey(SMSRecord)
+    outcome = models.TextField(max_length=30, default='Not Available')
+    status = models.CharField(max_length=350, default='Not Available')
 
 
 class ClassUpAdmin(models.Model):
@@ -56,6 +63,3 @@ class ParanShabd(models.Model):
     upbhokta = models.CharField(max_length=15)
     name = models.CharField(max_length=50, null=True)
     shabd = models.CharField(max_length=10)
-
-
-
