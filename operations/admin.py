@@ -1,7 +1,12 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import SMSRecord, ClassUpAdmin, SMSVendor, ParanShabd
+from .models import SMSRecord, ClassUpAdmin, SMSVendor, ParanShabd, ResendSMS
+
+
+@admin.register(ResendSMS)
+class ResendSMSAdmin(admin.ModelAdmin):
+    list_display = ('sms_record', 'outcome', 'status',)
 
 
 class SMSRecordAdmin(admin.ModelAdmin):
