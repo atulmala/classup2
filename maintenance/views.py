@@ -177,8 +177,8 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
 
                         if 'Delivered' not in status:
                             print('this message has not been delivered will have to be re send')
-                            record.status = 'Not Available'
-                            record.save()
+                            # record.status = 'Not Available'
+                            # record.save()
                             resend = ResendSMS(sms_record=record)
                             resend.save()
 
