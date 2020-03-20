@@ -171,6 +171,7 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
                         response = urllib.urlopen(url)
                         status = response.read()
                         print('status = ' + str(status))
+                        record.save()
 
                         # 19/03/2020 - a new approach to re deliver failed messages. Failed messages will be
                         # moved to another table where their delivery will be attempted by another vendor api
