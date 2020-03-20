@@ -1,7 +1,6 @@
 import urllib
 import json
 
-
 from django.db.models import Count, Max, Sum
 from django.http import HttpResponse
 from rest_framework.renderers import JSONRenderer
@@ -183,11 +182,11 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
                             resend = ResendSMS(sms_record=record)
                             resend.save()
 
-                            continue
                     except Exception as e:
                         print('unable to get the staus of sms delivery. The url was: ')
                         print(url)
-                        print ('Exception 10072019-A from operations maintenance views.py = %s (%s)' % (e.message, type(e)))
+                        print ('Exception 10072019-A from operations maintenance views.py = %s (%s)' % (
+                            e.message, type(e)))
                 else:
                     print('message was sent using DealSMS API')
                     deal_sms_count += 1
@@ -263,10 +262,11 @@ class GetMessageCount(generics.ListAPIView):
             try:
                 print('getting the count of messages sent by %s on %s...' % (school, yesterday))
                 message_count = SMSRecord.objects.filter(school=school, date__gte=date,
-                                                         date__lt=date+timedelta(days=1)).count()
+                                                         date__lt=date + timedelta(days=1)).count()
                 print('count of messages sent by %s on %s = %i' % (school, yesterday, message_count))
                 sms_consumed = SMSRecord.objects.filter(school=school, date__gte=date,
-                                                         date__lt=date+timedelta(days=1)).aggregate(Sum('sms_consumed'))
+                                                        date__lt=date + timedelta(days=1)).aggregate(
+                    Sum('sms_consumed'))
                 print(sms_consumed)
                 print('count of messages sent by %s on %s = %i' % (school, yesterday, message_count))
 
