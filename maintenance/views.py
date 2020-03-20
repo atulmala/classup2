@@ -152,6 +152,7 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
         deal_sms_count = 0
         for record in records:
             print(record.date)
+            recipient_number = record.recipient_number
             delivery_id = record.outcome
             print('delivery_id = %s' % delivery_id)
             print('extracting the delivery status of message with delivery id %s' % delivery_id)
@@ -175,7 +176,7 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
                         # 19/03/2020 - a new approach to re deliver failed messages. Failed messages will be
                         # moved to another table where their delivery will be attempted by another vendor api
 
-                        if 'Delivered' not in status:
+                        if 'Delivered' not in status[recipient_number]:
                             print('this message has not been delivered will have to be re send')
                             record.status = 'Not Available'
                             record.save()
