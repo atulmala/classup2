@@ -176,7 +176,7 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
                         # 19/03/2020 - a new approach to re deliver failed messages. Failed messages will be
                         # moved to another table where their delivery will be attempted by another vendor api
 
-                        if 'Delivered' not in status[recipient_number]:
+                        if 'Delivered' not in str(status):
                             print('this message has not been delivered will have to be re send')
                             record.status = 'Not Available'
                             record.save()
