@@ -33,23 +33,15 @@ class ResendFailedMessages(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         t1 = datetime.now()
         context_dict = {'start_time': '%s' % t1}
-        time_threshold = datetime.now() - timedelta(hours=5)
-        last_date = datetime(2020, 2, 8)
-        print(time_threshold)
-        records = SMSRecord.objects.filter(api_called=True, status_extracted=True,
-                                           date__lt=time_threshold, date__gt=last_date)
-        print('total %i messages will be checked for delivery status' % records.count())
-        context_dict['message_count'] = records.count()
-        failed_count = 0
+        records = ResendSMS.objects.filter(status='Not Available')
         for record in records:
-            delivery_status = record.status
-            if 'Delivered' not in delivery_status:
-                failed_count += 1
-                print('delivery status = %s' % delivery_status)
-                record.api_called = False
-                record.status = 'Not Available'
-                record.save()
-        context_dict['failed_count'] = failed_count
+            print(record.sms_record.message)
+            print()
+
+        t2 = datetime.now()
+        context_dict['end_time'] = '%s' % t2
+        time_taken = t2 - t1
+        context_dict['time_taken'] = time_taken
         return JSONResponse(context_dict, status=200)
 
 

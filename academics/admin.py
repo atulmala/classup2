@@ -60,7 +60,7 @@ class TestAdmin(admin.ModelAdmin):
     list_display = ('get_school_name', 'get_class', 'subject', 'teacher', 'date_conducted', 'get_exam',
                     'test_type', 'max_marks', 'passing_marks', 'is_completed', )
 
-    list_filter = ('the_class__school', 'test_type',)
+    list_filter = ('the_class__school', 'test_type', 'is_completed',)
 
     search_fields = ('subject__subject_name', 'the_class__standard', 'section__section', )
     actions = [change_exam]

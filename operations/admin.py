@@ -7,6 +7,7 @@ from .models import SMSRecord, ClassUpAdmin, SMSVendor, ParanShabd, ResendSMS
 @admin.register(ResendSMS)
 class ResendSMSAdmin(admin.ModelAdmin):
     list_display = ('sms_record', 'outcome', 'status',)
+    list_filter = ('sms_record__school',)
 
 
 class SMSRecordAdmin(admin.ModelAdmin):
