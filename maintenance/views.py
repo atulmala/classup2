@@ -142,7 +142,7 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
         context_dict['message_count'] = records.count()
 
         batch = ''.join(random.choice('0123456789ABCDEF') for i in range(16))
-        print('batch %s = ' % batch)
+        print('batch = %s' % batch)
         sms_batch = SMSBatch(batch=batch)
         sms_batch.total = records.count()
         success = 0
