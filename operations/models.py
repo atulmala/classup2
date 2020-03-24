@@ -49,6 +49,13 @@ class SMSRecord(models.Model):
             print('failed to determine the sms credits consumed by this sms')
 
 
+class SMSBatch(models.Model):
+    batch = models.CharField(max_length=20)
+    total = models.IntegerField()
+    success = models.IntegerField()
+    fail = models.IntegerField()
+
+
 class ResendSMS(models.Model):
     sms_record = models.ForeignKey(SMSRecord)
     outcome = models.TextField(max_length=30, default='Not Available')

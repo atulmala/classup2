@@ -1,5 +1,6 @@
 import urllib
 import json
+from random import random
 
 from django.db.models import Count, Max, Sum
 from django.http import HttpResponse
@@ -9,7 +10,7 @@ from rest_framework import generics
 from datetime import datetime, timedelta
 
 from attendance.models import Attendance, DailyAttendanceSummary
-from operations.models import SMSRecord, ResendSMS
+from operations.models import SMSRecord, ResendSMS, SMSBatch
 from teacher.models import MessageReceivers
 from setup.models import School
 from student.models import Student
@@ -132,14 +133,20 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         t1 = datetime.now()
         context_dict = {'start_time': '%s' % t1}
-        time_threshold = datetime.now() - timedelta(hours=2.5)
-        last_date = datetime(2019, 7, 8)
+        time_threshold = datetime.now() - timedelta(hours=4.0)
+        last_date = datetime(2020, 3, 20)
         print(time_threshold)
         records = SMSRecord.objects.filter(api_called=True, status_extracted=False,
                                            date__lt=time_threshold, date__gt=last_date)
         print('total %i messages delivery status to be extracted' % records.count())
         context_dict['message_count'] = records.count()
 
+        batch = ''.join(random.choice('0123456789ABCDEF') for i in range(16))
+        print('batch %s = ' % batch)
+        sms_batch = SMSBatch(batch=batch)
+        sms_batch.total = records.count()
+        success = 0
+        fail = 0
         soft_sms_count = 0
         deal_sms_count = 0
         for record in records:
@@ -169,11 +176,14 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
                         # moved to another table where their delivery will be attempted by another vendor api
 
                         if 'Delivered' not in str(status):
+                            fail += 1
                             print('this message has not been delivered will have to be re send')
                             record.status = 'Not Available'
                             record.save()
                             resend = ResendSMS(sms_record=record)
                             resend.save()
+                        else:
+                            success += 1
 
                     except Exception as e:
                         print('unable to get the staus of sms delivery. The url was: ')
@@ -218,6 +228,9 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
                 except Exception as e:
                     print('exception 10072019-D from maintenance views.py %s %s' % (e.message, type(e)))
                     print('failed to update Teacher Message Receiver with message id = %s' % delivery_id)
+        sms_batch.success = success
+        sms_batch.fail = fail
+        sms_batch.save()
         t2 = datetime.now()
         context_dict['end_time'] = '%s' % t2
         time_taken = t2 - t1
