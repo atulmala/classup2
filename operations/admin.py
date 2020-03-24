@@ -1,13 +1,18 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import SMSRecord, ClassUpAdmin, SMSVendor, ParanShabd, ResendSMS
+from .models import SMSRecord, ClassUpAdmin, SMSVendor, ParanShabd, ResendSMS, SMSBatch
 
 
 @admin.register(ResendSMS)
 class ResendSMSAdmin(admin.ModelAdmin):
     list_display = ('sms_record', 'outcome', 'status',)
     list_filter = ('sms_record__school',)
+
+
+@admin.register(SMSBatch)
+class SMSBatchAdmin(admin.ModelAdmin):
+    list_display = ('batch', 'total', 'success', 'fail')
 
 
 class SMSRecordAdmin(admin.ModelAdmin):
