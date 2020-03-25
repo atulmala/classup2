@@ -55,6 +55,11 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
         return  # To not perform the csrf check previously happening
 
 
+class CommitFailedSMS(generics.ListCreateAPIView):
+    def post(self, request, *args, **kwargs):
+        print('starting to re-send failed SMS through second vendor')
+
+
 class CommitBulkSMS(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         print('Starting to send bulk sms')

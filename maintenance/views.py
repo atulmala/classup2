@@ -1,6 +1,6 @@
 import urllib
 import json
-from random import random
+import random
 
 from django.db.models import Count, Max, Sum
 from django.http import HttpResponse
@@ -141,7 +141,7 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
         print('total %i messages delivery status to be extracted' % records.count())
         context_dict['message_count'] = records.count()
 
-        batch = ''.join(random.choice('0123456789ABCDEF') for i in range(16))
+        batch = ''.join(random.choice('0123456789ABCDEF') for i in range(6))
         print('batch = %s' % batch)
         sms_batch = SMSBatch(batch=batch)
         sms_batch.total = records.count()
