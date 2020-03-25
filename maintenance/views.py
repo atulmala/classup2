@@ -230,7 +230,8 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
                     print('failed to update Teacher Message Receiver with message id = %s' % delivery_id)
         sms_batch.success = success
         sms_batch.fail = fail
-        sms_batch.save()
+        if records.count() > 0:
+            sms_batch.save()
         t2 = datetime.now()
         context_dict['end_time'] = '%s' % t2
         time_taken = t2 - t1
