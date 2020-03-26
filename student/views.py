@@ -17,7 +17,7 @@ from django.db.models import Max
 from formats.formats import Formats as format
 from setup.models import School, Configurations
 from academics.models import ClassTest, TestResults, TermTestResult, ThirdLang, Class, Section, CoScholastics
-from exam.models import HigherClassMapping, NPromoted
+from exam.models import HigherClassMapping, NPromoted, ExamResult
 from exam.forms import ResultSheetForm
 from bus_attendance.models import Student_Rout, BusUser
 from erp.models import CollectAdmFee
@@ -706,47 +706,123 @@ class MidTermAdmission(generics.ListCreateAPIView):
 class StudentPromotion(generics.ListCreateAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
-    def post(self, request, *args, **kwargs):
-        fileToProcess_handle = request.FILES['rts_students.xlsx']
-        print(fileToProcess_handle)
+    def get(self, request, *args, **kwargs):
+        print ('from class based view')
+        context_dict = {
 
-        fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
-        sheet = fileToProcess.sheet_by_index(0)
-        for row in range(sheet.nrows):
-            # first two rows are header rows
-            if row == 0:
-                school_id = sheet.cell(row, 0).value
-                school = School.objects.get(pk=school_id)
-                print('school = %s' % school)
-                continue
-            print ('Processing a new row')
-            try:
-                erp_id = sheet.cell(row, 1).value
-                decimal = '.'
-                if decimal in erp_id:
-                    print('student id contains a decimal followed by zero. This has to be removed')
-                    erp_id = erp_id[:-2]
-                    print('decimal and following zero removed. Now student_id = %s' % erp_id)
-            except Exception as e:
-                print('exception 10022020-A from student views.py. %s %s' % (e.message, type(e)))
+        }
+        context_dict['user_type'] = 'school_admin'
+        context_dict['school_name'] = request.session['school_name']
+        context_dict['header'] = 'Upload Student Promotion List'
+        school_id = request.session['school_id']
+        print(school_id)
+        school = School.objects.get(id=school_id)
+        highest_class_dict = Class.objects.filter(school=school).aggregate(Max('sequence'))
+        print(highest_class_dict['sequence__max'])
+        highest_class = Class.objects.get(school=school, sequence=highest_class_dict['sequence__max'])
+        print(highest_class)
 
-            try:
-                student = Student.objects.get(school=school, student_erp_id=erp_id)
-                print('promoting %s with erp_id %s' % (student, erp_id))
-                promoted_standard = sheet.cell(row, 6).value
-                promoted_sec = sheet.cell(row, 7).value
-                try:
-                    promoted_class = Class.objects.get(school=school, standard=promoted_standard)
-                    student.current_class = promoted_class
-                    promoted_section = Section.objects.get(school=school, section=promoted_sec)
-                    student.current_section = promoted_section
-                    student.save()
-                    print('promoted %s' % student)
-                except Exception as e:
-                    print('exception 10022020-B from exam student views.py %s %s' % (e.message, type(e)))
-            except Exception as e:
-                print('could not retrieve student associated with erp_id %s' % str(erp_id))
-        return JSONResponse({'status': 'ok'}, status=200)
+        students = Student.objects.filter(school=school, current_class=highest_class)
+        if students.count() > 0:
+            print(students)
+            print('Student promotion for %s has already been done. Hence not doing again' % school.school_name)
+            error = 'Student promotion has already been done'
+            messages.error(request._request, 'Promotion has already been carried out.')
+            print (error)
+            return render(request, 'classup/setup_index.html', context_dict)
+        else:
+            print('Student promotion for %s has not been done. Will do now...' % school.school_name)
+            classes = Class.objects.filter(school=school).order_by('-sequence')
+            print('retrieved classes for %s' % school.school_name)
+            sections = Section.objects.filter(school=school).order_by('section')
+            print(sections)
+            print(classes)
+
+            for a_class in classes:
+                if a_class.sequence == highest_class_dict['sequence__max']:
+                    continue
+                for a_section in sections:
+                    students = Student.objects.filter(current_class=a_class, current_section=a_section)
+                    for student in students:
+                        try:
+                            student_name = '%s %s' % (student.fist_name, student.last_name)
+
+                            # the student should not be in the not promoted list.
+                            #  Only then he/she will be promoted
+                            result = ExamResult.objects.get(student=student)
+                            if result.detain_reason == 'Detained':
+                                print('%s is  in the detained. Hence not promoting...' % (student_name))
+                            else:
+                                print('exception 04042018-B from student views.py %s %s' % (e.message, type(e)))
+                                print('%s was not in not_promoted. Promoting now...' % (student_name))
+                                promoted_to_class = Class.objects.get(school=school,
+                                                                      sequence=a_class.sequence + 1)
+                                print('%s is going to be promoted to %s-%s' %
+                                      (student_name, promoted_to_class.standard, a_section.section))
+                                print('%s current class is %s-%s' %
+                                      (student_name, student.current_class.standard,
+                                       student.current_section.section))
+                                student.current_class = promoted_to_class
+                                student.save()
+                                print('%s now promoted to %s-%s' %
+                                      (student_name, promoted_to_class.standard, a_section.section))
+                        except Exception as e:
+                            print('failed to promote student %s' % student.fist_name)
+                            print('exception 04042018-A from student views.py %s %s' % (e.message, type(e)))
+
+        messages.success(request._request, 'students promoted.')
+        return render(request, 'classup/setup_index.html', context_dict)
+
+        print('exception 04042018-C from student views.py %s %s' % (e.message, type(e)))
+
+        return render(request, 'classup/setup_index.html', context_dict)
+
+        form = ExcelFileUploadForm()
+        context_dict['form'] = form
+        return render(request, 'classup/setup_data.html', context_dict)
+
+
+# def post(self, request, *args, **kwargs):
+#     fileToProcess_handle = request.FILES['rts_students.xlsx']
+#     print(fileToProcess_handle)
+#
+#     fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
+#     sheet = fileToProcess.sheet_by_index(0)
+#     for row in range(sheet.nrows):
+#         # first two rows are header rows
+#         if row == 0:
+#             school_id = sheet.cell(row, 0).value
+#             school = School.objects.get(pk=school_id)
+#             print('school = %s' % school)
+#             continue
+#         print ('Processing a new row')
+#         try:
+#             erp_id = sheet.cell(row, 1).value
+#             decimal = '.'
+#             if decimal in erp_id:
+#                 print('student id contains a decimal followed by zero. This has to be removed')
+#                 erp_id = erp_id[:-2]
+#                 print('decimal and following zero removed. Now student_id = %s' % erp_id)
+#         except Exception as e:
+#             print('exception 10022020-A from student views.py. %s %s' % (e.message, type(e)))
+#
+#         try:
+#             student = Student.objects.get(school=school, student_erp_id=erp_id)
+#             print('promoting %s with erp_id %s' % (student, erp_id))
+#             promoted_standard = sheet.cell(row, 6).value
+#             promoted_sec = sheet.cell(row, 7).value
+#             try:
+#                 promoted_class = Class.objects.get(school=school, standard=promoted_standard)
+#                 student.current_class = promoted_class
+#                 promoted_section = Section.objects.get(school=school, section=promoted_sec)
+#                 student.current_section = promoted_section
+#                 student.save()
+#                 print('promoted %s' % student)
+#             except Exception as e:
+#                 print('exception 10022020-B from exam student views.py %s %s' % (e.message, type(e)))
+#         except Exception as e:
+#             print('could not retrieve student associated with erp_id %s' % str(erp_id))
+#     return JSONResponse({'status': 'ok'}, status=200)
 
 
 class NotPromoted(generics.ListCreateAPIView):
