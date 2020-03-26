@@ -241,7 +241,6 @@ class SMSDeliveryStatus(generics.ListCreateAPIView):
 
         if records.count() > 0:
             try:
-
                 stats = SMSDelStats(start_time=t1, end_time=t2, time_taken=float(time_taken.seconds),
                                     messages_count=records.count())
                 stats.save()

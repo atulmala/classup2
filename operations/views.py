@@ -36,7 +36,7 @@ from pic_share.models import ImageVideo, ShareWithStudents, SharedWithTeacher
 
 from formats.formats import Formats as format
 
-from .models import SMSRecord, ClassUpAdmin
+from .models import SMSRecord, ClassUpAdmin, ResendSMS
 from .serializers import SMSDetailSerializer
 from .forms import SchoolAttSummaryForm, AttendanceRegisterForm
 from .forms import TestResultForm, ParentsCommunicationDetailsForm, BulkSMSForm, SMSSummaryForm
@@ -58,6 +58,28 @@ class CsrfExemptSessionAuthentication(SessionAuthentication):
 class CommitFailedSMS(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         print('starting to re-send failed SMS through second vendor')
+        try:
+            records = ResendSMS.objects.filter(status='Not Available')
+            for record in records:
+                number = record.sms_record.recipient_number
+                print('number = %s' % number)
+                message = record.sms_record.message
+
+                url = 'http://sms.dealsms.in/api/sendhttp.php?authkey=NTczY2Y2YWVjOTI&mobiles='
+                url += number
+                url += '&message='
+                url += message
+                url += '&sender=CLSSUP&type=1&route=2'
+                print('url = %s' % url)
+                response = urllib.urlopen(url)
+                status = response.read()
+                print('response = %s' % status)
+                record.status = status
+                record.save()
+        except Exception as e:
+            print('exception 25032020-A from operations views.py %s %s' % (e.message, type(e)))
+            print('failed to retrieve the list of failed sms deliveries')
+        return JSONResponse({}, status=200)
 
 
 class CommitBulkSMS(generics.ListCreateAPIView):

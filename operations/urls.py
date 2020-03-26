@@ -28,6 +28,8 @@ urlpatterns = patterns(
 
     url(r'commit_bulk_sms/$', views.CommitBulkSMS.as_view(), name='commit_bulk_sms'),
 
+    url(r'commit_failed_sms/$', views.CommitFailedSMS.as_view(), name='commit_failed'),
+
     url(r'retrieve_sms_history/(?P<parent_mobile>\w+)/$', views.SMSHistoryList.as_view()),
 
     url(r'send_welcome_sms/$', views.send_welcome_sms, name='send_welcome_sms'),
