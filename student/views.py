@@ -769,7 +769,6 @@ class StudentPromotion(generics.ListCreateAPIView):
                         except Exception as e:
                             print('failed to promote student %s' % student.fist_name)
                             print('exception 04042018-A from student views.py %s %s' % (e.message, type(e)))
-
         messages.success(request._request, 'students promoted.')
         return render(request, 'classup/setup_index.html', context_dict)
 
