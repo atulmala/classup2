@@ -661,7 +661,7 @@ class PromotionReport(generics.ListAPIView):
 
                 no_promotion_reason = result.detain_reason
                 sheet.write_string(row, col, no_promotion_reason, cell_normal)
-                col += 1
+
             except Exception as e:
                 print('exception 23122019-A from test_management.py %s %s' % (e.message, type(e)))
                 print('failed to retrieve promotion status for %s' % student)

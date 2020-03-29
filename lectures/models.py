@@ -13,4 +13,5 @@ class Lecture(models.Model):
     topic = models.CharField(max_length=100)
     youtube_link = models.CharField(max_length=200, null=True)
     pdf_link = models.CharField(max_length=200, null=True)
+    creation_date = models.DateTimeField(null=True, auto_now_add=True)
 

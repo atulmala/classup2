@@ -57,6 +57,8 @@ class DetainList(generics.ListAPIView):
         t1_sheet.set_column('B:B', 8)
         t1_sheet.set_column('C:C', 20)
         t1_sheet.set_column('D:D', 40)
+        t1_sheet.set_column('E:E', 20)
+        t1_sheet.set_column('F:F', 15)
 
         fmt = format()
         title_format = workbook.add_format(fmt.get_title())
@@ -70,7 +72,7 @@ class DetainList(generics.ListAPIView):
         cell_left = workbook.add_format(fmt.get_cell_left())
         cell_left.set_border()
 
-        t1_sheet.merge_range('A1:D1',
+        t1_sheet.merge_range('A1:F1',
                              'Jagran Public School\n Session 2019-20 - List of Detain/Compartment Cases',
                              title_format)
         row = 1
@@ -82,6 +84,10 @@ class DetainList(generics.ListAPIView):
         t1_sheet.write_string(row, col, 'Student', cell_bold)
         col += 1
         t1_sheet.write_string(row, col, 'Status', cell_bold)
+        col += 1
+        t1_sheet.write(row, col, 'Parent', cell_bold)
+        col += 1
+        t1_sheet.write(row, col, 'Mobile Number', cell_bold)
         row += 1
         col = 0
 
@@ -104,6 +110,10 @@ class DetainList(generics.ListAPIView):
                         t1_sheet.write_string(row, col, '%s %s' % (student.fist_name, student.last_name), cell_left)
                         col += 1
                         t1_sheet.write_string(row, col, entry.detain_reason, cell_left)
+                        col += 1
+                        t1_sheet.write_string(row, col, student.parent.parent_name, cell_left)
+                        col += 1
+                        t1_sheet.write_string(row, col, student.parent.parent_mobile1, cell_normal)
                         row += 1
                         col = 0
                     except Exception as e:

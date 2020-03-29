@@ -706,15 +706,12 @@ class MidTermAdmission(generics.ListCreateAPIView):
 class StudentPromotion(generics.ListCreateAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         print ('from class based view')
         context_dict = {
 
         }
-        context_dict['user_type'] = 'school_admin'
-        context_dict['school_name'] = request.session['school_name']
-        context_dict['header'] = 'Upload Student Promotion List'
-        school_id = request.session['school_id']
+        school_id = request.query_params.get('school_id')
         print(school_id)
         school = School.objects.get(id=school_id)
         highest_class_dict = Class.objects.filter(school=school).aggregate(Max('sequence'))
@@ -770,15 +767,11 @@ class StudentPromotion(generics.ListCreateAPIView):
                             print('failed to promote student %s' % student.fist_name)
                             print('exception 04042018-A from student views.py %s %s' % (e.message, type(e)))
         messages.success(request._request, 'students promoted.')
-        return render(request, 'classup/setup_index.html', context_dict)
+        return JSONResponse(context_dict, status=200)
 
-        print('exception 04042018-C from student views.py %s %s' % (e.message, type(e)))
 
-        return render(request, 'classup/setup_index.html', context_dict)
 
-        form = ExcelFileUploadForm()
-        context_dict['form'] = form
-        return render(request, 'classup/setup_data.html', context_dict)
+
 
 
 # def post(self, request, *args, **kwargs):
