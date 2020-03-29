@@ -119,7 +119,8 @@ class ShareLecture(generics.ListCreateAPIView):
             students = Student.objects.filter(current_class=the_class, current_section=section, active_status=True)
 
         for student in students:
-            message = 'Dear %s, %s %s lecture shared. Link:  %s ' % (student, subject, lesson_topic, youtube_link)
+            message = 'Dear %s, class %s %s %s lecture shared. Link:  %s ' % \
+                      (student, standard, sub, lesson_topic, youtube_link)
             if file_included == 'true' or file_included == 'yes':
                 message += '  Assignment link: %s' % short_link
             print(message)
