@@ -10,6 +10,7 @@ from rest_framework.authentication import SessionAuthentication, BasicAuthentica
 from academics.models import Class, Section, Subject
 from authentication.views import JSONResponse
 from lectures.models import Lecture
+from lectures.serializers import LectureSerializer
 from operations import sms
 from setup.models import School, GlobalConf
 from student.models import Student
@@ -19,6 +20,28 @@ from teacher.models import Teacher
 class CsrfExemptSessionAuthentication(SessionAuthentication):
     def enforce_csrf(self, request):
         return  #
+
+
+class TeacherLectures(generics.ListAPIView):
+    serializer_class = LectureSerializer
+
+    def get_queryset(self):
+        user = self.kwargs['teacher']
+        teacher = Teacher.objects.get(email=user)
+        print('retrieving lectures shared by %s' % teacher)
+        q = Lecture.objects.filter(teacher=teacher)
+        return q
+
+
+class StudentLectures(generics.ListAPIView):
+    serializer_class = LectureSerializer
+
+    def get_queryset(self):
+        user = self.kwargs['student']
+        student = Student.objects.get(pk=user)
+        the_class = student.current_class
+        q = Lecture.objects.filter(the_class=the_class)
+        return q
 
 
 class ShareLecture(generics.ListCreateAPIView):

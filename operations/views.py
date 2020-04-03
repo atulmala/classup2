@@ -64,6 +64,7 @@ class CommitFailedSMS(generics.ListCreateAPIView):
                 number = record.sms_record.recipient_number
                 print('number = %s' % number)
                 message = record.sms_record.message
+                
                 url = 'http://voice.dealsms.in/api/sendmsg.php?user=classupp&pass=123456&sender=CLASUP&phone='
                 # url = 'http://sms.dealsms.in/api/sendhttp.php?authkey=NTczY2Y2YWVjOTI&mobiles='
                 url += number
