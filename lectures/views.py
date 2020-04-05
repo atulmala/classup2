@@ -95,7 +95,12 @@ class ShareLecture(generics.ListCreateAPIView):
             print(type(doc_file))
             print('doc_file = %s' % doc_file)
             print(doc_file)
-            file_name = request.POST.get('file_name').replace(' ', '_')
+
+            # 05/04/2020 - a lot of stupid teachers use characters like (, ), & in file name which causes issues
+            file_name3 = request.POST.get('file_name').replace(' ', '_')
+            file_name2 = file_name3.replace('&', '_')
+            file_name1 = file_name2.replace('(', '_')
+            file_name = file_name1.replace(')', '_')
             # long_link = 'https://storage.cloud.google.com/classup/classup2/media/prod/image_video/%s' % \
             #             image_name.replace('@', '')
             long_link = 'https://classup2.s3.us-east-2.amazonaws.com/media/prod/image_video/%s' % \
