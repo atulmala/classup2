@@ -29,7 +29,7 @@ class TeacherLectures(generics.ListAPIView):
         user = self.kwargs['teacher']
         teacher = Teacher.objects.get(email=user)
         print('retrieving lectures shared by %s' % teacher)
-        q = Lecture.objects.filter(teacher=teacher).order_by('creation_date')
+        q = Lecture.objects.filter(teacher=teacher).order_by('-creation_date')
         return q
 
 
@@ -40,7 +40,7 @@ class StudentLectures(generics.ListAPIView):
         user = self.kwargs['student']
         student = Student.objects.get(pk=user)
         the_class = student.current_class
-        q = Lecture.objects.filter(the_class=the_class).order_by('creation_date')
+        q = Lecture.objects.filter(the_class=the_class).order_by('-creation_date')
         return q
 
 
