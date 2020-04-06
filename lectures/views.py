@@ -44,6 +44,25 @@ class StudentLectures(generics.ListAPIView):
         return q
 
 
+class DeleteLecture(generics.DestroyAPIView):
+    def delete(self, request, *args, **kwargs):
+        context_dict = {}
+        id = self.kwargs['id']
+        try:
+            lecture = Lecture.objects.get(id=id)
+            print('deleting lecture title %s subject %s by %s' % (lecture.topic, lecture.subject, lecture.teacher))
+            lecture.delete()
+            message = 'successfully deleted lecture title %s subject %s by %s' % (lecture.topic,
+                                                                                  lecture.subject, lecture.teacher)
+            print('message')
+        except Exception as e:
+            print('exception 06042020-A from lecture views.py %s %s' % (e.message, type(e)))
+            message = 'Lecture Deletion failed'
+        print(message)
+        context_dict['message'] = message
+        return JSONResponse(context_dict, status=200)
+
+
 class ShareLecture(generics.ListCreateAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
