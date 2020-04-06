@@ -502,19 +502,19 @@ def setup_students(request):
                     col += 1
                     current_section = sheet.cell(row, col).value
                     print('current section = ', current_section)
-                    col += 1
-                    current_roll_no_raw = sheet.cell(row, col).value
-                    # 29/03/2018 - We are making roll no optional
-                    if current_roll_no_raw == '':
-                        print('roll number for %s has not been specified' % student_first_name)
-                        current_roll_no_raw = 50
-                        current_roll_no = int(current_roll_no_raw)
-                    else:
-                        # excel may add a decimal to the roll number. We need to convert it to integer
-                        current_roll_no = int(current_roll_no_raw)
-                        print('roll no = ', current_roll_no)
-                        print (current_roll_no_raw)
-                        print (current_roll_no)
+                    # col += 1
+                    # current_roll_no_raw = sheet.cell(row, col).value
+                    # # 29/03/2018 - We are making roll no optional
+                    # if current_roll_no_raw == '':
+                    #     print('roll number for %s has not been specified' % student_first_name)
+                    #     current_roll_no_raw = 50
+                    #     current_roll_no = int(current_roll_no_raw)
+                    # else:
+                    #     # excel may add a decimal to the roll number. We need to convert it to integer
+                    #     current_roll_no = int(current_roll_no_raw)
+                    #     print('roll no = ', current_roll_no)
+                    #     print (current_roll_no_raw)
+                    #     print (current_roll_no)
                     col += 1
 
                     # now, capture the parent data
@@ -524,8 +524,9 @@ def setup_students(request):
                     col += 1
 
                     # 24/11/2016 - as of now we will not be using email. Hence use dummy
-                    # parent_email = sheet.cell(row, 7).value
-                    parent_email = 'dummy@testmail.com'
+                    parent_email = sheet.cell(row, col).value
+                    print('email = %s' % parent_email)
+                    # parent_email = 'dummy@testmail.com'
                     col += 1
 
                     # we need to explicitly cast mobile number to string. Else update will not function properly
@@ -679,9 +680,8 @@ def setup_students(request):
                                ' is a new entry for school ' + school.school_name + '. Hence inserting...')
                         try:
                             s = Student(school=school, student_erp_id=student_id, fist_name=student_first_name,
-                                        last_name=student_last_name,
-                                        current_class=the_class, current_section=the_section,
-                                        roll_number=current_roll_no, parent=p)
+                                        last_name=student_last_name, current_class=the_class,
+                                        current_section=the_section, parent=p)
                             s.save()
                             print ('saving successful!')
                             # this student should appear in all the pending test for this class & section
