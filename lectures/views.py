@@ -1,6 +1,7 @@
 import json
 import urllib2
 
+from django.db.models import Q
 from django.shortcuts import render
 
 # Create your views here.
@@ -85,7 +86,8 @@ class ShareLecture(generics.ListCreateAPIView):
         sec = request.POST.get('section')
         print('sec = %s' % sec)
         if sec != '':
-            section = Section.objects.get(school=school, section=sec)
+            section = sec.split(',')
+            # section = Section.objects.get(school=school, section=sec)
             print('section = %s' % section)
         all_sections = request.POST.get('all_sections')
         print(all_sections)
@@ -163,7 +165,15 @@ class ShareLecture(generics.ListCreateAPIView):
             students = Student.objects.filter(current_class=the_class, active_status=True)
         else:
             print('this lecture to be shared with class %s-%s' % (the_class, section))
-            students = Student.objects.filter(current_class=the_class, current_section=section, active_status=True)
+            sections = reduce(lambda x, y: x | y,
+                              [Q(current_section=Section.objects.get(school=school,
+                                                                     section=a_section)) for a_section in section])
+            print(sections)
+            try:
+                students = Student.objects.filter(sections, current_class=the_class, active_status=True)
+                print(students)
+            except Exception as e:
+                print('exception 07042020-A from lecture views.py %s %s' % (e.message, type(e)))
 
         for student in students:
             message = 'Dear %s, class %s %s %s lecture shared. Link:  %s ' % \
