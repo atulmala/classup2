@@ -425,6 +425,14 @@ def map_device_token(request):
         device_type = data['device_type']
         print('device_type = ' + device_type)
 
+        # 08/04/2020 OneSignal playere_id which is device id also to be stored
+        try:
+            player_id = data['player_id']
+        except Exception as e:
+            print('exception 08042020-A from authentication views.py %s %s' % (e.message, type(e)))
+            print('player_id not sent')
+            player_id = 'Not Available'
+
         # create the device user mapping
         try:
             # the user can be either a teacher or a parent. Look into parent first
@@ -478,6 +486,7 @@ def map_device_token(request):
             mapping.mobile_number = the_mobile
             mapping.token_id = device_token
             mapping.device_type = device_type
+            mapping.player_id = player_id
             mapping.save()
             response_dict['status'] = 'success'
             action_performed = 'Existing Mapping Updated for user ' + user
@@ -492,6 +501,7 @@ def map_device_token(request):
                 mapping.mobile_number = the_mobile
                 mapping.token_id = device_token
                 mapping.device_type = device_type
+                mapping.player_id = player_id
                 mapping.save()
                 action_performed = 'Created Mapping for user ' + user
                 print(action_performed)

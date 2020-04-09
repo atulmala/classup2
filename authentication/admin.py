@@ -35,7 +35,7 @@ admin.site.register(LastPasswordReset, LastPasswordResetAdmin)
 
 
 class UserDeviceMappingAdmin(admin.ModelAdmin):
-    list_display = ('user', 'mobile_number', 'token_id', 'device_type',)
+    list_display = ('user', 'mobile_number', 'player_id', 'token_id', 'device_type',)
     search_fields = ('mobile_number',)
 
 

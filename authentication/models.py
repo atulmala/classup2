@@ -32,6 +32,7 @@ class user_device_mapping(models.Model):
     mobile_number = models.CharField(max_length=20)
     token_id = models.CharField(max_length=500)
     device_type = models.CharField(max_length=20)
+    player_id = models.CharField(max_length=40, default='Unavailable')
 
 
 # 22/07/2017 - start logging important events & actions performed by users
