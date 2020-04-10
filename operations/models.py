@@ -34,6 +34,7 @@ class SMSRecord(models.Model):
     vendor = models.CharField(max_length=30, default='1')
     api_called = models.BooleanField(default=True)
     outcome = models.TextField(max_length=20, default='Delivered')
+    push_outcome = models.TextField(max_length=50, default='Not Attempted')
     status_extracted = models.BooleanField(default=False)
     status = models.CharField(max_length=350, default='Not Available')
     the_vendor = models.ForeignKey(SMSVendor, null=True, blank=True)

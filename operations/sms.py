@@ -1,3 +1,5 @@
+import requests
+
 l__author__ = 'atulgupta'
 import urllib2
 import json
@@ -6,7 +8,7 @@ import json
 
 from django.db.models import Q
 from django.contrib.auth.models import User
-from authentication.models import LoginRecord
+from authentication.models import LoginRecord, user_device_mapping
 from setup.models import Configurations
 from teacher.models import Teacher
 from student.models import Parent
@@ -38,6 +40,36 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
         m3 = m00.replace("\r\n", "+")
 
         print(m3)
+
+        # 10/04/2020 - finally after 3 years of struggle we are going to send notifications
+        try:
+            one_signal_api = '4f62be3e-1330-4fda-ac23-91757077abe3'
+            header = {
+                "Content-Type": "application/json; charset=utf-8",
+                "Authorization": "Basic NGEwMGZmMjItY2NkNy0xMWUzLTk5ZDUtMDAwYzI5NDBlNjJj"
+            }
+            device_mapping = user_device_mapping.objects.get(mobile_number=mobile)
+            player_id = device_mapping.player_id
+            unavailable = ['Not Available', 'Unavailable']
+            if player_id not in unavailable:
+                payload = {
+                    'app_id': one_signal_api,
+                    'include_player_ids': [player_id],
+                    'contents': {
+                        'en': message
+                    }
+                }
+                req = requests.post("https://onesignal.com/api/v1/notifications", headers=header,
+                                    data=json.dumps(payload))
+                print(req.status_code, req.reason)
+                push_outcome = '%s %s' % (req.status_code, req.reason)
+            else:
+                push_outcome = 'player_id not available'
+        except Exception as e:
+            print('exception 10042020-A from sms.py %s %s' % (e.message, type(e)))
+            push_outcome = '%s %s' % (e.message, type(e))
+            print('failed to send push notification')
+        print('push notification result = %s' % push_outcome)
 
         # first, determine the recepient & receipient type
         recepient_type = 'Undetermined'
@@ -295,7 +327,7 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                                        sender_code=sender_id, recipient_name=recepient_name,
                                        recipient_type=recepient_type, recipient_number=mobile, message=m3,
                                        message_type=message_type, vendor=vendor_name, outcome=message_id)
-
+                    sr.push_outcome = push_outcome
                     # 09/04/17 when bulk sms are sent from device, they are fired instantly. The batch job need not
                     # to be run if message_type == 'Bulk SMS (Web Interface)' or message_type == 'Bulk SMS (Device)':
                     if message_type == 'Bulk SMS (Web Interface)':
