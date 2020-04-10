@@ -482,8 +482,8 @@ def map_device_token(request):
             #     print('device creation failed')
 
             # now, create the mapping
-            mapping = user_device_mapping.objects.get(user=u)
-            mapping.mobile_number = the_mobile
+            mapping = user_device_mapping.objects.get(mobile_number=the_mobile)
+            mapping.user = u
             mapping.token_id = device_token
             mapping.device_type = device_type
             mapping.player_id = player_id
