@@ -628,8 +628,6 @@ def forgot_password(request):
                     except Exception as e:
                         print('unable to create an entry in the LastPasswordReset table for user ' + user)
                         print('Exception 21 from authentication views.py %s (%s)' % (e.message, type(e)))
-                        log_entry(user,
-                                  "Password Change exception (authentication view.py Exception 21", "Normal", False)
 
                 if should_reset:
                     new_password = User.objects.make_random_password(length=5, allowed_chars='1234567890')
@@ -637,8 +635,8 @@ def forgot_password(request):
                     u.set_password(new_password)
                     u.save()
                     message_type = 'Forgot Password'
-                    message = 'Dear ' + u.first_name + ' ' + u.last_name + ', your new password is ' + new_password
-                    message += '. Regards, ClassUp Support'
+                    message = 'Dear %s %s, %s is your new password. ClassUp Support' % \
+                              (u.first_name, u.last_name, str(new_password))
                     print(message)
 
                     # check if user is teacher or parent
