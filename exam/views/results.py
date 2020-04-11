@@ -55,10 +55,11 @@ class DetainList(generics.ListAPIView):
         t1_sheet.set_row(0, 35)
         t1_sheet.set_column('A:A', 3.5)
         t1_sheet.set_column('B:B', 8)
-        t1_sheet.set_column('C:C', 20)
-        t1_sheet.set_column('D:D', 40)
-        t1_sheet.set_column('E:E', 20)
-        t1_sheet.set_column('F:F', 15)
+        t1_sheet.set_column('C:C', 6)
+        t1_sheet.set_column('D:D', 20)
+        t1_sheet.set_column('E:E', 40)
+        t1_sheet.set_column('F:F', 20)
+        t1_sheet.set_column('G:G', 20)
 
         fmt = format()
         title_format = workbook.add_format(fmt.get_title())
@@ -72,12 +73,14 @@ class DetainList(generics.ListAPIView):
         cell_left = workbook.add_format(fmt.get_cell_left())
         cell_left.set_border()
 
-        t1_sheet.merge_range('A1:F1',
+        t1_sheet.merge_range('A1:G1',
                              'Jagran Public School\n Session 2019-20 - List of Detain/Compartment Cases',
                              title_format)
         row = 1
         col = 0
         t1_sheet.write_string(row, col, 'S No', cell_bold)
+        col += 1
+        t1_sheet.write_string(row, col, 'Reg No', cell_bold)
         col += 1
         t1_sheet.write_string(row, col, 'Class', cell_bold)
         col += 1
@@ -97,13 +100,16 @@ class DetainList(generics.ListAPIView):
         s_no = 1
         for a_class in classes:
             for section in sections:
-                students = Student.objects.filter(current_class=a_class, current_section=section)
+                students = Student.objects.filter(current_class=a_class,
+                                                  current_section=section).order_by('fist_name')
                 for student in students:
                     try:
                         entry = ExamResult.objects.get(student=student, status=False)
                         print('student %s of %s-%s is in Detainee list' % (student, a_class, section))
                         t1_sheet.write_number(row, col, s_no, cell_left)
                         s_no += 1
+                        col += 1
+                        t1_sheet.write_string(row, col, student.student_erp_id, cell_normal)
                         col += 1
                         t1_sheet.write_string(row, col, '%s-%s' % (a_class.standard, section.section), cell_normal)
                         col += 1

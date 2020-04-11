@@ -1,7 +1,7 @@
 import json
 import datetime
 
-
+import requests
 from ipware.ip import get_ip
 
 from django.contrib.auth.models import User
@@ -563,6 +563,16 @@ def forgot_password(request):
         user = data["user"]
         print (user)
 
+        # 11/04/2020 - see if we have received the player_id.
+        # If the username is valid then we will send push notification as well
+        try:
+            player_id = data['player_id']
+        except Exception as e:
+            print('exception 11042019-A from authentication views.py %s %s' % (e.message, type(e)))
+            print('player id not sent by this user')
+            player_id = 'Not Available'
+        print('player_id = %s' % player_id)
+
         try:
             u = User.objects.get(username=user)
 
@@ -610,8 +620,6 @@ def forgot_password(request):
                     should_reset = True
                     print(user + ' is changing password for the first time')
                     print('Exception 20 from authentication views.py = %s (%s)' % (e.message, type(e)))
-                    log_entry(user,
-                              "Password Change exception (authentication view.py Exception 20", "Normal", True)
 
                     # create an entry for this user in the LastPasswordReset table
                     try:
@@ -626,14 +634,12 @@ def forgot_password(request):
                 if should_reset:
                     new_password = User.objects.make_random_password(length=5, allowed_chars='1234567890')
                     print (new_password)
-                    log_entry(user, "New Password Generated", "Normal", True)
                     u.set_password(new_password)
                     u.save()
                     message_type = 'Forgot Password'
                     message = 'Dear ' + u.first_name + ' ' + u.last_name + ', your new password is ' + new_password
                     message += '. Regards, ClassUp Support'
                     print(message)
-                    log_entry(user, "Forgot password SMS created", "Normal", True)
 
                     # check if user is teacher or parent
                     if u.is_staff:
@@ -646,6 +652,29 @@ def forgot_password(request):
                         log_entry(user, "New Password SMS Sending completed", "Normal", True)
                     else:
                         # a parent's mobile is their username
+                        # 11/04/2020 - try to send push notification
+                        one_signal_api = '4f62be3e-1330-4fda-ac23-91757077abe3'
+                        header = {
+                            "Content-Type": "application/json; charset=utf-8",
+                            "Authorization": "Basic NGEwMGZmMjItY2NkNy0xMWUzLTk5ZDUtMDAwYzI5NDBlNjJj"
+                        }
+                        payload = {
+                            "app_id": one_signal_api,
+                            "include_player_ids": [player_id],
+                            "contents": {
+                                "en": message
+                            },
+                        }
+                        try:
+                            req = requests.post("https://onesignal.com/api/v1/notifications", headers=header,
+                                                data=json.dumps(payload))
+                            outcome = '%s %s' % (req.status_code, req.reason)
+
+                            print('push notification send attempt result = %s' % outcome)
+                        except Exception as e:
+                            print('exception 11042020-B from atulmala views.py %s %s' % (e.message, type(e)))
+                            print('push notification for forgot password could not be sent')
+
                         mobile = user
                         # we need to extract the school name this parent belong to. First get the parent
                         try:
@@ -655,9 +684,7 @@ def forgot_password(request):
                             # finally, get the school
                             for student in ward_list:
                                 school = student.school
-                            log_entry(user, "New Password SMS sending initiated", "Normal", True)
                             sms.send_sms1(school, user, mobile, message, message_type)
-                            log_entry(user, "New Password SMS Sending completed", "Normal", True)
 
                             return_data["forgot_password"] = "successful"
                             log_entry(user, "Forgot Password process completed", "Normal", True)
@@ -668,11 +695,9 @@ def forgot_password(request):
                             return_data["forgot_password"] = "failed"
                             log_entry(user, "Forgot Password process Failed", "Normal", True)
                             return JSONResponse(return_data, status=201)
-
         except Exception as e:
             print('unable to reset password for ' + user)
             print('Exception 6 from authentication views.py = %s (%s)' % (e.message, type(e)))
-            log_entry(user, "Forgot Password process failed authentication view.py Exception 6", "Normal", True)
             return_data["forgot_password"] = "Fail"
             error_message = 'User does not exist'
             print(error_message)
