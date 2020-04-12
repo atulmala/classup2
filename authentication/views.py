@@ -645,11 +645,33 @@ def forgot_password(request):
                         teacher = Teacher.objects.get(email=u.email)
                         mobile = teacher.mobile
                         school = teacher.school
-                        log_entry(user, "New Password SMS sending initiated", "Normal", True)
+
+                        # 12/04/2020 - if user device mapping exist, send push notification
+                        try:
+                            mapping = user_device_mapping.objects.get(mobile_number=mobile)
+                            one_signal_api = '4f62be3e-1330-4fda-ac23-91757077abe3'
+                            header = {
+                                "Content-Type": "application/json; charset=utf-8",
+                                "Authorization": "Basic NGEwMGZmMjItY2NkNy0xMWUzLTk5ZDUtMDAwYzI5NDBlNjJj"
+                            }
+                            payload = {
+                                "app_id": one_signal_api,
+                                "include_player_ids": [player_id],
+                                "contents": {
+                                    "en": message
+                                },
+                            }
+                            req = requests.post("https://onesignal.com/api/v1/notifications", headers=header,
+                                                    data=json.dumps(payload))
+                            outcome = '%s %s' % (req.status_code, req.reason)
+                            print('push notification send attempt result = %s' % outcome)
+                        except Exception as e:
+                            print('exception 12042020-A from authentication %s %s' % (e.message, type(e)))
+                            print('push notification cound not be sent for this teacher user')
+
                         sms.send_sms1(school, user, mobile, message, message_type)
-                        log_entry(user, "New Password SMS Sending completed", "Normal", True)
                     else:
-                        # a parent's mobile is their username
+                        # this user is a parent - a parent's mobile is their username
                         # 11/04/2020 - try to send push notification
                         one_signal_api = '4f62be3e-1330-4fda-ac23-91757077abe3'
                         header = {
@@ -734,3 +756,5 @@ def check_subscription(request, student_id):
             print('Exception 7 from authentication views.py = %s (%s)' % (e.message, type(e)))
             return JSONResponse(return_data, status=400)
     return JSONResponse(return_data, status=200)
+
+
