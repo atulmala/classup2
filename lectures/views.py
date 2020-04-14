@@ -97,6 +97,8 @@ class ShareLecture(generics.ListCreateAPIView):
         print('subject = %s' % subject)
         youtube_link = request.POST.get('youtube_link')
         print('youtube_link = %s' % youtube_link)
+        if youtube_link == '':
+            youtube_link = 'N/A'
         lesson_topic = request.POST.get('lesson_topic')
         print('lesson_topic = %s' % lesson_topic)
         try:

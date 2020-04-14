@@ -649,6 +649,7 @@ def forgot_password(request):
                         # 12/04/2020 - if user device mapping exist, send push notification
                         try:
                             mapping = user_device_mapping.objects.get(mobile_number=mobile)
+                            player_id = mapping.player_id
                             one_signal_api = '4f62be3e-1330-4fda-ac23-91757077abe3'
                             header = {
                                 "Content-Type": "application/json; charset=utf-8",
