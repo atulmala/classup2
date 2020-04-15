@@ -4,8 +4,6 @@ l__author__ = 'atulgupta'
 import urllib2
 import json
 
-
-
 from django.db.models import Q
 from django.contrib.auth.models import User
 from authentication.models import LoginRecord, user_device_mapping
@@ -29,7 +27,6 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
 
     if conf.send_sms:
         # values for softsms vendor
-        key = '58fc1def26489'
         print('message received in sms.py=' + message)
         m1 = message.replace(" ", "+")
         print(m1)
@@ -219,40 +216,10 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                 print('exception 12072019-A from sms.py %s %s' % (e.message, type(e)))
                 print('could not retrieve the vendor object associated with %s' % vendor_name)
 
-            # 12/03/2020 new api from softsms they say its more robust and reliable
-            # url = 'http://softsms.in/app/smsapi/index.php?'
-            # url += 'key=%s' % key
-            # url += '&type=Text'
             url = 'http://softsms.in/app/smsuserapi/index.php?username=classup&userpassword=classup@123&type=text'
             url += '&contacts=%s' % mobile
             url += '&senderid=%s' % sender_id
             url += '&msg=%s' % m3
-
-        if vendor == 2:
-            print('vendor for sending this sms for %s is ClickSend' % school.school_name)
-            vendor_name = 'ClickSend'
-            try:
-                v = SMSVendor.objects.get(vendor=vendor_name)
-                vendor_retrieved = True
-            except Exception as e:
-                print('exception 12072019-B from sms.py %s %s' % (e.message, type(e)))
-                print('could not retrieve the vendor object associated with %s' % vendor_name)
-            configuration = clicksend_client.Configuration()
-            configuration.username = 'atul.gupta@classup.in'
-            configuration.password = 'FFB1E530-5CB9-CD36-0135-5F0C5D206FBB'
-
-            # create an instance of the API class
-            api_instance = clicksend_client.SMSApi(clicksend_client.ApiClient(configuration))
-            sms_message = SmsMessage(source="php", body=m3, to=mobile, schedule=1436874701)
-            sms_messages = clicksend_client.SmsMessageCollection(messages=[sms_message])
-
-            try:
-                # Send sms message(s)
-                api_response = api_instance.sms_send_post(sms_messages)
-                print(api_response)
-            except ApiException as e:
-                print('exception 12112019-A from sms.py %s %s' % (e.message, type(e)))
-                print("Exception when calling SMSApi->sms_send_post: %s\n" % e)
 
         if vendor == 3:
             print('vendor for sending this sms for %s is DealSMS' % school.school_name)
@@ -279,22 +246,24 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                 if message_type != 'Bulk SMS (Web Interface)':
                     # send the message
                     print ('sending to ' + mobile)
-
-                    response = urllib2.urlopen(url)
-                    if vendor == 1:
-                        message_id = response.read()
-                    if vendor == 2:
-                        outcome = json.loads(response.read())
-                        print(outcome)
-                        message_id = (outcome['JobId'])
-                    if vendor == 3:
-                        outcome = json.loads(response.read())
-                        print(outcome)
-                        message_id = (outcome['message_id'])
-                        # m = response.read()
-                        # message_id = m[17:56]
-                    print('job_id = %s' % message_id)
-                    print(message_id)
+                    if push_outcome != '200 OK':
+                        response = urllib2.urlopen(url)
+                        if vendor == 1:
+                            message_id = response.read()
+                        if vendor == 2:
+                            outcome = json.loads(response.read())
+                            print(outcome)
+                            message_id = (outcome['JobId'])
+                        if vendor == 3:
+                            outcome = json.loads(response.read())
+                            print(outcome)
+                            message_id = (outcome['message_id'])
+                            # m = response.read()
+                            # message_id = m[17:56]
+                        print('job_id = %s' % message_id)
+                        print(message_id)
+                    else:
+                        message_id = 'Notification'
                 else:
                     print('message type was Bulk SMS (Web Interface). '
                           'Batch process to send those SMS will have to be run!')
