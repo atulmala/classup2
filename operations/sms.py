@@ -296,6 +296,8 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                                        sender_code=sender_id, recipient_name=recepient_name,
                                        recipient_type=recepient_type, recipient_number=mobile, message=m3,
                                        message_type=message_type, vendor=vendor_name, outcome=message_id)
+                    if push_outcome == '200 OK':
+                        sr.status_extracted = True
                     sr.push_outcome = push_outcome
                     # 09/04/17 when bulk sms are sent from device, they are fired instantly. The batch job need not
                     # to be run if message_type == 'Bulk SMS (Web Interface)' or message_type == 'Bulk SMS (Device)':
