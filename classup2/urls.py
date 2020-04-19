@@ -40,6 +40,7 @@ urlpatterns = patterns(' ',
     url(r'pic_share/', include('pic_share.urls')),
     url(r'analytics/', include('analytics.urls')),
     url(r'lectures/', include('lectures.urls')),
+    url(r'online_test/', include('online_test.urls')),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 )
 
