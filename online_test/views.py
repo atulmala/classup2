@@ -1,7 +1,7 @@
+import datetime as dt
 from datetime import date as today
 
 import xlrd
-from django.shortcuts import render
 
 # Create your views here.
 from rest_framework import generics
@@ -15,6 +15,16 @@ from student.models import Student
 from teacher.models import Teacher
 
 from .serializers import OnlineTestSerializer, OnlineQuestionSerializer
+
+
+class GetOnlineQuestion(generics.ListAPIView):
+    serializer_class = OnlineQuestionSerializer
+
+    def get_queryset(self):
+        test_id = self.kwargs['test_id']
+        test = OnlineTest.objects.get(id=test_id)
+        q = OnlineQuestion.objects.filter(test=test)
+        return q
 
 
 class GetOnlineTest(generics.ListAPIView):
@@ -75,7 +85,7 @@ class CreateOnlineTest(generics.ListCreateAPIView):
                     col += 1
                     date = sheet.cell(row, col).value
                     try:
-                        test_date = datetime.datetime(*xlrd.xldate_as_tuple(date, fileToProcess.datemode))
+                        test_date = dt.datetime(*xlrd.xldate_as_tuple(date, fileToProcess.datemode))
                         print ('test date is in acceptable format')
                         print (test_date)
                     except Exception as e:
