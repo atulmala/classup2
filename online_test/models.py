@@ -32,3 +32,9 @@ class StudentQuestion(models.Model):
     question = models.ForeignKey(OnlineQuestion)
     answer_marked = models.CharField(max_length=5)
     whether_correct = models.BooleanField(default=False)
+
+
+class StudentTestAttempt(models.Model):
+    student = models.ForeignKey(Student)
+    online_test = models.ForeignKey(OnlineTest)
+    date = models.DateTimeField(auto_now_add=True)

@@ -1,4 +1,5 @@
 import datetime as dt
+import json
 from datetime import date as today
 
 import xlrd
@@ -9,12 +10,30 @@ from rest_framework.authentication import BasicAuthentication
 
 from academics.models import Class, Subject
 from authentication.views import CsrfExemptSessionAuthentication, JSONResponse
-from online_test.models import OnlineTest, OnlineQuestion
+from online_test.models import OnlineTest, OnlineQuestion, StudentTestAttempt, StudentQuestion
 from setup.models import School
 from student.models import Student
 from teacher.models import Teacher
 
 from .serializers import OnlineTestSerializer, OnlineQuestionSerializer
+
+
+class WhetherAttempted(generics.ListAPIView):
+    def get(self, request, *args, **kwargs):
+        student_id = self.kwargs['student_id']
+        student = Student.objects.get(id=student_id)
+        test_id = self.kwargs['test_id']
+        online_test = OnlineTest.objects.get(id=test_id)
+
+        context_dict = {}
+        if StudentTestAttempt.objects.filter(student=student, online_test=online_test).exists():
+            context_dict['attempted'] = 'true'
+        else:
+            context_dict['attempted'] = 'false'
+        return JSONResponse(context_dict, status=200)
+
+
+
 
 
 class GetOnlineQuestion(generics.ListAPIView):
@@ -126,5 +145,33 @@ class CreateOnlineTest(generics.ListCreateAPIView):
         return JSONResponse(context_dict, status=200)
 
 
+class SubmitAnswer(generics.ListCreateAPIView):
+    def post(self, request, *args, **kwargs):
+        context_dict = {
 
+        }
+        print('starting to save Scholastic Grades')
+        print('request=')
+        print(request.body)
+        data = json.loads(request.body)
+        print ('json=')
+        print (data)
 
+        for key in data:
+            student_id = data[key]['student_id']
+            student = Student.objects.get(id=student_id)
+
+            question_id = data[key]['question_id']
+            question = OnlineQuestion.objects.get(id=question_id)
+
+            option_marked = data[key]['option_marked']
+
+            student_question = StudentQuestion(student=student, question=question,
+                                               answer_marked=option_marked)
+            student_question.save()
+
+        online_test = question.test
+        attempt = StudentTestAttempt(student=student, online_test=online_test)
+        attempt.save()
+        context_dict['status'] = 'success'
+        return JSONResponse(context_dict, status=200)
