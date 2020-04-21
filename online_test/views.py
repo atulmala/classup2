@@ -18,6 +18,20 @@ from teacher.models import Teacher
 from .serializers import OnlineTestSerializer, OnlineQuestionSerializer
 
 
+class MarkAttempted(generics.ListAPIView):
+    def post(self, request, *args, **kwargs):
+        student_id = self.kwargs['student_id']
+        student = Student.objects.get(id=student_id)
+        test_id = self.kwargs['test_id']
+        online_test = OnlineTest.objects.get(id=test_id)
+
+        context_dict = {}
+        attempted = StudentTestAttempt(student=student, online_test=online_test)
+        attempted.save()
+
+        return JSONResponse(context_dict, status=200)
+
+
 class WhetherAttempted(generics.ListAPIView):
     def get(self, request, *args, **kwargs):
         student_id = self.kwargs['student_id']
@@ -31,9 +45,6 @@ class WhetherAttempted(generics.ListAPIView):
         else:
             context_dict['attempted'] = 'false'
         return JSONResponse(context_dict, status=200)
-
-
-
 
 
 class GetOnlineQuestion(generics.ListAPIView):

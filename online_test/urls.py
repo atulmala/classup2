@@ -13,6 +13,9 @@ urlpatterns = [
     url(r'^whether_attempted/(?P<student_id>[\w.@+-]+)/(?P<test_id>[\w.@+-]+)/$',
         views.WhetherAttempted.as_view(), name='whether_attempted'),
 
+    url(r'^mark_attempted/(?P<student_id>[\w.@+-]+)/(?P<test_id>[\w.@+-]+)/$',
+        views.MarkAttempted.as_view(), name='mark_attempted'),
+
     url(r'^get_online_questions/(?P<test_id>[\w.@+-]+)/$', views.GetOnlineQuestion.as_view(),
         name='get_online_questions'),
 
