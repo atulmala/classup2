@@ -184,9 +184,10 @@ class SubmitAnswer(generics.ListCreateAPIView):
         online_test = question.test
         try:
             attempt = StudentTestAttempt.objects.get(student=student, online_test=online_test)
-            print('%s attempt has been recorded')
+            print('%s attempt has already been recorded' % student)
         except Exception as e:
             print('a good exception from online_test views.py %s %s' % (e.message, type(e)))
+            print('%s attempt was not recorded' % student)
             attempt = StudentTestAttempt(student=student, online_test=online_test)
             attempt.save()
 
