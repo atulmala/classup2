@@ -182,7 +182,13 @@ class SubmitAnswer(generics.ListCreateAPIView):
             student_question.save()
 
         online_test = question.test
-        attempt = StudentTestAttempt(student=student, online_test=online_test)
-        attempt.save()
+        try:
+            attempt = StudentTestAttempt.objects.get(student=student, online_test=online_test)
+            print('%s attempt has been recorded')
+        except Exception as e:
+            print('a good exception from online_test views.py %s %s' % (e.message, type(e)))
+            attempt = StudentTestAttempt(student=student, online_test=online_test)
+            attempt.save()
+
         context_dict['status'] = 'success'
         return JSONResponse(context_dict, status=200)
