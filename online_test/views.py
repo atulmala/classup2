@@ -26,8 +26,14 @@ class MarkAttempted(generics.ListAPIView):
         online_test = OnlineTest.objects.get(id=test_id)
 
         context_dict = {}
-        attempted = StudentTestAttempt(student=student, online_test=online_test)
-        attempted.save()
+        try:
+            attempted = StudentTestAttempt.objects.get(student=student, online_test=online_test)
+            print('attempt recorded')
+        except Exception as e:
+            print('exception 22042020-B from online_test viws.py %s %s' % (e.message, type(e)))
+            print('recording attempt for the first time')
+            attempted = StudentTestAttempt(student=student, online_test=online_test)
+            attempted.save()
 
         return JSONResponse(context_dict, status=200)
 
