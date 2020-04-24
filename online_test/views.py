@@ -114,8 +114,9 @@ class CreateOnlineTest(generics.ListCreateAPIView):
                     sub_name = sheet.cell(row, col).value
                     subject = Subject.objects.get(school=school, subject_name=sub_name)
 
-                    col += 5
+                    col += 4
                     teacher_id = sheet.cell(row, col).value
+                    print('teacher_id = %s' % teacher_id)
                     teacher = Teacher.objects.get(email=teacher_id)
 
                     col += 1
