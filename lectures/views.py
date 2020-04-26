@@ -72,9 +72,11 @@ class ShareLecture(generics.ListCreateAPIView):
         context_dict = {
             'message_type': message_type
         }
-
+        print(request.POST)
         school_id = request.POST.get('school_id')
+        print('school_id = %s' % school_id)
         school = School.objects.get(id=school_id)
+        print('school = %s' % school)
         teacher_email = request.POST.get('teacher')
         teacher = Teacher.objects.get(email=teacher_email)
         print('teacher = %s' % teacher)

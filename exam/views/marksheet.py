@@ -679,13 +679,13 @@ class GenerateMarksheet(generics.ListAPIView):
                             # if idx == 0 and the_class in ninth_tenth and school_id == 20:
                             #     continue
                             try:
-                                if sub.subject_name not in ['GK', 'Moral Science', 'Drawing']:
+                                if sub.subject_name not in ['GK', 'MV', 'Drawing']:
                                     test = ClassTest.objects.get(subject=sub, the_class=standard,
                                                                  section=sec, exam=term)
                                     print(test)
                                     tr = TestResults.objects.get(class_test=test, student=s)
 
-                                if sub.subject_name in ['GK', 'Moral Science', 'Drawing']:
+                                if sub.subject_name in ['GK', 'MV', 'Drawing']:
                                     test = ClassTest.objects.filter(subject=sub,
                                                                     the_class=standard, section=sec)[idx]
 
@@ -695,7 +695,7 @@ class GenerateMarksheet(generics.ListAPIView):
                                     sub_enrich = 'NA'
                                     main = 'NA'
                                     notebook = 'NA'
-                                    if sub.subject_name == 'GK':
+                                    if sub.subject_name == 'GK' or sub.subject_name == 'MV':
                                         total = 'NA'
                                         grade = tr.grade
                                 else:
