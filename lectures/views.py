@@ -46,6 +46,8 @@ class StudentLectures(generics.ListAPIView):
 
 
 class DeleteLecture(generics.DestroyAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
     def delete(self, request, *args, **kwargs):
         context_dict = {}
         id = self.kwargs['id']

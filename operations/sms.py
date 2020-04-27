@@ -25,7 +25,6 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
         print('unable to retrieve configuration')
         print ('Exception70 from sms.py = %s (%s)' % (e.message, type(e)))
 
-    if conf.send_sms:
         # values for softsms vendor
         print('message received in sms.py=' + message)
         m1 = message.replace(" ", "+")
@@ -247,21 +246,24 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                     # send the message
                     print ('sending to ' + mobile)
                     if push_outcome != '200 OK':
-                        response = urllib2.urlopen(url)
-                        if vendor == 1:
-                            message_id = response.read()
-                        if vendor == 2:
-                            outcome = json.loads(response.read())
-                            print(outcome)
-                            message_id = (outcome['JobId'])
-                        if vendor == 3:
-                            outcome = json.loads(response.read())
-                            print(outcome)
-                            message_id = (outcome['message_id'])
-                            # m = response.read()
-                            # message_id = m[17:56]
-                        print('job_id = %s' % message_id)
-                        print(message_id)
+                        if conf.send_sms:
+                            response = urllib2.urlopen(url)
+                            if vendor == 1:
+                                message_id = response.read()
+                            if vendor == 2:
+                                outcome = json.loads(response.read())
+                                print(outcome)
+                                message_id = (outcome['JobId'])
+                            if vendor == 3:
+                                outcome = json.loads(response.read())
+                                print(outcome)
+                                message_id = (outcome['message_id'])
+                                # m = response.read()
+                                # message_id = m[17:56]
+                            print('job_id = %s' % message_id)
+                            print(message_id)
+                        else:
+                            message_id = 'Notification'
                     else:
                         message_id = 'Notification'
                 else:
@@ -296,7 +298,7 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                                        sender_code=sender_id, recipient_name=recepient_name,
                                        recipient_type=recepient_type, recipient_number=mobile, message=m3,
                                        message_type=message_type, vendor=vendor_name, outcome=message_id)
-                    if push_outcome == '200 OK':
+                    if push_outcome == '200 OK' or message_id == 'Notification':
                         sr.status_extracted = True
                         sr.status = 'Through Notification'
                     sr.push_outcome = push_outcome
@@ -316,5 +318,3 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
                 print ('error occured while sending sms to ' + str(mobile) + '. The url was: ')
                 print(url)
                 print ('Exception2 from sms.py = %s (%s)' % (e.message, type(e)))
-    else:
-        print ('Send SMS is turned off for this school: ' + school.school_name + ', ' + school.school_address)
