@@ -502,19 +502,6 @@ def setup_students(request):
                     col += 1
                     current_section = sheet.cell(row, col).value
                     print('current section = ', current_section)
-                    # col += 1
-                    # current_roll_no_raw = sheet.cell(row, col).value
-                    # # 29/03/2018 - We are making roll no optional
-                    # if current_roll_no_raw == '':
-                    #     print('roll number for %s has not been specified' % student_first_name)
-                    #     current_roll_no_raw = 50
-                    #     current_roll_no = int(current_roll_no_raw)
-                    # else:
-                    #     # excel may add a decimal to the roll number. We need to convert it to integer
-                    #     current_roll_no = int(current_roll_no_raw)
-                    #     print('roll no = ', current_roll_no)
-                    #     print (current_roll_no_raw)
-                    #     print (current_roll_no)
                     col += 1
 
                     # now, capture the parent data

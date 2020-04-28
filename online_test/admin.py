@@ -7,7 +7,7 @@ from .models import OnlineTest, OnlineQuestion, StudentTestAttempt, StudentQuest
 
 @admin.register(OnlineTest)
 class OnlineTestAdmin(admin.ModelAdmin):
-    list_display = ('school', 'the_class', 'subject', 'teacher', 'date', 'duration',)
+    list_display = ('school', 'exam', 'the_class', 'subject', 'teacher', 'date', 'duration',)
     list_filter = ('school',)
 
 

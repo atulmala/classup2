@@ -8,8 +8,10 @@ import xlrd
 from rest_framework import generics
 from rest_framework.authentication import BasicAuthentication
 
-from academics.models import Class, Subject
+from academics.models import Class, Subject, Exam, Section, ClassTest, TestResults, ThirdLang
 from authentication.views import CsrfExemptSessionAuthentication, JSONResponse
+from exam.models import HigherClassMapping
+from exam.views import get_wings
 from online_test.models import OnlineTest, OnlineQuestion, StudentTestAttempt, StudentQuestion
 from setup.models import School
 from student.models import Student
@@ -130,11 +132,25 @@ class CreateOnlineTest(generics.ListCreateAPIView):
                         print ('exception 18042020-H from online_test views.py %s %s ' % (e.message, type(e)))
                         continue
 
+                    col += 1
+                    exam_title = sheet.cell(row, col).value
+                    exam = Exam.objects.get(school=school, title=exam_title)
+
                     # create online test
-                    online_test = OnlineTest(school=school, the_class=the_class,
-                                             subject=subject, teacher=teacher, date=test_date)
-                    online_test.save()
-                    row += 1
+                    try:
+                        test = OnlineTest.objects.get(school=school, the_class=the_class,
+                                                      subject=subject, exam=exam)
+                        print ('online test for class %s subject %s exam %s has already been created' %
+                               (the_class, subject, exam))
+                        return JSONResponse(context_dict, status=200)
+                    except Exception as e:
+                        print('exception 28042020-A from online_test views.py %s %s' % (e.message, type(e)))
+                        print ('online test for class %s subject %s exam %s has not been created' %
+                               (the_class, subject, exam))
+                        online_test = OnlineTest(school=school, the_class=the_class,
+                                                 subject=subject, teacher=teacher, date=test_date, exam=exam)
+                        online_test.save()
+                        row += 1
                 if row > 1:
                     print('C - row = %i' % row)
                     col = 1
@@ -160,6 +176,92 @@ class CreateOnlineTest(generics.ListCreateAPIView):
         except Exception as e:
             print('exception 17042020-A from online_test views.py %s %s' % (e.message, type(e)))
             print('failed to create online test')
+
+        # now create a manual test
+        wings = get_wings(school)
+        ninth_tenth = wings['ninth_tenth']
+        higher_classes = wings['higher_classes']
+        sections = Section.objects.filter(school=school)
+        for section in sections:
+            students = Student.objects.filter(current_class=the_class,
+                                              current_section=section, active_status=True)
+            if students.count() > 0:
+                # check if this test has already been created by some other teacher
+                q = ClassTest.objects.filter(exam=exam, the_class=the_class, section=section, subject=subject)
+                if q.count() > 0:
+                    teacher = q[:1].get().teacher
+                    name = '%s %s' % (teacher.first_name, teacher.last_name)
+                    outcome = ('test for %s %s %s-%s already created by %s. Hence not creating' %
+                               (exam, subject, the_class, section, name))
+                    print(outcome)
+                    continue
+
+                print('test for %s %s %s-%s does not exist. Hence  creating' % (exam, subject, the_class, section))
+                try:
+                    print(test_date)
+                    print(teacher)
+                    test = ClassTest(date_conducted=test_date, exam=exam, the_class=the_class, section=section,
+                                     subject=subject, teacher=teacher, grade_based=False)
+                    test.max_marks = float(40.00)  # max_marks and pass_marks are passed as strings
+                    test.passing_marks = float(20.00)
+                    test.save()
+                    print('successfully scheduled test for %s class %s-%s for %s' %
+                          (subject, the_class, section, exam))
+                except Exception as e:
+                    print('exception 28042020-B from online_test views.py %s %s' % (e.message, type(e)))
+                    outcome = 'failed to create test for %s class %s-%s for %s' % (subject, the_class, section, exam)
+                    print(outcome)
+                    continue
+                for student in students:
+                    # for higher classes (XI & XII) we need to look into the student subject mapping
+                    if the_class.standard in higher_classes:
+                        print ('test is for higher class %s. Hence, mapping will be considered' % the_class)
+                        try:
+                            mapping = HigherClassMapping.objects.get(student=student, subject=subject)
+                            if mapping:
+                                test_result = TestResults(class_test=test, roll_no=student.roll_number,
+                                                          student=student, marks_obtained=-5000.00, grade='')
+                                test_result.save()
+                                print ('test results successfully created for %s' % (student))
+                        except Exception as e:
+                            print ('mapping does not exist between subject %s and %s' % (subject, student))
+                            print ('exception 28042020-C from exam online_test view.py %s %s' % (e.message, type(e)))
+                    else:
+                        # 06/11/2017 if the subject is third language or elective subject (class XI & XII),
+                        #  we need to filter students
+                        if (subject.subject_type == 'Third Language') or \
+                                ((the_class in ninth_tenth) and (subject.subject_name == 'Hindi')):
+                            print (
+                                'this is a second/third language. Hence test results will be created for selected students')
+                            try:
+                                third_lang = ThirdLang.objects.get(third_lang=subject, student=student)
+                                print ('%s has chosen %s as second/third language' % (student.fist_name, subject))
+                                test_result = TestResults(class_test=test, roll_no=student.roll_number,
+                                                          student=third_lang.student, marks_obtained=-5000.00, grade='')
+                                try:
+                                    test_result.save()
+                                    print ('test results successfully created for %s' % student)
+                                except Exception as e:
+                                    print ('failed to create test results for %s' % student)
+                                    print ('Exception 28042020-D from online_test views.py = %s (%s)' %
+                                           (e.message, type(e)))
+                                    context_dict['outcome'] = 'Failed to create test'
+                                    return JSONResponse(context_dict, status=201)
+                            except Exception as e:
+                                print ('Exception 20112019-E from exam test_management.py %s %s' % (e.message, type(e)))
+                                print ('%s has not chosen %s as third language' % (student, subject))
+                        else:
+                            print ('this is a regular subject. Hence test results will be created for all students')
+                            test_result = TestResults(class_test=test, roll_no=student.roll_number,
+                                                      student=student, marks_obtained=-5000.00, grade='')
+                            try:
+                                test_result.save()
+                                print ('test results successfully created for %s' % student)
+                            except Exception as e:
+                                print ('failed to create test results for %s' % student)
+                                print ('Exception 28042020-F from online_test views.py %s %s' % (e.message, type(e)))
+                                context_dict['outcome'] = 'Failed to create test'
+                                return JSONResponse(context_dict, status=201)
         return JSONResponse(context_dict, status=200)
 
 
