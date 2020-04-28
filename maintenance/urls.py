@@ -8,6 +8,7 @@ urlpatterns = [
     url(r'^get_delivery_status/', views.SMSDeliveryStatus.as_view(), name='get_delivery_status'),
     url(r'^get_daily_message_count/', views.GetMessageCount.as_view(), name='get_daily_message_count'),
     url(r'^resend_failed_messages/$', views.ResendFailedMessages.as_view(), name='resend_failed_messages'),
+    url(r'^delete_messages/$', views.DeleteMessages.as_view(), name='delete_messages'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

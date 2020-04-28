@@ -30,6 +30,30 @@ class JSONResponse(HttpResponse):
         super(JSONResponse, self).__init__(content, **kwargs)
 
 
+class DeleteMessages(generics.ListCreateAPIView):
+    def delete(self, request, *args, **kwargs):
+        t1 = datetime.now()
+        context_dict = {'start_time': '%s' % t1}
+        # print ('start_time = %s' % t1)
+        school_id = request.POST.get('school_id')
+        school = School.objects.get(school_name='Radisson the School')
+
+        messages = SMSRecord.objects.filter(school=school)
+        total = messages.count()
+        for message in messages:
+            message.delete()
+            print('message deleted')
+            total -= 1
+            print('remaining messages to be deleted = %i' % total)
+
+        t2 = datetime.now()
+        # print ('end_time = %s' % t2)
+        context_dict['end_time'] = '%s' % t2
+        time_taken = t2 - t1
+        context_dict['time_taken'] = time_taken
+        return JSONResponse(context_dict, status=200)
+
+
 class ResendFailedMessages(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         t1 = datetime.now()
