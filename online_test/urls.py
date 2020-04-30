@@ -20,6 +20,9 @@ urlpatterns = [
         name='get_online_questions'),
 
     url(r'^submit_answers/$', views.SubmitAnswer.as_view(), name='submit_answers'),
+
+    url(r'^generate_answer_sheet/(?P<student_id>[\w.@+-]+)/(?P<test_id>[\w.@+-]+)/$',
+        views.GenerateAnswerSheet.as_view(), name='generate_answer_sheet'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

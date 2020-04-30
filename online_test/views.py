@@ -1,19 +1,29 @@
 import datetime as dt
 import json
+import os
+import urllib2
+
+import boto3
 from datetime import date as today
+from PIL import Image
 
 import xlrd
+import classup2.settings as settings
 
 # Create your views here.
+from django.http import HttpResponse
+from google.cloud import storage
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 from rest_framework import generics
 from rest_framework.authentication import BasicAuthentication
 
 from academics.models import Class, Subject, Exam, Section, ClassTest, TestResults, ThirdLang
 from authentication.views import CsrfExemptSessionAuthentication, JSONResponse
-from exam.models import HigherClassMapping
+from exam.models import HigherClassMapping, Marksheet
 from exam.views import get_wings
 from online_test.models import OnlineTest, OnlineQuestion, StudentTestAttempt, StudentQuestion
-from setup.models import School
+from setup.models import School, GlobalConf
 from student.models import Student
 from teacher.models import Teacher
 
@@ -156,13 +166,13 @@ class CreateOnlineTest(generics.ListCreateAPIView):
                     col = 1
                     question = sheet.cell(row, col).value
                     row += 1
-                    option_a = sheet.cell(row, col).value
+                    option_a = str(sheet.cell(row, col).value)
                     row += 1
-                    option_b = sheet.cell(row, col).value
+                    option_b = str(sheet.cell(row, col).value)
                     row += 1
-                    option_c = sheet.cell(row, col).value
+                    option_c = str(sheet.cell(row, col).value)
                     row += 1
-                    option_d = sheet.cell(row, col).value
+                    option_d = str(sheet.cell(row, col).value)
                     row += 1
                     correct_option = sheet.cell(row, col).value
 
@@ -302,3 +312,142 @@ class SubmitAnswer(generics.ListCreateAPIView):
 
         context_dict['status'] = 'success'
         return JSONResponse(context_dict, status=200)
+
+
+class GenerateAnswerSheet(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def post(self, request, *args, **kwargs):
+        student_id = self.kwargs['student_id']
+        student = Student.objects.get(id=student_id)
+        test_id = self.kwargs['test_id']
+        online_test = OnlineTest.objects.get(id=test_id)
+        print('generating result for %s in online test class %s subject %s' %
+              (student, online_test.the_class, online_test.subject))
+
+        pdf_name = 'online_test/%s_%s_answer_sheet_online_test_%s_class_%s.pdf' % \
+                   (student.fist_name, str(student.id), student.current_class, online_test.subject)
+        print('pdf_name = %s' % pdf_name)
+        response = HttpResponse(content_type='application/pdf')
+        content_disposition = ('attachment; filename= %s' % pdf_name)
+        print (content_disposition)
+        response['Content-Disposition'] = content_disposition
+        print(response)
+        c = canvas.Canvas(pdf_name, pagesize=A4, bottomup=1)
+
+        font = 'Times-Bold'
+        c.setFont(font, 12)
+        font = 'Times-Bold'
+        top = 750
+        school = student.school
+        ms = Marksheet.objects.get(school=school)
+        title_start = ms.title_start
+        c.drawString(title_start + 80, top, school.school_name)
+        c.setFont(font, 8)
+        top -= 10
+        c.drawString(title_start + 100, top, 'Online Test Sheet')
+        top -= 20
+        c.drawString(60, top, 'Name: %s' % student)
+        c.drawString(175, top, 'Class: %s' % student.current_class)
+        c.drawString(260, top, 'Subject: %s (%s)' % (online_test.subject, online_test.exam))
+
+        marks_obtained = 0
+        questions = OnlineQuestion.objects.filter(test=online_test)
+        print('number of questions in this test: %d' % questions.count())
+        for a_question in questions:
+            try:
+                student_answer = StudentQuestion.objects.get(student=student, question=a_question)
+                option_marked = student_answer.answer_marked
+                correct_option = a_question.correct_option
+
+                if option_marked.strip() == correct_option.strip():
+                    marks_obtained += 2
+            except Exception as e:
+                print('exception 29042020-A from online_test views.py %s %s' % (e.message, type(e)))
+                print('could not retrieve student %s attempt for question %s' % (student, a_question.question))
+        c.drawString(400, top, 'Marks Obtained: %s / 40' % str(marks_obtained))
+
+        top -= 20
+        top_question_position = top
+        left = 100
+        tick_mark = Image.open('online_test/correct.png')
+        cross = Image.open('online_test/cross.png')
+
+        print('number of questions in this test: %d' % questions.count())
+        q_no = 1
+        for a_question in questions:
+            if q_no == 9 or q_no == 17:
+                top = 750
+                c.showPage()
+                c.setFont(font, 8)
+
+            c.drawString(left, top, 'Q %s - %s' % (str(q_no), a_question.question))
+            top -= 15
+            c.drawString(left, top, 'A.   %s' % a_question.option_a)
+            top -= 10
+            c.drawString(left, top, 'B.   %s' % a_question.option_b)
+            top -= 10
+            c.drawString(left, top, 'C.   %s' % a_question.option_c)
+            top -= 10
+            c.drawString(left, top, 'D.   %s' % a_question.option_d)
+            top -= 15
+            c.drawString(left, top, 'Correct Option:  %s' % a_question.correct_option)
+            try:
+                student_answer = StudentQuestion.objects.get(student=student, question=a_question)
+                option_marked = student_answer.answer_marked
+                correct_option = a_question.correct_option
+                print('for question %d, %s has marked %s and correct option is %s' %
+                      (q_no, student, student_answer.answer_marked, a_question.correct_option))
+                c.drawString(left + 100, top, 'Your Answer: %s' % student_answer.answer_marked)
+
+                if option_marked.strip() == correct_option.strip():
+                    print('%s has marked question: %d correct.' % (student, q_no))
+                    c.drawInlineImage(tick_mark, left - 30, top + 20, width=15, height=15)
+                    c.drawString(left + 220, top, 'Marks: 2')
+                else:
+                    print('%s has marked question: %d wrong.' % (student, q_no))
+                    c.drawInlineImage(cross, left - 30, top + 20, width=15, height=15)
+                    c.drawString(left + 220, top, 'Marks: 0')
+            except Exception as e:
+                print('exception 29042020-A from online_test views.py %s %s' % (e.message, type(e)))
+                print('could not retrieve student %s attempt for question %s' % (student, a_question.question))
+
+            top -= 20
+            q_no += 1
+
+        context_dict = {
+            'marks_obtained': marks_obtained
+        }
+        c.save()
+        session = boto3.Session(
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        )
+        s3 = session.resource('s3')
+
+        s3.meta.client.upload_file(Filename=pdf_name, Bucket='classup2', Key='classup2/%s' % pdf_name)
+        long_path = 'https://classup2.s3.us-east-2.amazonaws.com/classup2/%s' % pdf_name
+        print('long path: %s' % long_path)
+        # prepare short link
+        global_conf = GlobalConf.objects.get(pk=1)
+        key = global_conf.short_link_api
+        url = 'https://cutt.ly/api/api.php?'
+        url += 'key=%s&short=%s' % (key, long_path)
+        print('url for generating short link = %s' % url)
+        try:
+            response = urllib2.urlopen(url)
+            print('response for generating short link = %s' % response)
+            outcome = json.loads(response.read())
+            print('ouctome = ')
+            print(outcome)
+            status = outcome['url']['status']
+            print('status = %i' % status)
+            if status == 7:
+                short_link = outcome['url']['shortLink']
+                print('short_lint = %s' % short_link)
+        except Exception as e:
+            print('exception 30042020-A from online_test views.py %s %s' % (e.message, type(e)))
+            print('failed to generate short link  for the lesson doc uploaded by %s')
+        os.remove(pdf_name)
+        return response
+        # return JSONResponse(context_dict, status=200)
