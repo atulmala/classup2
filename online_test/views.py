@@ -23,7 +23,8 @@ from authentication.views import CsrfExemptSessionAuthentication, JSONResponse
 from exam.models import HigherClassMapping, Marksheet
 from exam.views import get_wings
 from online_test.models import OnlineTest, OnlineQuestion, StudentTestAttempt, StudentQuestion, AnswerSheets
-from setup.models import School, GlobalConf
+from operations import sms
+from setup.models import School, GlobalConf, Configurations
 from student.models import Student
 from teacher.models import Teacher
 
@@ -169,22 +170,22 @@ class CreateOnlineTest(generics.ListCreateAPIView):
                     print('C - row = %i' % row)
                     col = 1
                     try:
-                        question = sheet.cell(row, col).value.decode('utf-8')
+                        question = sheet.cell(row, col).value
                         print('question = %s' % question)
                         row += 1
-                        option_a = sheet.cell(row, col).value.decode('utf-8')
+                        option_a = sheet.cell(row, col).value
                         print('option_a = %s' % option_a)
                         row += 1
-                        option_b = sheet.cell(row, col).value.decode('utf-8')
+                        option_b = sheet.cell(row, col).value
                         print('option_b = %s' % option_b)
                         row += 1
-                        option_c = sheet.cell(row, col).value.decode('utf-8')
+                        option_c = sheet.cell(row, col).value
                         print('option_c = %s' % option_c)
                         row += 1
-                        option_d = sheet.cell(row, col).value.decode('utf-8')
+                        option_d = sheet.cell(row, col).value
                         print('option_d = %s' % option_d)
                         row += 1
-                        correct_option = sheet.cell(row, col).value.decode('utf-8')
+                        correct_option = sheet.cell(row, col).value
                     except Exception as e:
                         print('exception 01052020-X from online_test viws.py %s %s' % (e.message, type(e)))
 
@@ -383,7 +384,7 @@ class GenerateAnswerSheet(generics.ListCreateAPIView):
                     correct_option = a_question.correct_option
 
                     if option_marked.strip() == correct_option.strip():
-                        marks_obtained += 2
+                        marks_obtained += 1
                 except Exception as e:
                     print('exception 29042020-A from online_test views.py %s %s' % (e.message, type(e)))
                     print('could not retrieve student %s attempt for question %s' % (student, a_question.question))
@@ -497,3 +498,21 @@ class GenerateAnswerSheet(generics.ListCreateAPIView):
             os.remove(pdf_name)
             # return response
         return JSONResponse(context_dict, status=200)
+
+
+class ShareAnswerSheet(generics.ListAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def post(self, request, *args, **kwargs):
+        answer_sheets = AnswerSheets.objects.all()
+        for a_sheet in answer_sheets:
+            if not a_sheet.shared:
+                message = 'Dear %s, answer sheet of %s online test attached. link:  %s' % \
+                          (a_sheet.student, a_sheet.online_test.subject, a_sheet.link)
+                print('message: %s' % message)
+                school = a_sheet.student.school
+                mobile = a_sheet.student.parent.parent_mobile1
+                sms.send_sms1(school, 'admin@jps.com', mobile, message, 'Share Answer sheet')
+                a_sheet.shared = True
+                a_sheet.save()
+        return JSONResponse({}, status=200)

@@ -44,3 +44,4 @@ class AnswerSheets(models.Model):
     student = models.ForeignKey(Student)
     online_test = models.ForeignKey(OnlineTest)
     link = models.CharField(max_length=200)
+    shared = models.BooleanField(default=False)
