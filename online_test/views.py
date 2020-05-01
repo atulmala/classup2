@@ -168,22 +168,25 @@ class CreateOnlineTest(generics.ListCreateAPIView):
                 if row > 1:
                     print('C - row = %i' % row)
                     col = 1
-                    question = sheet.cell(row, col).value
-                    print('question = %s' % question)
-                    row += 1
-                    option_a = sheet.cell(row, col).value
-                    print('option_a = %s' % option_a)
-                    row += 1
-                    option_b = sheet.cell(row, col).value
-                    print('option_b = %s' % option_b)
-                    row += 1
-                    option_c = sheet.cell(row, col).value
-                    print('option_c = %s' % option_c)
-                    row += 1
-                    option_d = sheet.cell(row, col).value
-                    print('option_d = %s' % option_d)
-                    row += 1
-                    correct_option = sheet.cell(row, col).value
+                    try:
+                        question = sheet.cell(row, col).value
+                        print('question = %s' % question)
+                        row += 1
+                        option_a = sheet.cell(row, col).value
+                        print('option_a = %s' % option_a)
+                        row += 1
+                        option_b = sheet.cell(row, col).value
+                        print('option_b = %s' % option_b)
+                        row += 1
+                        option_c = sheet.cell(row, col).value
+                        print('option_c = %s' % option_c)
+                        row += 1
+                        option_d = sheet.cell(row, col).value
+                        print('option_d = %s' % option_d)
+                        row += 1
+                        correct_option = sheet.cell(row, col).value
+                    except Exception as e:
+                        print('exception 01052020-X from online_test viws.py %s %s' % (e.message, type(e)))
 
                     online_question = OnlineQuestion(test=online_test, question=question,
                                                      option_a=option_a, option_b=option_b,
