@@ -169,22 +169,22 @@ class CreateOnlineTest(generics.ListCreateAPIView):
                     print('C - row = %i' % row)
                     col = 1
                     try:
-                        question = sheet.cell(row, col).value
+                        question = sheet.cell(row, col).value.decode('utf-8')
                         print('question = %s' % question)
                         row += 1
-                        option_a = sheet.cell(row, col).value
+                        option_a = sheet.cell(row, col).value.decode('utf-8')
                         print('option_a = %s' % option_a)
                         row += 1
-                        option_b = sheet.cell(row, col).value
+                        option_b = sheet.cell(row, col).value.decode('utf-8')
                         print('option_b = %s' % option_b)
                         row += 1
-                        option_c = sheet.cell(row, col).value
+                        option_c = sheet.cell(row, col).value.decode('utf-8')
                         print('option_c = %s' % option_c)
                         row += 1
-                        option_d = sheet.cell(row, col).value
+                        option_d = sheet.cell(row, col).value.decode('utf-8')
                         print('option_d = %s' % option_d)
                         row += 1
-                        correct_option = sheet.cell(row, col).value
+                        correct_option = sheet.cell(row, col).value.decode('utf-8')
                     except Exception as e:
                         print('exception 01052020-X from online_test viws.py %s %s' % (e.message, type(e)))
 
