@@ -833,7 +833,7 @@ class GenerateMarksheet(generics.ListAPIView):
                             health_ed = co_scl.health_education
                             health_array.append(health_ed)
 
-                            dscpln_array.append('Discipline: Term-1[On a 3-point(A-C) grading scale]')
+                            dscpln_array.append('Discipline: Term-2[On a 3-point(A-C) grading scale]')
                             dscpln = co_scl.discipline
                             dscpln_array.append(dscpln)
                             remark = co_scl.teacher_remarks

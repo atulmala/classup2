@@ -31,3 +31,8 @@ class StudentQuestionAdmin(admin.ModelAdmin):
 class AnswerSheetsAdmin(admin.ModelAdmin):
     list_display = ('student', 'online_test', 'link',)
     search_fields = ('student__fist_name', 'student__last_name',)
+
+    def link(self, obj):
+        return '<a href="%s">%s</a>' % (obj.lin, obj.link)
+    link.allow_tags = True
+    link.short_description = 'Short link'
