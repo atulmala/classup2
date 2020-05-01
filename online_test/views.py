@@ -144,7 +144,10 @@ class CreateOnlineTest(generics.ListCreateAPIView):
 
                     col += 1
                     exam_title = sheet.cell(row, col).value
-                    exam = Exam.objects.get(school=school, title=exam_title)
+                    try:
+                        exam = Exam.objects.get(school=school, title=exam_title)
+                    except Exception as e:
+                        print('exception 01052020-A from online_test views.py %s %s' % (e.message, type(e)))
 
                     # create online test
                     try:
