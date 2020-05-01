@@ -171,19 +171,19 @@ class CreateOnlineTest(generics.ListCreateAPIView):
                     col = 1
                     try:
                         question = sheet.cell(row, col).value
-                        print('question = %s' % question)
+                        # print('question = %s' % question)
                         row += 1
                         option_a = sheet.cell(row, col).value
-                        print('option_a = %s' % option_a)
+                        # print('option_a = %s' % option_a)
                         row += 1
                         option_b = sheet.cell(row, col).value
-                        print('option_b = %s' % option_b)
+                        # print('option_b = %s' % option_b)
                         row += 1
                         option_c = sheet.cell(row, col).value
-                        print('option_c = %s' % option_c)
+                        # print('option_c = %s' % option_c)
                         row += 1
                         option_d = sheet.cell(row, col).value
-                        print('option_d = %s' % option_d)
+                        # print('option_d = %s' % option_d)
                         row += 1
                         correct_option = sheet.cell(row, col).value
                     except Exception as e:
