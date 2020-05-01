@@ -112,6 +112,8 @@ class CreateOnlineTest(generics.ListCreateAPIView):
                 print ('Successfully got hold of sheet!')
             row = 0
             for row1 in range(sheet.nrows):
+                if row == 142:
+                    break
                 print('at the top of the loop, row = %i' % row)
                 col = 1
                 if row == 1:
