@@ -2,7 +2,7 @@ from django.contrib import admin
 
 # Register your models here.
 
-from .models import OnlineTest, OnlineQuestion, StudentTestAttempt, StudentQuestion
+from .models import OnlineTest, OnlineQuestion, StudentTestAttempt, StudentQuestion, AnswerSheets
 
 
 @admin.register(OnlineTest)
@@ -25,3 +25,9 @@ class StudentTestAttemptAdmin(admin.ModelAdmin):
 @admin.register(StudentQuestion)
 class StudentQuestionAdmin(admin.ModelAdmin):
     list_display = ('student', 'question', 'answer_marked', 'whether_correct',)
+
+
+@admin.register(AnswerSheets)
+class AnswerSheetsAdmin(admin.ModelAdmin):
+    list_display = ('student', 'online_test', 'link',)
+    search_fields = ('student__fist_name', 'student__last_name',)

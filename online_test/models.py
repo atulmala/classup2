@@ -38,3 +38,9 @@ class StudentTestAttempt(models.Model):
     student = models.ForeignKey(Student)
     online_test = models.ForeignKey(OnlineTest)
     date = models.DateTimeField(auto_now_add=True)
+
+
+class AnswerSheets(models.Model):
+    student = models.ForeignKey(Student)
+    online_test = models.ForeignKey(OnlineTest)
+    link = models.CharField(max_length=200)
