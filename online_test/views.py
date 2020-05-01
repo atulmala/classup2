@@ -104,7 +104,8 @@ class CreateOnlineTest(generics.ListCreateAPIView):
             print ('now starting to process the uploaded file for fee upload...')
             fileToProcess_handle = request.FILES['online_test.xlsx']
             print(fileToProcess_handle)
-            fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
+            fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read(),
+                                               encoding_override="cp1252")
             sheet = fileToProcess.sheet_by_index(0)
             if sheet:
                 print ('Successfully got hold of sheet!')
@@ -168,14 +169,19 @@ class CreateOnlineTest(generics.ListCreateAPIView):
                     print('C - row = %i' % row)
                     col = 1
                     question = sheet.cell(row, col).value
+                    print('question = %s' % question)
                     row += 1
-                    option_a = str(sheet.cell(row, col).value)
+                    option_a = sheet.cell(row, col).value
+                    print('option_a = %s' % option_a)
                     row += 1
-                    option_b = str(sheet.cell(row, col).value)
+                    option_b = sheet.cell(row, col).value
+                    print('option_b = %s' % option_b)
                     row += 1
-                    option_c = str(sheet.cell(row, col).value)
+                    option_c = sheet.cell(row, col).value
+                    print('option_c = %s' % option_c)
                     row += 1
-                    option_d = str(sheet.cell(row, col).value)
+                    option_d = sheet.cell(row, col).value
+                    print('option_d = %s' % option_d)
                     row += 1
                     correct_option = sheet.cell(row, col).value
 
