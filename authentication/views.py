@@ -24,7 +24,6 @@ from operations import sms
 
 from .forms import ClassUpLoginForm
 
-
 print ('in views.py for authentication')
 
 
@@ -148,7 +147,6 @@ def auth_login(request):
         # login from django login form
         try:
             login_form = ClassUpLoginForm(request.POST)
-            #context_dict['form'] = login_form
             the_user = request.POST['username']
             password = request.POST['password']
             login_from = 'django'
@@ -168,26 +166,23 @@ def auth_login(request):
         print('login initiated from = %s' % login_from)
         l.login_id = the_user
         l.password = password
-        log_entry(the_user, "Login attempt from web (vuejs)", "Normal", True)
-        l.login_id = the_user
-
-        l.password = password
 
         user = authenticate(username=the_user, password=password)
         log_entry(the_user, "User has been authenticated", "Normal", True)
         if user is not None:
             if user.is_active:
                 user_name = '%s %s' % (user.first_name, user.last_name)
-                log_entry(the_user, "User is an Active user", "Normal", True)
                 try:
                     login(request, user)
                     l.save()
+
+                    request.session['user'] = the_user
+                    context_dict['user_name'] = user_name
+
                     u = UserSchoolMapping.objects.get(user=user)
                     school = u.school
-                    request.session['user'] = the_user
                     request.session['school_name'] = school.school_name
                     request.session['school_id'] = school.id
-                    context_dict['user_name'] = user_name
                     context_dict['school_id'] = school.id
                     context_dict['school_name'] = school.school_name
 
@@ -202,7 +197,7 @@ def auth_login(request):
                         print(error)
                         context_dict['message'] = error
                         context_dict['outcome'] = 'failed'
-                        if login_from =='vuejs':
+                        if login_from == 'vuejs':
                             return JSONResponse(context_dict)
                         else:
                             login_form.errors['__all__'] = login_form.error_class([error])
@@ -217,9 +212,23 @@ def auth_login(request):
                     context_dict['user_type'] = 'school_admin'
                     request.session['user_type'] = 'school_admin'
                 else:
-                    log_entry(the_user, "User found to be non-Admin user", "Normal", True)
-                    context_dict['user_type'] = 'non_admin'
+                    print('user is non admin now figure out whether teacher or parent')
+                    parent = Parent.objects.filter(parent_mobile1=the_user)
+                    if parent.count() > 0:
+                        print('%s is a parent user' % the_user)
+                        context_dict['user_type'] = 'parent'
+                        request.session['user_type'] = 'parent'
+                    else:
+                        print('%s is not a parent user' % the_user)
+                    teacher = Teacher.objects.filter(email=the_user)
+                    if teacher.count() > 0:
+                        print('%s is a teacher' % the_user)
+                        context_dict['user_type'] = 'teacher'
+                    else:
+                        print('%s is not a te user' % the_user)
+                    # context_dict['user_type'] = 'non_admin'
                     request.session['user_type'] = 'non_admin'
+
                 print (context_dict)
                 log_entry(the_user, "Login Successful", "Normal", True)
                 context_dict['message'] = 'Login Successful'
@@ -248,7 +257,7 @@ def auth_login(request):
             context_dict['outcome'] = 'failed'
             l.comments = error
             l.save()
-            #login_form.errors['__all__'] = login_form.error_class([error])
+            # login_form.errors['__all__'] = login_form.error_class([error])
             print (error)
             if login_from == 'vuejs':
                 return JSONResponse(context_dict)
@@ -274,6 +283,7 @@ class JSONResponse(HttpResponse):
     """
     an HttpResponse that renders its contents to JSON
     """
+
     def __init__(self, data, **kwargs):
         print ('from JSONResponse...')
         content = JSONRenderer().render(data)
@@ -494,7 +504,7 @@ def map_device_token(request):
             response_dict['action_performed'] = action_performed
             return JSONResponse(response_dict, status=200)
         except Exception as e:
-            print('Exception 120 from authentication views.py = %s (%s)' % (e.message , type(e)))
+            print('Exception 120 from authentication views.py = %s (%s)' % (e.message, type(e)))
             print('user device mapping does not exist for ' + user + '. Hence Creating')
             try:
                 mapping = user_device_mapping(user=u)
@@ -663,7 +673,7 @@ def forgot_password(request):
                                 },
                             }
                             req = requests.post("https://onesignal.com/api/v1/notifications", headers=header,
-                                                    data=json.dumps(payload))
+                                                data=json.dumps(payload))
                             outcome = '%s %s' % (req.status_code, req.reason)
                             print('push notification send attempt result = %s' % outcome)
                         except Exception as e:
@@ -757,5 +767,3 @@ def check_subscription(request, student_id):
             print('Exception 7 from authentication views.py = %s (%s)' % (e.message, type(e)))
             return JSONResponse(return_data, status=400)
     return JSONResponse(return_data, status=200)
-
-
