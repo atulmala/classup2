@@ -1126,8 +1126,11 @@ class UploadFeeDefaulters(generics.ListCreateAPIView):
         print('school_id = %s' % school_id)
         school = School.objects.get(id=school_id)
         print ('now starting to process the uploaded file for fee upload...')
-        fileToProcess_handle = request.FILES['fee_defaulters_list.xlsx']
-        print(fileToProcess_handle)
+        try:
+            fileToProcess_handle = request.FILES['fee_defaulters_list.xlsx']
+            print(fileToProcess_handle)
+        except Exception as e:
+            print('exception 02052020-D from fee_processing views.py %s %s' % (e.message, type(e)))
 
         fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
         sheet = fileToProcess.sheet_by_index(0)
