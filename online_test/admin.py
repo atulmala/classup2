@@ -13,7 +13,12 @@ class OnlineTestAdmin(admin.ModelAdmin):
 
 @admin.register(OnlineQuestion)
 class OnlineQuestionAdmin(admin.ModelAdmin):
-    list_display = ('question',)
+    def get_the_class(self, obj):
+        return obj.test.the_class
+
+    def get_subject(self, obj):
+        return obj.test.subject
+    list_display = ('get_the_class', 'get_subject', 'question',)
 
 
 @admin.register(StudentTestAttempt)
