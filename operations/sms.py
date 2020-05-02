@@ -246,8 +246,8 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
             message_id = 'Not Available'
             if message_type != 'Bulk SMS (Web Interface)':
                 # send the message
-                print ('sending to ' + mobile)
                 if push_outcome != '200 OK':
+                    print ('sending SMS to ' + mobile)
                     if conf.send_sms:
                         response = urllib2.urlopen(url)
                         if vendor == 1:

@@ -15,6 +15,7 @@ from rest_framework import generics
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.renderers import JSONRenderer
 
+from fee_processing.models import FeeDefaulters
 from setup.models import UserSchoolMapping, GlobalConf
 from teacher.models import Teacher
 from student.models import Student, Parent
@@ -300,6 +301,7 @@ def auth_login_from_device1(request):
                         print('this is a school admin')
                         log_entry(the_user, "User is an Admin User", "Normal", True)
                         return_data["school_admin"] = "true"
+
                     try:
                         u = UserSchoolMapping.objects.get(user=user)
                         school_id = u.school.id
@@ -318,25 +320,47 @@ def auth_login_from_device1(request):
                         print('Exception 10 from authentication views.py = %s (%s)' % (e.message, type(e)))
                 else:
                     return_data['is_staff'] = "false"
-                return JSONResponse(return_data, status=200)
-            else:
-                l.outcome = 'Failed'
-                l.comments = 'Inactive User'
-                log_entry(the_user, "Found to be an Inactive User", "Normal", True)
-                l.save()
-                return_data["login"] = "successful"
-                return_data['user_name'] = user.first_name + ' ' + user.last_name
-                return_data["user_status"] = "inactive"
-                print (return_data)
-                log_entry(the_user, event, category, False)
-                return JSONResponse(return_data, status=200)
+
+                    print('user is non admin now figure out whether teacher or parent')
+                    parent = Parent.objects.filter(parent_mobile1=the_user)
+                    if parent.count() > 0:
+                        print('%s is a parent user' % the_user)
+                        return_data['user_type'] = 'parent'
+
+                        # check if this user is a fee defaulter user
+                        students = Student.objects.filter(parent=parent)
+                        for a_student in students:
+                            print('checking whether any fee due on %s' % a_student)
+                            try:
+                                defaulter = FeeDefaulters.objects.get(student=a_student)
+                                return_data['fee_defaulter'] = 'yes'
+                                return_data['amount_due'] = defaulter.amount_due
+                            except Exception as e:
+                                print('exception 02052020-A from authentication views.py %s %s' %
+                                      (e.message, type(e)))
+                                print('%s is not a fee defaulter')
+                                return_data['fee_defaulter'] = 'no'
+                    else:
+                        print('%s is not a parent user' % the_user)
+            return JSONResponse(return_data, status=200)
         else:
             l.outcome = 'Failed'
+            l.comments = 'Inactive User'
+            log_entry(the_user, "Found to be an Inactive User", "Normal", True)
             l.save()
-            return_data["login"] = "failed"
+            return_data["login"] = "successful"
+            return_data['user_name'] = user.first_name + ' ' + user.last_name
+            return_data["user_status"] = "inactive"
             print (return_data)
-            log_entry(the_user, "Login Failed", category, False)
+            log_entry(the_user, event, category, False)
             return JSONResponse(return_data, status=200)
+    else:
+        l.outcome = 'Failed'
+        l.save()
+        return_data["login"] = "failed"
+        print (return_data)
+        log_entry(the_user, "Login Failed", category, False)
+        return JSONResponse(return_data, status=200)
 
 
 @csrf_exempt
