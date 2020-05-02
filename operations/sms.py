@@ -141,6 +141,8 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
     sender_type = 'Undetermined'
     sender_name = sender
     print('message type = %s' % message_type)
+    if message_type == 'Fee Reminder':
+        sender_type = 'Accounts Department'
     if message_type == 'Bulk SMS (Web Interface)' or message_type == 'Bulk SMS (Device)' \
             or message_type == 'Welcome Parent' \
             or message_type == 'Welcome Teacher' or message_type == 'Run Batch':

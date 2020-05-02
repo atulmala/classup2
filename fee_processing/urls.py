@@ -1,6 +1,8 @@
 from django.conf.urls import url, patterns
 
-from .views import FeeDetails, ProcessFee, DefaulterReport, FeeHistory, CorrectFee, UploadFee, FeeHistoryDownload
+from .views import FeeDetails, ProcessFee, DefaulterReport, SendMessagetoDefaulters
+from .views import FeeHistory, CorrectFee, UploadFee, FeeHistoryDownload
+from .views import UploadFeeDefaulters
 
 urlpatterns = patterns(
     '',
@@ -11,4 +13,8 @@ urlpatterns = patterns(
     url(r'fee_history_download/$', FeeHistoryDownload.as_view(), name='fee_history_download'),
     url(r'^correct_fee/(?P<school_id>\w+)/$', CorrectFee.as_view(), name='correct_fee'),
     url(r'^upload_bulk_fee/$', UploadFee.as_view(), name='upload_bulk_fee'),
+    url(r'^upload_fee_defaulters/(?P<school_id>\w+)/$',
+        UploadFeeDefaulters.as_view(), name='upload_fee_defaulters'),
+    url(r'^send_message_to_defaulters/(?P<school_id>\w+)/$',
+        SendMessagetoDefaulters.as_view(), name='send_message_to_defaulters'),
 )

@@ -40,77 +40,7 @@ class LogEntry(generics.ListCreateAPIView):
 
 # 23/07/2017 now we are implementing logging
 def log_entry(user, event, category, outcome):
-    # 26/11/2018 logs are stored into db and as on date they are more than 2 million. It is not a good practice
-    # to store logs in db hence disabling as of now and they will be stored on disk preferably some tool from google
     return
-    # print('Inside log_entry')
-    # log = {}
-    # log['user'] = user
-    # log['event'] = event
-    # log['category'] = category
-    # log['outcome'] = outcome
-    # print(log)
-    #
-    # headers = {'content-type': 'application/json'}
-    # global_conf = GlobalConf.objects.get(pk=1)
-    # server = global_conf.server_url + 'auth/logbook_entry/'
-    # print(server)
-    #
-    # # get the name of the user. Can be a teacher or parent or admin. Try teacher first
-    # try:
-    #     t = Teacher.objects.get(email=user)
-    #     name = t.first_name + ' ' + t.last_name
-    #     print(name)
-    #     school = t.school.school_name
-    #     log['user_name'] = name
-    #     log['school'] = school
-    #     print(json.dumps(log))
-    #
-    #     r = requests.post(server, data=json.dumps(log), headers=headers)
-    #     print(r.text)
-    #     return
-    # except Exception as e:
-    #     print('Exception 210 from authentication views.py = %s (%s)' % (e.message, type(e)))
-    #     print('will now check to see if this is an Administrator or Parent')
-    # # the user is not teacher. Can be are parent or admin
-    # try:
-    #     u = User.objects.get(username=user)
-    #     print('retrieved user')
-    #     name = u.first_name + ' ' + u.last_name
-    #     log['user_name'] = name
-    #     print(name)
-    #     if u.is_staff:
-    #         print('chances of being and Admin user...')
-    #         if u.groups.filter(name='school_admin').exists():
-    #             print('user is an admin')
-    #             mapping = UserSchoolMapping.objects.get(user=u)
-    #             school = mapping.school.school_name
-    #             print('school = ' + school)
-    #             log['school'] = school
-    #             r = requests.post(server, data=json.dumps(log), headers=headers)
-    #             print(r.text)
-    #             return
-    #         else:
-    #             print('user is not an admin may be a parent')
-    #     else:   # user is parent
-    #         print('not a staff. Checking whether parent...')
-    #         p = Parent.objects.get(parent_mobile1=user)
-    #         q = Student.objects.filter(parent=p, active_status=True).order_by('fist_name')
-    #         for s in q:
-    #             school = s.school.school_name
-    #             break
-    #         log['school'] = school
-    #         r = requests.post(server, data=json.dumps(log), headers=headers)
-    #         print(r.text)
-    #         return
-    # except Exception as e:
-    #     print('user is neither a teacher, nor a parent, nor an administrator. Perhaps a fake user '  )
-    #     print('Exception 212 from authentication views.py = %s (%s)' % (e.message, type(e)))
-    #     log["user_name"] = "Un-registered User"
-    #     log["school"] = "Undetermined"
-    #     r = requests.post(server, data=json.dumps(log), headers=headers)
-    #     print(r.text)
-    #     return
 
 
 def auth_index(request):
@@ -225,12 +155,11 @@ def auth_login(request):
                         print('%s is a teacher' % the_user)
                         context_dict['user_type'] = 'teacher'
                     else:
-                        print('%s is not a te user' % the_user)
+                        print('%s is not a teacher user' % the_user)
                     # context_dict['user_type'] = 'non_admin'
                     request.session['user_type'] = 'non_admin'
 
                 print (context_dict)
-                log_entry(the_user, "Login Successful", "Normal", True)
                 context_dict['message'] = 'Login Successful'
                 context_dict['outcome'] = 'success'
                 if login_from == 'vuejs':
@@ -385,18 +314,10 @@ def auth_login_from_device1(request):
                         return_data['school_id'] = school_id
                         print ('school_id=' + str(school_id))
                     except Exception as e:
-                        log_entry(the_user,
-                                  "School could not be determined. Exception 10 from authentication views.py",
-                                  "Normal", True)
                         print ('unable to retrieve school_id for ' + user.username)
                         print('Exception 10 from authentication views.py = %s (%s)' % (e.message, type(e)))
                 else:
                     return_data['is_staff'] = "false"
-                try:
-                    log_entry(the_user, "Login Successful", category, True)
-                except Exception as e:
-                    print('failed to create log entry for log: ')
-                    print('Exception 211 from authentication views.py = %s (%s)' % (e.message, type(e)))
                 return JSONResponse(return_data, status=200)
             else:
                 l.outcome = 'Failed'

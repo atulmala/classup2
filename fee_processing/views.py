@@ -23,6 +23,8 @@ from dateutil import relativedelta
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework import generics
 
+from fee_processing.models import FeeDefaulters
+from operations import sms
 from setup.models import School, Configurations
 from student.models import Student, Parent
 from exam.models import StreamMapping
@@ -1114,6 +1116,79 @@ class FeeDetails(generics.ListCreateAPIView):
         os.remove(local_path)
         print(context_dict)
         return JSONResponse(context_dict, status=200)
+
+
+class UploadFeeDefaulters(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def post(self, request, *args, **kwargs):
+        school_id = self.kwargs['school_id']
+        print('school_id = %s' % school_id)
+        school = School.objects.get(id=school_id)
+        print ('now starting to process the uploaded file for fee upload...')
+        fileToProcess_handle = request.FILES['fee_defaulters_list.xlsx']
+        print(fileToProcess_handle)
+
+        fileToProcess = xlrd.open_workbook(filename=None, file_contents=fileToProcess_handle.read())
+        sheet = fileToProcess.sheet_by_index(0)
+        if sheet:
+            print ('Successfully got hold of sheet!')
+            for row in range(sheet.nrows):
+                if row == 0:
+                    continue
+                try:
+                    erp_id = str(sheet.cell(row, 1).value)
+                    decimal = '.'
+                    if decimal in erp_id:
+                        print('student id contains a decimal followed by zero. This has to be removed')
+                        erp_id = erp_id[:-2]
+                        print('decimal and following zero removed. Now student_id = %s' % erp_id)
+                except Exception as e:
+                    print('exception 02052020-A from fee_processing views. %s %s' % (e.message, type(e)))
+
+                try:
+                    student = Student.objects.get(school=school, student_erp_id=erp_id)
+                    print('entering %s with erp_id %s in Fee Defaulter list' % (student, erp_id))
+                except Exception as e:
+                    print('exception 02052020-B from fee_processing views.py %s %s' % (e.message, type(e)))
+                    print('coudn not retrieve student asscociated with erp_id %s' % erp_id)
+                    continue
+
+                amount_due = sheet.cell(row, 7).value
+                try:
+                    defaulter = FeeDefaulters.objects.get(student=student)
+                    print('entry for %s as fee defaulter already exist. this will be updated' % student)
+                    defaulter.amount_due = amount_due
+                    defaulter.save()
+                except Exception as e:
+                    print('exception 02052020-C from fee_processing views.py %s %s' % (e.message, type(e)))
+                    print('%s was not in Fee Defaulters adding now')
+                    defaulter = FeeDefaulters(student=student)
+                    defaulter.amount_due = amount_due
+                    defaulter.save()
+                    print('%s added to Fee Defaulters')
+            return JSONResponse({'status': 'success'}, status=200)
+
+
+class SendMessagetoDefaulters(generics.ListCreateAPIView):
+    def get(self, request, *args, **kwargs):
+        school_id = self.kwargs['school_id']
+        school = School.objects.get(id=school_id)
+
+        defaulters = FeeDefaulters.objects.all()
+        for a_defaulter in defaulters:
+            if a_defaulter.student.school == school:
+                student = a_defaulter.student
+                parent = a_defaulter.student.parent
+                mobile = parent.parent_mobile1
+                amount_due = a_defaulter.amount_due
+                message = 'Dear %s, fee due on your ward %s for last session 2019-2020. Amount: %.2f.'\
+                          % (parent, student, amount_due)
+                message += ' Plese make the payment by Sat 9th May other wise online Classes will Stop.'
+                message += ' For any details please contact Accounts at 9953272524'
+                print('message: %s' % message)
+                sms.send_sms1(school, 'admin@jps.com', mobile, message, 'Fee Reminder')
+        return JSONResponse({'status': 'ok'}, status=200)
 
 
 from rest_framework.decorators import parser_classes
