@@ -173,19 +173,14 @@ class CreateOnlineTest(generics.ListCreateAPIView):
                     col = 1
                     try:
                         question = sheet.cell(row, col).value
-                        # print('question = %s' % question)
                         row += 1
                         option_a = sheet.cell(row, col).value
-                        # print('option_a = %s' % option_a)
                         row += 1
                         option_b = sheet.cell(row, col).value
-                        # print('option_b = %s' % option_b)
                         row += 1
                         option_c = sheet.cell(row, col).value
-                        # print('option_c = %s' % option_c)
                         row += 1
                         option_d = sheet.cell(row, col).value
-                        # print('option_d = %s' % option_d)
                         row += 1
                         correct_option = sheet.cell(row, col).value
                     except Exception as e:
@@ -227,8 +222,8 @@ class CreateOnlineTest(generics.ListCreateAPIView):
                     print(teacher)
                     test = ClassTest(date_conducted=test_date, exam=exam, the_class=the_class, section=section,
                                      subject=subject, teacher=teacher, grade_based=False)
-                    test.max_marks = float(40.00)  # max_marks and pass_marks are passed as strings
-                    test.passing_marks = float(20.00)
+                    test.max_marks = float(20.00)  # max_marks and pass_marks are passed as strings
+                    test.passing_marks = float(8.00)
                     test.save()
                     print('successfully scheduled test for %s class %s-%s for %s' %
                           (subject, the_class, section, exam))
@@ -335,10 +330,37 @@ class GenerateAnswerSheet(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         attempts = StudentTestAttempt.objects.all()
         for an_attempt in attempts:
-            # student_id = self.kwargs['student_id']
+            marks_obtained = 0
             student = an_attempt.student
-            # test_id = self.kwargs['test_id']
             online_test = an_attempt.online_test
+            questions = OnlineQuestion.objects.filter(test=online_test)
+            for a_question in questions:
+                try:
+                    student_answer = StudentQuestion.objects.get(student=student, question=a_question)
+                    option_marked = student_answer.answer_marked
+                    correct_option = a_question.correct_option
+
+                    if option_marked.strip() == correct_option.strip():
+                        marks_obtained += 1
+                except Exception as e:
+                    print('exception 29042020-A from online_test views.py %s %s' % (e.message, type(e)))
+                    print('could not retrieve student %s attempt for question %s' % (student, a_question.question))
+
+            # update marks in corresponding offline test_date
+            try:
+                offline_test = ClassTest.objects.get(exam=online_test.exam, subject=online_test.subject,
+                                                     the_class=online_test.the_class,
+                                                     section=student.current_section)
+                offline_result = TestResults.objects.get(student=student, class_test=offline_test)
+                offline_result.marks_obtained = marks_obtained
+                offline_result.save()
+                print('successfully saved offline test marks for %s in %s class %s exam %s' %
+                      (student, student.current_class, online_test.subject, online_test.exam))
+            except Exception as e:
+                print('exception 30042020-B from online_test view.py %s %s' % (e.message, type(e)))
+                print('failed to fill offline test marks for %s in %s class %s exam %s' %
+                      (student, student.current_class, online_test.subject, online_test.exam))
+
             try:
                 answer_sheet = AnswerSheets.objects.get(student=student, online_test=online_test)
                 print('answer sheet for %s for online test %s class %s has already been generated. Skipping' %
@@ -376,36 +398,8 @@ class GenerateAnswerSheet(generics.ListCreateAPIView):
             c.drawString(175, top, 'Class: %s' % student.current_class)
             c.drawString(260, top, 'Subject: %s (%s)' % (online_test.subject, online_test.exam))
 
-            marks_obtained = 0
-            questions = OnlineQuestion.objects.filter(test=online_test)
             print('number of questions in this test: %d' % questions.count())
-            for a_question in questions:
-                try:
-                    student_answer = StudentQuestion.objects.get(student=student, question=a_question)
-                    option_marked = student_answer.answer_marked
-                    correct_option = a_question.correct_option
-
-                    if option_marked.strip() == correct_option.strip():
-                        marks_obtained += 1
-                except Exception as e:
-                    print('exception 29042020-A from online_test views.py %s %s' % (e.message, type(e)))
-                    print('could not retrieve student %s attempt for question %s' % (student, a_question.question))
-            c.drawString(400, top, 'Marks Obtained: %s / 40' % str(marks_obtained))
-
-            # update marks in corresponding offline test_date
-            try:
-                offline_test = ClassTest.objects.get(exam=online_test.exam, subject=online_test.subject,
-                                                     the_class=online_test.the_class,
-                                                     section=student.current_section)
-                offline_result = TestResults.objects.get(student=student, class_test=offline_test)
-                offline_result.marks_obtained = marks_obtained
-                offline_result.save()
-                print('successfully saved offline test marks for %s in %s class %s exam %s' %
-                      (student, student.current_class, online_test.subject, online_test.exam))
-            except Exception as e:
-                print('exception 30042020-B from online_test view.py %s %s' % (e.message, type(e)))
-                print('failed to fill offline test marks for %s in %s class %s exam %s' %
-                      (student, student.current_class, online_test.subject, online_test.exam))
+            c.drawString(400, top, 'Marks Obtained: %s / 20' % str(marks_obtained))
 
             top -= 20
             left = 100
