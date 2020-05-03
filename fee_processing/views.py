@@ -1180,6 +1180,7 @@ class SendMessagetoDefaulters(generics.ListCreateAPIView):
         conf = Configurations.objects.get(school=school)
         sms_allowed = conf.send_sms
         if not sms_allowed:
+            print('send_sms was off for %s. Turning it on to send defaulter messages' % school)
             conf.send_sms = True
             conf.save()
 

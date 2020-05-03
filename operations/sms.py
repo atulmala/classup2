@@ -149,8 +149,9 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
         sender_type = 'Admin'
         sender_name = sender
         print ('sender type is Admin')
-    if message_type == 'Teacher Communication' or message_type == 'Attendance' or \
-            message_type == 'Test Marks':
+    if message_type in ['Teacher Communication', 'Attendance', 'Test Marks', 'Share Lecture']:
+    # if message_type == 'Teacher Communication' or message_type == 'Attendance' or \
+    #         message_type == 'Test Marks':
         # the sender must be a teacher
         sender_type = 'Teacher'
         print ('sender type is Teacher')
