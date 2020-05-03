@@ -23,7 +23,16 @@ class OnlineQuestionAdmin(admin.ModelAdmin):
 
 @admin.register(StudentTestAttempt)
 class StudentTestAttemptAdmin(admin.ModelAdmin):
-    list_display = ('student', 'online_test', 'date',)
+    def get_school(self, obj):
+        return obj.student.school
+
+    def get_class(self, obj):
+        return obj.student.current_class
+
+    def get_section(self, obj):
+        return obj.student.current_section
+
+    list_display = ('get_school', 'student', 'get_class', 'get_section', 'online_test', 'date',)
     search_fields = ('student__fist_name', 'student__last_name', )
 
 

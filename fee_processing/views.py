@@ -1177,6 +1177,11 @@ class SendMessagetoDefaulters(generics.ListCreateAPIView):
     def get(self, request, *args, **kwargs):
         school_id = self.kwargs['school_id']
         school = School.objects.get(id=school_id)
+        conf = Configurations.objects.get(school=school)
+        sms_allowed = conf.send_sms
+        if not sms_allowed:
+            conf.send_sms = True
+            conf.save()
 
         defaulters = FeeDefaulters.objects.all()
         for a_defaulter in defaulters:
@@ -1191,6 +1196,8 @@ class SendMessagetoDefaulters(generics.ListCreateAPIView):
                 message += ' For any details please contact Accounts at 9953272524'
                 print('message: %s' % message)
                 sms.send_sms1(school, 'admin@jps.com', mobile, message, 'Fee Reminder')
+        conf.send_sms = sms_allowed
+        conf.save()
         return JSONResponse({'status': 'ok'}, status=200)
 
 
