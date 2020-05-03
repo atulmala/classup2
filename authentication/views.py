@@ -16,7 +16,7 @@ from rest_framework.authentication import SessionAuthentication, BasicAuthentica
 from rest_framework.renderers import JSONRenderer
 
 from fee_processing.models import FeeDefaulters
-from setup.models import UserSchoolMapping, GlobalConf
+from setup.models import UserSchoolMapping, GlobalConf, Configurations
 from teacher.models import Teacher
 from student.models import Student, Parent
 from .models import LoginRecord, LastPasswordReset, user_device_mapping
@@ -247,10 +247,8 @@ def auth_login_from_device1(request):
     else:
         print("we don't have an IP address for user")
 
-    return_data = {}
+    return_data = {'school_admin': 'false', 'subscription': 'na'}
 
-    return_data['school_admin'] = 'false'
-    return_data['subscription'] = 'na'
     if request.method == 'POST':
         data = json.loads(request.body)
         the_user = data['user']
@@ -291,7 +289,7 @@ def auth_login_from_device1(request):
                 return_data["user_status"] = "active"
                 full_name = user.first_name + ' ' + user.last_name
                 return_data['user_name'] = full_name
-                return_data['welcome_message'] = 'Welcome, ' + full_name
+                return_data['welcome_message'] = 'Welcome, %s' % full_name
 
                 if user.is_staff:
                     return_data['is_staff'] = "true"
@@ -332,9 +330,25 @@ def auth_login_from_device1(request):
                         for a_student in students:
                             print('checking whether any fee due on %s' % a_student)
                             try:
+                                conf = Configurations.objects.get(school=a_student.school)
+                                accounts_mobile = conf.admin2_mobile
                                 defaulter = FeeDefaulters.objects.get(student=a_student)
                                 return_data['fee_defaulter'] = 'yes'
                                 return_data['amount_due'] = defaulter.amount_due
+
+                                stop_access = defaulter.stop_access
+                                if stop_access:
+                                    return_data['stop_access'] = "true"
+                                else:
+                                    return_data['stop_access'] = "false"
+
+                                welcome_message = 'Dear %s, fee on your ward outstanding. ' % parent[0]
+                                welcome_message += 'Amount due: %.2f.' % defaulter.amount_due
+                                welcome_message += 'Please make the payment at the earliest. '
+                                welcome_message += 'Accounts department contact number: %s. ' % accounts_mobile
+                                welcome_message += 'Thanks for your understanding and support'
+                                return_data['welcome_message'] = welcome_message
+                                return JSONResponse(return_data, status=200)
                             except Exception as e:
                                 print('exception 02052020-A from authentication views.py %s %s' %
                                       (e.message, type(e)))
@@ -342,24 +356,25 @@ def auth_login_from_device1(request):
                                 return_data['fee_defaulter'] = 'no'
                     else:
                         print('%s is not a parent user' % the_user)
-            return JSONResponse(return_data, status=200)
+                        return JSONResponse(return_data, status=200)
+
+            else:
+                l.outcome = 'Failed'
+                l.comments = 'Inactive User'
+                log_entry(the_user, "Found to be an Inactive User", "Normal", True)
+                l.save()
+                return_data["login"] = "successful"
+                return_data['user_name'] = user.first_name + ' ' + user.last_name
+                return_data["user_status"] = "inactive"
+                print (return_data)
+                log_entry(the_user, event, category, False)
+                return JSONResponse(return_data, status=200)
         else:
             l.outcome = 'Failed'
-            l.comments = 'Inactive User'
-            log_entry(the_user, "Found to be an Inactive User", "Normal", True)
             l.save()
-            return_data["login"] = "successful"
-            return_data['user_name'] = user.first_name + ' ' + user.last_name
-            return_data["user_status"] = "inactive"
+            return_data["login"] = "failed"
             print (return_data)
-            log_entry(the_user, event, category, False)
-            return JSONResponse(return_data, status=200)
-    else:
-        l.outcome = 'Failed'
-        l.save()
-        return_data["login"] = "failed"
-        print (return_data)
-        log_entry(the_user, "Login Failed", category, False)
+            log_entry(the_user, "Login Failed", category, False)
         return JSONResponse(return_data, status=200)
 
 

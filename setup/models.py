@@ -61,8 +61,8 @@ class Configurations(models.Model):
     vendor_bulk_sms = models.IntegerField(default=1)
     bulk_sms_delay = models.IntegerField(default=5)
     principal_mobile = models.CharField(max_length=20, default='1234567890')
-    admin1_mobile = models.CharField(max_length=20, default='1234567890')
-    admin2_mobile = models.CharField(max_length=20, default='1234567890')
+    admin1_mobile = models.CharField(max_length=20, default='1234567890') # Vice Principal
+    admin2_mobile = models.CharField(max_length=20, default='1234567890')   # Accounts Department
     admin3_mobile = models.CharField(max_length=20, default='1234567890')
     admin4_mobile = models.CharField(max_length=20, default='1234567890')
     transport_incharge_mobile = models.CharField(max_length=20, default='1234567890')
