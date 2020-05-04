@@ -150,8 +150,6 @@ def auth_login(request):
                         context_dict['user_type'] = 'parent'
                         request.session['user_type'] = 'parent'
 
-                        context_dict['user_type'] = 'parent'
-
                         # check if this user is a fee defaulter user
                         students = Student.objects.filter(parent=parent)
                         for a_student in students:

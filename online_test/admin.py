@@ -37,6 +37,7 @@ class StudentTestAttemptAdmin(admin.ModelAdmin):
 
     list_display = ('get_school', 'student', 'get_class', 'get_section', 'get_subject', 'date',)
     search_fields = ('student__fist_name', 'student__last_name', )
+    list_filter = ('date',)
 
 
 @admin.register(StudentQuestion)
