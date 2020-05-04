@@ -129,7 +129,7 @@ def auth_login(request):
                         context_dict['message'] = error
                         context_dict['outcome'] = 'failed'
                         if login_from == 'vuejs':
-                            return JSONResponse(context_dict)
+                            return JSONResponse(context_dict, status=200)
                         else:
                             login_form.errors['__all__'] = login_form.error_class([error])
                             return render(request, 'classup/auth_login.html', context_dict)
@@ -149,6 +149,38 @@ def auth_login(request):
                         print('%s is a parent user' % the_user)
                         context_dict['user_type'] = 'parent'
                         request.session['user_type'] = 'parent'
+
+                        context_dict['user_type'] = 'parent'
+
+                        # check if this user is a fee defaulter user
+                        students = Student.objects.filter(parent=parent)
+                        for a_student in students:
+                            print('checking whether any fee due on %s' % a_student)
+                            try:
+                                conf = Configurations.objects.get(school=a_student.school)
+                                accounts_mobile = conf.admin2_mobile
+                                defaulter = FeeDefaulters.objects.get(student=a_student)
+                                context_dict['fee_defaulter'] = 'yes'
+                                context_dict['amount_due'] = defaulter.amount_due
+
+                                stop_access = defaulter.stop_access
+                                if stop_access:
+                                    context_dict['stop_access'] = "true"
+                                else:
+                                    context_dict['stop_access'] = "false"
+
+                                welcome_message = 'Dear %s, fee on your ward outstanding. ' % parent[0]
+                                welcome_message += 'Amount due: %.2f.' % defaulter.amount_due
+                                welcome_message += 'Please make the payment at the earliest. '
+                                welcome_message += 'Accounts department contact number: %s. ' % accounts_mobile
+                                welcome_message += 'Thanks for your understanding and support'
+                                context_dict['welcome_message'] = welcome_message
+                                return JSONResponse(context_dict, status=200)
+                            except Exception as e:
+                                print('exception 02052020-A from authentication views.py %s %s' %
+                                      (e.message, type(e)))
+                                print('%s is not a fee defaulter')
+                                context_dict['fee_defaulter'] = 'no'
                     else:
                         print('%s is not a parent user' % the_user)
                     teacher = Teacher.objects.filter(email=the_user)
@@ -164,7 +196,7 @@ def auth_login(request):
                 context_dict['message'] = 'Login Successful'
                 context_dict['outcome'] = 'success'
                 if login_from == 'vuejs':
-                    return JSONResponse(context_dict)
+                    return JSONResponse(context_dict, status=200)
                 else:
                     return render(request, 'classup/setup_index.html', context_dict)
             else:

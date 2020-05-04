@@ -32,7 +32,10 @@ class StudentTestAttemptAdmin(admin.ModelAdmin):
     def get_section(self, obj):
         return obj.student.current_section
 
-    list_display = ('get_school', 'student', 'get_class', 'get_section', 'online_test', 'date',)
+    def get_subject(self, obj):
+        return obj.online_test.subject
+
+    list_display = ('get_school', 'student', 'get_class', 'get_section', 'get_subject', 'date',)
     search_fields = ('student__fist_name', 'student__last_name', )
 
 

@@ -193,16 +193,6 @@ class PendingTestListParents(generics.ListAPIView):
             section = student.current_section
             q = ClassTest.objects.filter(the_class=the_class, section=section,
                                          date_conducted__gte=date.today()).order_by('date_conducted')
-
-            try:
-                parent_name = student.parent.parent_name
-                action = 'Retrieving pending test list for ' + parent_name
-                mobile = student.parent.parent_mobile1
-                log_entry(mobile, action, 'Normal', True)
-            except Exception as e:
-                print ('unable to create logbook entry. Exception 50 from academics views.py')
-                print ('Exception 503 from academics views.py %s %s' % (e.message, type(e)))
-
             return q
         except Exception as e:
             print ('Exception 370 from academics views.py %s %s' % (e.message, type(e)))

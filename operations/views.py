@@ -64,7 +64,7 @@ class CommitFailedSMS(generics.ListCreateAPIView):
                 number = record.sms_record.recipient_number
                 print('number = %s' % number)
                 message = record.sms_record.message
-                
+
                 url = 'http://voice.dealsms.in/api/sendmsg.php?user=classupp&pass=123456&sender=CLASUP&phone='
                 # url = 'http://sms.dealsms.in/api/sendhttp.php?authkey=NTczY2Y2YWVjOTI&mobiles='
                 url += number
@@ -84,6 +84,37 @@ class CommitFailedSMS(generics.ListCreateAPIView):
 
 
 class CommitBulkSMS(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
+    def post(self, request, *args, **kwargs):
+        messages = SMSRecord.objects.filter(api_called=False)
+        for a_message in messages:
+            mobile = a_message.mobile
+            msg = a_message.message
+            url = 'http://softsms.in/app/smsuserapi/index.php?username=classup&userpassword=classup@123&type=text'
+            url += '&contacts=%s' % mobile
+            url += '&senderid=%s' % 'SCHOOL'
+            url += '&msg=%s' % msg
+            print('url=%s' % url)
+
+            try:
+                print('sending to=' + mobile)
+                print('message received in send_bulk_sms.py = %s' % msg)
+
+                response = urllib.urlopen(url)
+                print('response = ')
+                message_id = response.read()
+                print('message_id = %s' % message_id)
+                a_message.outcome = message_id
+                a_message.api_called = True
+                a_message.save()
+            except Exception as e:
+                print('exception 03052020-A from operations views.py %s %s' % (e.message, type(e)))
+                print('failed to send message %s to mobile %s' % (msg, mobile))
+        return JSONResponse({'outcome': 'success'}, status=200)
+
+
+class CommitBulkSMS1(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         print('Starting to send bulk sms')
         try:
