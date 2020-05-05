@@ -38,6 +38,7 @@ class StudentTestAttempt(models.Model):
     student = models.ForeignKey(Student)
     online_test = models.ForeignKey(OnlineTest)
     date = models.DateTimeField(auto_now_add=True)
+    submission_ok = models.BooleanField(default=True)
 
 
 class AnswerSheets(models.Model):

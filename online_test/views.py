@@ -361,6 +361,8 @@ class GenerateAnswerSheet(generics.ListCreateAPIView):
                 except Exception as e:
                     print('exception 29042020-X from online_test views.py %s %s' % (e.message, type(e)))
                     print('could not retrieve student %s attempt for question' % (student))
+                    an_attempt.submission_ok = False
+                    an_attempt.save()
                     continue
 
             # update marks in corresponding offline test_date
