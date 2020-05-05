@@ -529,17 +529,41 @@ class ShareAnswerSheet(generics.ListAPIView):
 
     def post(self, request, *args, **kwargs):
         answer_sheets = AnswerSheets.objects.all()
+
+        zero_getter_count = 0
         for a_sheet in answer_sheets:
-            if not a_sheet.shared:
-                message = 'Dear %s, answer sheet of %s online test attached. link:  %s' % \
-                          (a_sheet.student, a_sheet.online_test.subject, a_sheet.link)
-                print('message: %s' % message)
-                school = a_sheet.student.school
-                mobile = a_sheet.student.parent.parent_mobile1
-                sms.send_sms1(school, 'admin@jps.com', mobile, message, 'Share Answer sheet')
-                a_sheet.shared = True
-                a_sheet.save()
-        return JSONResponse({}, status=200)
+            try:
+                online_test = a_sheet.online_test
+                exam = online_test.exam
+                subject = online_test.subject
+                student = a_sheet.student
+                the_class = student.current_class
+                section = student.current_section
+
+                offline_test = ClassTest.objects.get(exam=exam, subject=subject,
+                                                     the_class=the_class, section=section)
+                test_result = TestResults.objects.get(class_test=offline_test, student=student)
+                marks = test_result.marks_obtained
+            except Exception as e:
+                print('exception 05052020-E from online_test views.py %s %s' % (e.message, type(e)))
+                print('failed to retrieve marks')
+
+            if marks > 0:
+                if not a_sheet.shared:
+                    link = a_sheet.link
+                    message = 'Dear %s, answer sheet of %s online test attached. link:  %s' % \
+                              (student, subject, link)
+                    # print('message: %s' % message)
+                    school = a_sheet.student.school
+                    mobile = a_sheet.student.parent.parent_mobile1
+                    # sms.send_sms1(school, 'admin@jps.com', mobile, message, 'Share Answer sheet')
+                    # a_sheet.shared = True
+                    # a_sheet.save()
+            else:
+                zero_getter_count += 1
+                print('%s secued zero marks in the online test of %s class %s. hence not sharing'
+                      % (student, subject, the_class))
+        return JSONResponse({'zero_getter_count': zero_getter_count}, status=200)
 
 
 class FailedAttempts(generics.ListAPIView):
