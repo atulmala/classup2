@@ -328,7 +328,20 @@ class GenerateAnswerSheet(generics.ListCreateAPIView):
     authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
 
     def post(self, request, *args, **kwargs):
+        # connect to AWS s3 bucket and
+        try:
+            session = boto3.Session(
+                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            )
+            s3 = session.resource('s3')
+            print('s3 session established successfully')
+        except Exception as e:
+            print('exception 05052020-C from online_test views.py %s %s' % (e.message, type(e)))
+            print('failed estable connections to AWS S3 storage')
+
         attempts = StudentTestAttempt.objects.all()
+
         for an_attempt in attempts:
             marks_obtained = 0
             student = an_attempt.student
@@ -455,13 +468,12 @@ class GenerateAnswerSheet(generics.ListCreateAPIView):
 
             print('uploading %s online test %s class %s to AWS S3 Storage' %
                   (student, online_test.subject, online_test.the_class))
-            session = boto3.Session(
-                aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-                aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            )
-            s3 = session.resource('s3')
-            s3.meta.client.upload_file(Filename=pdf_name, Bucket='classup2', Key='classup2/%s' % pdf_name)
-            print('uploaded')
+            try:
+                s3.meta.client.upload_file(Filename=pdf_name, Bucket='classup2', Key='classup2/%s' % pdf_name)
+                print('uploaded')
+            except Exception as e:
+                print('exception 05052020-B from online_test views.py %s %s' % (e.message, type(e)))
+                print('failed to upload answer sheet for %s to AWS S3 storage' % student)
 
             print('will now try to generate short link')
             long_link = 'https://classup2.s3.us-east-2.amazonaws.com/classup2/%s' % pdf_name
@@ -488,11 +500,21 @@ class GenerateAnswerSheet(generics.ListCreateAPIView):
                 print('failed to generate short link  for the lesson doc uploaded by %s')
                 short_link = long_link
 
-            answer_sheet = AnswerSheets(student=student, online_test=online_test)
-            answer_sheet.link = short_link
+            try:
+                answer_sheet = AnswerSheets.objects.get(student=student, online_test=online_test)
+                print('answer sheet for %s of class %s-%s in for the online test of %s exists. Now updated' %
+                      (student, student.current_class, student.current_section, online_test.subject))
+                answer_sheet.link = short_link
+            except Exception as e:
+                print('exception 05052020-A from online_test views.py %s %s' % (e.message, type(e)))
+                print('answer sheet for %s of class %s-%s in for the online test of %s creating for the first time.' %
+                      (student, student.current_class, student.current_section, online_test.subject))
+                answer_sheet = AnswerSheets(student=student, online_test=online_test)
+                answer_sheet.link = short_link
             answer_sheet.save()
             os.remove(pdf_name)
             # return response
+
         return JSONResponse(context_dict, status=200)
 
 

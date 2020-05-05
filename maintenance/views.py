@@ -4,18 +4,26 @@ import random
 
 from django.db.models import Count, Max, Sum
 from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.renderers import JSONRenderer
 from rest_framework import generics
 
 from datetime import datetime, timedelta
 
 from attendance.models import Attendance, DailyAttendanceSummary
+from online_test.models import StudentTestAttempt, StudentQuestion
 from operations.models import SMSRecord, ResendSMS, SMSBatch
 from teacher.models import MessageReceivers
 from setup.models import School
 from student.models import Student
 
 from .models import SMSDelStats, DailyMessageCount
+
+class CsrfExemptSessionAuthentication(SessionAuthentication):
+    def enforce_csrf(self, request):
+        return  # To not perform the csrf check previously happening
+
 
 
 class JSONResponse(HttpResponse):
@@ -71,10 +79,64 @@ class ResendFailedMessages(generics.ListCreateAPIView):
 
 
 class DeDup(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
     def post(self, request, *args, **kwargs):
         context_dict = {
 
         }
+        try:
+            unique_fields = ['student', 'online_test']
+            print('try to identify duplicate entries for test attempts')
+            duplicates = (
+                StudentTestAttempt.objects.values(*unique_fields)
+                    .order_by()
+                    .annotate(max_id=Max('id'), count_id=Count('id'))
+                    .filter(count_id__gt=1)
+            )
+
+            print('total %i duplicates online tests found' % len(duplicates))
+            context_dict['duplicate online test'] = len(duplicates)
+
+            for duplicate in duplicates:
+                print(duplicate)
+                (
+                    StudentTestAttempt.objects
+                        .filter(**{x: duplicate[x] for x in unique_fields})
+                        .exclude(id=duplicate['max_id'])
+                        .delete()
+                )
+            context_dict['remove_duplicate_test_attempts'] = 'success'
+        except Exception as e:
+            print('exception 04052020-A from maintenance views.py %s %s' % (e.message, type(e)))
+            print('failed in removing duplicate test attempts')
+
+        try:
+            unique_fields = ['student', 'question']
+            print('try to identify duplicate answers by student')
+            duplicates = (
+                StudentQuestion.objects.values(*unique_fields)
+                    .order_by()
+                    .annotate(max_id=Max('id'), count_id=Count('id'))
+                    .filter(count_id__gt=1)
+            )
+
+            print('total %i duplicates answers found' % len(duplicates))
+            context_dict['duplicate anwers'] = len(duplicates)
+
+            for duplicate in duplicates:
+                print(duplicate)
+                (
+                    StudentQuestion.objects
+                        .filter(**{x: duplicate[x] for x in unique_fields})
+                        .exclude(id=duplicate['max_id'])
+                        .delete()
+                )
+            context_dict['remove_duplicate_answers'] = 'success'
+
+        except Exception as e:
+            print('exception 04052020-B from maintenance views.py %s %s' % (e.message, type(e)))
+            print('failed in removing duplicate answers')
 
         try:
             unique_fields = ['date', 'the_class', 'section', 'subject', 'student', 'taken_by']

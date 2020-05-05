@@ -43,6 +43,7 @@ class StudentTestAttemptAdmin(admin.ModelAdmin):
 @admin.register(StudentQuestion)
 class StudentQuestionAdmin(admin.ModelAdmin):
     list_display = ('student', 'question', 'answer_marked', 'whether_correct',)
+    search_fields = ('student__fist_name', 'student__last_name', )
 
 
 @admin.register(AnswerSheets)
