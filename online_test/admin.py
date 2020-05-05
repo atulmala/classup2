@@ -48,7 +48,26 @@ class StudentQuestionAdmin(admin.ModelAdmin):
 
 @admin.register(AnswerSheets)
 class AnswerSheetsAdmin(admin.ModelAdmin):
-    list_display = ('student', 'online_test', 'link', 'shared',)
+    def get_school_name(self, obj):
+        return obj.student.school
+
+    def get_class(self, obj):
+        return obj.student.current_class
+
+    def get_section(self, obj):
+        return obj.student.current_section
+
+    def get_subject(self, obj):
+        return obj.online_test.subject
+
+    def get_exam(self, obj):
+        return obj.online_test.exam
+
+    def get_date(self, obj):
+        return obj.online_test.date
+
+    list_display = ('get_date', 'get_school_name', 'student', 'get_class',
+                    'get_section', 'get_subject', 'online_test', 'link', 'shared',)
     search_fields = ('student__fist_name', 'student__last_name',)
 
     def link(self, obj):
