@@ -148,8 +148,10 @@ class CreateOnlineTest(generics.ListCreateAPIView):
 
                     col += 1
                     exam_title = sheet.cell(row, col).value
+                    print('exam_title = %s' % exam_title)
                     try:
                         exam = Exam.objects.get(school=school, title=exam_title)
+                        print('exam fetched %s' % exam)
                     except Exception as e:
                         print('exception 01052020-A from online_test views.py %s %s' % (e.message, type(e)))
 
@@ -356,7 +358,7 @@ class GenerateAnswerSheet(generics.ListCreateAPIView):
                     if option_marked.strip() == correct_option.strip():
                         marks_obtained += 1
                 except Exception as e:
-                    print('exception 29042020-A from online_test views.py %s %s' % (e.message, type(e)))
+                    print('exception 29042020-X from online_test views.py %s %s' % (e.message, type(e)))
                     print('could not retrieve student %s attempt for question %s' % (student, a_question.question))
 
             # update marks in corresponding offline test_date

@@ -67,7 +67,7 @@ class AnswerSheetsAdmin(admin.ModelAdmin):
         return obj.online_test.date
 
     list_display = ('get_date', 'get_school_name', 'student', 'get_class',
-                    'get_section', 'get_subject', 'online_test', 'link', 'shared',)
+                    'get_section', 'get_subject', 'get_exam', 'link', 'shared',)
     search_fields = ('student__fist_name', 'student__last_name',)
 
     def link(self, obj):
