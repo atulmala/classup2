@@ -42,7 +42,13 @@ class StudentTestAttemptAdmin(admin.ModelAdmin):
 
 @admin.register(StudentQuestion)
 class StudentQuestionAdmin(admin.ModelAdmin):
-    list_display = ('student', 'question', 'answer_marked', 'whether_correct',)
+    def get_class(self, obj):
+        return obj.question.test.the_class
+
+    def get_subject(self, obj):
+        return obj.question.test.subject
+
+    list_display = ('student', 'get_class', 'get_subject', 'answer_marked', 'whether_correct',)
     search_fields = ('student__fist_name', 'student__last_name', )
 
 

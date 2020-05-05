@@ -24,6 +24,8 @@ urlpatterns = [
     url(r'^generate_answer_sheet/$',views.GenerateAnswerSheet.as_view(), name='generate_answer_sheet'),
 
     url(r'^share_answer_sheet/$',views.ShareAnswerSheet.as_view(), name='share_answer_sheet'),
+
+    url(r'^get_failed_attempts', views.FailedAttempts.as_view(), name='get_failed_attempts'),
 ]
 
 urlpatterns = format_suffix_patterns(urlpatterns)

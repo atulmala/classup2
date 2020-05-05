@@ -1,3 +1,4 @@
+import datetime
 import datetime as dt
 import json
 import os
@@ -382,7 +383,7 @@ class GenerateAnswerSheet(generics.ListCreateAPIView):
                       (student, online_test.subject, online_test.the_class))
                 continue
             except Exception as e:
-                print('answer sheet for %s for online test %s class %s has already not generated. Will do now' %
+                print('answer sheet for %s for online test %s class %s has not been generated. Will do now' %
                       (student, online_test.subject, online_test.the_class))
             print('generating result for %s in online test class %s subject %s' %
                   (student, online_test.the_class, online_test.subject))
@@ -536,3 +537,33 @@ class ShareAnswerSheet(generics.ListAPIView):
                 a_sheet.shared = True
                 a_sheet.save()
         return JSONResponse({}, status=200)
+
+
+class FailedAttempts(generics.ListAPIView):
+    def get(self, request, *args, **kwargs):
+        attempts = StudentTestAttempt.objects.all()
+
+        failed_attempts = 0
+        for an_attempt in attempts:
+            student = an_attempt.student
+            online_test = an_attempt.online_test
+            test_date = datetime.datetime.strptime('2020-05-04', '%Y-%m-%d')
+            try:
+                answer_count = StudentQuestion.objects.filter(student=student,
+                                                              question__test=online_test).count()
+                if answer_count < 20:
+                    print('test date = %s' % str(online_test.date))
+                    print(online_test.date)
+                    if str(online_test.date) == '2020-05-04':
+                        failed_attempts += 1
+                        print('%s of class %s-%s attempted test %s but only %d answers recorded' % (student,
+                                                                                                    student.current_class,
+                                                                                                    student.current_section,
+                                                                                                    online_test.subject,
+                                                                                                    answer_count))
+
+
+            except Exception as e:
+                print('exception 05052020-A from online_test views.py %s %s' % (e.message, type(e)))
+                print('failed to retrieve details of online attempts for %s in %s' % (student, online_test.subject))
+        return JSONResponse({'failed_attempts': failed_attempts}, status=200)
