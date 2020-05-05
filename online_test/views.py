@@ -553,12 +553,12 @@ class ShareAnswerSheet(generics.ListAPIView):
                     link = a_sheet.link
                     message = 'Dear %s, answer sheet of %s online test attached. link:  %s' % \
                               (student, subject, link)
-                    # print('message: %s' % message)
+                    print('message: %s' % message)
                     school = a_sheet.student.school
                     mobile = a_sheet.student.parent.parent_mobile1
-                    # sms.send_sms1(school, 'admin@jps.com', mobile, message, 'Share Answer sheet')
-                    # a_sheet.shared = True
-                    # a_sheet.save()
+                    sms.send_sms1(school, 'admin@jps.com', mobile, message, 'Share Answer sheet')
+                    a_sheet.shared = True
+                    a_sheet.save()
             else:
                 zero_getter_count += 1
                 print('%s secued zero marks in the online test of %s class %s. hence not sharing'

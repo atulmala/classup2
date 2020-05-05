@@ -141,6 +141,8 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
     sender_type = 'Undetermined'
     sender_name = sender
     print('message type = %s' % message_type)
+    if message_type == 'Share Answer sheet':
+        sender_type = 'Admin'
     if message_type == 'Fee Reminder':
         sender_type = 'Accounts Department'
     if message_type == 'Bulk SMS (Web Interface)' or message_type == 'Bulk SMS (Device)' \
@@ -149,9 +151,10 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
         sender_type = 'Admin'
         sender_name = sender
         print ('sender type is Admin')
-    if message_type in ['Teacher Communication', 'Attendance', 'Test Marks', 'Share Lecture']:
-    # if message_type == 'Teacher Communication' or message_type == 'Attendance' or \
-    #         message_type == 'Test Marks':
+    if message_type in [
+        'Teacher Communication', 'Attendance',
+        'Test Marks', 'Share Lecture'
+    ]:
         # the sender must be a teacher
         sender_type = 'Teacher'
         print ('sender type is Teacher')
