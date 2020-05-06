@@ -122,6 +122,7 @@ def auth_login(request):
                         school_id = u.school.id
                         request.session['school_id'] = school_id
                         print ('school_id=' + str(school_id))
+                        context_dict['outcome'] = 'success'
                     else:
                         error = school.school_name + "'s subscription has expired. "
                         error += 'Please contact ClassUp support at info@classup.in for renewal'
@@ -173,6 +174,7 @@ def auth_login(request):
                                 welcome_message += 'Accounts department contact number: %s. ' % accounts_mobile
                                 welcome_message += 'Thanks for your understanding and support'
                                 context_dict['welcome_message'] = welcome_message
+                                context_dict['outcome'] = 'success'
                                 return JSONResponse(context_dict, status=200)
                             except Exception as e:
                                 print('exception 02052020-A from authentication views.py %s %s' %
@@ -198,7 +200,6 @@ def auth_login(request):
                 else:
                     return render(request, 'classup/setup_index.html', context_dict)
             else:
-                log_entry(the_user, "User is an Inactive user", "Normal", True)
                 error = 'User: ' + the_user + ' is disabled. Please contact your administrator'
                 l.comments = error
                 l.save()

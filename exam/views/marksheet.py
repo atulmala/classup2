@@ -820,6 +820,7 @@ class GenerateMarksheet(generics.ListAPIView):
                         if term == 'term1' and the_class in ninth_tenth:
                             continue
                         try:
+                            print('retrieving co-scholastic for %s term %s' % (s, term))
                             co_scl = CoScholastics.objects.get(term=term, student=s)
                             work_array.append('Work Education (or Pre-vocational Education)')
                             work_ed = co_scl.work_education
