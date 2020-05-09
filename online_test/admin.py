@@ -16,9 +16,13 @@ class OnlineQuestionAdmin(admin.ModelAdmin):
     def get_the_class(self, obj):
         return obj.test.the_class
 
+    def get_date(self, obj):
+        return obj.test.date
+
     def get_subject(self, obj):
         return obj.test.subject
-    list_display = ('get_the_class', 'get_subject', 'question',)
+    list_display = ('get_the_class', 'get_subject', 'get_date', 'question',)
+    list_filter = ('test__date', 'test__school',)
 
 
 @admin.register(StudentTestAttempt)
