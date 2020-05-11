@@ -105,6 +105,7 @@ def auth_login(request):
                 user_name = '%s %s' % (user.first_name, user.last_name)
                 try:
                     login(request, user)
+                    l.outcome = 'Success'
                     l.save()
 
                     request.session['user'] = the_user
