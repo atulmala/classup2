@@ -55,6 +55,7 @@ class StudentQuestionAdmin(admin.ModelAdmin):
 
     list_display = ('student', 'get_class', 'get_subject', 'answer_marked', 'whether_correct',)
     search_fields = ('student__fist_name', 'student__last_name', )
+    list_filter = ('answer_marked', 'question__test__date',)
 
 
 @admin.register(AnswerSheets)
