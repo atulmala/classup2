@@ -344,8 +344,9 @@ class GenerateAnswerSheet(generics.ListCreateAPIView):
             print('failed estable connections to AWS S3 storage')
 
         # attempts = StudentTestAttempt.objects.all()
-        attempts = StudentTestAttempt.objects.filter(student__fist_name='Vishishth',
+        attempts = StudentTestAttempt.objects.filter(student__fist_name='Devvrat',
                                                      online_test__subject__subject_name='English')
+        print(attempts)
 
         for an_attempt in attempts:
             marks_obtained = 0

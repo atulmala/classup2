@@ -16,6 +16,9 @@ class OnlineTest(models.Model):
     date = models.DateField()
     duration = models.IntegerField(default=30)
 
+    def __unicode__(self):
+        return '%s %s %s' % (self.the_class, self.subject, self.date)
+
 
 class OnlineQuestion(models.Model):
     test = models.ForeignKey(OnlineTest)

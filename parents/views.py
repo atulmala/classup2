@@ -462,18 +462,12 @@ def get_exam_result(request, student_id, exam_id):
                                 exam_result['max_marks'] = test.max_marks
                                 print (tr.marks_obtained)
                                 exam_result['marks'] = tr.marks_obtained
+
                         d = dict(exam_result)
                         response_array.append(d)
                     except Exception as e:
                         print('exception 27032018-A from parents views.py %s %s' % (e.message, type(e)))
                         print('subject %s is not opted by %s' % (test.subject.subject_name, student_name))
-            try:
-                parent_mobile = student.parent.parent_mobile1
-                action = 'Retrieved ' + exam.title + ' results for ' + student.fist_name + ' ' + student.last_name
-                log_entry(parent_mobile, action, 'Normal', True)
-            except Exception as e:
-                print('unable to create logbook entry')
-                print ('Exception 508 from parents views.py %s %s' % (e.message, type(e)))
             return JSONResponse(response_array, status=200)
         except Exception as e:
             print (exam_result)
