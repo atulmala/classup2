@@ -4,6 +4,8 @@ from django.contrib import admin
 
 from .models import OnlineTest, OnlineQuestion, StudentTestAttempt, StudentQuestion, AnswerSheets
 
+admin.autodiscover()
+
 
 @admin.register(OnlineTest)
 class OnlineTestAdmin(admin.ModelAdmin):
@@ -21,6 +23,7 @@ class OnlineQuestionAdmin(admin.ModelAdmin):
 
     def get_subject(self, obj):
         return obj.test.subject
+
     list_display = ('get_the_class', 'get_subject', 'get_date', 'question',)
     list_filter = ('test__date', 'test__school',)
 
@@ -41,7 +44,7 @@ class StudentTestAttemptAdmin(admin.ModelAdmin):
 
     list_display = ('get_school', 'student', 'get_class', 'get_section',
                     'get_subject', 'date', 'submission_ok',)
-    search_fields = ('student__fist_name', 'student__last_name', )
+    search_fields = ('student__fist_name', 'student__last_name',)
     list_filter = ('date', 'submission_ok',)
 
 
@@ -54,7 +57,7 @@ class StudentQuestionAdmin(admin.ModelAdmin):
         return obj.question.test.subject
 
     list_display = ('student', 'get_class', 'get_subject', 'answer_marked', 'whether_correct',)
-    search_fields = ('student__fist_name', 'student__last_name', )
+    search_fields = ('student__fist_name', 'student__last_name',)
     list_filter = ('answer_marked', 'question__test__date',)
 
 
@@ -84,7 +87,6 @@ class AnswerSheetsAdmin(admin.ModelAdmin):
 
     def link(self, obj):
         return '<a href="%s">%s</a>' % (obj.lin, obj.link)
+
     link.allow_tags = True
     link.short_description = 'Short link'
-
-

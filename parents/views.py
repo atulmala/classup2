@@ -3,7 +3,6 @@ import calendar
 import json
 import xlrd
 
-
 from rest_framework import generics
 
 from django.contrib import messages
@@ -24,6 +23,7 @@ from operations import sms
 from .models import ParentCommunicationCategories, ParentCommunication
 
 from .serializers import ParentsCommunicationCategorySerializer
+
 
 # Create your views here.
 
@@ -139,7 +139,6 @@ def submit_parents_communication(request):
 
 
 def retrieve_stu_att_summary(request):
-
     dict_attendance_summary = {
 
     }
@@ -173,7 +172,7 @@ def retrieve_stu_att_summary(request):
     if now.month < session_start_month:
         print ('current month is less than session start month. Hence starting from last year')
         for m in range(session_start_month, 12 + 1):  # 12+1, because loop executes for 1 time less than max index
-            month_year = calendar.month_abbr[m] + '/' + str(now.year-1)
+            month_year = calendar.month_abbr[m] + '/' + str(now.year - 1)
             dict_attendance_summary["month_year"] = month_year
             try:
                 if main_exist:
@@ -200,7 +199,7 @@ def retrieve_stu_att_summary(request):
                 dict_attendance_summary["present_days"] = present_days
 
                 if work_days != 0:
-                    present_perc = round((float(present_days)/float(work_days))*100, 2)
+                    present_perc = round((float(present_days) / float(work_days)) * 100, 2)
                     dict_attendance_summary['percentage'] = str(present_perc) + '%'
                 else:
                     dict_attendance_summary['percentage'] = 'N/A'
@@ -210,13 +209,13 @@ def retrieve_stu_att_summary(request):
                 print ('Exception6 from parents views.py = %s (%s)' % (e.message, type(e)))
             d = dict(dict_attendance_summary)
             response_array.append(d)
-        for m in range(1, now.month+1):
+        for m in range(1, now.month + 1):
             month_year = calendar.month_abbr[m] + '/' + str(now.year)
             dict_attendance_summary["month_year"] = month_year
             try:
                 if main_exist:
                     query = AttendanceTaken.objects.filter(date__month=m, date__year=now.year,
-                                                           subject=main,the_class=the_class, section=section)
+                                                           subject=main, the_class=the_class, section=section)
                 else:
                     query = AttendanceTaken.objects.filter(date__month=m, date__year=now.year,
                                                            the_class=the_class, section=section)
@@ -237,7 +236,7 @@ def retrieve_stu_att_summary(request):
                 present_days = work_days - absent_days
                 dict_attendance_summary["present_days"] = present_days
                 if work_days != 0:
-                    present_perc = round((float(present_days)/float(work_days))*100, 2)
+                    present_perc = round((float(present_days) / float(work_days)) * 100, 2)
                     dict_attendance_summary['percentage'] = str(present_perc) + '%'
                 else:
                     dict_attendance_summary['percentage'] = 'N/A'
@@ -251,7 +250,7 @@ def retrieve_stu_att_summary(request):
     # if current month is higher than the session_start_month then we need to add the working days
     # session start month till current-1 month
     else:
-        for m in range(session_start_month, now.month+1):
+        for m in range(session_start_month, now.month + 1):
             month_year = calendar.month_abbr[m] + '/' + str(now.year)
             dict_attendance_summary["month_year"] = month_year
             try:
@@ -269,8 +268,8 @@ def retrieve_stu_att_summary(request):
                 print ('Exception9 from parents views.py = %s (%s)' % (e.message, type(e)))
             try:
                 if main_exist:
-                    query = Attendance.objects.filter (student=student, subject=main,
-                                                       date__month=m, date__year=now.year)
+                    query = Attendance.objects.filter(student=student, subject=main,
+                                                      date__month=m, date__year=now.year)
                 else:
                     query = Attendance.objects.filter(student=student, date__month=m, date__year=now.year)
                 absent_days = query.count()
@@ -278,7 +277,7 @@ def retrieve_stu_att_summary(request):
                 present_days = work_days - absent_days
                 dict_attendance_summary["present_days"] = present_days
                 if work_days != 0:
-                    present_perc = round((float(present_days)/float(work_days))*100, 2)
+                    present_perc = round((float(present_days) / float(work_days)) * 100, 2)
                     dict_attendance_summary['percentage'] = str(present_perc) + '%'
                 else:
                     dict_attendance_summary['percentage'] = 'N/A'
@@ -355,7 +354,7 @@ def retrieve_stu_sub_marks_history(request, subject):
             c = s.current_class
             sect = s.current_section
 
-            test_list = ClassTest.objects.filter(the_class=c, section=sect, subject=sub, is_completed=True).\
+            test_list = ClassTest.objects.filter(the_class=c, section=sect, subject=sub, is_completed=True). \
                 order_by('date_conducted')
             for test in test_list:
                 marks_history['date'] = test.date_conducted
@@ -419,55 +418,58 @@ def get_exam_result(request, student_id, exam_id):
                                                  the_class=student.current_class, section=student.current_section)
             print (test_list)
             for test in test_list:
-                if test.is_completed:
-                    print (test)
-                    exam_result['subject'] = test.subject.subject_name
-                    print (exam_result)
+                print (test)
+                exam_result['subject'] = test.subject.subject_name
+                print (exam_result)
 
-                    # 27/03/2018 - in case of third language in V-VIII, second language in IX and all subjects in XI
-                    # the student may have not opted for it. So a check has to be made
-                    try:
-                        tr = TestResults.objects.get(class_test=test, student=student)
-                        print (tr)
-                        if test.grade_based:
-                            exam_result['max_marks'] = 'Grade Based'
-                            exam_result['marks'] = tr.grade
+                # 27/03/2018 - in case of third language in V-VIII, second language in IX and all subjects in XI
+                # the student may have not opted for it. So a check has to be made
+                try:
+                    tr = TestResults.objects.get(class_test=test, student=student)
+                    print (tr)
+                    if test.grade_based:
+                        exam_result['max_marks'] = 'Grade Based'
+                        exam_result['marks'] = tr.grade
 
-                        else:
-                            if test.test_type == 'term':
-                                print('this is a term test')
-                                exam_result['max_marks'] = 100
-                                main = tr.marks_obtained
-                                # if student was absent then main marks would be -1000
-                                if float(main) < 0.0:
-                                    print('%s was absent in the test of %s' % (student_name, test.subject.subject_name))
-                                    main = 0.0
-                                print('this is a term test. PA, Notebook Sub & Sub Enrich marks/prac will be considered')
-                                ttr = TermTestResult.objects.get(test_result=tr)
-                                if the_class in higher_classes:
-                                    prac = 0.0
-                                    if test.subject.subject_name in prac_subjects:
-                                        prac = ttr.prac_marks
-                                    total = float(main) + float(prac)
-                                    exam_result['marks'] = total
-                                else:
-                                    pa = ttr.periodic_test_marks
-                                    notebook = ttr.note_book_marks
-                                    sub_enrich = ttr.sub_enrich_marks
-                                    multi_asses = ttr.multi_asses_marks
-                                    total = float(main) + float(pa) + float(notebook) + float(sub_enrich) + float(multi_asses)
-                                    exam_result['marks'] = round(total, 2)
+                    else:
+                        if test.test_type == 'term':
+                            print('this is a term test')
+                            exam_result['max_marks'] = 100
+                            main = tr.marks_obtained
+                            # if student was absent then main marks would be -1000
+                            if float(main) < 0.0:
+                                print('%s was absent in the test of %s' % (student_name, test.subject.subject_name))
+                                main = 0.0
+                            print('this is a term test. PA, Notebook Sub & Sub Enrich marks/prac will be considered')
+                            ttr = TermTestResult.objects.get(test_result=tr)
+                            if the_class in higher_classes:
+                                prac = 0.0
+                                if test.subject.subject_name in prac_subjects:
+                                    prac = ttr.prac_marks
+                                total = float(main) + float(prac)
+                                exam_result['marks'] = total
                             else:
-                                print('this is a unit test')
-                                exam_result['max_marks'] = test.max_marks
-                                print (tr.marks_obtained)
-                                exam_result['marks'] = tr.marks_obtained
+                                pa = ttr.periodic_test_marks
+                                notebook = ttr.note_book_marks
+                                sub_enrich = ttr.sub_enrich_marks
+                                multi_asses = ttr.multi_asses_marks
+                                total = float(main) + float(pa) + float(notebook) + float(sub_enrich) + float(
+                                    multi_asses)
+                                exam_result['marks'] = round(total, 2)
+                        else:
+                            print('this is a unit test')
+                            exam_result['max_marks'] = test.max_marks
+                            marks_obtained = tr.marks_obtained
+                            print (marks_obtained)
+                            if marks_obtained == -5000.00:
+                                marks_obtained = ' '
+                            exam_result['marks'] = marks_obtained
 
-                        d = dict(exam_result)
-                        response_array.append(d)
-                    except Exception as e:
-                        print('exception 27032018-A from parents views.py %s %s' % (e.message, type(e)))
-                        print('subject %s is not opted by %s' % (test.subject.subject_name, student_name))
+                    d = dict(exam_result)
+                    response_array.append(d)
+                except Exception as e:
+                    print('exception 27032018-A from parents views.py %s %s' % (e.message, type(e)))
+                    print('subject %s is not opted by %s' % (test.subject.subject_name, student_name))
             return JSONResponse(response_array, status=200)
         except Exception as e:
             print (exam_result)
@@ -477,7 +479,7 @@ def get_exam_result(request, student_id, exam_id):
     return JSONResponse(response_array, status=201)
 
 
-def send_health_record (request):
+def send_health_record(request):
     context_dict = {
     }
     context_dict['user_type'] = 'school_admin'
@@ -533,7 +535,7 @@ def send_health_record (request):
                         if weight == '':
                             weight = 'N/A'
                         message = 'Dear %s, weight of your ward %s during last health checkup is %s KG' % \
-                              (parent_name, student.fist_name, weight)
+                                  (parent_name, student.fist_name, weight)
                         message_type = 'Health Data Communication (Web)'
                         print(message)
                         sms.send_sms1(school, sender, mobile, message, message_type)
