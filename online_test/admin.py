@@ -84,6 +84,7 @@ class AnswerSheetsAdmin(admin.ModelAdmin):
     list_display = ('get_date', 'get_school_name', 'student', 'get_class',
                     'get_section', 'get_subject', 'get_exam', 'link', 'shared',)
     search_fields = ('student__fist_name', 'student__last_name', 'online_test__subject__subject_name',)
+    list_filter = ('online_test__date',)
 
     def link(self, obj):
         return '<a href="%s">%s</a>' % (obj.lin, obj.link)
