@@ -458,7 +458,7 @@ class GenerateAnswerSheet(generics.ListCreateAPIView):
                     if option_marked.strip() == correct_option.strip():
                         print('%s has marked question: %d correct.' % (student, q_no))
                         c.drawInlineImage(tick_mark, left - 30, top + 20, width=15, height=15)
-                        c.drawString(left + 220, top, 'Marks: 2')
+                        c.drawString(left + 220, top, 'Marks: 1')
                     else:
                         print('%s has marked question: %d wrong.' % (student, q_no))
                         c.drawInlineImage(cross, left - 30, top + 20, width=15, height=15)
