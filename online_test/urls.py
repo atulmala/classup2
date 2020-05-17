@@ -21,6 +21,8 @@ urlpatterns = [
 
     url(r'^submit_answers/$', views.SubmitAnswer.as_view(), name='submit_answers'),
 
+    url(r'^mark_answer/$', views.MarkAnswer.as_view(), name='mark_answer'),
+
     url(r'^generate_answer_sheet/$',views.GenerateAnswerSheet.as_view(), name='generate_answer_sheet'),
 
     url(r'^share_answer_sheet/$',views.ShareAnswerSheet.as_view(), name='share_answer_sheet'),

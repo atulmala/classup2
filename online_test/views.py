@@ -288,12 +288,50 @@ class CreateOnlineTest(generics.ListCreateAPIView):
         return JSONResponse(context_dict, status=200)
 
 
+class MarkAnswer(generics.ListCreateAPIView):
+    def post(self, request, *args, **kwargs):
+        context_dict = {
+
+        }
+        print('request=')
+        print(request.body)
+        data = json.loads(request.body)
+        print ('json=')
+        print (data)
+        try:
+            student_id = data['student_id']
+            student = Student.objects.get(id=student_id)
+
+            question_id = data['question_id']
+            question = OnlineQuestion.objects.get(id=question_id)
+
+            answer_marked = data['answer_marked']
+
+            try:
+                question = StudentQuestion.objects.get(student=student, question=question)
+                print('%s has already marked an answer. This will be updated')
+                print('changed the answer marked')
+            except Exception as e:
+                print('exception 17052020-A from online_test views.py %s %s' % (e.message, type(e)))
+                print('%s is marking the answer for the first time')
+                question = StudentQuestion(student=student, question=question)
+                print('changed the answer marked')
+            question.answer_marked = answer_marked
+            question.save()
+            context_dict['status'] = 'success'
+        except Exception as e:
+            print('exception 17052020-B from online_test views.py %s %s' % (e.message, type(e)))
+            print('error decoding json for answer marking')
+            context_dict['status'] = 'Fail'
+        return JSONResponse(context_dict, status=200)
+
+
+
 class SubmitAnswer(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         context_dict = {
 
         }
-        print('starting to save Scholastic Grades')
         print('request=')
         print(request.body)
         data = json.loads(request.body)
