@@ -43,7 +43,7 @@ class StudentTestAttemptAdmin(admin.ModelAdmin):
         return obj.online_test.subject
 
     list_display = ('get_school', 'student', 'get_class', 'get_section',
-                    'get_subject', 'date', 'submission_ok',)
+                    'get_subject', 'date', 'submitted_via', 'submission_ok',)
     search_fields = ('student__fist_name', 'student__last_name',)
     list_filter = ('date', 'submission_ok',)
 

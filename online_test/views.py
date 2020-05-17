@@ -39,6 +39,17 @@ class MarkAttempted(generics.ListAPIView):
         test_id = self.kwargs['test_id']
         online_test = OnlineTest.objects.get(id=test_id)
 
+        try:
+            data = json.loads(request.body)
+            print ('json=')
+            print (data)
+            submitted_via = data['submitted_via']
+            print('this test submitted via %s' % submitted_via)
+        except Exception as e:
+            print('exception 17052020-B from online_test views.py %s %s' % (e.message, type(e)))
+            print('this test is submitted via smartphone')
+            submitted_via = 'smartphone'
+
         context_dict = {}
         try:
             attempted = StudentTestAttempt.objects.get(student=student, online_test=online_test)
@@ -47,6 +58,7 @@ class MarkAttempted(generics.ListAPIView):
             print('exception 22042020-B from online_test viws.py %s %s' % (e.message, type(e)))
             print('recording attempt for the first time')
             attempted = StudentTestAttempt(student=student, online_test=online_test)
+            attempted.submitted_via = submitted_via
             attempted.save()
 
         return JSONResponse(context_dict, status=200)
