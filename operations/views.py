@@ -89,7 +89,7 @@ class CommitBulkSMS(generics.ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         messages = SMSRecord.objects.filter(api_called=False)
         for a_message in messages:
-            mobile = a_message.mobile
+            mobile = a_message.recipient_number
             msg = a_message.message
             url = 'http://softsms.in/app/smsuserapi/index.php?username=classup&userpassword=classup@123&type=text'
             url += '&contacts=%s' % mobile

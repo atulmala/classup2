@@ -154,7 +154,7 @@ def send_sms1(school, sender, mobile, message, message_type, *args, **kwargs):
     if message_type in [
         'Teacher Communication', 'Attendance',
         'Test Marks', 'Share Lecture'
-    ]:
+        ]:
         # the sender must be a teacher
         sender_type = 'Teacher'
         print ('sender type is Teacher')
