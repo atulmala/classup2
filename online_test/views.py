@@ -33,6 +33,8 @@ from .serializers import OnlineTestSerializer, OnlineQuestionSerializer
 
 
 class MarkAttempted(generics.ListAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
     def post(self, request, *args, **kwargs):
         student_id = self.kwargs['student_id']
         student = Student.objects.get(id=student_id)
@@ -301,6 +303,8 @@ class CreateOnlineTest(generics.ListCreateAPIView):
 
 
 class MarkAnswer(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+
     def post(self, request, *args, **kwargs):
         context_dict = {
 
@@ -332,7 +336,7 @@ class MarkAnswer(generics.ListCreateAPIView):
             question.save()
             context_dict['status'] = 'success'
         except Exception as e:
-            print('exception 17052020-B from online_test views.py %s %s' % (e.message, type(e)))
+            print('exception 17052020-C from online_test views.py %s %s' % (e.message, type(e)))
             print('error decoding json for answer marking')
             context_dict['status'] = 'Fail'
         return JSONResponse(context_dict, status=200)
@@ -340,6 +344,8 @@ class MarkAnswer(generics.ListCreateAPIView):
 
 
 class SubmitAnswer(generics.ListCreateAPIView):
+    authentication_classes = (CsrfExemptSessionAuthentication, BasicAuthentication)
+    
     def post(self, request, *args, **kwargs):
         context_dict = {
 
