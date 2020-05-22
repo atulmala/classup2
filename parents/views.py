@@ -473,7 +473,7 @@ def get_exam_result(request, student_id, exam_id):
                                                                marks_obtained__gt=0).aggregate(Sum('marks_obtained'))
                             appeared = TestResults.objects.filter(class_test=test, marks_obtained__gt=0).count()
                             exam_result['appeared'] = appeared
-                            exam_result['average'] = '%.2f' % float(total/total['marks_obtained__sum'])
+                            exam_result['average'] = '%.2f' % float(total['marks_obtained__sum']/appeared)
 
                     d = dict(exam_result)
                     response_array.append(d)
