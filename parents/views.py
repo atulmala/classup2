@@ -9,7 +9,7 @@ from django.contrib import messages
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Max
+from django.db.models import Max, Sum
 
 from authentication.views import JSONResponse, log_entry
 from student.models import Student
@@ -469,8 +469,11 @@ def get_exam_result(request, student_id, exam_id):
                             highest = TestResults.objects.filter(class_test=test).aggregate(Max('marks_obtained'))
                             exam_result['highest'] = highest['marks_obtained__max']
 
+                            total = TestResults.objects.filter(class_test=test,
+                                                               marks_obtained__gt=0).aggregate(Sum('marks_obtained'))
                             appeared = TestResults.objects.filter(class_test=test, marks_obtained__gt=0).count()
                             exam_result['appeared'] = appeared
+                            exam_result['average'] = '%.2f' % float(total/appeared)
 
                     d = dict(exam_result)
                     response_array.append(d)
