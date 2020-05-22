@@ -469,6 +469,9 @@ def get_exam_result(request, student_id, exam_id):
                             highest = TestResults.objects.filter(class_test=test).aggregate(Max('marks_obtained'))
                             exam_result['highest'] = highest['marks_obtained__max']
 
+                            appeared = TestResults.objects.filter(class_test=test, marks_obtained__gt=0)
+                            exam_result['appeared'] = appeared
+
                     d = dict(exam_result)
                     response_array.append(d)
                 except Exception as e:
