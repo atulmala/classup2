@@ -1,7 +1,6 @@
 __author__ = 'atulgupta'
 
 from django.conf.urls import url
-from rest_framework.urlpatterns import format_suffix_patterns
 from academics import views
 
 urlpatterns = [
@@ -62,5 +61,3 @@ urlpatterns = [
 
     url(r'^delete_hw/(?P<hw_id>\w+)/$', views.delete_hw, name='delete_hw'),
 ]
-
-urlpatterns = format_suffix_patterns(urlpatterns)

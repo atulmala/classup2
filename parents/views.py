@@ -9,6 +9,7 @@ from django.contrib import messages
 from django.shortcuts import render
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Max
 
 from authentication.views import JSONResponse, log_entry
 from student.models import Student
@@ -430,7 +431,8 @@ def get_exam_result(request, student_id, exam_id):
                     if test.grade_based:
                         exam_result['max_marks'] = 'Grade Based'
                         exam_result['marks'] = tr.grade
-
+                        exam_result['average'] = 'N/A'
+                        exam_result['highest'] = 'N/A'
                     else:
                         if test.test_type == 'term':
                             print('this is a term test')
@@ -464,6 +466,8 @@ def get_exam_result(request, student_id, exam_id):
                             if marks_obtained == -5000.00:
                                 marks_obtained = ' '
                             exam_result['marks'] = marks_obtained
+                            highest = TestResults.objects.filter(class_test=test).aggregate(Max('marks_obtained'))
+                            exam_result['highest'] = highest['marks_obtained__max']
 
                     d = dict(exam_result)
                     response_array.append(d)

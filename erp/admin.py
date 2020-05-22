@@ -17,7 +17,7 @@ class AdditionalDetailsAdmin(admin.ModelAdmin):
             na = 'Not Available'
             return na
     list_display = ('student', 'date_of_admission', 'mother_name', 'address', 'get_house')
-    search_fields = ('student__fist_name', 'student__last_name')
+    search_fields = ('student__fist_name', 'student__last_name', 'mother_name',)
     list_filter = ('student__school',)
 
 

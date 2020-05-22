@@ -67,7 +67,7 @@ class CalculateStudentTotalMarks(generics.ListCreateAPIView):
                     try:
                         student_total_marks = StudentTotalMarks.objects.get(exam=exam, student=student)
                         student_total_marks.total_marks = total_marks['total_marks__sum']
-                        percentage = (float(total_marks['total_marks__sum'])/float(grand_total)) * 100
+                        percentage = (float(total_marks['total_marks__sum']) / float(grand_total)) * 100
                         student_total_marks.percentage = float(percentage)
                         student_total_marks.save()
                         print('total marks & percentage for %s of %s-%s in %s are updated' %
@@ -101,7 +101,7 @@ class CalculateStudentRank(generics.ListCreateAPIView):
             section = student.current_section
             for exam in exams:
                 marks_list = StudentTotalMarks.objects.filter(
-                    exam=exam, student__current_class=the_class, student__current_section=section).\
+                    exam=exam, student__current_class=the_class, student__current_section=section). \
                     order_by('-total_marks').values_list('total_marks', flat=True)
                 if len(marks_list) > 0:
                     try:
@@ -109,7 +109,7 @@ class CalculateStudentRank(generics.ListCreateAPIView):
                         student_marks = StudentTotalMarks.objects.get(exam=exam, student=student)
                         my_marks = student_marks.total_marks
                         print('marks obtained by %s = %.2f' % (student, my_marks))
-                        rank =list(marks_list).index(my_marks) + 1
+                        rank = list(marks_list).index(my_marks) + 1
                         out_of = len(marks_list)
                         print('rank secured by %s = %d / %d' % (student, rank, out_of))
                         student_marks.rank = rank
@@ -439,7 +439,7 @@ class StudentPerformanceAnalysis(generics.ListCreateAPIView):
 
             c.setFont(font, 10)
             c.drawString(left_margin, stu_detail_top, stu_name_lbl)
-            c.drawString(tab, stu_detail_top, '%s' % s )
+            c.drawString(tab, stu_detail_top, '%s' % s)
             c.drawString(tab + 140, stu_detail_top, 'Adm No: ')
             c.drawString(tab + 190, stu_detail_top, s.student_erp_id)
             c.drawString(tab + 270, stu_detail_top, class_sec_lbl)
@@ -517,7 +517,7 @@ class StudentPerformanceAnalysis(generics.ListCreateAPIView):
                     bc.data = data
                     bc.categoryAxis.categoryNames = subject_array
                     subject_wise.add(bc)
-                    subject_wise.drawOn(c, left_margin -50, analytics_top - 270)
+                    subject_wise.drawOn(c, left_margin - 50, analytics_top - 270)
 
                     c.drawString(left_margin + 350, analytics_top - 10,
                                  'Comparison of Total Marks with Class Highest/Average')
@@ -541,7 +541,7 @@ class StudentPerformanceAnalysis(generics.ListCreateAPIView):
                     percentage = StudentTotalMarks.objects.get(student=s, exam=exam).percentage
                     d = Drawing(300, 200)
                     lab = Label()
-                    lab.setOrigin(50,90)
+                    lab.setOrigin(50, 90)
                     lab.boxAnchor = 'ne'
                     lab.angle = 0
                     lab.dx = 5
