@@ -24,3 +24,4 @@ class ActivityGroupMembersSerializer (serializers.ModelSerializer):
 
     class Meta:
         model = ActivityMembers
+        exclude = ()

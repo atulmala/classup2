@@ -6,17 +6,18 @@ from .models import *
 class PeriodSerializer(serializers.ModelSerializer):
     class Meta:
         model = Period
+        exclude = ()
 
 
 class TimeTableSerializer(serializers.ModelSerializer):
     class Meta:
         model = TimeTable
-
+        exclude = ()
 
 class TeacherWingMappingSerializer (serializers.ModelSerializer):
     class Meta:
         model = TeacherWingMapping
-
+        exclude = ()
 
 class ArrangementSerializer (serializers.ModelSerializer):
     school = serializers.SlugRelatedField (read_only=True, slug_field='school_name')
@@ -26,6 +27,7 @@ class ArrangementSerializer (serializers.ModelSerializer):
 
     class Meta:
         model = Arrangements
+        exclude = ()
 
 
 class CTimeTableSerializer(serializers.ModelSerializer):
@@ -36,3 +38,4 @@ class CTimeTableSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CTimeTable
+        exclude = ()

@@ -11,8 +11,10 @@ class OnlineTestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OnlineTest
+        exclude = ()
 
 
 class OnlineQuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = OnlineQuestion
+        exclude = ()

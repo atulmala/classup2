@@ -1,7 +1,6 @@
 __author__ = 'atulgupta'
 
 from django.conf.urls import url
-from rest_framework.urlpatterns import format_suffix_patterns
 
 from teacher import views
 
@@ -47,5 +46,3 @@ urlpatterns = [
 
     url(r'^get_class_teacher/$', views.GetClassTeacher.as_view(), name='get_class_teacher'),
 ]
-
-urlpatterns = format_suffix_patterns(urlpatterns)

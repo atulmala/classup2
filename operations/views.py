@@ -920,7 +920,8 @@ def send_bulk_sms(request):
             url += 'key=%s&short=%s' % (key, long_link)
             print('url for generating short link = %s' % url)
             try:
-                response = urllib2.urlopen(url)
+                req = urllib2.Request(url, headers={'User-Agent': "Magic Browser"})
+                response = urllib2.urlopen(req)
                 print('response for generating short link = %s' % response)
                 outcome = json.loads(response.read())
                 print('ouctome = ')
@@ -1210,7 +1211,8 @@ def send_message(request, school_id):
             url += 'key=%s&short=%s' % (key, long_link)
             print('url for generating short link = %s' % url)
             try:
-                response = urllib2.urlopen(url)
+                req = urllib2.Request(url, headers={'User-Agent': "Magic Browser"})
+                response = urllib2.urlopen(req)
                 print('response for generating short link = %s' % response)
                 outcome = json.loads(response.read())
                 print('ouctome = ')

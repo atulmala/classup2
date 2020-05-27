@@ -1,5 +1,4 @@
 from django.conf.urls import url
-from rest_framework.urlpatterns import format_suffix_patterns
 
 from time_table import views
 
@@ -8,18 +7,22 @@ urlpatterns = [
 
     url('^teacher_period/$', views.TheTeacherPeriod.as_view(), name='teacher_period'),
 
-    url(r'^teacher_wing_mapping/$', views.TheTeacherWingMapping.as_view(), name='teacher_wing_mapping'),
+    url(r'^teacher_wing_mapping/$', views.TheTeacherWingMapping.as_view(),
+        name='teacher_wing_mapping'),
 
     url(r'^get_arrangements/$', views.GetArrangements.as_view(), name='get_arrangements'),
 
     url(r'^get_arrangement_teacher/(?P<teacher>[\w.@+-]+)/$',
         views.ArrangementListForTeachers.as_view(), name='get_arrangement_teacher'),
 
-    url(r'^set_arrangements/(?P<school_id>\w+)/$', views.SetArrangements.as_view(), name='set_arrangements'),
+    url(r'^set_arrangements/(?P<school_id>\w+)/$', views.SetArrangements.as_view(),
+        name='set_arrangements'),
 
-    url(r'^process_arrangements/$', views.AbsentTeacherPeriods.as_view(), name='process_arrangements'),
+    url(r'^process_arrangements/$', views.AbsentTeacherPeriods.as_view(),
+        name='process_arrangements'),
 
-    url(r'^notify_arrangements/(?P<school_id>\w+)/$', views.NotifyArrangements.as_view(), name='notify_arrangements'),
+    url(r'^notify_arrangements/(?P<school_id>\w+)/$', views.NotifyArrangements.as_view(),
+        name='notify_arrangements'),
 
     url(r'^download_arrangements/$', views.GetArrangements.as_view(), name='download_arrangements'),
 
@@ -27,13 +30,10 @@ urlpatterns = [
 
     url(r'^class_time_table/$', views.ClassTimeTable.as_view(), name='class_time_table'),
 
-    url(r'^get_time_table/(?P<school_id>\w+)/(?P<for>\w+)/(?P<id>[\w.@+-]+)/(?P<day>\w+)/$', views.PeriodList.as_view(),
+    url(r'^get_time_table/(?P<school_id>\w+)/(?P<for>\w+)/(?P<id>[\w.@+-]+)/(?P<day>\w+)/$',
+        views.PeriodList.as_view(),
         name='get_time_table'),
 
     url(r'^get_periods/(?P<school_id>\w+)/$', views.Periods.as_view(), name='get_periods'),
     url(r'^set_period/$', views.SetPeriod.as_view(), name='set_period')
-
-
 ]
-
-urlpatterns = format_suffix_patterns(urlpatterns)

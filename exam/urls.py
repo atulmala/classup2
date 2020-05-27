@@ -1,10 +1,9 @@
-from django.conf.urls import url, patterns
+from django.conf.urls import url
 
 from student import views as student_view
 from . import views
 
-urlpatterns = patterns(
-    '',
+urlpatterns = [
     url(r'^setup_third_lang/$', views.setup_third_lang, name='setup_third_lang'),
 
     url(r'^setup_scheme/$', views.setup_scheme, name='setup_scheme'),
@@ -16,9 +15,9 @@ urlpatterns = patterns(
         views.GenerateMarksheet.as_view(), name='marksheet'),
 
     url(r'^setup_higher_class_subject_mapping/$', views.setup_higher_class_subject_mapping,
-         name='setup_higher_class_subject_mapping'),
+        name='setup_higher_class_subject_mapping'),
 
-    url (r'result_sheet/$', views.ResultAnalysisSheet.as_view(), name='result_sheet'),
+    url(r'result_sheet/$', views.ResultAnalysisSheet.as_view(), name='result_sheet'),
     url(r'upload_marks/$', views.UploadMarks.as_view(), name='upload_marks'),
     url(r'schedule_test/$', views.ScheduleTest.as_view(), name='schedule_test'),
     url(r'get_wings/(?P<school_id>\w+)/$', views.GetWings.as_view(), name='get_wings'),
@@ -34,4 +33,4 @@ urlpatterns = patterns(
     url(r'^unscheuled_test_list/$', views.UnscheduledTestList.as_view(), name='unscheuled_test_list'),
     url(r'^detain_list/$', views.DetainList.as_view(), name='detain_list'),
     url(r'^student_subject_list/$', views.StudentSubjects.as_view(), name='student_subject_list'),
-)
+]

@@ -4,9 +4,8 @@ from .views import FeeDetails, ProcessFee, DefaulterReport, SendMessagetoDefault
 from .views import FeeHistory, CorrectFee, UploadFee, FeeHistoryDownload
 from .views import UploadFeeDefaulters
 
-urlpatterns = patterns(
-    '',
-    url(r'^fee_details/$', FeeDetails.as_view(), name='fee_payment',),
+urlpatterns = [
+    url(r'^fee_details/$', FeeDetails.as_view(), name='fee_payment', ),
     url(r'^process_fee/(?P<school_id>\w+)/$', ProcessFee.as_view(), name='process_fee'),
     url(r'^defaulter_list/(?P<school_id>\w+)/$', DefaulterReport.as_view(), name='defaulter_list'),
     url(r'^get_fee_history/$', FeeHistory.as_view(), name='fee_history'),
@@ -17,4 +16,4 @@ urlpatterns = patterns(
         UploadFeeDefaulters.as_view(), name='upload_fee_defaulters'),
     url(r'^send_message_to_defaulters/(?P<school_id>\w+)/$',
         SendMessagetoDefaulters.as_view(), name='send_message_to_defaulters'),
-)
+]

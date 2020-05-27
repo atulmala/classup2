@@ -1,5 +1,4 @@
 from django.conf.urls import url
-from rest_framework.urlpatterns import format_suffix_patterns
 
 import views
 
@@ -10,5 +9,3 @@ urlpatterns = [
     url(r'^resend_failed_messages/$', views.ResendFailedMessages.as_view(), name='resend_failed_messages'),
     url(r'^delete_messages/$', views.DeleteMessages.as_view(), name='delete_messages'),
 ]
-
-urlpatterns = format_suffix_patterns(urlpatterns)

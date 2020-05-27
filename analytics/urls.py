@@ -1,7 +1,6 @@
 __author__ = 'atulgupta'
 
 from django.conf.urls import url
-from rest_framework.urlpatterns import format_suffix_patterns
 from analytics import views
 
 urlpatterns = [
@@ -14,5 +13,3 @@ urlpatterns = [
     url(r'master_data/$', views.MasterData.as_view(), name='master_data'),
     url(r'generate_analytics/$', views.GenerateAnalytics.as_view(), name='generate_analytics'),
 ]
-
-urlpatterns = format_suffix_patterns(urlpatterns)

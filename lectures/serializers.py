@@ -11,3 +11,4 @@ class LectureSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Lecture
+        exclude = ()

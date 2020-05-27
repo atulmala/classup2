@@ -34,10 +34,11 @@ class TeacherAttendanceSerializer(serializers.ModelSerializer):
 class TeacherMessageRecordSerializer (serializers.ModelSerializer):
     class Meta:
         model = TeacherMessageRecord
-
+        exclude = ()
 
 class MessageReceiversSerializer (serializers.ModelSerializer):
     student = serializers.StringRelatedField()
 
     class Meta:
         model = MessageReceivers
+        exclude = ()

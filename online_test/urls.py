@@ -1,5 +1,4 @@
 from django.conf.urls import url
-from rest_framework.urlpatterns import format_suffix_patterns
 
 import views
 
@@ -29,5 +28,3 @@ urlpatterns = [
 
     url(r'^get_failed_attempts', views.FailedAttempts.as_view(), name='get_failed_attempts'),
 ]
-
-urlpatterns = format_suffix_patterns(urlpatterns)

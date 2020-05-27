@@ -1,7 +1,6 @@
 __author__ = 'atulgupta'
 
 from django.conf.urls import url
-from rest_framework.urlpatterns import format_suffix_patterns
 from pic_share import views
 
 urlpatterns = [
@@ -14,5 +13,3 @@ urlpatterns = [
     url(r'^upload_video/$', views.UploadVideo.as_view(), name='upload_video'),
     url(r'delete_media/(?P<image_id>[\w\ ]+)/$', views.DeleteMedia.as_view(), name='delete_media'),
 ]
-
-urlpatterns = format_suffix_patterns(urlpatterns)

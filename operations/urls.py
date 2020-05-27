@@ -1,10 +1,9 @@
 __author__ = 'atulmala'
 
-from django.conf.urls import url, patterns
+from django.conf.urls import url
 from operations import views
 
-urlpatterns = patterns(
-    '',
+urlpatterns = [
     url(r'^$', views.operations_index, name='operations_index'),
 
     url(r'^att_summary_school/$', views.att_summary_school, name='att_summary_school'),
@@ -33,4 +32,4 @@ urlpatterns = patterns(
     url(r'retrieve_sms_history/(?P<parent_mobile>\w+)/$', views.SMSHistoryList.as_view()),
 
     url(r'send_welcome_sms/$', views.send_welcome_sms, name='send_welcome_sms'),
-)
+]

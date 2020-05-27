@@ -24,3 +24,4 @@ class BusAttendanceSerializer(serializers.ModelSerializer):
 class BusStopSerializer(serializers.ModelSerializer):
     class Meta:
         model = BusStop
+        exclude = ()

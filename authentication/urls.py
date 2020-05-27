@@ -1,11 +1,11 @@
 __author__ = 'atulmala'
 
 from authentication import views
-from django.conf.urls import url, patterns
+from django.conf.urls import url
 
 from .views import LogEntry
 
-urlpatterns = patterns('',
+urlpatterns = [
     url('^$', views.auth_login, name='auth_index'),
     url('^auth/login/$', views.auth_login, name='auth_login'),
     url('^logout/$', views.auth_logout, name='auth_logout'),
@@ -17,4 +17,4 @@ urlpatterns = patterns('',
     url(r'auth/check_subscription/(?P<student_id>\w+)/$', views.check_subscription, name='check_subscription'),
     url(r'auth/map_device_token/$', views.map_device_token, name='map_device_token'),
     url(r'auth/logbook_entry/$', LogEntry.as_view(), name='log_book_entry'),
-)
+]

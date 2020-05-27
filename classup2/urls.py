@@ -14,13 +14,12 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include(blog_urls))
 """
 
-from django.conf.urls import include, url, patterns
+from django.conf.urls import include, url
 from django.contrib import admin
 from classup2 import settings
 
-
-urlpatterns = patterns(' ',
-    url(r'^grappelli/', include('grappelli.urls')), # grappelli URLS
+urlpatterns = [
+    url(r'^grappelli/', include('grappelli.urls')),  # grappelli URLS
     url(r'^admin/', include(admin.site.urls)),
     url(r'^', include('authentication.urls')),
     url(r'^setup/', include('setup.urls')),
@@ -33,22 +32,20 @@ urlpatterns = patterns(' ',
     url(r'^parents/', include('parents.urls')),
     url(r'^exam/', include('exam.urls')),
     url(r'^time_table/', include('time_table.urls')),
-    url(r'^activity_groups/', include ('activity_groups.urls')),
-    url(r'erp/', include('erp.urls')),
-    url(r'fee_processing/', include('fee_processing.urls')),
-    url(r'maintenance/', include('maintenance.urls')),
-    url(r'pic_share/', include('pic_share.urls')),
-    url(r'analytics/', include('analytics.urls')),
-    url(r'lectures/', include('lectures.urls')),
-    url(r'online_test/', include('online_test.urls')),
+    url(r'^activity_groups/', include('activity_groups.urls')),
+    url(r'^erp/', include('erp.urls')),
+    url(r'^fee_processing/', include('fee_processing.urls')),
+    url(r'^maintenance/', include('maintenance.urls')),
+    url(r'^pic_share/', include('pic_share.urls')),
+    url(r'^analytics/', include('analytics.urls')),
+    url(r'^lectures/', include('lectures.urls')),
+    url(r'^online_test/', include('online_test.urls')),
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-)
+]
 
 if settings.DEBUG:
     import debug_toolbar
-    urlpatterns += (
+
+    urlpatterns += [
         url(r'^__debug__/', include(debug_toolbar.urls)),
-    )
-
-
-
+    ]

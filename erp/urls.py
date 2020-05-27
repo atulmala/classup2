@@ -1,9 +1,9 @@
-from django.conf.urls import url, patterns
+from django.conf.urls import url
 
 from .views import SetupAddDetails
 
-urlpatterns = patterns(
+urlpatterns = [
     '',
-    url(r'^setup_additional_details/$', SetupAddDetails.as_view(), name='setup_additional_details'),
-
-)
+    url(r'^setup_additional_details/$', SetupAddDetails.as_view(),
+        name='setup_additional_details'),
+]
