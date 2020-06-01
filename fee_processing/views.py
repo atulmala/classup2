@@ -1194,7 +1194,7 @@ class SendMessagetoDefaulters(generics.ListCreateAPIView):
                 message = 'Dear %s, fee due on your ward %s for last session 2019-2020. Amount: %.2f.'\
                           % (parent, student, amount_due)
                 message += ' Plese make the payment by Sat 9th May other wise online Classes will Stop.'
-                message += ' For any details please contact Accounts at 9953272524'
+                message += ' For any details please contact Accounts at 9953272524. Notice to DM/DIOS https://cutt.ly/ryKaiIZ'
                 print('message: %s' % message)
                 sms.send_sms1(school, 'admin@jps.com', mobile, message, 'Fee Reminder')
         conf.send_sms = sms_allowed

@@ -19,7 +19,7 @@ admin.site.register(User, MyUserAdmin)
 class LoginRecordAdmin(admin.ModelAdmin):
     list_display = ('date_and_time', 'login_id', 'password', 'string_ip',
                     'ip_address', 'login_type', 'model', 'os', 'resolution', 'size', 'outcome', 'comments',)
-    search_fields = ('login_id',)
+    search_fields = ('login_id', 'model',)
     list_filter = ('date_and_time', 'outcome',)
 
 

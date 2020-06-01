@@ -52,20 +52,20 @@ def auth_index(request):
 @csrf_exempt
 def auth_login(request):
     # we need to record every login attempt into database
-    l = LoginRecord()
-    l.login_type = 'Web'
+    login_record = LoginRecord()
+    login_record.login_type = 'Web'
     # get the ip address of the user
     ip = get_ip(request)
     if ip is not None:
         print(ip)
         print("we have an IP address for user")
         try:
-            l.string_ip = ip
-            l.ip_address = ip
-            l.save()
+            login_record.string_ip = ip
+            login_record.ip_address = ip
+            login_record.save()
         except Exception as e:
-            l.string_ip = 'Unable to get'
-            l.save()
+            login_record.string_ip = 'Unable to get'
+            login_record.save()
             print('unable to store ip address')
             print('Exception 1 from authentication views.py = %s (%s)' % (e.message, type(e)))
     else:
@@ -95,18 +95,17 @@ def auth_login(request):
             print('exception 28032019-B from authentication views.py %s %s' % (e.message, type(e)))
             print('looks like is NOT initiated from vuejs. It is from traditional django form')
         print('login initiated from = %s' % login_from)
-        l.login_id = the_user
-        l.password = password
+        login_record.login_id = the_user
+        login_record.password = password
 
         user = authenticate(username=the_user, password=password)
-        log_entry(the_user, "User has been authenticated", "Normal", True)
         if user is not None:
             if user.is_active:
                 user_name = '%s %s' % (user.first_name, user.last_name)
                 try:
                     login(request, user)
-                    l.outcome = 'Success'
-                    l.save()
+                    login_record.outcome = 'Success'
+                    login_record.save()
 
                     request.session['user'] = the_user
                     context_dict['user_name'] = user_name
@@ -136,14 +135,19 @@ def auth_login(request):
                             login_form.errors['__all__'] = login_form.error_class([error])
                             return render(request, 'classup/auth_login.html', context_dict)
                 except Exception as e:
-                    print ('unable to retrieve school_id for ' + user.username)
+                    print ('unable to retrieve school_id for %s' % user.username)
                     print('Exception 8 from authentication views.py = %s (%s)' % (e.message, type(e)))
-                    log_entry(the_user, "Unable to retrieve School Id. Exception 8 authentication views.py",
-                              "Normal", True)
+
                 if user.groups.filter(name='school_admin').exists():
-                    log_entry(the_user, "User found to be an Admin User", "Normal", True)
+                    print('%s username is an admin user' % user_name)
                     context_dict['user_type'] = 'school_admin'
                     request.session['user_type'] = 'school_admin'
+                if user.groups.filter(name='accounts').exists():
+                    print('%s username is an accounts user' % user_name)
+                    context_dict['user_type'] = 'accounts'
+                if user.groups.filter(name='academics').exists():
+                    print('%s username is an academics user' % user_name)
+                    context_dict['user_type'] = 'academics'
                 else:
                     print('user is non admin now figure out whether teacher or parent')
                     parent = Parent.objects.filter(parent_mobile1=the_user)
@@ -202,8 +206,8 @@ def auth_login(request):
                     return render(request, 'classup/setup_index.html', context_dict)
             else:
                 error = 'User: ' + the_user + ' is disabled. Please contact your administrator'
-                l.comments = error
-                l.save()
+                login_record.comments = error
+                login_record.save()
 
                 print (error)
                 context_dict['message'] = error
@@ -217,8 +221,8 @@ def auth_login(request):
             error = 'Invalid username/password or blank entry. Please try again.'
             context_dict['message'] = error
             context_dict['outcome'] = 'failed'
-            l.comments = error
-            l.save()
+            login_record.comments = error
+            login_record.save()
             # login_form.errors['__all__'] = login_form.error_class([error])
             print (error)
             if login_from == 'vuejs':
@@ -259,8 +263,8 @@ def auth_login_from_device1(request):
     category = "Normal"
     print ('Inside login from device view!')
 
-    l = LoginRecord()
-    l.login_type = 'Device'
+    login_record = LoginRecord()
+    login_record.login_type = 'Device'
 
     # get the ip address of the user
     ip = get_ip(request)
@@ -268,12 +272,12 @@ def auth_login_from_device1(request):
         print(ip)
         print("we have an IP address for user")
         try:
-            l.string_ip = ip
-            l.ip_address = ip
-            l.save()
+            login_record.string_ip = ip
+            login_record.ip_address = ip
+            login_record.save()
         except Exception as e:
-            l.string_ip = 'Unable to get'
-            l.save()
+            login_record.string_ip = 'Unable to get'
+            login_record.save()
             print('unable to store ip address')
             print('Exception 9 from authentication views.py = %s (%s)' % (e.message, type(e)))
     else:
@@ -286,8 +290,8 @@ def auth_login_from_device1(request):
         the_user = data['user']
         log_entry(the_user, "Login from device initiated", "Normal", True)
         password = data['password']
-        l.login_id = the_user
-        l.password = password
+        login_record.login_id = the_user
+        login_record.password = password
 
         # 11/07/2017 we are now capturing the
         try:
@@ -296,12 +300,12 @@ def auth_login_from_device1(request):
             os = data['os']
             size = data['size']
             resolution = data['resolution']
-            l.login_type = login_type
-            l.model = model
-            l.os = os
-            l.size = size
-            l.resolution = resolution
-            l.save()
+            login_record.login_type = login_type
+            login_record.model = model
+            login_record.os = os
+            login_record.size = size
+            login_record.resolution = resolution
+            login_record.save()
         except Exception as e:
             print ('User %s is still using an older version of app' % the_user)
             print('Exception 250 from authentication views.py = %s (%s)' % (e.message, type(e)))
@@ -315,8 +319,8 @@ def auth_login_from_device1(request):
                 print('user ' + the_user + ' is an active user')
                 log_entry(the_user, "Found to be an Active User", "Normal", True)
                 login(request, user)
-                l.outcome = 'Success'
-                l.save()
+                login_record.outcome = 'Success'
+                login_record.save()
                 return_data["login"] = "successful"
                 return_data["user_status"] = "active"
                 full_name = user.first_name + ' ' + user.last_name
@@ -391,10 +395,10 @@ def auth_login_from_device1(request):
                         return JSONResponse(return_data, status=200)
 
             else:
-                l.outcome = 'Failed'
-                l.comments = 'Inactive User'
+                login_record.outcome = 'Failed'
+                login_record.comments = 'Inactive User'
                 log_entry(the_user, "Found to be an Inactive User", "Normal", True)
-                l.save()
+                login_record.save()
                 return_data["login"] = "successful"
                 return_data['user_name'] = user.first_name + ' ' + user.last_name
                 return_data["user_status"] = "inactive"
@@ -402,8 +406,8 @@ def auth_login_from_device1(request):
                 log_entry(the_user, event, category, False)
                 return JSONResponse(return_data, status=200)
         else:
-            l.outcome = 'Failed'
-            l.save()
+            login_record.outcome = 'Failed'
+            login_record.save()
             return_data["login"] = "failed"
             print (return_data)
             log_entry(the_user, "Login Failed", category, False)

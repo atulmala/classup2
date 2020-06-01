@@ -1,4 +1,4 @@
-from django.conf.urls import url, patterns
+from django.conf.urls import url
 
 from .views import FeeDetails, ProcessFee, DefaulterReport, SendMessagetoDefaulters
 from .views import FeeHistory, CorrectFee, UploadFee, FeeHistoryDownload
